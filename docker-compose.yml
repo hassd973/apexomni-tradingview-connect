@@ -1,0 +1,17 @@
+version: '3'
+services:
+  webserver:
+    build: ./
+    tty: true
+    volumes:
+      - ./data:/app/data
+    ports:
+      - '80:3000'
+    environment:
+      ETH_ADDRESS: ${ETH_ADDRESS}
+      ZKLINK_SEED: ${ZKLINK_SEED}
+      API_KEY: ${API_KEY}
+      API_PASSPHRASE: ${API_PASSPHRASE}
+      API_SECRET: ${API_SECRET}
+      TRADINGVIEW_PASSPHRASE: ${TRADINGVIEW_PASSPHRASE}
+      SENTRY_DNS: ${SENTRY_DNS}
