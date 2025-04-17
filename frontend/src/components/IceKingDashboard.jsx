@@ -7,19 +7,21 @@ const IceKingDashboard = () => {
   const [positions, setPositions] = useState([])
   const [error, setError] = useState(null)
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const balanceRes = await axios.get(`${API_URL}/api/balance`)
-        setBalance(balanceRes.data.balance || 0)
-
-        const positionsRes = await axios.get(`${API_URL}/api/positions`)
-        setPositions(positionsRes.data || [])
+        const response = await axios.get('https://raw.githubusercontent.com/hassd973/apexomni-tradingview-connect/main/data/accountData.json')
+        setBalance(response.data.balance || 0)
+        setPositions(response.data.positions || [])
       } catch (error) {
-        console.error('Error fetching data:', error)
-        setError('Failed to fetch account data. Please check the backend API.')
+        console.error('Error fetching data from GitHub:', error)
+        setError('Failed to fetch account data from repository. Using mock data instead.')
+        // Fallback to mock data
+        setBalance(1000)
+        setPositions([
+          { market: 'BTCUSD', side: 'Long', size: 0.5, entryPrice: 60000 },
+          { market: 'BTCUSD', side: 'Short', size: 0.3, entryPrice: 59000 },
+        ])
       }
     }
 
