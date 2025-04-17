@@ -2,18 +2,20 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import Chart from './Chart.jsx'
 
-const Dashboard = () => {
+const IceKingDashboard = () => {
   const [balance, setBalance] = useState(0)
   const [positions, setPositions] = useState([])
+
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     // Fetch balance and positions from backend API
     const fetchData = async () => {
       try {
-        const balanceRes = await axios.get('http://localhost:5000/api/balance')
+        const balanceRes = await axios.get(`${API_URL}/api/balance`)
         setBalance(balanceRes.data.balance)
 
-        const positionsRes = await axios.get('http://localhost:5000/api/positions')
+        const positionsRes = await axios.get(`${API_URL}/api/positions`)
         setPositions(positionsRes.data)
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -54,4 +56,4 @@ const Dashboard = () => {
   )
 }
 
-export default Dashboard
+export default IceKingDashboard
