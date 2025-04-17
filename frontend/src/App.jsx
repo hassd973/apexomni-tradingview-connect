@@ -20,44 +20,72 @@ function App() {
     setError(null);
 
     try {
-      // Hypothetical: Use apexomni-tradingview-connect to initiate OAuth flow
-      // This might redirect the user to TradingView's login page
-      const response = await axios.get('https://your-apexomni-tradingview-connect-url/auth/init', {
+      const authUrl = 'https://omni-trading-webhook.onrender.com/auth/init';
+      console.log('Initiating sign-in with URL:', authUrl);
+
+      const response = await axios.get(authUrl, {
         params: {
-          redirect_uri: window.location.href, // Callback URL after login
+          redirect_uri: window.location.href,
         },
       });
 
+      console.log('Auth response:', response.data);
+
       if (response.data.authUrl) {
-        // Redirect user to TradingView's login page
+        console.log('Redirecting to TradingView login:', response.data.authUrl);
         window.location.href = response.data.authUrl;
       } else {
-        throw new Error('Failed to initiate sign-in');
+        throw new Error('Failed to initiate sign-in: No auth URL provided');
       }
     } catch (err) {
-      setError('Sign-in failed. Please try again.');
+      const errorMessage = err.response?.data?.message || err.message || 'Sign-in failed. Please check the console for details.';
+      setError(errorMessage);
       setIsLoading(false);
       console.error('Sign-in error:', err);
     }
   };
 
-  // Handle callback after TradingView login (if redirected back)
+  // Handle callback after TradingView login
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token'); // Hypothetical token from callback
+    const code = urlParams.get('code');
+    const token = urlParams.get('token');
 
-    if (token) {
+    if (code) {
+      // Exchange code for token
+      const exchangeCodeForToken = async () => {
+        try {
+          const response = await axios.get('https://omni-trading-webhook.onrender.com/auth/callback', {
+            params: { code },
+          });
+          const newToken = response.data.token;
+          if (newToken) {
+            localStorage.setItem('tradingview_token', newToken);
+            setIsSignedIn(true);
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } else {
+            throw new Error('No token received after code exchange');
+          }
+        } catch (err) {
+          setError('Failed to exchange code for token. Please try again.');
+          console.error('Token exchange error:', err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      exchangeCodeForToken();
+    } else if (token) {
       localStorage.setItem('tradingview_token', token);
       setIsSignedIn(true);
-      setIsLoading(false);
-      // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
+      setIsLoading(false);
     }
   }, []);
 
   const handleSignOut = () => {
     localStorage.removeItem('tradingview_token');
     setIsSignedIn(false);
+    setError(null);
   };
 
   return (
