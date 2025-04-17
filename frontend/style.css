@@ -1,0 +1,36 @@
+body {
+  margin: 0;
+  background: #0a0f2e;
+  color: #eef2ff;
+  font-family: Arial, sans-serif;
+}
+.container {
+  max-width: 800px;
+  margin: 2rem auto;
+  display: grid;
+  gap: 1.5rem;
+}
+h1 {
+  text-align: center;
+  font-size: 2rem;
+}
+.card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+.card h2 {
+  margin-top: 0;
+  font-size: 1.25rem;
+}
+#positions ul {
+  list-style: none;
+  padding: 0;
+}
+#positions li {
+  margin: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+}
