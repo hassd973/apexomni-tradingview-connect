@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Dashboard from './components/Dashboard.jsx'
+import IceKingDashboard from './components/IceKingDashboard.jsx'
 
 function App() {
   const [isSignedIn, setIsSignedIn] = useState(false)
@@ -15,7 +15,7 @@ function App() {
       {!isSignedIn ? (
         <button onClick={handleSignIn}>Sign In to Access Indicators</button>
       ) : (
-        <Dashboard />
+        <IceKingDashboard />
       )}
     </div>
   )
