@@ -5,6 +5,10 @@ const Chart = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('tradingview_token');
+    if (!token) {
+      console.error('No TradingView token found. Please sign in.');
+      return;
+    }
 
     const script = document.createElement('script')
     script.src = 'https://s3.tradingview.com/tv.js'
@@ -25,16 +29,19 @@ const Chart = () => {
         enable_publishing: false,
         allow_symbol_change: true,
         studies: [
-          'MASimple@tv-basicstudies', // Placeholder; replace with Ice King indicator if known
+          // Replace with your Ice King indicator ID if known
+          'IceKingIndicator@your-user-id', // Placeholder; get the actual ID from TradingView
         ],
-        // Attempt to pass authentication (hypothetical, depends on TradingView API)
-        ...(token && { auth_token: token }), // Hypothetical: pass the token if available
         utm_source: 'ice-king-dashboard-tm4b.onrender.com',
         utm_medium: 'widget',
         utm_campaign: 'chart-logo',
         utm_term: 'BITSTAMP:BTCUSD',
       })
     }
+
+    script.onerror = () => {
+      console.error('Failed to load TradingView script');
+    };
 
     document.body.appendChild(script)
 
