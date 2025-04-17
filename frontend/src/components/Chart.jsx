@@ -19,16 +19,36 @@ const Chart = () => {
         theme: 'dark',
         style: '1',
         locale: 'en',
-        toolbar_bg: '#1e3a8a',
-        enable_publishing: false, // Set to true to enable features that may prompt sign-in
+        toolbar_bg: '#1e3a8a', // Dark blue toolbar background
+        backgroundColor: 'rgba(30, 58, 138, 0.8)', // Dark blue with transparency
+        gridColor: 'rgba(255, 255, 255, 0.1)', // Light grid with transparency
+        enable_publishing: false,
         allow_symbol_change: true,
         studies: [
-          // Placeholder for Ice King indicator; user must sign in to load unpublished indicators
-          // Replace with actual ID if known, e.g., 'IceKingIndicator@your-user-id'
+          // Attempt to load the Ice King indicator; user must sign in to access unpublished indicators
+          'ICE KING🌍🧊👑 V27.18.10 - Debug@your-user-id', // Replace 'your-user-id' with your actual TradingView user ID
         ],
         autosize: true,
-        // Enable features that may require sign-in
-        save_image: true, // This may prompt sign-in if the user isn't logged in
+        save_image: true, // Prompts sign-in if user isn't logged in
+        // Override chart colors to match the blue dark transparent theme
+        overrides: {
+          "paneProperties.background": "rgba(30, 58, 138, 0.8)", // Dark blue background with transparency
+          "paneProperties.vertGridProperties.color": "rgba(255, 255, 255, 0.1)",
+          "paneProperties.horzGridProperties.color": "rgba(255, 255, 255, 0.1)",
+          "scalesProperties.lineColor": "rgba(255, 255, 255, 0.3)", // Light scale lines
+          "scalesProperties.textColor": "rgba(255, 255, 255, 0.8)", // Light text
+          "mainSeriesProperties.candleStyle.upColor": "#00FF00", // Green for up candles
+          "mainSeriesProperties.candleStyle.downColor": "#FF0000", // Red for down candles
+          "mainSeriesProperties.candleStyle.borderUpColor": "#00FF00",
+          "mainSeriesProperties.candleStyle.borderDownColor": "#FF0000",
+          "mainSeriesProperties.candleStyle.wickUpColor": "rgba(255, 255, 255, 0.5)",
+          "mainSeriesProperties.candleStyle.wickDownColor": "rgba(255, 255, 255, 0.5)",
+        },
+        studies_overrides: {
+          // Customize indicator styles if needed (e.g., EMA colors from Pine Script)
+          "volume.volume.color.0": "rgba(255, 0, 0, 0.3)", // Red for down volume with transparency
+          "volume.volume.color.1": "rgba(0, 255, 0, 0.3)", // Green for up volume with transparency
+        },
         utm_source: 'ice-king-dashboard-tm4b.onrender.com',
         utm_medium: 'widget',
         utm_campaign: 'chart-logo',
