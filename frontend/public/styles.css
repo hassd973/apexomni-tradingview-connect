@@ -1,0 +1,51 @@
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: radial-gradient(circle, #001f3f, #000c1a);
+  color: #00f0ff;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.dashboard {
+  max-width: 800px;
+  width: 100%;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #005577;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.1);
+}
+
+.card h2 {
+  margin-top: 0;
+}
+
+#balance {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-top: 1rem;
+}
+
+table {
+  width: 100%;
+  color: #00f0ff;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #005577;
+}
+
+th {
+  text-align: left;
+}
