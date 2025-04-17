@@ -1,0 +1,30 @@
+.dashboard {
+  padding: 2rem;
+  text-align: center;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin: 1rem auto;
+  max-width: 800px;
+  box-shadow: 0 0 15px #00f0ff22;
+}
+
+.card h2 {
+  color: #00f0ff;
+}
+
+.card table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.card table th,
+.card table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
