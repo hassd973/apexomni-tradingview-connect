@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🧊 ICE KING DASHBOARD 👑</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🧊 ICE KING DASHBOARD 👑</h1>
+        <div class="card">
+            <h2>Balance</h2>
+            <p id="balance">$--.--</p>
+        </div>
+        <div class="card">
+            <h2>Open Positions</h2>
+            <table id="positions">
+                <tr><th>Market</th><th>Side</th><th>Size</th><th>Entry Price</th></tr>
+            </table>
+        </div>
+        <div class="card">
+            <h2>Live BTC Chart (1 Day)</h2>
+            <iframe src="https://www.tradingview.com/embed-widget/mini-symbol-overview/?symbol=BINANCE%3ABTCUSDT&width=100%&height=400&locale=en" width="100%" height="400" frameborder="0"></iframe>
+        </div>
+    </div>
+    <script src="js/script.js"></script>
+</body>
+</html>
