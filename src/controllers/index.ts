@@ -2,6 +2,7 @@ import express, { Router } from 'express';
 import {
   apexomniCreateOrder,
   apexomniGetAccount,
+  apexomniGetPositions, // Add this import
   apexomniBuildOrderParams,
   apexomniExportOrder,
   validateAlert,
@@ -48,14 +49,7 @@ router.get('/api/balance', async (req, res) => {
 router.get('/api/positions', async (req, res) => {
   console.log('Received request for /api/positions');
   try {
-    const apexomniAccount = await apexomniGetAccount();
-    if (!apexomniAccount) {
-      res.status(500).json({ error: 'Error on getting account data' });
-      return;
-    }
-    // Assuming apexomniAccount has a positions field (array of open positions)
-    // If apexomniGetAccount doesn't return positions, you may need a separate service function
-    const positions = apexomniAccount.positions || [];
+    const positions = await apexomniGetPositions();
     res.json(positions);
   } catch (error) {
     console.error('Error fetching positions:', error);
