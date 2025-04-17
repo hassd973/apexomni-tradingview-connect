@@ -13,18 +13,22 @@ const Chart = () => {
         container_id: chartContainerRef.current.id,
         width: '100%',
         height: 400,
-        symbol: 'BTCUSD',
-        interval: 'D',
+        symbol: 'BITSTAMP:BTCUSD', // Match the symbol from the URL
+        interval: 'D', // 1D timeframe, as in your screenshot
         timezone: 'Etc/UTC',
-        theme: 'dark',
-        style: '1',
+        theme: 'dark', // Match the dark theme from your screenshot
+        style: '1', // Candlestick style, as seen in the screenshot
         locale: 'en',
-        toolbar_bg: '#1e3a8a',
+        toolbar_bg: '#1e3a8a', // Futuristic blue theme
         enable_publishing: false,
         allow_symbol_change: true,
         studies: [
-          'MASimple@tv-basicstudies', // Replace with your personal indicators
+          'MASimple@tv-basicstudies', // Placeholder; replace with your personal indicators
         ],
+        utm_source: 'ice-king-dashboard-tm4b.onrender.com',
+        utm_medium: 'widget',
+        utm_campaign: 'chart-logo',
+        utm_term: 'BITSTAMP:BTCUSD',
       })
     }
 
