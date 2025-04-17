@@ -22,38 +22,47 @@ const IceKingDashboard = () => {
   }
 
   useEffect(() => {
-    fetchData() // Initial fetch
-    const interval = setInterval(fetchData, 30000) // Poll every 30 seconds
-    return () => clearInterval(interval) // Cleanup on unmount
+    fetchData()
+    const interval = setInterval(fetchData, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   return (
-    <div className="dashboard w-full max-w-4xl">
-      {error && <p className="text-red-500">{error}</p>}
-      <div className="card">
-        <h2 className="text-2xl font-semibold">Balance</h2>
-        <p className="text-3xl">${balance.toFixed(2)}</p>
+    <div className="dashboard w-full max-w-5xl space-y-8">
+      {error && <p className="text-red-400 text-center">{error}</p>}
+      <div className="card neon-border">
+        <h2 className="text-2xl font-semibold text-cyan-300">Balance</h2>
+        <p className="text-4xl mt-2 text-white">${balance.toFixed(2)}</p>
       </div>
 
-      <div className="card">
-        <h2 className="text-2xl font-semibold">Open Positions</h2>
+      <div className="card neon-border">
+        <h2 className="text-2xl font-semibold text-cyan-300">Open Positions</h2>
         {positions.length > 0 ? (
-          positions.map((position, index) => (
-            <div key={index} className="flex justify-between py-2 border-b border-gray-500">
-              <span>{position.market}</span>
-              <span>{position.side}</span>
-              <span>{position.size} BTC</span>
-              <span>${position.entryPrice.toFixed(2)}</span>
-            </div>
-          ))
+          <div className="mt-4 space-y-3">
+            {positions.map((position, index) => (
+              <div
+                key={index}
+                className="flex justify-between py-2 border-b border-gray-700 text-gray-300"
+              >
+                <span>{position.market}</span>
+                <span className={position.side === 'Long' ? 'text-green-400' : 'text-red-400'}>
+                  {position.side}
+                </span>
+                <span>{position.size} BTC</span>
+                <span>${position.entryPrice.toFixed(2)}</span>
+              </div>
+            ))}
+          </div>
         ) : (
-          <p>No open positions.</p>
+          <p className="text-gray-400 mt-2">No open positions.</p>
         )}
       </div>
 
-      <div className="card">
-        <h2 className="text-2xl font-semibold">Live BTC Chart (1D)</h2>
-        <Chart />
+      <div className="card neon-border">
+        <h2 className="text-2xl font-semibold text-cyan-300">Live BTC Chart (1D)</h2>
+        <div className="mt-4">
+          <Chart />
+        </div>
       </div>
     </div>
   )
