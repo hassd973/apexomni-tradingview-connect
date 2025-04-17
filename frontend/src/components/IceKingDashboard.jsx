@@ -7,25 +7,24 @@ const IceKingDashboard = () => {
   const [positions, setPositions] = useState([])
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get('https://raw.githubusercontent.com/hassd973/apexomni-tradingview-connect/main/data/accountData.json')
-        setBalance(response.data.balance || 0)
-        setPositions(response.data.positions || [])
-      } catch (error) {
-        console.error('Error fetching data from GitHub:', error)
-        setError('Failed to fetch account data from repository. Using mock data instead.')
-        // Fallback to mock data
-        setBalance(1000)
-        setPositions([
-          { market: 'BTCUSD', side: 'Long', size: 0.5, entryPrice: 60000 },
-          { market: 'BTCUSD', side: 'Short', size: 0.3, entryPrice: 59000 },
-        ])
-      }
-    }
+  const fetchData = async () => {
+    try {
+      const balanceRes = await axios.get('/api/balance')
+      setBalance(balanceRes.data.balance || 0)
 
-    fetchData()
+      const positionsRes = await axios.get('/api/positions')
+      setPositions(positionsRes.data || [])
+      setError(null)
+    } catch (error) {
+      console.error('Error fetching data:', error)
+      setError('Failed to fetch account data.')
+    }
+  }
+
+  useEffect(() => {
+    fetchData() // Initial fetch
+    const interval = setInterval(fetchData, 30000) // Poll every 30 seconds
+    return () => clearInterval(interval) // Cleanup on unmount
   }, [])
 
   return (
