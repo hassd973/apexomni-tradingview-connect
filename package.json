@@ -50,3 +50,16 @@
 		"tsc-watch": "^4.6.0"
 	}
 }
+{
+  "name": "apexomni-tradingview-connect",
+  "version": "1.0.0",
+  "scripts": {
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "start:backend": "cd backend && npm install && node server.js",
+    "start": "npm run build:frontend && npm run start:backend"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "@apexpro/apexpro-api": "^1.0.0"
+  }
+}
