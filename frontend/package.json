@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npx vite build",         // ✅ Ensures vite is called properly
+    "build": "npx vite build",
     "preview": "vite preview",
     "start": "vite preview --port $PORT"
   },
