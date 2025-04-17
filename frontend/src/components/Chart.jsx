@@ -4,6 +4,8 @@ const Chart = () => {
   const chartContainerRef = useRef(null)
 
   useEffect(() => {
+    const token = localStorage.getItem('tradingview_token');
+
     const script = document.createElement('script')
     script.src = 'https://s3.tradingview.com/tv.js'
     script.async = true
@@ -13,18 +15,20 @@ const Chart = () => {
         container_id: chartContainerRef.current.id,
         width: '100%',
         height: 400,
-        symbol: 'BITSTAMP:BTCUSD', // Match the symbol from the URL
-        interval: 'D', // 1D timeframe, as in your screenshot
+        symbol: 'BITSTAMP:BTCUSD',
+        interval: 'D',
         timezone: 'Etc/UTC',
-        theme: 'dark', // Match the dark theme from your screenshot
-        style: '1', // Candlestick style, as seen in the screenshot
+        theme: 'dark',
+        style: '1',
         locale: 'en',
-        toolbar_bg: '#1e3a8a', // Futuristic blue theme
+        toolbar_bg: '#1e3a8a',
         enable_publishing: false,
         allow_symbol_change: true,
         studies: [
-          'MASimple@tv-basicstudies', // Placeholder; replace with your personal indicators
+          'MASimple@tv-basicstudies', // Placeholder; replace with Ice King indicator if known
         ],
+        // Attempt to pass authentication (hypothetical, depends on TradingView API)
+        ...(token && { auth_token: token }), // Hypothetical: pass the token if available
         utm_source: 'ice-king-dashboard-tm4b.onrender.com',
         utm_medium: 'widget',
         utm_campaign: 'chart-logo',
