@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import controller from './controllers/index';
 import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
@@ -9,31 +10,37 @@ import 'dotenv/config';
 const app: express.Express = express();
 const port = process.env.PORT || 3000;
 
+// Enable CORS for the frontend domain
+app.use(cors({
+  origin: 'https://ice-king-dashboard-tm4b.onrender.com',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+}));
+
 if (process.env.SENTRY_DNS) {
-	Sentry.init({
-		dsn: process.env.SENTRY_DNS,
-		integrations: [
-			// enable HTTP calls tracing
-			new Sentry.Integrations.Http({ tracing: true }),
-			// enable Express.js middleware tracing
-			new Tracing.Integrations.Express({ app }),
-			new CaptureConsoleIntegration({
-				// array of methods that should be captured
-				// defaults to ['log', 'info', 'warn', 'error', 'debug', 'assert']
-				levels: ['error']
-			})
-		],
+  Sentry.init({
+    dsn: process.env.SENTRY_DNS,
+    integrations: [
+      // enable HTTP calls tracing
+      new Sentry.Integrations.Http({ tracing: true }),
+      // enable Express.js middleware tracing
+      new Tracing.Integrations.Express({ app }),
+      new CaptureConsoleIntegration({
+        // array of methods that should be captured
+        // defaults to ['log', 'info', 'warn', 'error', 'debug', 'assert']
+        levels: ['error']
+      })
+    ],
+    // Set tracesSampleRate to 1.0 to capture 100%
+    // of transactions for performance monitoring.
+    // We recommend adjusting this value in production
+    tracesSampleRate: 1.0
+  });
 
-		// Set tracesSampleRate to 1.0 to capture 100%
-		// of transactions for performance monitoring.
-		// We recommend adjusting this value in production
-		tracesSampleRate: 1.0
-	});
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
 
-	app.use(Sentry.Handlers.requestHandler());
-	app.use(Sentry.Handlers.tracingHandler());
-
-	console.log('initialized Sentry.io');
+  console.log('initialized Sentry.io');
 }
 
 app.use(helmet());
@@ -44,9 +51,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/', controller);
 
 if (process.env.SENTRY_DNS) {
-	app.use(Sentry.Handlers.errorHandler());
+  app.use(Sentry.Handlers.errorHandler());
 }
 
 app.listen(port, () => {
-	console.log(`TV-Connector web server listening on port ${port}`);
+  console.log(`TV-Connector web server listening on port ${port}`);
 });
