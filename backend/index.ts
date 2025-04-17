@@ -1,17 +1,17 @@
 import express from 'express';
+import cors from 'cors';
 import { ApexClient } from '@apexpro/apexpro-api';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(express.json());
+// Enable CORS for the frontend domain
+app.use(cors({
+  origin: 'https://ice-king-dashboard-tm4b.onrender.com',
+  methods: ['GET', 'POST'],
+  allowedHeaders: ['Content-Type'],
+}));
 
-// Serve static frontend build
-app.use(express.static(path.join(__dirname, '../frontend/build')));
+app.use(express.json());
 
 // Apex Pro client setup
 const client = new ApexClient({
@@ -20,12 +20,13 @@ const client = new ApexClient({
   userId: process.env.APEX_USER_ID,
 });
 
-// API routes
+// API routes for frontend
 app.get('/api/balance', async (req, res) => {
   try {
     const account = await client.getAccount();
-    res.json({ balance: account.collateralBalance });
+    res.json({ balance: account.collateralBalance || 0 });
   } catch (error) {
+    console.error('Error fetching balance:', error);
     res.status(500).json({ error: 'Failed to fetch balance' });
   }
 });
@@ -33,15 +34,25 @@ app.get('/api/balance', async (req, res) => {
 app.get('/api/positions', async (req, res) => {
   try {
     const positions = await client.getPositions();
-    res.json(positions);
+    res.json(positions || []);
   } catch (error) {
+    console.error('Error fetching positions:', error);
     res.status(500).json({ error: 'Failed to fetch positions' });
   }
 });
 
-// Fallback to serve React app for all other routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+// Route for TradingView webhooks (example)
+app.post('/webhook', (req, res) => {
+  try {
+    const alert = req.body;
+    console.log('Received TradingView alert:', alert);
+    // Process the alert and place trades via Apex Pro
+    // Example: client.placeOrder(...)
+    res.status(200).send('Webhook received');
+  } catch (error) {
+    console.error('Error processing webhook:', error);
+    res.status(500).send('Error processing webhook');
+  }
 });
 
 const PORT = process.env.PORT || 5000;
