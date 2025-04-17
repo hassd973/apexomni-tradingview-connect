@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: iceking-dashboard
+    env: static
+    buildCommand: echo "No build needed"
+    staticPublishPath: public
+    branch: main
