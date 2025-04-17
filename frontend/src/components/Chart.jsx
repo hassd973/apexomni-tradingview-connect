@@ -37,3 +37,5 @@ const Chart = () => {
 
   return <div id="tradingview_chart" ref={chartContainerRef}></div>
 }
+
+export default Chart
