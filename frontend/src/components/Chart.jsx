@@ -4,12 +4,6 @@ const Chart = () => {
   const chartContainerRef = useRef(null)
 
   useEffect(() => {
-    const token = localStorage.getItem('tradingview_token');
-    if (!token) {
-      console.error('No TradingView token found. Please sign in.');
-      return;
-    }
-
     const script = document.createElement('script')
     script.src = 'https://s3.tradingview.com/tv.js'
     script.async = true
@@ -26,12 +20,15 @@ const Chart = () => {
         style: '1',
         locale: 'en',
         toolbar_bg: '#1e3a8a',
-        enable_publishing: false,
+        enable_publishing: false, // Set to true to enable features that may prompt sign-in
         allow_symbol_change: true,
         studies: [
-          // Replace with your Ice King indicator ID if known
-          'IceKingIndicator@your-user-id', // Placeholder; get the actual ID from TradingView
+          // Placeholder for Ice King indicator; user must sign in to load unpublished indicators
+          // Replace with actual ID if known, e.g., 'IceKingIndicator@your-user-id'
         ],
+        autosize: true,
+        // Enable features that may require sign-in
+        save_image: true, // This may prompt sign-in if the user isn't logged in
         utm_source: 'ice-king-dashboard-tm4b.onrender.com',
         utm_medium: 'widget',
         utm_campaign: 'chart-logo',
@@ -50,7 +47,7 @@ const Chart = () => {
     }
   }, [])
 
-  return <div id="tradingview_chart" ref={chartContainerRef}></div>
+  return <div id="tradingview_chart" ref={chartContainerRef} style={{ height: '400px', width: '100%' }}></div>
 }
 
 export default Chart
