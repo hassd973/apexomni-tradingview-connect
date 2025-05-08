@@ -1,0 +1,15 @@
+{
+  "name": "ice-king-trading-dashboard",
+  "version": "1.0.0",
+  "description": "Static website for ICE KING trading dashboard with CoinGecko data and TradingView alerts",
+  "scripts": {
+    "start": "npx serve .",
+    "build": "npm run zip",
+    "zip": "zip -r ice-king-trading-dashboard.zip . -x '*.git*'"
+  },
+  "dependencies": {
+    "serve": "^14.2.3"
+  },
+  "author": "",
+  "license": "MIT"
+}
