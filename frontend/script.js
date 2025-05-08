@@ -117,7 +117,7 @@ function initWebSocket() {
     try {
       ws = new WebSocket(WEBSOCKET_URL);
     } catch (error) {
-      wsStatus.textContent = `Failed to initialize WebSocket: ${error.message}. Check network or URL.`;
+      wsStatus.textContent = `Failed to initialize WebSocket: ${error.message}. Ensure backend is running and URL is accessible.`;
       wsStatus.className = 'mb-4 text-danger';
       console.error('WebSocket initialization error:', error);
       return;
@@ -126,7 +126,8 @@ function initWebSocket() {
     ws.onopen = () => {
       wsStatus.textContent = 'Connected to WebSocket';
       wsStatus.className = 'mb-4 text-success';
-      retryCount = 0; // Reset retries on successful connection
+      retryCount = 0;
+      console.log('WebSocket connected to:', WEBSOCKET_URL);
     };
 
     ws.onmessage = (event) => {
@@ -167,21 +168,27 @@ function initWebSocket() {
     };
 
     ws.onclose = (event) => {
-      console.warn(`WebSocket closed: Code=${event.code}, Reason=${event.reason}`);
+      console.warn(`WebSocket closed: Code=${event.code}, Reason=${event.reason || 'No reason provided'}`);
+      let errorMessage = 'Disconnected from WebSocket.';
+      if (event.code === 1006) {
+        errorMessage += ' Possible network issue or backend not running.';
+      } else if (event.code === 1001) {
+        errorMessage += ' Backend may be shutting down.';
+      }
       if (retryCount < maxRetries) {
-        wsStatus.textContent = `Disconnected from WebSocket. Reconnecting (${retryCount + 1}/${maxRetries})...`;
+        wsStatus.textContent = `${errorMessage} Reconnecting (${retryCount + 1}/${maxRetries})...`;
         wsStatus.className = 'mb-4 text-danger';
         retryCount++;
         setTimeout(connect, 5000);
       } else {
-        wsStatus.textContent = 'Failed to connect to WebSocket after multiple attempts. Please check the backend or network.';
+        wsStatus.textContent = `${errorMessage} Failed after ${maxRetries} attempts. Check backend at ${WEBSOCKET_URL} or use ngrok/Render.`;
         wsStatus.className = 'mb-4 text-danger';
       }
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
-      wsStatus.textContent = 'WebSocket error occurred. Reconnecting...';
+      wsStatus.textContent = 'WebSocket error occurred. Check console for details and ensure backend is accessible.';
       wsStatus.className = 'mb-4 text-danger';
     };
   }
