@@ -117,7 +117,7 @@ function initWebSocket() {
     try {
       ws = new WebSocket(WEBSOCKET_URL);
     } catch (error) {
-      wsStatus.textContent = `Failed to initialize WebSocket: ${error.message}. Ensure backend is running and URL is accessible.`;
+      wsStatus.textContent = `Failed to initialize WebSocket: ${error.message}. Ensure backend is running and accessible from Render IPs: 44.226.145.213, 54.187.200.255, 34.213.214.55, 35.164.95.156, 44.230.95.183, 44.229.200.200.`;
       wsStatus.className = 'mb-4 text-danger';
       console.error('WebSocket initialization error:', error);
       return;
@@ -171,7 +171,7 @@ function initWebSocket() {
       console.warn(`WebSocket closed: Code=${event.code}, Reason=${event.reason || 'No reason provided'}`);
       let errorMessage = 'Disconnected from WebSocket.';
       if (event.code === 1006) {
-        errorMessage += ' Possible network issue or backend not running.';
+        errorMessage += ' Likely network issue or backend not running. Ensure backend accepts Render IPs: 44.226.145.213, 54.187.200.255, 34.213.214.55, 35.164.95.156, 44.230.95.183, 44.229.200.200.';
       } else if (event.code === 1001) {
         errorMessage += ' Backend may be shutting down.';
       }
@@ -181,14 +181,14 @@ function initWebSocket() {
         retryCount++;
         setTimeout(connect, 5000);
       } else {
-        wsStatus.textContent = `${errorMessage} Failed after ${maxRetries} attempts. Check backend at ${WEBSOCKET_URL} or use ngrok/Render.`;
+        wsStatus.textContent = `${errorMessage} Failed after ${maxRetries} attempts. Expose backend via ngrok or deploy on Render and whitelist Render IPs.`;
         wsStatus.className = 'mb-4 text-danger';
       }
     };
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
-      wsStatus.textContent = 'WebSocket error occurred. Check console for details and ensure backend is accessible.';
+      wsStatus.textContent = 'WebSocket error occurred. Check console and ensure backend is accessible from Render IPs: 44.226.145.213, 54.187.200.255, 34.213.214.55, 35.164.95.156, 44.230.95.183, 44.229.200.200.';
       wsStatus.className = 'mb-4 text-danger';
     };
   }
