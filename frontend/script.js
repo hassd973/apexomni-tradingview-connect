@@ -1,5 +1,5 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
-const WEBSOCKET_URL = 'wss://your-websocket-server'; // Replace with actual WebSocket URL from apexomni-tradingview-connect
+const WEBSOCKET_URL = 'wss://your-websocket-server'; // Replace with your deployed backend WebSocket URL (e.g., wss://apexomni-backend.onrender.com after deploying backend/)
 
 // Fetch low-volume tokens from CoinGecko
 async function fetchLowVolumeTokens() {
