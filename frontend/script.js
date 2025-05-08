@@ -1,7 +1,7 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const WEBSOCKET_URL = 'wss://omni-trading-webhook:10000'; // Internal webhook; replace with external URL for production (e.g., wss://apexomni-backend.onrender.com)
+const WEBSOCKET_URL = 'https://omni-trading-webhook.onrender.com/'; // Internal webhook; replace with external URL for production (e.g., wss://apexomni-backend.onrender.com)
 
 // Fetch low-volume tokens from multiple sources
 async function fetchLowVolumeTokens() {
