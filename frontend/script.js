@@ -108,72 +108,85 @@ async function fetchLowVolumeTokens() {
 // Initialize WebSocket for TradingView alerts
 function initWebSocket() {
   let ws;
-  try {
-    ws = new WebSocket(WEBSOCKET_URL);
-  } catch (error) {
-    const wsStatus = document.getElementById('ws-status');
-    wsStatus.textContent = 'Failed to connect to WebSocket. Check network or URL.';
-    wsStatus.className = 'mb-4 text-danger';
-    console.error('WebSocket initialization error:', error);
-    return;
+  const wsStatus = document.getElementById('ws-status');
+  const alertList = document.getElementById('alert-list');
+  let retryCount = 0;
+  const maxRetries = 5;
+
+  function connect() {
+    try {
+      ws = new WebSocket(WEBSOCKET_URL);
+    } catch (error) {
+      wsStatus.textContent = `Failed to initialize WebSocket: ${error.message}. Check network or URL.`;
+      wsStatus.className = 'mb-4 text-danger';
+      console.error('WebSocket initialization error:', error);
+      return;
+    }
+
+    ws.onopen = () => {
+      wsStatus.textContent = 'Connected to WebSocket';
+      wsStatus.className = 'mb-4 text-success';
+      retryCount = 0; // Reset retries on successful connection
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const alert = JSON.parse(event.data);
+        const li = document.createElement('li');
+        li.className = 'bg-secondary p-4 rounded-md shadow hover:bg-gray-700 transition';
+        const eventType = alert.event || 'unknown';
+        const signal = alert.signal || '';
+        const market = alert.market || 'N/A';
+        const timestamp = alert.timestamp || new Date().toISOString();
+        let message = '';
+        let emoji = '✅';
+        if (eventType.includes('entry')) {
+          emoji = eventType.includes('long') ? '🚀' : '🧪';
+          message = `${signal.toUpperCase()} Entry on ${market} at ${timestamp}`;
+        } else if (eventType.includes('exit')) {
+          emoji = eventType.includes('protect') ? '🛡️' : '🏁';
+          message = `${signal.toUpperCase()} Exit on ${market} at ${timestamp}`;
+        } else if (eventType === 'filter_blocked') {
+          emoji = '🧊';
+          message = `Blocked ${signal.toUpperCase()} Signal on ${market} (${alert.filter}) at ${timestamp}`;
+        } else {
+          message = `${eventType} on ${market} at ${timestamp}`;
+        }
+        li.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-medium">${emoji} ${message}</span>
+            <span class="text-sm text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
+          </div>`;
+        alertList.prepend(li);
+        while (alertList.children.length > 20) {
+          alertList.removeChild(alertList.lastChild);
+        }
+      } catch (error) {
+        console.error('Error processing alert:', error);
+      }
+    };
+
+    ws.onclose = (event) => {
+      console.warn(`WebSocket closed: Code=${event.code}, Reason=${event.reason}`);
+      if (retryCount < maxRetries) {
+        wsStatus.textContent = `Disconnected from WebSocket. Reconnecting (${retryCount + 1}/${maxRetries})...`;
+        wsStatus.className = 'mb-4 text-danger';
+        retryCount++;
+        setTimeout(connect, 5000);
+      } else {
+        wsStatus.textContent = 'Failed to connect to WebSocket after multiple attempts. Please check the backend or network.';
+        wsStatus.className = 'mb-4 text-danger';
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      wsStatus.textContent = 'WebSocket error occurred. Reconnecting...';
+      wsStatus.className = 'mb-4 text-danger';
+    };
   }
 
-  const alertList = document.getElementById('alert-list');
-  const wsStatus = document.getElementById('ws-status');
-
-  ws.onopen = () => {
-    wsStatus.textContent = 'Connected to WebSocket';
-    wsStatus.className = 'mb-4 text-success';
-  };
-
-  ws.onmessage = (event) => {
-    try {
-      const alert = JSON.parse(event.data);
-      const li = document.createElement('li');
-      li.className = 'bg-secondary p-4 rounded-md shadow hover:bg-gray-700 transition';
-      const eventType = alert.event || 'unknown';
-      const signal = alert.signal || '';
-      const market = alert.market || 'N/A';
-      const timestamp = alert.timestamp || new Date().toISOString();
-      let message = '';
-      let emoji = '✅';
-      if (eventType.includes('entry')) {
-        emoji = eventType.includes('long') ? '🚀' : '🧪';
-        message = `${signal.toUpperCase()} Entry on ${market} at ${timestamp}`;
-      } else if (eventType.includes('exit')) {
-        emoji = eventType.includes('protect') ? '🛡️' : '🏁';
-        message = `${signal.toUpperCase()} Exit on ${market} at ${timestamp}`;
-      } else if (eventType === 'filter_blocked') {
-        emoji = '🧊';
-        message = `Blocked ${signal.toUpperCase()} Signal on ${market} (${alert.filter}) at ${timestamp}`;
-      } else {
-        message = `${eventType} on ${market} at ${timestamp}`;
-      }
-      li.innerHTML = `
-        <div class="flex items-center justify-between">
-          <span class="font-medium">${emoji} ${message}</span>
-          <span class="text-sm text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
-        </div>`;
-      alertList.prepend(li);
-      while (alertList.children.length > 20) {
-        alertList.removeChild(alertList.lastChild);
-      }
-    } catch (error) {
-      console.error('Error processing alert:', error);
-    }
-  };
-
-  ws.onclose = () => {
-    wsStatus.textContent = 'Disconnected from WebSocket. Reconnecting...';
-    wsStatus.className = 'mb-4 text-danger';
-    setTimeout(initWebSocket, 5000);
-  };
-
-  ws.onerror = (error) => {
-    wsStatus.textContent = 'WebSocket error. Reconnecting...';
-    wsStatus.className = 'mb-4 text-danger';
-    console.error('WebSocket error:', error);
-  };
+  connect();
 }
 
 // Initialize both functionalities
