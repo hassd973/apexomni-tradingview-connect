@@ -149,6 +149,12 @@ async function fetchLowVolumeTokens() {
 async function showPriceChart(token) {
   const chartCanvas = document.getElementById('chart-canvas');
   const chartTitle = document.getElementById('chart-title');
+  if (!chartCanvas) {
+    console.error('Chart canvas not found in DOM');
+    return;
+  }
+  console.log('Chart canvas found:', chartCanvas);
+
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
 
   // Update chart title hover effect based on performance
@@ -164,11 +170,15 @@ async function showPriceChart(token) {
   // Destroy existing chart if it exists
   if (window.chartInstance) {
     window.chartInstance.destroy();
+    console.log('Previous chart instance destroyed');
   }
 
-  console.log('Chart canvas element:', chartCanvas);
   const ctx = chartCanvas.getContext('2d');
-  console.log('Chart context:', ctx);
+  if (!ctx) {
+    console.error('Failed to get 2D context from canvas');
+    return;
+  }
+  console.log('Chart context obtained:', ctx);
 
   try {
     window.chartInstance = new Chart(ctx, {
@@ -210,6 +220,7 @@ async function showPriceChart(token) {
     console.log('Chart instance created:', window.chartInstance);
   } catch (error) {
     console.error('Chart initialization error:', error);
+    return;
   }
 
   const symbol = `${token.symbol.toLowerCase()}usdt`;
@@ -227,17 +238,6 @@ async function showPriceChart(token) {
     window.chartInstance.data.datasets[0].data = prices;
     window.chartInstance.update();
     console.log('Chart updated with Binance data');
-
-    let lastClose = prices[prices.length - 1].y;
-    setInterval(() => {
-      lastClose += (Math.random() - 0.5) * lastClose * 0.001;
-      const newPoint = {
-        x: new Date(),
-        y: lastClose
-      };
-      window.chartInstance.data.datasets[0].data.push(newPoint);
-      window.chartInstance.update();
-    }, 5000);
   } catch (error) {
     console.error('Chart data error:', error);
     const mockPrices = Array.from({ length: 168 }, (_, i) => ({
@@ -252,6 +252,7 @@ async function showPriceChart(token) {
   window.addEventListener('resize', () => {
     if (window.chartInstance) {
       window.chartInstance.resize();
+      console.log('Chart resized');
     }
   });
 }
