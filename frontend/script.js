@@ -1,7 +1,8 @@
-const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
-const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
-const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
-const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/explore-logs';
+const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
+const COINGECKO_API = `${PROXY_URL}https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1`;
+const COINGECKO_CHART_API = `${PROXY_URL}https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}`;
+const COINGECKO_PRICE_API = `${PROXY_URL}https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd`;
+const BETTERSTACK_API = `${PROXY_URL}https://telemetry.betterstack.com/api/v2/query/explore-logs`;
 const SOURCE_ID = '1303816';
 const POLLING_INTERVAL = 15000;
 const LIVE_DATA_INTERVAL = 10000;
@@ -24,15 +25,17 @@ let currentTimeframe = 1; // Default to 1 day
 let priceChart = null;
 
 // Retry fetch with delay
-async function fetchWithRetry(url, retries = 3, delay = 1000) {
+async function fetchWithRetry(url, retries = 5, delay = 2000) {
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        headers: url.includes(BETTERSTACK_API) ? { 'Authorization': 'Bearer WGdCT5KhHtg4kiGWAbdXRaSL' } : {}
+      });
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       return await response.json();
     } catch (error) {
+      console.error(`Fetch attempt ${i + 1}/${retries} for ${url} failed:`, error);
       if (i === retries - 1) throw error;
-      console.warn(`Retrying fetch (${i + 1}/${retries}) for ${url}:`, error);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -190,7 +193,6 @@ async function fetchLowVolumeTokens() {
   } catch (error) {
     console.error('Error loading tokens:', error);
     tokenList.innerHTML = '<p class="text-red-400 text-sm">Failed to load tokens. Check console.</p>';
-    errorFallback.classList.remove('hidden');
   } finally {
     loader.style.display = 'none';
   }
@@ -294,7 +296,6 @@ async function showPriceChart(token, compareToken, days) {
   } catch (error) {
     console.error('Chart error:', error);
     chartContainer.innerHTML = '<div class="text-red-400 text-sm">Chart failed to load. Check console.</div>';
-    errorFallback.classList.remove('hidden');
   }
 }
 
@@ -356,7 +357,6 @@ async function initLogStream() {
       wsStatus.innerHTML = '<span class="status-dot red"></span>Error fetching logs: ' + error.message;
       wsStatus.className = 'mb-2 text-red-400 text-xs sm:text-sm';
       alertList.innerHTML = '<p class="text-red-400 text-xs">Failed to fetch logs. Check console.</p>';
-      errorFallback.classList.remove('hidden');
     }
   }
 
@@ -366,7 +366,8 @@ async function initLogStream() {
     Setup required on your Docker host:<br>
     1. Grant permissions: <code>usermod -a -G docker vector</code><br>
     2. Install Vector: <code>curl -sSL https://telemetry.betterstack.com/setup-vector/docker/x5nvK7DNDURcpAHEBuCbHrza -o /tmp/setup-vector.sh && bash /tmp/setup-vector.sh</code><br>
-    - Logs will appear after 2 minutes. Check Better Stack → Live tail.
+    - Logs will appear after 2 minutes. Check Better Stack → Live tail.<br>
+    - Ensure internet connection and verify token (WGdCT5KhHtg4kiGWAbdXRaSL).
   `;
   wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
 
