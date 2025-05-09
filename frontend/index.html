@@ -128,10 +128,17 @@
     }
     .chart-container {
       position: relative;
-      height: 400px;
+      height: 500px; /* Increased height */
       max-width: 100%;
       margin: 0 auto;
       width: 100%;
+    }
+    .chart-wrapper {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(45, 55, 72, 0.7));
+      padding-bottom: 8px;
     }
     #chart-canvas {
       width: 100% !important;
@@ -139,7 +146,7 @@
     }
     @media (min-width: 640px) {
       .chart-container {
-        height: 600px;
+        height: 700px; /* Increased height for larger screens */
       }
     }
     /* Dynamic Tooltip with Performance Color */
@@ -173,7 +180,7 @@
     }
     .marquee {
       display: inline-block;
-      animation: marquee 30s linear infinite; /* Slowed down to 30s */
+      animation: marquee 30s linear infinite;
       animation-play-state: running;
       will-change: transform;
     }
@@ -206,12 +213,14 @@
     <div class="text-center w-full px-2">
       <h1 class="text-2xl sm:text-3xl font-bold glow-blue">🧊 ICE KING DASHBOARD 👑</h1>
       <p class="text-sm sm:text-base mt-1 text-gray-300">Live Price Chart</p>
-      <div id="chart-container" class="mt-2">
-        <canvas id="chart-canvas"></canvas>
-      </div>
-      <h3 id="chart-title" class="text-sm sm:text-lg font-medium mt-2 text-gray-200 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
-      <div class="marquee-container">
-        <div class="marquee" id="ticker-marquee"></div>
+      <div class="chart-wrapper">
+        <div id="chart-container" class="mt-2">
+          <canvas id="chart-canvas"></canvas>
+        </div>
+        <h3 id="chart-title" class="text-sm sm:text-lg font-medium mt-2 text-gray-200 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
+        <div class="marquee-container">
+          <div class="marquee" id="ticker-marquee"></div>
+        </div>
       </div>
     </div>
   </header>
