@@ -155,6 +155,13 @@ async function showPriceChart(token) {
   // Destroy existing chart if it exists
   if (window.chart) window.chart.remove();
 
+  // Check if LightweightCharts is available
+  if (typeof LightweightCharts === 'undefined') {
+    chartDiv.innerHTML = `<p class="text-red-400">LightweightCharts library failed to load. Check network and console.</p>`;
+    console.error('LightweightCharts is not defined. Ensure the CDN script is loaded.');
+    return;
+  }
+
   // Initialize TradingView Lightweight Chart
   const chart = LightweightCharts.createChart(chartDiv, {
     width: chartDiv.clientWidth,
@@ -171,7 +178,11 @@ async function showPriceChart(token) {
     const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1d&limit=30`);
     if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch data for ${pair}`);
     const data = await response.json();
-    if (!data || data.length === 0) throw new Error(`No data returned for ${pair}`);
+
+    // Validate response format
+    if (!Array.isArray(data) || data.length === 0 || !Array.isArray(data[0]) || data[0].length < 5) {
+      throw new Error('Unexpected response format or no data for ' + pair);
+    }
 
     const candles = data.map(([time, open, high, low, close]) => ({
       time: parseInt(time) / 1000,
