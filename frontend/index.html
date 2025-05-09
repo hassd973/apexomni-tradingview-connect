@@ -6,7 +6,7 @@
   <title>ICE KING 🌍🧊👑 Trading Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
   <header class="w-full bg-gray-800/30 backdrop-blur-md p-6 flex justify-center items-center">
@@ -16,7 +16,7 @@
       <div id="chart-container" class="mt-4">
         <h3 id="chart-title" class="text-xl font-medium mb-4"></h3>
         <div class="flex justify-center">
-          <canvas id="chart-canvas" class="w-[90%] max-w-[1000px] h-[400px] bg-transparent backdrop-blur-md rounded-xl shadow-lg border border-gray-700/50"></canvas>
+          <div id="chart-canvas" class="w-[90%] max-w-[1000px] h-[400px] bg-transparent backdrop-blur-md rounded-xl shadow-lg border border-gray-700/50"></div>
         </div>
       </div>
     </div>
