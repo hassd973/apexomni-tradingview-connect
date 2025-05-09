@@ -6,8 +6,9 @@ const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfu
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const POLLING_INTERVAL = 15000;
 const PRICE_UPDATE_INTERVAL = 10000;
+const TOKEN_REFRESH_INTERVAL = 30000; // Refresh token data every 30 seconds
 const CMC_API_KEY = 'bef090eb-323d-4ae8-86dd-266236262f19';
-const MARQUEE_UPDATE_INTERVAL = 30000; // Slowed down to 30 seconds
+const MARQUEE_UPDATE_INTERVAL = 30000;
 
 // Expanded Ice King puns pool
 const iceKingPuns = [
@@ -29,14 +30,13 @@ const iceKingPuns = [
   "Cool trades, warm wins! ❄️🔥"
 ];
 
-// Track used puns to avoid repetition
 let usedPuns = [];
-
 let priceChart = null;
 let currentToken = null;
 let compareToken = null;
 let currentTimeframe = 1;
 let allTokens = [];
+let sortedTokens = []; // Store sorted tokens globally for marquee updates
 
 async function fetchWithRetry(url, retries = 3, delay = 1000, options = {}) {
   for (let i = 0; i < retries; i++) {
@@ -68,15 +68,52 @@ async function fetchLivePrice(tokenId) {
 }
 
 async function updateLivePrice() {
-  if (!currentToken) return;
+  if (!currentToken || !priceChart) return;
+
   const livePriceElements = [
     document.getElementById('live-price-header'),
     document.getElementById('live-price-modal')
   ];
+  const tickerMarquees = [
+    document.getElementById('ticker-marquee-header'),
+    document.getElementById('ticker-marquee-modal')
+  ];
+
   const price = await fetchLivePrice(currentToken.id);
   livePriceElements.forEach(element => {
     if (element) element.textContent = `Live Price: $${price !== 'N/A' ? price.toLocaleString() : 'N/A'}`;
   });
+
+  // Update the chart with the new live price
+  if (price !== 'N/A' && priceChart) {
+    const now = new Date();
+    priceChart.data.labels.push(now.toLocaleDateString());
+    priceChart.data.datasets[0].data.push(price);
+
+    // Keep the chart from growing indefinitely by limiting to the last 50 points
+    if (priceChart.data.labels.length > 50) {
+      priceChart.data.labels.shift();
+      priceChart.data.datasets[0].data.shift();
+    }
+
+    priceChart.update('none'); // Update without animation for smoother live updates
+
+    tickerMarquees.forEach(marquee => {
+      if (marquee) marquee.innerHTML = `<span class="glow-green">${currentToken.symbol}: $${price.toLocaleString()}</span>`;
+    });
+  }
+
+  // Update compare token price if applicable
+  if (compareToken && priceChart && priceChart.data.datasets[1]) {
+    const comparePrice = await fetchLivePrice(compareToken.id);
+    if (comparePrice !== 'N/A') {
+      priceChart.data.datasets[1].data.push(comparePrice);
+      if (priceChart.data.datasets[1].data.length > 50) {
+        priceChart.data.datasets[1].data.shift();
+      }
+      priceChart.update('none');
+    }
+  }
 }
 
 async function fetchLogs(sourceId) {
@@ -141,7 +178,7 @@ async function fetchLowVolumeTokens() {
       headers: { 'X-CMC_PRO_API_KEY': CMC_API_KEY }
     });
     console.log('CoinMarketCap response:', cmcResponse);
-    tokens.push(...cmcResponse.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
+    tokens = cmcResponse.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
       id: token.slug,
       name: token.name,
       symbol: token.symbol.toUpperCase(),
@@ -152,7 +189,7 @@ async function fetchLowVolumeTokens() {
       circulating_supply: token.circulating_supply,
       source: 'CoinMarketCap',
       score: Math.min(100, Math.max(0, (token.quote.USD.percent_change_24h + 100) / 2))
-    })));
+    }));
   } catch (error) {
     console.error('CoinMarketCap error:', error);
   }
@@ -163,7 +200,7 @@ async function fetchLowVolumeTokens() {
       if (!cgResponse.ok) throw new Error(`CoinGecko HTTP ${cgResponse.status}`);
       const cgData = await cgResponse.json();
       console.log('CoinGecko response:', cgData);
-      tokens.push(...cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
+      tokens = cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
         id: token.id,
         name: token.name,
         symbol: token.symbol.toUpperCase(),
@@ -174,7 +211,7 @@ async function fetchLowVolumeTokens() {
         circulating_supply: token.circulating_supply,
         source: 'CoinGecko',
         score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
-      })));
+      }));
     } catch (error) {
       console.error('CoinGecko error:', error);
     }
@@ -186,7 +223,7 @@ async function fetchLowVolumeTokens() {
       if (!ccResponse.ok) throw new Error(`CryptoCompare HTTP ${ccResponse.status}`);
       const ccData = await ccResponse.json();
       console.log('CryptoCompare response:', ccData);
-      tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
+      tokens = ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
         id: token.CoinInfo.Name.toLowerCase(),
         name: token.CoinInfo.FullName,
         symbol: token.CoinInfo.Name.toUpperCase(),
@@ -197,7 +234,7 @@ async function fetchLowVolumeTokens() {
         circulating_supply: token.RAW?.USD?.SUPPLY || 0,
         source: 'CryptoCompare',
         score: Math.min(100, Math.max(0, ((token.RAW?.USD?.CHANGEPCT24HOUR || 0) + 100) / 2))
-      })));
+      }));
     } catch (error) {
       console.error('CryptoCompare error:', error);
     }
@@ -219,8 +256,8 @@ async function fetchLowVolumeTokens() {
   }
 
   allTokens = uniqueTokens;
+  sortedTokens = [...uniqueTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 
-  const sortedTokens = [...uniqueTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
   tokenList.innerHTML = '';
   sortedTokens.forEach((token, index) => {
     const li = document.createElement('li');
@@ -325,11 +362,11 @@ async function fetchChartData(tokenId, days) {
     if (!tokenId) throw new Error('Token ID is undefined or invalid');
     const url = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(tokenId)).replace('{days}', days);
     console.log(`Fetching chart data for ${tokenId} (${days} days) from ${url}`);
-    const data = await fetchWithRetry(url, 3, 2000); // Increased delay for rate limiting
+    const data = await fetchWithRetry(url, 3, 2000);
     if (!data.prices || !Array.isArray(data.prices) || data.prices.length === 0) {
       throw new Error('Invalid chart data: prices array is missing, empty, or malformed');
     }
-    console.log(`Chart data for ${tokenId}:`, data.prices.slice(0, 5)); // Log first 5 entries for debugging
+    console.log(`Chart data for ${tokenId}:`, data.prices.slice(0, 5));
     return data.prices;
   } catch (error) {
     console.error(`Failed to fetch chart data for ${tokenId}:`, error);
@@ -520,6 +557,7 @@ function setupChartControls() {
 document.addEventListener('DOMContentLoaded', async () => {
   const SOURCE_ID = 'source_123';
   await fetchLowVolumeTokens();
+  setInterval(fetchLowVolumeTokens, TOKEN_REFRESH_INTERVAL); // Refresh token data every 30 seconds
   updateAlertsWithLogs(SOURCE_ID);
   setInterval(() => updateAlertsWithLogs(SOURCE_ID), POLLING_INTERVAL);
   setupChartControls();
