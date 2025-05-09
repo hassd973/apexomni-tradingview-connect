@@ -105,7 +105,8 @@ async function fetchLowVolumeTokens() {
     const li = document.createElement('li');
     const opacity = 30 + (index / sortedTokens.length) * 40;
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
-    li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in`;
+    const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
+    li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass}`;
     const priceChange = token.price_change_percentage_24h;
     const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
     const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
@@ -130,9 +131,11 @@ async function fetchLowVolumeTokens() {
 
   const topTokens = sortedTokens.slice(0, 5).map(token => token.symbol);
   topPairs.innerHTML = topTokens.map((pair, index) => {
+    const token = sortedTokens[index];
     const opacity = 20 + (index / 4) * 30;
-    const bgColor = `bg-gradient-to-r from-purple-500/${opacity} to-gray-800/${opacity}`;
-    return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition">${pair}/USDT</li>`;
+    const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
+    const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
+    return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition ${glowClass}">${pair}/USDT</li>`;
   }).join('');
 
   if (sortedTokens.length > 0) {
@@ -142,97 +145,114 @@ async function fetchLowVolumeTokens() {
   loader.style.display = 'none';
 }
 
-// Show Chart.js candlestick chart
+// Show Chart.js line chart
 async function showPriceChart(token) {
   const chartCanvas = document.getElementById('chart-canvas');
   const chartTitle = document.getElementById('chart-title');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
+
+  // Update chart title hover effect based on performance
+  chartTitle.onmouseover = () => {
+    chartTitle.style.color = token.price_change_percentage_24h >= 0 ? 'rgba(74, 222, 128, 0.8)' : 'rgba(248, 113, 113, 0.8)';
+    chartTitle.style.opacity = '0.75';
+  };
+  chartTitle.onmouseout = () => {
+    chartTitle.style.color = '';
+    chartTitle.style.opacity = '1';
+  };
 
   // Destroy existing chart if it exists
   if (window.chartInstance) {
     window.chartInstance.destroy();
   }
 
+  console.log('Chart canvas element:', chartCanvas);
   const ctx = chartCanvas.getContext('2d');
-  window.chartInstance = new Chart(ctx, {
-    type: 'candlestick',
-    data: {
-      datasets: [{
-        label: `${token.symbol}/USDT`,
-        data: [],
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        backgroundColor: (ctx) => ctx.raw.y[3] < ctx.raw.y[0] ? 'rgba(124, 58, 237, 0.8)' : 'rgba(74, 222, 128, 0.8)',
-        borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: {
-          type: 'time',
-          time: { unit: 'hour' },
-          title: { display: false },
-          grid: { color: 'rgba(74, 222, 128, 0.1)' }
+  console.log('Chart context:', ctx);
+
+  try {
+    window.chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        datasets: [{
+          label: `${token.symbol}/USDT`,
+          data: [],
+          borderColor: token.price_change_percentage_24h >= 0 ? 'rgba(74, 222, 128, 0.8)' : 'rgba(248, 113, 113, 0.8)',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            type: 'time',
+            time: { unit: 'hour' },
+            title: { display: false },
+            grid: { color: 'rgba(74, 222, 128, 0.1)' }
+          },
+          y: {
+            title: { display: false },
+            grid: { color: 'rgba(124, 58, 237, 0.1)' },
+            beginAtZero: false
+          }
         },
-        y: {
-          title: { display: false },
-          grid: { color: 'rgba(124, 58, 237, 0.1)' },
-          beginAtZero: false
-        }
-      },
-      plugins: {
-        legend: { display: false },
-        tooltip: { mode: 'nearest', intersect: false }
-      },
-      animation: { duration: 0 }
-    }
-  });
+        plugins: {
+          legend: { display: false },
+          tooltip: { mode: 'nearest', intersect: false }
+        },
+        animation: { duration: 0 }
+      }
+    });
+    console.log('Chart instance created:', window.chartInstance);
+  } catch (error) {
+    console.error('Chart initialization error:', error);
+  }
 
   const symbol = `${token.symbol.toLowerCase()}usdt`;
   try {
+    console.log('Fetching Binance data for:', symbol);
     const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1h&limit=168`);
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     const data = await response.json();
     if (!Array.isArray(data) || data.length === 0) throw new Error('No data from Binance');
-    const candles = data.map(d => ({
+    console.log('Binance data:', data);
+    const prices = data.map(d => ({
       x: new Date(parseInt(d[0])),
-      o: parseFloat(d[1]),
-      h: parseFloat(d[2]),
-      l: parseFloat(d[3]),
-      c: parseFloat(d[4])
+      y: parseFloat(d[4]) // Use closing price
     }));
-    window.chartInstance.data.datasets[0].data = candles;
+    window.chartInstance.data.datasets[0].data = prices;
     window.chartInstance.update();
+    console.log('Chart updated with Binance data');
 
-    let lastClose = candles[candles.length - 1].c;
+    let lastClose = prices[prices.length - 1].y;
     setInterval(() => {
       lastClose += (Math.random() - 0.5) * lastClose * 0.001;
-      const newCandle = {
+      const newPoint = {
         x: new Date(),
-        o: lastClose * 0.999,
-        h: lastClose * 1.001,
-        l: lastClose * 0.998,
-        c: lastClose
+        y: lastClose
       };
-      window.chartInstance.data.datasets[0].data.push(newCandle);
+      window.chartInstance.data.datasets[0].data.push(newPoint);
       window.chartInstance.update();
     }, 5000);
   } catch (error) {
     console.error('Chart data error:', error);
-    const mockCandles = Array.from({ length: 168 }, (_, i) => ({
+    const mockPrices = Array.from({ length: 168 }, (_, i) => ({
       x: new Date(Date.now() - (167 - i) * 3600 * 1000),
-      o: token.current_price * (1 - 0.05 + Math.random() * 0.1),
-      h: token.current_price * (1 + 0.05 + Math.random() * 0.1),
-      l: token.current_price * (1 - 0.05 - Math.random() * 0.1),
-      c: token.current_price * (1 - 0.05 + Math.random() * 0.1)
+      y: token.current_price * (1 - 0.05 + Math.random() * 0.1)
     }));
-    window.chartInstance.data.datasets[0].data = mockCandles;
+    window.chartInstance.data.datasets[0].data = mockPrices;
     window.chartInstance.update();
+    console.log('Chart updated with mock data');
   }
 
   window.addEventListener('resize', () => {
-    window.chartInstance.resize();
+    if (window.chartInstance) {
+      window.chartInstance.resize();
+    }
   });
 }
 
