@@ -1,7 +1,9 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const WEBSOCKET_URL = 'wss://omni-trading-webhook:10000';
+const WEBSOCKET_URL = 'wss://apexomni-backend.onrender.com'; // Public Render Web Service URL
+const POLLING_URL = 'https://apexomni-backend.onrender.com/alerts'; // Fallback HTTP endpoint
+const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 
 // Fetch low-volume tokens from multiple sources
 async function fetchLowVolumeTokens() {
@@ -105,6 +107,36 @@ async function fetchLowVolumeTokens() {
   }
 }
 
+// Process alert data for display
+function processAlert(alert) {
+  const li = document.createElement('li');
+  li.className = 'bg-secondary p-4 rounded-md shadow hover:bg-gray-700 transition';
+  const eventType = alert.event || 'unknown';
+  const signal = alert.signal || '';
+  const market = alert.market || 'N/A';
+  const timestamp = alert.timestamp || new Date().toISOString();
+  let message = '';
+  let emoji = '✅';
+  if (eventType.includes('entry')) {
+    emoji = eventType.includes('long') ? '🚀' : '🧪';
+    message = `${signal.toUpperCase()} Entry on ${market} at ${timestamp}`;
+  } else if (eventType.includes('exit')) {
+    emoji = eventType.includes('protect') ? '🛡️' : '🏁';
+    message = `${signal.toUpperCase()} Exit on ${market} at ${timestamp}`;
+  } else if (eventType === 'filter_blocked') {
+    emoji = '🧊';
+    message = `Blocked ${signal.toUpperCase()} Signal on ${market} (${alert.filter}) at ${timestamp}`;
+  } else {
+    message = `${eventType} on ${market} at ${timestamp}`;
+  }
+  li.innerHTML = `
+    <div class="flex items-center justify-between">
+      <span class="font-medium">${emoji} ${message}</span>
+      <span class="text-sm text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
+    </div>`;
+  return li;
+}
+
 // Initialize WebSocket for TradingView alerts
 function initWebSocket() {
   let ws;
@@ -112,14 +144,16 @@ function initWebSocket() {
   const alertList = document.getElementById('alert-list');
   let retryCount = 0;
   const maxRetries = 5;
+  let isPolling = false;
 
   function connect() {
     try {
       ws = new WebSocket(WEBSOCKET_URL);
     } catch (error) {
-      wsStatus.textContent = `Failed to initialize WebSocket: ${error.message}. Ensure backend is running and accessible from Render IPs: 44.226.145.213, 54.187.200.255, 34.213.214.55, 35.164.95.156, 44.230.95.183, 44.229.200.200.`;
+      wsStatus.textContent = `Failed to initialize WebSocket: ${error.message}. Switching to HTTP polling.`;
       wsStatus.className = 'mb-4 text-danger';
       console.error('WebSocket initialization error:', error);
+      startPolling();
       return;
     }
 
@@ -128,36 +162,15 @@ function initWebSocket() {
       wsStatus.className = 'mb-4 text-success';
       retryCount = 0;
       console.log('WebSocket connected to:', WEBSOCKET_URL);
+      if (isPolling) {
+        isPolling = false; // Stop polling if WebSocket connects
+      }
     };
 
     ws.onmessage = (event) => {
       try {
         const alert = JSON.parse(event.data);
-        const li = document.createElement('li');
-        li.className = 'bg-secondary p-4 rounded-md shadow hover:bg-gray-700 transition';
-        const eventType = alert.event || 'unknown';
-        const signal = alert.signal || '';
-        const market = alert.market || 'N/A';
-        const timestamp = alert.timestamp || new Date().toISOString();
-        let message = '';
-        let emoji = '✅';
-        if (eventType.includes('entry')) {
-          emoji = eventType.includes('long') ? '🚀' : '🧪';
-          message = `${signal.toUpperCase()} Entry on ${market} at ${timestamp}`;
-        } else if (eventType.includes('exit')) {
-          emoji = eventType.includes('protect') ? '🛡️' : '🏁';
-          message = `${signal.toUpperCase()} Exit on ${market} at ${timestamp}`;
-        } else if (eventType === 'filter_blocked') {
-          emoji = '🧊';
-          message = `Blocked ${signal.toUpperCase()} Signal on ${market} (${alert.filter}) at ${timestamp}`;
-        } else {
-          message = `${eventType} on ${market} at ${timestamp}`;
-        }
-        li.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-medium">${emoji} ${message}</span>
-            <span class="text-sm text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
-          </div>`;
+        const li = processAlert(alert);
         alertList.prepend(li);
         while (alertList.children.length > 20) {
           alertList.removeChild(alertList.lastChild);
@@ -171,7 +184,7 @@ function initWebSocket() {
       console.warn(`WebSocket closed: Code=${event.code}, Reason=${event.reason || 'No reason provided'}`);
       let errorMessage = 'Disconnected from WebSocket.';
       if (event.code === 1006) {
-        errorMessage += ' Likely network issue or backend not running. Ensure backend accepts Render IPs: 44.226.145.213, 54.187.200.255, 34.213.214.55, 35.164.95.156, 44.230.95.183, 44.229.200.200.';
+        errorMessage += ' Network issue or backend not running. Ensure backend accepts Render IPs: 44.226.145.213, 54.187.200.255, 34.213.214.55, 35.164.95.156, 44.230.95.183, 44.229.200.200.';
       } else if (event.code === 1001) {
         errorMessage += ' Backend may be shutting down.';
       }
@@ -181,8 +194,9 @@ function initWebSocket() {
         retryCount++;
         setTimeout(connect, 5000);
       } else {
-        wsStatus.textContent = `${errorMessage} Failed after ${maxRetries} attempts. Expose backend via ngrok or deploy on Render and whitelist Render IPs.`;
+        wsStatus.textContent = `${errorMessage} Failed after ${maxRetries} attempts. Switching to HTTP polling.`;
         wsStatus.className = 'mb-4 text-danger';
+        startPolling();
       }
     };
 
@@ -191,6 +205,39 @@ function initWebSocket() {
       wsStatus.textContent = 'WebSocket error occurred. Check console and ensure backend is accessible from Render IPs: 44.226.145.213, 54.187.200.255, 34.213.214.55, 35.164.95.156, 44.230.95.183, 44.229.200.200.';
       wsStatus.className = 'mb-4 text-danger';
     };
+  }
+
+  async function startPolling() {
+    if (isPolling) return;
+    isPolling = true;
+    wsStatus.textContent = 'Using HTTP polling for alerts.';
+    wsStatus.className = 'mb-4 text-gray-400';
+
+    async function poll() {
+      try {
+        const response = await fetch(POLLING_URL);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const alerts = await response.json();
+        if (Array.isArray(alerts)) {
+          alerts.forEach(alert => {
+            const li = processAlert(alert);
+            alertList.prepend(li);
+            while (alertList.children.length > 20) {
+              alertList.removeChild(alertList.lastChild);
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Polling error:', error);
+        wsStatus.textContent = `Polling error: ${error.message}. Retrying...`;
+        wsStatus.className = 'mb-4 text-danger';
+      }
+      if (isPolling) {
+        setTimeout(poll, POLLING_INTERVAL);
+      }
+    }
+
+    poll();
   }
 
   connect();
