@@ -1,16 +1,12 @@
-const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
-const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
-const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
-const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
-const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
+const BINANCE_API_TICKER = 'https://api.binance.com/api/v3/ticker/24hr';
+const BINANCE_API_KLINES = 'https://api.binance.com/api/v3/klines?symbol={symbol}&interval=1d&limit=30'; // Daily candles, last 30 days
+const BINANCE_API_PRICE = 'https://api.binance.com/api/v3/ticker/price?symbol={symbol}';
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const POLLING_INTERVAL = 15000;
 const PRICE_UPDATE_INTERVAL = 10000;
-const TOKEN_REFRESH_INTERVAL = 30000; // Refresh token data every 30 seconds
-const CMC_API_KEY = 'bef090eb-323d-4ae8-86dd-266236262f19';
+const TOKEN_REFRESH_INTERVAL = 30000;
 const MARQUEE_UPDATE_INTERVAL = 30000;
 
-// Expanded Ice King puns pool
 const iceKingPuns = [
   "I’m chilling like the Ice King! ❄️👑",
   "Penguins are my royal guards! 🐧🧊",
@@ -36,7 +32,7 @@ let currentToken = null;
 let compareToken = null;
 let currentTimeframe = 1;
 let allTokens = [];
-let sortedTokens = []; // Store sorted tokens globally for marquee updates
+let sortedTokens = [];
 
 async function fetchWithRetry(url, retries = 3, delay = 1000, options = {}) {
   for (let i = 0; i < retries; i++) {
@@ -55,14 +51,14 @@ async function fetchWithRetry(url, retries = 3, delay = 1000, options = {}) {
   }
 }
 
-async function fetchLivePrice(tokenId) {
+async function fetchLivePrice(symbol) {
   try {
-    if (!tokenId) throw new Error('Token ID is undefined');
-    const url = COINGECKO_PRICE_API.replace('{id}', encodeURIComponent(tokenId));
+    if (!symbol) throw new Error('Symbol is undefined');
+    const url = BINANCE_API_PRICE.replace('{symbol}', symbol);
     const data = await fetchWithRetry(url);
-    return data[tokenId]?.usd || 'N/A';
+    return parseFloat(data.price) || 'N/A';
   } catch (error) {
-    console.error(`Error fetching live price for ${tokenId}:`, error);
+    console.error(`Error fetching live price for ${symbol}:`, error);
     return 'N/A';
   }
 }
@@ -79,33 +75,30 @@ async function updateLivePrice() {
     document.getElementById('ticker-marquee-modal')
   ];
 
-  const price = await fetchLivePrice(currentToken.id);
+  const price = await fetchLivePrice(currentToken.symbol + 'USDT');
   livePriceElements.forEach(element => {
     if (element) element.textContent = `Live Price: $${price !== 'N/A' ? price.toLocaleString() : 'N/A'}`;
   });
 
-  // Update the chart with the new live price
   if (price !== 'N/A' && priceChart) {
     const now = new Date();
     priceChart.data.labels.push(now.toLocaleDateString());
     priceChart.data.datasets[0].data.push(price);
 
-    // Keep the chart from growing indefinitely by limiting to the last 50 points
     if (priceChart.data.labels.length > 50) {
       priceChart.data.labels.shift();
       priceChart.data.datasets[0].data.shift();
     }
 
-    priceChart.update('none'); // Update without animation for smoother live updates
+    priceChart.update('none');
 
     tickerMarquees.forEach(marquee => {
       if (marquee) marquee.innerHTML = `<span class="glow-green">${currentToken.symbol}: $${price.toLocaleString()}</span>`;
     });
   }
 
-  // Update compare token price if applicable
   if (compareToken && priceChart && priceChart.data.datasets[1]) {
-    const comparePrice = await fetchLivePrice(compareToken.id);
+    const comparePrice = await fetchLivePrice(compareToken.symbol + 'USDT');
     if (comparePrice !== 'N/A') {
       priceChart.data.datasets[1].data.push(comparePrice);
       if (priceChart.data.datasets[1].data.length > 50) {
@@ -174,74 +167,32 @@ async function fetchLowVolumeTokens() {
   let selectedTokenLi = null;
 
   try {
-    const cmcResponse = await fetchWithRetry(`${COINMARKETCAP_API}?start=1&limit=250&convert=USD`, 3, 1000, {
-      headers: { 'X-CMC_PRO_API_KEY': CMC_API_KEY }
-    });
-    console.log('CoinMarketCap response:', cmcResponse);
-    tokens = cmcResponse.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
-      id: token.slug,
-      name: token.name,
-      symbol: token.symbol.toUpperCase(),
-      total_volume: token.quote.USD.volume_24h,
-      current_price: token.quote.USD.price,
-      price_change_percentage_24h: token.quote.USD.percent_change_24h,
-      market_cap: token.quote.USD.market_cap,
-      circulating_supply: token.circulating_supply,
-      source: 'CoinMarketCap',
-      score: Math.min(100, Math.max(0, (token.quote.USD.percent_change_24h + 100) / 2))
-    }));
+    const binanceResponse = await fetchWithRetry(BINANCE_API_TICKER);
+    console.log('Binance ticker response:', binanceResponse.slice(0, 5)); // Log first 5 for brevity
+    tokens = binanceResponse
+      .filter(token => token.symbol.endsWith('USDT')) // Only USDT pairs
+      .filter(token => parseFloat(token.quoteVolume) < 5_000_000) // Low volume < $5M
+      .map(token => {
+        const symbol = token.symbol.replace('USDT', '');
+        return {
+          id: symbol.toLowerCase(),
+          name: symbol,
+          symbol: symbol,
+          total_volume: parseFloat(token.quoteVolume),
+          current_price: parseFloat(token.lastPrice),
+          price_change_percentage_24h: parseFloat(token.priceChangePercent),
+          market_cap: 0, // Binance doesn't provide market cap directly; set to 0
+          circulating_supply: 0, // Not available via this endpoint
+          source: 'Binance',
+          score: Math.min(100, Math.max(0, (parseFloat(token.priceChangePercent) + 100) / 2))
+        };
+      });
   } catch (error) {
-    console.error('CoinMarketCap error:', error);
+    console.error('Binance ticker error:', error);
   }
 
   if (tokens.length === 0) {
-    try {
-      const cgResponse = await fetch(COINGECKO_API);
-      if (!cgResponse.ok) throw new Error(`CoinGecko HTTP ${cgResponse.status}`);
-      const cgData = await cgResponse.json();
-      console.log('CoinGecko response:', cgData);
-      tokens = cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
-        id: token.id,
-        name: token.name,
-        symbol: token.symbol.toUpperCase(),
-        total_volume: token.total_volume,
-        current_price: token.current_price,
-        price_change_percentage_24h: token.price_change_percentage_24h,
-        market_cap: token.market_cap,
-        circulating_supply: token.circulating_supply,
-        source: 'CoinGecko',
-        score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
-      }));
-    } catch (error) {
-      console.error('CoinGecko error:', error);
-    }
-  }
-
-  if (tokens.length === 0) {
-    try {
-      const ccResponse = await fetch(CRYPTOCOMPARE_API);
-      if (!ccResponse.ok) throw new Error(`CryptoCompare HTTP ${ccResponse.status}`);
-      const ccData = await ccResponse.json();
-      console.log('CryptoCompare response:', ccData);
-      tokens = ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
-        id: token.CoinInfo.Name.toLowerCase(),
-        name: token.CoinInfo.FullName,
-        symbol: token.CoinInfo.Name.toUpperCase(),
-        total_volume: token.RAW?.USD?.VOLUME24HOURTO || 0,
-        current_price: token.RAW?.USD?.PRICE || 0,
-        price_change_percentage_24h: token.RAW?.USD?.CHANGEPCT24HOUR || 0,
-        market_cap: token.RAW?.USD?.MKTCAP || 0,
-        circulating_supply: token.RAW?.USD?.SUPPLY || 0,
-        source: 'CryptoCompare',
-        score: Math.min(100, Math.max(0, ((token.RAW?.USD?.CHANGEPCT24HOUR || 0) + 100) / 2))
-      }));
-    } catch (error) {
-      console.error('CryptoCompare error:', error);
-    }
-  }
-
-  if (tokens.length === 0) {
-    tokenList.innerHTML = '<p class="text-gray-400 text-xs">Failed to fetch token data from all sources. Please try again later or check API status.</p>';
+    tokenList.innerHTML = '<p class="text-gray-400 text-xs">Failed to fetch token data from Binance. Please try again later.</p>';
     loader.style.display = 'none';
     return;
   }
@@ -279,8 +230,8 @@ async function fetchLowVolumeTokens() {
         <div class="text-xs">
           <p>Price: $${token.current_price.toLocaleString()}</p>
           <p class="${priceChangeColor}">24h: ${priceChange.toFixed(2)}% ${priceChangeEmoji}</p>
-          <p>Market Cap: $${token.market_cap.toLocaleString()}</p>
-          <p>Circulating Supply: ${token.circulating_supply.toLocaleString()} ${token.symbol}</p>
+          <p>Market Cap: Not Available</p>
+          <p>Circulating Supply: Not Available</p>
           <p>Source: ${token.source}</p>
         </div>
       </div>`;
@@ -357,19 +308,24 @@ async function fetchLowVolumeTokens() {
   loader.style.display = 'none';
 }
 
-async function fetchChartData(tokenId, days) {
+async function fetchChartData(symbol, days) {
   try {
-    if (!tokenId) throw new Error('Token ID is undefined or invalid');
-    const url = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(tokenId)).replace('{days}', days);
-    console.log(`Fetching chart data for ${tokenId} (${days} days) from ${url}`);
+    if (!symbol) throw new Error('Symbol is undefined or invalid');
+    const url = BINANCE_API_KLINES.replace('{symbol}', symbol + 'USDT');
+    console.log(`Fetching chart data for ${symbol} (${days} days) from ${url}`);
     const data = await fetchWithRetry(url, 3, 2000);
-    if (!data.prices || !Array.isArray(data.prices) || data.prices.length === 0) {
-      throw new Error('Invalid chart data: prices array is missing, empty, or malformed');
+    if (!Array.isArray(data) || data.length === 0) {
+      throw new Error('Invalid chart data: data array is missing or empty');
     }
-    console.log(`Chart data for ${tokenId}:`, data.prices.slice(0, 5));
-    return data.prices;
+    // Map candlestick data: [timestamp, open, high, low, close, volume, ...]
+    const prices = data.map(candle => [
+      parseInt(candle[0]), // Timestamp
+      parseFloat(candle[4]) // Close price
+    ]);
+    console.log(`Chart data for ${symbol}:`, prices.slice(0, 5));
+    return prices;
   } catch (error) {
-    console.error(`Failed to fetch chart data for ${tokenId}:`, error);
+    console.error(`Failed to fetch chart data for ${symbol}:`, error);
     throw error;
   }
 }
@@ -421,13 +377,13 @@ async function showPriceChart(token, compareToken, days, containerType) {
   };
 
   try {
-    const data = await fetchChartData(token.id, days);
+    const data = await fetchChartData(token.symbol, days);
     const labels = data.map(d => new Date(d[0]).toLocaleDateString());
     const prices = data.map(d => d[1]);
 
     let compareData = [];
     if (compareToken) {
-      const compareChartData = await fetchChartData(compareToken.id, days);
+      const compareChartData = await fetchChartData(compareToken.symbol, days);
       compareData = compareChartData.map(d => d[1]);
     }
 
@@ -442,7 +398,7 @@ async function showPriceChart(token, compareToken, days, containerType) {
         labels: labels,
         datasets: [
           {
-            label: `${token.symbol}/USD Price`,
+            label: `${token.symbol}/USDT Price`,
             data: prices,
             borderColor: '#9333ea',
             backgroundColor: 'rgba(147, 51, 234, 0.2)',
@@ -451,7 +407,7 @@ async function showPriceChart(token, compareToken, days, containerType) {
             pointRadius: 0,
           },
           ...(compareToken ? [{
-            label: `${compareToken.symbol}/USD Price`,
+            label: `${compareToken.symbol}/USDT Price`,
             data: compareData,
             borderColor: '#34d399',
             backgroundColor: 'rgba(52, 211, 153, 0.2)',
@@ -484,7 +440,7 @@ async function showPriceChart(token, compareToken, days, containerType) {
             display: true,
             title: {
               display: true,
-              text: 'Price (USD)',
+              text: 'Price (USDT)',
               color: '#d1d4dc'
             },
             ticks: {
@@ -557,7 +513,7 @@ function setupChartControls() {
 document.addEventListener('DOMContentLoaded', async () => {
   const SOURCE_ID = 'source_123';
   await fetchLowVolumeTokens();
-  setInterval(fetchLowVolumeTokens, TOKEN_REFRESH_INTERVAL); // Refresh token data every 30 seconds
+  setInterval(fetchLowVolumeTokens, TOKEN_REFRESH_INTERVAL);
   updateAlertsWithLogs(SOURCE_ID);
   setInterval(() => updateAlertsWithLogs(SOURCE_ID), POLLING_INTERVAL);
   setupChartControls();
