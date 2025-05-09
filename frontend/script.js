@@ -6,16 +6,31 @@ const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfu
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const POLLING_INTERVAL = 15000;
 const PRICE_UPDATE_INTERVAL = 10000;
-const CMC_API_KEY = 'bef090eb-323d-4ae8-86dd-266236262f19'; // Provided API key
+const CMC_API_KEY = 'bef090eb-323d-4ae8-86dd-266236262f19';
+const MARQUEE_UPDATE_INTERVAL = 30000; // Slowed down to 30 seconds
 
+// Expanded Ice King puns pool
 const iceKingPuns = [
   "I’m chilling like the Ice King! ❄️👑",
   "Penguins are my royal guards! 🐧🧊",
   "Time to freeze the market! ❄️😂",
   "Ice to meet you, traders! 🧊🐧",
   "I’m the coolest king around! 👑❄️",
-  "Penguin power activate! 🐧🧊😂"
+  "Penguin power activate! 🐧🧊😂",
+  "Snow way I’m missing this trade! ❄️📈",
+  "Freeze your doubts, let’s trade! 🧊💸",
+  "I’m skating through the market! ⛸️❄️",
+  "Cold cash, hot trades! 🥶💰",
+  "My portfolio’s cooler than ice! ❄️📊",
+  "Chill out, I’ve got this! 🧊😎",
+  "Ice King’s here to rule the charts! 👑📉",
+  "Let’s make it snow profits! ❄️💵",
+  "I’m frosting the competition! 🧊🏆",
+  "Cool trades, warm wins! ❄️🔥"
 ];
+
+// Track used puns to avoid repetition
+let usedPuns = [];
 
 let priceChart = null;
 let currentToken = null;
@@ -42,6 +57,7 @@ async function fetchWithRetry(url, retries = 3, delay = 1000, options = {}) {
 
 async function fetchLivePrice(tokenId) {
   try {
+    if (!tokenId) throw new Error('Token ID is undefined');
     const url = COINGECKO_PRICE_API.replace('{id}', encodeURIComponent(tokenId));
     const data = await fetchWithRetry(url);
     return data[tokenId]?.usd || 'N/A';
@@ -120,7 +136,6 @@ async function fetchLowVolumeTokens() {
   let tokens = [];
   let selectedTokenLi = null;
 
-  // Try CoinMarketCap first
   try {
     const cmcResponse = await fetchWithRetry(`${COINMARKETCAP_API}?start=1&limit=250&convert=USD`, 3, 1000, {
       headers: { 'X-CMC_PRO_API_KEY': CMC_API_KEY }
@@ -142,7 +157,6 @@ async function fetchLowVolumeTokens() {
     console.error('CoinMarketCap error:', error);
   }
 
-  // Fallback to CoinGecko if CoinMarketCap fails or returns no data
   if (tokens.length === 0) {
     try {
       const cgResponse = await fetch(COINGECKO_API);
@@ -166,7 +180,6 @@ async function fetchLowVolumeTokens() {
     }
   }
 
-  // Fallback to CryptoCompare if both fail
   if (tokens.length === 0) {
     try {
       const ccResponse = await fetch(CRYPTOCOMPARE_API);
@@ -257,12 +270,20 @@ async function fetchLowVolumeTokens() {
     return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition ${glowClass} ${hoverClass}">${pair}/USDT</li>`;
   }).join('');
 
-  let punIndex = 0;
+  function getUniquePun() {
+    if (usedPuns.length === iceKingPuns.length) {
+      usedPuns = [];
+    }
+    const availablePuns = iceKingPuns.filter(pun => !usedPuns.includes(pun));
+    const selectedPun = availablePuns[Math.floor(Math.random() * availablePuns.length)];
+    usedPuns.push(selectedPun);
+    return selectedPun;
+  }
+
   function updateMarquee() {
     const winners = sortedTokens.filter(t => t.price_change_percentage_24h > 0).slice(0, 3);
     const losers = sortedTokens.filter(t => t.price_change_percentage_24h < 0).slice(-3);
-    const currentPun = iceKingPuns[punIndex];
-    punIndex = (punIndex + 1) % iceKingPuns.length;
+    const currentPun = getUniquePun();
     const marqueeItems = [
       ...winners.map(t => `<span class="glow-green text-green-400">🏆 ${t.symbol}: +${t.price_change_percentage_24h.toFixed(2)}%</span>`),
       `<span class="glow-purple text-purple-400">${currentPun}</span>`,
@@ -272,7 +293,7 @@ async function fetchLowVolumeTokens() {
     marqueeElements.forEach(element => {
       if (element) element.innerHTML = doubledItems.join('');
     });
-    setTimeout(updateMarquee, 20000);
+    setTimeout(updateMarquee, MARQUEE_UPDATE_INTERVAL);
   }
   updateMarquee();
 
@@ -301,14 +322,17 @@ async function fetchLowVolumeTokens() {
 
 async function fetchChartData(tokenId, days) {
   try {
+    if (!tokenId) throw new Error('Token ID is undefined or invalid');
     const url = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(tokenId)).replace('{days}', days);
-    const data = await fetchWithRetry(url);
-    if (!data.prices || !Array.isArray(data.prices)) {
-      throw new Error('Invalid chart data format: prices array missing');
+    console.log(`Fetching chart data for ${tokenId} (${days} days) from ${url}`);
+    const data = await fetchWithRetry(url, 3, 2000); // Increased delay for rate limiting
+    if (!data.prices || !Array.isArray(data.prices) || data.prices.length === 0) {
+      throw new Error('Invalid chart data: prices array is missing, empty, or malformed');
     }
+    console.log(`Chart data for ${tokenId}:`, data.prices.slice(0, 5)); // Log first 5 entries for debugging
     return data.prices;
   } catch (error) {
-    console.error(`Error fetching chart data for ${tokenId}:`, error);
+    console.error(`Failed to fetch chart data for ${tokenId}:`, error);
     throw error;
   }
 }
@@ -326,6 +350,7 @@ async function showPriceChart(token, compareToken, days, containerType) {
 
   if (!chartContainer || !chartTitle || !tickerMarquee || !token) {
     console.error('Missing required elements for chart rendering');
+    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Chart rendering failed: missing elements.</div>';
     return;
   }
 
@@ -454,7 +479,7 @@ async function showPriceChart(token, compareToken, days, containerType) {
     tickerMarquee.innerHTML = `<span class="glow-green">${token.symbol}: $${prices[prices.length - 1].toLocaleString()}</span>`;
   } catch (error) {
     console.error('Error rendering chart:', error);
-    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
+    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Please try another token or check API status.</div>';
   }
 }
 
