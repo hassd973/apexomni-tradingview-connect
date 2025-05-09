@@ -3,8 +3,9 @@ const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_
 const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
+const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const POLLING_INTERVAL = 15000;
-const PRICE_UPDATE_INTERVAL = 10000; // Update live price every 10 seconds
+const PRICE_UPDATE_INTERVAL = 10000;
 
 // Mock token data for fallback, including ConstitutionDAO
 const mockTokens = [
@@ -39,10 +40,10 @@ let currentTimeframe = 1; // Default to 1 day
 let allTokens = [];
 
 // Retry fetch with delay
-async function fetchWithRetry(url, retries = 3, delay = 1000) {
+async function fetchWithRetry(url, retries = 3, delay = 1000, options = {}) {
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, options);
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       return await response.json();
     } catch (error) {
@@ -71,6 +72,50 @@ async function updateLivePrice() {
   const livePriceElement = document.getElementById('live-price');
   const price = await fetchLivePrice(currentToken.id);
   livePriceElement.textContent = `Live Price: $${price !== 'N/A' ? price.toLocaleString() : 'N/A'}`;
+}
+
+// Fetch logs from Betterstack API
+async function fetchLogs(sourceId) {
+  const url = BETTERSTACK_API;
+  const options = {
+    method: 'GET',
+    headers: {
+      'Authorization': 'Bearer WGdCT5KhHtg4kiGWAbdXRaSL'
+    },
+    body: new URLSearchParams({
+      source_ids: sourceId,
+      query: 'level=info'
+    })
+  };
+  try {
+    const data = await fetchWithRetry(url, 3, 1000, options);
+    return data;
+  } catch (error) {
+    console.error('Error fetching logs:', error);
+    return [];
+  }
+}
+
+// Update alerts with fetched logs
+function updateAlertsWithLogs(sourceId) {
+  const alertList = document.getElementById('alert-list');
+  fetchLogs(sourceId).then(logs => {
+    alertList.innerHTML = '';
+    logs.forEach(log => {
+      const li = document.createElement('li');
+      li.className = 'bg-gray-700/40 p-2 rounded-md shadow hover-glow transition fade-in';
+      const timestamp = log.timestamp || new Date().toISOString();
+      li.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="font-medium truncate text-gray-200">📜 ${log.message || 'No message'}</span>
+          <span class="text-xs text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
+        </div>`;
+      alertList.prepend(li);
+    });
+    while (alertList.children.length > 20) {
+      alertList.removeChild(alertList.lastChild);
+    }
+  });
 }
 
 // Fetch low-volume tokens, rank by performance, and update marquee with puns
@@ -176,7 +221,7 @@ async function fetchLowVolumeTokens() {
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
     const tooltipBg = token.price_change_percentage_24h >= 0 ? 'rgba(74, 222, 128, 0.9)' : 'rgba(248, 113, 113, 0.9)';
     const tooltipGlow = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
-    li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} ${hoverClass}`;
+    li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} ${hoverClass} z-20`;
     li.setAttribute('data-tooltip', 'Click to toggle chart');
     li.setAttribute('style', `--tooltip-bg: ${tooltipBg}; --tooltip-glow: ${tooltipGlow};`);
     const priceChange = token.price_change_percentage_24h;
@@ -445,69 +490,6 @@ async function showPriceChart(token, compareToken, days) {
   }
 }
 
-// Process alert data for display
-function processAlert(alert) {
-  const li = document.createElement('li');
-  li.className = 'bg-gray-700/40 p-2 rounded-md shadow hover-glow transition fade-in';
-  const eventType = alert.event || 'unknown';
-  const signal = alert.signal || '';
-  const market = alert.market || 'N/A';
-  const timestamp = alert.timestamp || new Date().toISOString();
-  let message = '';
-  let emoji = '✅';
-  if (eventType.includes('entry')) {
-    emoji = eventType.includes('long') ? '🚀' : '🧪';
-    message = `${signal.toUpperCase()} Entry on ${market}`;
-  } else if (eventType.includes('exit')) {
-    emoji = eventType.includes('protect') ? '🛡️' : '🏁';
-    message = `${signal.toUpperCase()} Exit on ${market}`;
-  } else if (eventType === 'filter_blocked') {
-    emoji = '🧊';
-    message = `Blocked ${signal.toUpperCase()} on ${market} (${alert.filter})`;
-  } else {
-    message = `${eventType} on ${market}`;
-  }
-  li.innerHTML = `
-    <div class="flex items-center justify-between">
-      <span class="font-medium truncate text-gray-200">${emoji} ${message}</span>
-      <span class="text-xs text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
-    </div>`;
-  return li;
-}
-
-// Mock alert generator
-function generateMockAlerts() {
-  const alerts = [];
-  const events = ['long_entry', 'short_entry', 'exit', 'protect_exit', 'filter_blocked'];
-  const markets = ['BTC-USDT', 'ETH-USDT', 'FLOKI-USDT'];
-  for (let i = 0; i < 10; i++) {
-    const event = events[Math.floor(Math.random() * events.length)];
-    alerts.push({
-      type: 'debug',
-      event: event,
-      signal: event.includes('entry') ? 'buy' : 'sell',
-      market: markets[Math.floor(Math.random() * markets.length)],
-      timestamp: new Date(Date.now() - Math.random() * 86400000 * 10).toISOString(),
-      filter: event === 'filter_blocked' ? 'low_volume' : undefined
-    });
-  }
-  return alerts;
-}
-
-// Initialize mock alerts
-function initLogStream() {
-  const alertList = document.getElementById('alert-list');
-  function updateAlerts() {
-    const newAlerts = generateMockAlerts();
-    newAlerts.forEach(alert => alertList.prepend(processAlert(alert)));
-    while (alertList.children.length > 20) {
-      alertList.removeChild(alertList.lastChild);
-    }
-    setTimeout(updateAlerts, POLLING_INTERVAL);
-  }
-  updateAlerts();
-}
-
 // Setup chart timeframe and sticky toggle
 function setupChartControls() {
   const timeframes = {
@@ -545,6 +527,9 @@ function setupChartControls() {
   });
 }
 
+// Initialize with a placeholder sourceId (replace with actual SOURCE_ID)
+const SOURCE_ID = 'your-source-id-here'; // Replace with actual source ID
 fetchLowVolumeTokens();
-initLogStream();
+updateAlertsWithLogs(SOURCE_ID);
+setInterval(() => updateAlertsWithLogs(SOURCE_ID), POLLING_INTERVAL);
 setupChartControls();
