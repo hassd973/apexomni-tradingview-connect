@@ -147,12 +147,10 @@ async function fetchLowVolumeTokens() {
   loader.style.display = 'none';
 }
 
-// Show HTML5 Canvas Chart
-function showPriceChart(token) {
+// Show TradingView Lightweight Chart
+async function showPriceChart(token) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
-  const canvas = document.getElementById('chart-canvas');
-  const ctx = canvas.getContext('2d');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
 
   // Update chart title hover effect based on performance
@@ -165,108 +163,115 @@ function showPriceChart(token) {
     chartTitle.style.opacity = '1';
   };
 
-  // Set canvas size
-  function resizeCanvas() {
-    canvas.width = chartContainer.clientWidth;
-    canvas.height = chartContainer.clientHeight;
-    drawChart();
-  }
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
+  // Clear existing chart
+  chartContainer.innerHTML = '';
+  const chartElement = document.createElement('div');
+  chartElement.id = 'chart-canvas';
+  chartElement.style.width = '100%';
+  chartElement.style.height = '100%';
+  chartContainer.appendChild(chartElement);
 
-  // Draw chart
-  function drawChart() {
-    if (!ctx) {
-      console.error('Canvas 2D context not available');
-      chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Canvas failed to load.</div>';
-      return;
-    }
-
-    const width = canvas.width;
-    const height = canvas.height;
-    ctx.clearRect(0, 0, width, height);
-
-    // Grid
-    ctx.strokeStyle = 'rgba(147, 51, 234, 0.1)';
-    ctx.lineWidth = 0.5;
-    for (let x = 0; x <= width; x += width / 10) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, height);
-      ctx.stroke();
-    }
-    for (let y = 0; y <= height; y += height / 10) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(width, y);
-      ctx.stroke();
-    }
-
-    // Data points
-    const data = Array.from({ length: 100 }, (_, i) => ({
-      x: (i / 99) * width,
-      y: height - (height * (token.current_price * (1 + (Math.random() - 0.5) * 0.1)) / (token.current_price * 1.1)),
-    }));
-    ctx.strokeStyle = token.price_change_percentage_24h >= 0 ? '#4ade80' : '#f87171';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(data[0].x, data[0].y);
-    for (let i = 1; i < data.length; i++) {
-      ctx.lineTo(data[i].x, data[i].y);
-    }
-    ctx.stroke();
-
-    // Labels
-    ctx.fillStyle = '#d1d4dc';
-    ctx.font = '16px Orbitron';
-    ctx.fillText('Price', 10, 20);
-  }
-  drawChart();
-
-  // Update with real data if available
-  const symbol = `${token.symbol.toLowerCase()}usdt`;
-  fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1h&limit=168`)
-    .then(response => {
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      return response.json();
-    })
-    .then(data => {
-      if (!Array.isArray(data) || data.length === 0) throw new Error('No data from Binance');
-      console.log('Binance data:', data);
-      const prices = data.map(d => parseFloat(d[4])); // Closing prices
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
-      const scale = height / (maxPrice - minPrice);
-      const chartData = prices.map((price, i) => ({
-        x: (i / 167) * width,
-        y: height - ((price - minPrice) * scale),
-      }));
-      ctx.strokeStyle = token.price_change_percentage_24h >= 0 ? '#4ade80' : '#f87171';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(chartData[0].x, chartData[0].y);
-      for (let i = 1; i < chartData.length; i++) {
-        ctx.lineTo(chartData[i].x, chartData[i].y);
-      }
-      ctx.stroke();
-      console.log('Chart updated with Binance data');
-    })
-    .catch(error => {
-      console.error('Chart data fetch error:', error);
+  try {
+    const chart = LightweightCharts.createChart(chartElement, {
+      width: chartContainer.clientWidth,
+      height: chartContainer.clientHeight,
+      layout: {
+        background: { type: 'solid', color: 'transparent' },
+        textColor: '#d1d4dc',
+      },
+      grid: {
+        vertLines: { color: 'rgba(59, 130, 246, 0.1)' },
+        horzLines: { color: 'rgba(59, 130, 246, 0.1)' },
+      },
+      timeScale: {
+        borderColor: 'rgba(59, 130, 246, 0.2)',
+      },
+      rightPriceScale: {
+        borderColor: 'rgba(59, 130, 246, 0.2)',
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal,
+      },
     });
 
-  // Animate with mock updates
-  let lastPrice = token.current_price;
-  setInterval(() => {
-    lastPrice += (Math.random() - 0.5) * lastPrice * 0.001;
-    const newData = {
-      x: width,
-      y: height - (height * lastPrice / (token.current_price * 1.1)),
-    };
-    data.push(newData);
-    if (data.length > 100) data.shift();
-    drawChart();
-  }, 5000);
+    console.log('Chart container size:', chartContainer.clientWidth, chartContainer.clientHeight);
+    console.log('TradingView chart created:', chart);
+
+    const candleSeries = chart.addCandlestickSeries({
+      upColor: '#4ade80',
+      downColor: '#f87171',
+      wickUpColor: '#9333ea',
+      wickDownColor: '#9333ea',
+      borderVisible: false,
+      priceLineVisible: false,
+    });
+
+    // Test with mock data first
+    const mockData = Array.from({ length: 100 }, (_, i) => ({
+      time: Date.now() / 1000 - (99 - i) * 3600,
+      open: token.current_price * (1 + (Math.random() - 0.5) * 0.05),
+      high: token.current_price * (1 + (Math.random() - 0.5) * 0.06),
+      low: token.current_price * (1 + (Math.random() - 0.5) * 0.04),
+      close: token.current_price * (1 + (Math.random() - 0.5) * 0.05),
+    }));
+    candleSeries.setData(mockData);
+    chart.timeScale().fitContent();
+    console.log('Chart initialized with mock data');
+
+    // Attempt to fetch real data
+    const symbol = `${token.symbol.toLowerCase()}usdt`;
+    try {
+      const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1h&limit=168`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) throw new Error('No data from Binance');
+      console.log('Binance data:', data);
+      const chartData = data.map(d => ({
+        time: parseInt(d[0]) / 1000,
+        open: parseFloat(d[1]),
+        high: parseFloat(d[2]),
+        low: parseFloat(d[3]),
+        close: parseFloat(d[4]),
+      }));
+      candleSeries.setData(chartData);
+      chart.timeScale().fitContent();
+      console.log('Chart updated with Binance data');
+
+      let lastClose = chartData[chartData.length - 1].close;
+      setInterval(() => {
+        lastClose += (Math.random() - 0.5) * lastClose * 0.001;
+        const newPoint = {
+          time: Math.floor(Date.now() / 1000),
+          open: lastClose * (1 - 0.005),
+          high: lastClose * (1 + 0.005),
+          low: lastClose * (1 - 0.005),
+          close: lastClose,
+        };
+        candleSeries.update(newPoint);
+      }, 5000);
+    } catch (error) {
+      console.error('Chart data fetch error:', error);
+    }
+
+    // Ensure chart resizes properly
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        chart.resize(entry.contentRect.width, entry.contentRect.height);
+        chart.timeScale().fitContent();
+        console.log('Chart resized to:', entry.contentRect.width, entry.contentRect.height);
+      }
+    });
+    resizeObserver.observe(chartContainer);
+
+    window.addEventListener('resize', () => {
+      chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
+      chart.timeScale().fitContent();
+      console.log('Chart resized on window resize');
+    });
+  } catch (error) {
+    console.error('TradingView chart initialization error:', error);
+    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Chart failed to load. Check console for errors.</div>';
+  }
 }
 
 // Process alert data for display
