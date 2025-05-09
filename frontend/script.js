@@ -21,8 +21,15 @@ const mockChartData = {
   ])
 };
 
-// Chart.js instance
-let priceChart = null;
+// Ice King puns for marquee
+const iceKingPuns = [
+  "I’m chilling like the Ice King! ❄️👑",
+  "Penguins are my royal guards! 🐧🧊",
+  "Time to freeze the market! ❄️😂",
+  "Ice to meet you, traders! 🧊🐧",
+  "I’m the coolest king around! 👑❄️",
+  "Penguin power activate! 🐧🧊😂"
+];
 
 // Retry fetch with delay
 async function fetchWithRetry(url, retries = 3, delay = 1000) {
@@ -39,7 +46,7 @@ async function fetchWithRetry(url, retries = 3, delay = 1000) {
   }
 }
 
-// Fetch low-volume tokens, rank by performance, and update marquee
+// Fetch low-volume tokens, rank by performance, and update marquee with puns
 async function fetchLowVolumeTokens() {
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
@@ -181,14 +188,22 @@ async function fetchLowVolumeTokens() {
     return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition ${glowClass} ${hoverClass}">${pair}/USDT</li>`;
   }).join('');
 
-  // Populate marquee with top 3 winners and losers
-  const winners = sortedTokens.filter(t => t.price_change_percentage_24h > 0).slice(0, 3);
-  const losers = sortedTokens.filter(t => t.price_change_percentage_24h < 0).slice(-3);
-  const marqueeItems = [
-    ...winners.map(t => `<span class="glow-green text-green-400">🏆 ${t.symbol}: +${t.price_change_percentage_24h.toFixed(2)}%</span>`),
-    ...losers.map(t => `<span class="glow-red text-red-400">📉 ${t.symbol}: ${t.price_change_percentage_24h.toFixed(2)}%</span>`)
-  ];
-  marquee.innerHTML = marqueeItems.join('');
+  // Populate marquee with top 3 winners, Ice King puns, and top 3 losers
+  let punIndex = 0;
+  function updateMarquee() {
+    const winners = sortedTokens.filter(t => t.price_change_percentage_24h > 0).slice(0, 3);
+    const losers = sortedTokens.filter(t => t.price_change_percentage_24h < 0).slice(-3);
+    const currentPun = iceKingPuns[punIndex];
+    punIndex = (punIndex + 1) % iceKingPuns.length;
+    const marqueeItems = [
+      ...winners.map(t => `<span class="glow-green text-green-400">🏆 ${t.symbol}: +${t.price_change_percentage_24h.toFixed(2)}%</span>`),
+      `<span class="glow-purple text-purple-400">${currentPun}</span>`,
+      ...losers.map(t => `<span class="glow-red text-red-400">📉 ${t.symbol}: ${t.price_change_percentage_24h.toFixed(2)}%</span>`)
+    ];
+    marquee.innerHTML = marqueeItems.join('');
+    setTimeout(updateMarquee, 5000); // Rotate pun every 5 seconds
+  }
+  updateMarquee();
 
   if (sortedTokens.length > 0) {
     const firstTokenLi = tokenList.children[0];
