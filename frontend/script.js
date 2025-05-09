@@ -1,8 +1,9 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_WS = 'wss://eu-nbg-2-vec.betterstackdata.com:6514';
+const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const BETTERSTACK_TOKEN = 'x5nvK7DNDURcpAHEBuCbHrza';
+const SOURCE_ID = '12345'; // Replace with actual source ID from Better Stack Sources API
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 
 // Fetch low-volume tokens and top pairs
@@ -10,10 +11,8 @@ async function fetchLowVolumeTokens() {
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
-  const sortToggle = document.getElementById('sort-toggle');
   let tokens = [];
   const volumeThreshold = 5_000_000; // $5M threshold
-  let sortAscending = false;
 
   // CoinGecko
   try {
@@ -77,7 +76,7 @@ async function fetchLowVolumeTokens() {
     console.error('CryptoCompare error:', error);
   }
 
-  // Deduplicate and sort
+  // Deduplicate
   const uniqueTokens = [];
   const seenSymbols = new Set();
   for (const token of tokens) {
@@ -87,57 +86,49 @@ async function fetchLowVolumeTokens() {
     }
   }
 
-  function renderTokens() {
-    tokenList.innerHTML = '';
-    const sortedTokens = [...uniqueTokens].sort((a, b) =>
-      sortAscending
-        ? a.price_change_percentage_24h - b.price_change_percentage_24h
-        : b.price_change_percentage_24h - a.price_change_percentage_24h
-    );
-
-    sortedTokens.forEach((token, index) => {
-      const li = document.createElement('li');
-      const opacity = 50 + (index / sortedTokens.length) * 50; // Gradient from 50 to 100
-      const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
-      li.className = `p-4 rounded-md shadow hover:bg-gray-700 transition cursor-pointer ${bgColor}`;
-      const priceChange = token.price_change_percentage_24h;
-      const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
-      const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
-      li.innerHTML = `
-        <div class="flex flex-col space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="font-medium truncate">🍀 ${token.name} (${token.symbol}) [Score: ${token.score.toFixed(1)}]</span>
-            <span class="text-sm text-gray-400">Vol: $${token.total_volume.toLocaleString()}</span>
-          </div>
-          <div class="text-sm text-gray-300">
-            <p>Price: $${token.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</p>
-            <p class="${priceChangeColor}">24h Change: ${priceChange.toFixed(2)}% ${priceChangeEmoji}</p>
-            <p>Market Cap: $${token.market_cap.toLocaleString()}</p>
-            <p>Circulating Supply: ${token.circulating_supply.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${token.symbol}</p>
-            <p>Source: ${token.source}</p>
-          </div>
-        </div>`;
-      li.addEventListener('click', () => showPriceChart(token));
-      tokenList.appendChild(li);
-    });
-
-    if (sortedTokens.length === 0) {
-      tokenList.innerHTML = '<p class="text-gray-400">No tokens under $5M volume at this time.</p>';
-    }
-
-    // Top pairs
-    const topTokens = sortedTokens.slice(0, 5).map(token => `${token.symbol}/USDT`);
-    topPairs.innerHTML = topTokens.map(pair => `<li>${pair}</li>`).join('');
-  }
-
-  sortToggle.addEventListener('click', () => {
-    sortAscending = !sortAscending;
-    sortToggle.textContent = `Sort: ${sortAscending ? 'Low to High' : 'High to Low'}`;
-    renderTokens();
+  // Sort by performance and render
+  const sortedTokens = [...uniqueTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+  tokenList.innerHTML = '';
+  sortedTokens.forEach((token, index) => {
+    const li = document.createElement('li');
+    const opacity = 50 + (index / sortedTokens.length) * 50;
+    const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
+    li.className = `p-4 rounded-md shadow hover:bg-gray-700 transition cursor-pointer ${bgColor}`;
+    const priceChange = token.price_change_percentage_24h;
+    const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
+    const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
+    li.innerHTML = `
+      <div class="flex flex-col space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="font-medium truncate">🍀 ${token.name} (${token.symbol}) [Score: ${token.score.toFixed(1)}]</span>
+          <span class="text-sm text-gray-400">Vol: $${token.total_volume.toLocaleString()}</span>
+        </div>
+        <div class="text-sm text-gray-300">
+          <p>Price: $${token.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</p>
+          <p class="${priceChangeColor}">24h Change: ${priceChange.toFixed(2)}% ${priceChangeEmoji}</p>
+          <p>Market Cap: $${token.market_cap.toLocaleString()}</p>
+          <p>Circulating Supply: ${token.circulating_supply.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${token.symbol}</p>
+          <p>Source: ${token.source}</p>
+        </div>
+      </div>`;
+    li.addEventListener('click', () => showPriceChart(token));
+    tokenList.appendChild(li);
   });
 
+  if (sortedTokens.length === 0) {
+    tokenList.innerHTML = '<p class="text-gray-400">No tokens under $5M volume at this time.</p>';
+  }
+
+  // Top pairs
+  const topTokens = sortedTokens.slice(0, 5).map(token => `${token.symbol}/USDT`);
+  topPairs.innerHTML = topTokens.map(pair => `<li>${pair}</li>`).join('');
+
+  // Default chart to highest-performing token
+  if (sortedTokens.length > 0) {
+    showPriceChart(sortedTokens[0]);
+  }
+
   loader.style.display = 'none';
-  renderTokens();
 }
 
 // Show TradingView widget
@@ -148,7 +139,6 @@ function showPriceChart(token) {
   chartContainer.innerHTML = ''; // Reset container
   chartContainer.appendChild(chartTitle);
   chartContainer.appendChild(widgetDiv);
-  chartContainer.classList.remove('hidden');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Chart`;
 
   // Destroy existing widget if it exists
@@ -160,7 +150,7 @@ function showPriceChart(token) {
   script.innerHTML = `
     new TradingView.widget({
       width: '100%',
-      height: 300,
+      height: 400,
       symbol: 'BINANCE:${token.symbol.toUpperCase()}USDT',
       interval: '1D',
       timezone: 'Etc/UTC',
@@ -226,25 +216,37 @@ function generateMockAlerts() {
   return alerts;
 }
 
-// Fetch logs from Better Stack WebSocket or use mock data
-function initLogStream() {
+// Fetch logs from Better Stack Live Tail API or use mock data
+async function initLogStream() {
   const wsStatus = document.getElementById('ws-status');
   const alertList = document.getElementById('alert-list');
   const toggleLive = document.getElementById('toggle-live');
   let isLive = false;
+  let nextUrl = null;
 
-  function connectWebSocket() {
-    const ws = new WebSocket(`${BETTERSTACK_WS}?token=${BETTERSTACK_TOKEN}`);
-    ws.onopen = () => {
-      console.log('WebSocket connection opened');
-      wsStatus.textContent = 'Connected to Better Stack WebSocket';
-      wsStatus.className = 'mb-4 text-green-400';
-    };
+  async function fetchLogs() {
+    try {
+      const url = nextUrl || `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=type%3Ddebug&batch=100&from=${new Date(Date.now() - 30 * 60 * 1000).toISOString()}&to=${new Date().toISOString()}&order=newest_first`;
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${BETTERSTACK_TOKEN}` },
+        redirect: 'follow' // Follow redirects as per API docs
+      });
 
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const logs = Array.isArray(data) ? data : [data];
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to fetch logs`);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(`Unexpected response format: Content-Type=${contentType}`);
+      }
+
+      const data = await response.json();
+      nextUrl = data.pagination?.next || null;
+
+      const logs = data.rows || [];
+      if (logs.length > 0) {
         logs.forEach((log, index) => {
           try {
             const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
@@ -259,58 +261,32 @@ function initLogStream() {
             console.warn(`Invalid log format at index ${index}:`, error);
           }
         });
-      } catch (error) {
-        console.error('Failed to parse WebSocket message:', error);
+        wsStatus.textContent = 'Receiving live logs from Better Stack';
+        wsStatus.className = 'mb-4 text-green-400';
+      } else {
+        wsStatus.textContent = 'Waiting for new logs...';
+        wsStatus.className = 'mb-4 text-gray-400';
       }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      wsStatus.textContent = 'WebSocket error. Using mock data or check proxy.';
+    } catch (error) {
+      console.error('Log fetching error:', error);
+      wsStatus.textContent = `Error: ${error.message}. Using mock data or check proxy setup.`;
       wsStatus.className = 'mb-4 text-red-400';
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
-      wsStatus.textContent = 'WebSocket disconnected. Retrying...';
-      wsStatus.className = 'mb-4 text-yellow-400';
-      setTimeout(connectWebSocket, 5000); // Retry after 5 seconds
-    };
-
-    return ws;
-  }
-
-  let ws = null;
-
-  function updateAlerts() {
-    alertList.innerHTML = '';
-    if (isLive) {
-      if (!ws || ws.readyState === WebSocket.CLOSED) {
-        ws = connectWebSocket();
-      }
-    } else {
-      if (ws) {
-        ws.close();
-        ws = null;
-      }
-      generateMockAlerts().forEach(alert => alertList.prepend(processAlert(alert)));
-      wsStatus.textContent = 'Using mock data. Set up a proxy for live logs.';
-      wsStatus.className = 'mb-4 text-yellow-400';
-    }
-    while (alertList.children.length > 20) {
-      alertList.removeChild(alertList.lastChild);
+      if (!isLive) generateMockAlerts().forEach(alert => alertList.prepend(processAlert(alert)));
     }
   }
 
   toggleLive.addEventListener('click', () => {
     isLive = !isLive;
     toggleLive.textContent = `${isLive ? 'Live Data' : 'Mock Data'} (Toggle ${isLive ? 'Mock' : 'Live'})`;
-    updateAlerts();
+    alertList.innerHTML = '';
+    nextUrl = null;
+    fetchLogs();
   });
 
   wsStatus.textContent = 'Starting with mock data...';
   wsStatus.className = 'mb-4 text-yellow-400';
-  updateAlerts();
+  fetchLogs();
+  setInterval(fetchLogs, POLLING_INTERVAL);
 }
 
 // Initialize both functionalities
