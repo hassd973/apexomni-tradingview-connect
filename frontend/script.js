@@ -1,8 +1,8 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const WEBSOCKET_URL = 'wss://apexomni-backend.onrender.com'; // Public Render Web Service URL
-const POLLING_URL = 'https://apexomni-backend.onrender.com/alerts'; // Fallback HTTP endpoint
+const BETTERSTACK_LOGS_API = 'https://in.logs.betterstack.com/api/v1/query';
+const BETTERSTACK_TOKEN = 'kbwEU9ZqoTy2JHtpHda8dpKm'; // Replace with your Better Stack source token
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 
 // Fetch low-volume tokens from multiple sources
@@ -137,112 +137,59 @@ function processAlert(alert) {
   return li;
 }
 
-// Initialize WebSocket for TradingView alerts
-function initWebSocket() {
-  let ws;
+// Fetch live logs from Better Stack
+async function initLogStream() {
   const wsStatus = document.getElementById('ws-status');
   const alertList = document.getElementById('alert-list');
-  let retryCount = 0;
-  const maxRetries = 5;
-  let isPolling = false;
+  let lastTimestamp = new Date().toISOString(); // Track last log timestamp
 
-  function connect() {
+  async function pollLogs() {
     try {
-      ws = new WebSocket(WEBSOCKET_URL);
-    } catch (error) {
-      wsStatus.textContent = `Failed to initialize WebSocket: ${error.message}. Switching to HTTP polling.`;
-      wsStatus.className = 'mb-4 text-danger';
-      console.error('WebSocket initialization error:', error);
-      startPolling();
-      return;
-    }
-
-    ws.onopen = () => {
-      wsStatus.textContent = 'Connected to WebSocket';
-      wsStatus.className = 'mb-4 text-success';
-      retryCount = 0;
-      console.log('WebSocket connected to:', WEBSOCKET_URL);
-      if (isPolling) {
-        isPolling = false; // Stop polling if WebSocket connects
-      }
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const alert = JSON.parse(event.data);
-        const li = processAlert(alert);
-        alertList.prepend(li);
-        while (alertList.children.length > 20) {
-          alertList.removeChild(alertList.lastChild);
+      const query = `SELECT * FROM logs WHERE dt > '${lastTimestamp}' ORDER BY dt DESC LIMIT 20`;
+      const response = await fetch(`${BETTERSTACK_LOGS_API}?query=${encodeURIComponent(query)}`, {
+        headers: {
+          'Authorization': `Bearer ${BETTERSTACK_TOKEN}`
         }
-      } catch (error) {
-        console.error('Error processing alert:', error);
-      }
-    };
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      const logs = data.data || [];
 
-    ws.onclose = (event) => {
-      console.warn(`WebSocket closed: Code=${event.code}, Reason=${event.reason || 'No reason provided'}`);
-      let errorMessage = 'Disconnected from WebSocket.';
-      if (event.code === 1006) {
-        errorMessage += ' Network issue or backend not running. Ensure backend accepts Render IPs: 44.226.145.213, 54.187.200.255, 34.213.214.55, 35.164.95.156, 44.230.95.183, 44.229.200.200.';
-      } else if (event.code === 1001) {
-        errorMessage += ' Backend may be shutting down.';
-      }
-      if (retryCount < maxRetries) {
-        wsStatus.textContent = `${errorMessage} Reconnecting (${retryCount + 1}/${maxRetries})...`;
-        wsStatus.className = 'mb-4 text-danger';
-        retryCount++;
-        setTimeout(connect, 5000);
-      } else {
-        wsStatus.textContent = `${errorMessage} Failed after ${maxRetries} attempts. Switching to HTTP polling.`;
-        wsStatus.className = 'mb-4 text-danger';
-        startPolling();
-      }
-    };
-
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      wsStatus.textContent = 'WebSocket error occurred. Check console and ensure backend is accessible from Render IPs: 44.226.145.213, 54.187.200.255, 34.213.214.55, 35.164.95.156, 44.230.95.183, 44.229.200.200.';
-      wsStatus.className = 'mb-4 text-danger';
-    };
-  }
-
-  async function startPolling() {
-    if (isPolling) return;
-    isPolling = true;
-    wsStatus.textContent = 'Using HTTP polling for alerts.';
-    wsStatus.className = 'mb-4 text-gray-400';
-
-    async function poll() {
-      try {
-        const response = await fetch(POLLING_URL);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const alerts = await response.json();
-        if (Array.isArray(alerts)) {
-          alerts.forEach(alert => {
-            const li = processAlert(alert);
-            alertList.prepend(li);
-            while (alertList.children.length > 20) {
-              alertList.removeChild(alertList.lastChild);
+      if (logs.length > 0) {
+        lastTimestamp = logs[0].dt; // Update to latest timestamp
+        logs.reverse().forEach(log => {
+          try {
+            const alert = JSON.parse(log.message); // Assume log.message is JSON
+            if (alert.type === 'debug' && alert.event) { // Filter ICE KING alerts
+              const li = processAlert(alert);
+              alertList.prepend(li);
+              while (alertList.children.length > 20) {
+                alertList.removeChild(alertList.lastChild);
+              }
             }
-          });
-        }
-      } catch (error) {
-        console.error('Polling error:', error);
-        wsStatus.textContent = `Polling error: ${error.message}. Retrying...`;
-        wsStatus.className = 'mb-4 text-danger';
+          } catch (error) {
+            console.warn('Invalid log message format:', log.message);
+          }
+        });
+        wsStatus.textContent = 'Receiving live logs from Better Stack';
+        wsStatus.className = 'mb-4 text-success';
+      } else {
+        wsStatus.textContent = 'Waiting for new logs...';
+        wsStatus.className = 'mb-4 text-gray-400';
       }
-      if (isPolling) {
-        setTimeout(poll, POLLING_INTERVAL);
-      }
+    } catch (error) {
+      console.error('Better Stack polling error:', error);
+      wsStatus.textContent = `Error fetching logs: ${error.message}. Retrying...`;
+      wsStatus.className = 'mb-4 text-danger';
     }
-
-    poll();
+    setTimeout(pollLogs, POLLING_INTERVAL);
   }
 
-  connect();
+  wsStatus.textContent = 'Connecting to Better Stack logs...';
+  wsStatus.className = 'mb-4 text-gray-400';
+  pollLogs();
 }
 
 // Initialize both functionalities
 fetchLowVolumeTokens();
-initWebSocket();
+initLogStream();
