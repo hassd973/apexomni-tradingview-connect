@@ -4,8 +4,14 @@ const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfu
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
 const SOURCE_ID = '1303816';
-const POLLING_INTERVAL = 10000;
+const POLLING_INTERVAL = 15000; // Increased to avoid rate limits
 const BINANCE_API = 'https://api.binance.com/api/v3/klines';
+
+// Mock token data for fallback
+const mockTokens = [
+  { id: 'floki', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
+  { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 }
+];
 
 // Fetch low-volume tokens and top pairs
 async function fetchLowVolumeTokens() {
@@ -13,12 +19,13 @@ async function fetchLowVolumeTokens() {
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
   let tokens = [];
-  const volumeThreshold = 5_000_000;
 
   try {
     const cgResponse = await fetch(COINGECKO_API);
+    if (!cgResponse.ok) throw new Error(`CoinGecko HTTP ${cgResponse.status}`);
     const cgData = await cgResponse.json();
-    tokens.push(...cgData.filter(token => token.total_volume < volumeThreshold).map(token => ({
+    console.log('CoinGecko data:', cgData);
+    tokens.push(...cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
       id: token.id,
       name: token.name,
       symbol: token.symbol.toUpperCase(),
@@ -38,8 +45,10 @@ async function fetchLowVolumeTokens() {
     const cmcResponse = await fetch(COINMARKETCAP_API, {
       headers: { 'X-CMC_PRO_API_KEY': 'bef090eb-323d-4ae8-86dd-266236262f19' }
     });
+    if (!cmcResponse.ok) throw new Error(`CoinMarketCap HTTP ${cmcResponse.status}`);
     const cmcData = await cmcResponse.json();
-    tokens.push(...cmcData.data.filter(token => token.quote.USD.volume_24h < volumeThreshold).map(token => ({
+    console.log('CoinMarketCap data:', cmcData);
+    tokens.push(...cmcData.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
       id: token.slug,
       name: token.name,
       symbol: token.symbol.toUpperCase(),
@@ -57,8 +66,10 @@ async function fetchLowVolumeTokens() {
 
   try {
     const ccResponse = await fetch(CRYPTOCOMPARE_API);
+    if (!ccResponse.ok) throw new Error(`CryptoCompare HTTP ${ccResponse.status}`);
     const ccData = await ccResponse.json();
-    tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < volumeThreshold).map(token => ({
+    console.log('CryptoCompare data:', ccData);
+    tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
       id: token.CoinInfo.Name.toLowerCase(),
       name: token.CoinInfo.FullName,
       symbol: token.CoinInfo.Name.toUpperCase(),
@@ -72,6 +83,11 @@ async function fetchLowVolumeTokens() {
     })));
   } catch (error) {
     console.error('CryptoCompare error:', error);
+  }
+
+  if (tokens.length === 0) {
+    console.warn('No token data fetched. Using mock data.');
+    tokens = mockTokens;
   }
 
   const uniqueTokens = [];
@@ -92,7 +108,7 @@ async function fetchLowVolumeTokens() {
     li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in`;
     const priceChange = token.price_change_percentage_24h;
     const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
-    const priceChangeColor = priceChange >= 0 a ? 'text-green-400' : 'text-red-400';
+    const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
     li.innerHTML = `
       <div class="flex flex-col space-y-1">
         <div class="flex items-center justify-between">
@@ -266,7 +282,7 @@ async function initLogStream() {
 
   async function fetchLogs() {
     try {
-      const url = nextUrl || `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=type%3Ddebug&batch=100&from=${new Date(Date.now() - 30 * 60 * 1000).toISOString()}&to=${new Date().toISOString()}&order=newest_first`;
+      const url = nextUrl || `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=type%3Ddebug&batch=50&from=${new Date(Date.now() - 30 * 60 * 1000).toISOString()}&to=${new Date().toISOString()}&order=newest_first`;
       console.log('Fetching logs from:', url);
       const response = await fetch(url, {
         method: 'GET',
