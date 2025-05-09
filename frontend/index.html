@@ -7,14 +7,13 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.0/dist/chartjs-chart-financial.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
     body {
       font-family: 'Orbitron', sans-serif;
       background: linear-gradient(135deg, #0d1b2a, #1b263b);
       overflow-x: hidden;
     }
-    /* Futuristic Grid Background */
     .grid-bg {
       position: fixed;
       top: 0;
@@ -43,7 +42,6 @@
       5% { transform: translate(2px, -2px); opacity: 0.5; }
       10% { transform: translate(-2px, 2px); opacity: 0.9; }
     }
-    /* Star Animation */
     .particles {
       position: fixed;
       top: 0;
@@ -66,7 +64,6 @@
       50% { opacity: 0.8; }
       100% { transform: translate(100px, -100px); opacity: 0; }
     }
-    /* Glow Effects */
     @keyframes glow-blue {
       0% { text-shadow: 0 0 5px rgba(59, 130, 246, 0.5), 0 0 10px rgba(59, 130, 246, 0.3); }
       50% { text-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.5); }
@@ -129,7 +126,7 @@
     }
     .chart-container {
       position: relative;
-      height: 700px;
+      height: 400px;
       max-width: 100%;
       margin: 0 auto;
       width: 100%;
@@ -144,16 +141,15 @@
     .chart-wrapper.unlocked {
       position: static;
     }
-    #chart-canvas, #volume-canvas {
+    #chart-canvas {
       width: 100% !important;
-      height: 50% !important;
+      height: 100% !important;
     }
     @media (min-width: 640px) {
       .chart-container {
-        height: 900px;
+        height: 500px;
       }
     }
-    /* Dynamic Tooltip with Performance Color */
     [data-tooltip] {
       position: relative;
     }
@@ -172,7 +168,6 @@
       z-index: 10;
       animation: var(--tooltip-glow, glow-blue) 2s infinite;
     }
-    /* Wall Street Marquee */
     .marquee-container {
       background: #111827;
       border: 1px solid rgba(59, 130, 246, 0.3);
@@ -208,7 +203,6 @@
     .marquee-container:hover .marquee {
       animation-play-state: running;
     }
-    /* Connection Status Dot */
     .status-dot {
       display: inline-block;
       width: 8px;
@@ -232,12 +226,9 @@
       <div class="chart-wrapper">
         <div class="flex justify-between items-center mb-2">
           <div class="flex space-x-2 flex-wrap">
-            <button id="timeframe-1min" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">1M</button>
-            <button id="timeframe-5min" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">5M</button>
-            <button id="timeframe-15min" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">15M</button>
-            <button id="timeframe-1hr" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">1H</button>
-            <button id="timeframe-4hr" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">4H</button>
             <button id="timeframe-1d" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm active">1D</button>
+            <button id="timeframe-7d" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">7D</button>
+            <button id="timeframe-30d" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">30D</button>
           </div>
           <button id="toggle-sticky" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs sm:text-sm">Lock Chart</button>
         </div>
@@ -249,7 +240,6 @@
         </div>
         <div id="chart-container" class="mt-2">
           <canvas id="chart-canvas"></canvas>
-          <canvas id="volume-canvas"></canvas>
         </div>
         <h3 id="chart-title" class="text-sm sm:text-lg font-medium mt-2 text-gray-200 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
         <div class="marquee-container">
@@ -270,12 +260,14 @@
     </section>
     <section class="gradient-bg p-3 rounded-lg shadow-md mt-4">
       <h2 class="text-xl sm:text-2xl font-semibold mb-2 glow-purple">Alerts</h2>
-      <div id="ws-status" class="mb-2 text-yellow-400 text-xs sm:text-sm"><span class="status-dot yellow"></span>Starting with mock data...</div>
+      <div id="ws-status" class="mb-2 text-yellow-400 text-xs sm:text-sm">
+        <span class="status-dot yellow"></span>Setting up Better Stack logging...
+      </div>
       <ul id="alert-list" class="space-y-2 max-h-[400px] overflow-y-auto text-sm sm:text-base"></ul>
     </section>
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-400 text-xs sm:text-sm">
-    <p>Powered by CoinGecko, CoinMarketCap, CryptoCompare, Better Stack</p>
+    <p>Powered by CoinGecko, Better Stack</p>
   </footer>
   <script>
     // Add stars
@@ -288,12 +280,7 @@
       star.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(star);
     }
-    // Load script after DOM
-    document.addEventListener('DOMContentLoaded', () => {
-      const script = document.createElement('script');
-      script.src = 'script.js';
-      document.body.appendChild(script);
-    });
   </script>
+  <script src="script.js"></script>
 </body>
 </html>
