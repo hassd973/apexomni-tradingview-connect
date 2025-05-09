@@ -2,7 +2,7 @@ const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currenc
 const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
+const BETTERSTACK_API = '/proxy/live-tail'; // Use proxy endpoint to bypass CORS
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
 const SOURCE_ID = '1303816';
 const POLLING_INTERVAL = 15000;
@@ -86,7 +86,7 @@ async function fetchLowVolumeTokens() {
     const cmcResponse = await fetch(COINMARKETCAP_API, {
       headers: { 'X-CMC_PRO_API_KEY': 'bef090eb-323d-4ae8-86dd-266236262f19' }
     });
-    if (!cmcResponse.ok) throw new Error(`CoinMarketCap HTTP ${cmcResponse.status}`);
+    if (!cmcResponse.ok) throw new Error(`CoinMarketCap HTTP ${cgResponse.status}`);
     const cmcData = await cmcResponse.json();
     console.log('CoinMarketCap data:', cmcData);
     tokens.push(...cmcData.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
@@ -210,8 +210,10 @@ async function fetchLowVolumeTokens() {
       `<span class="glow-purple text-purple-400">${currentPun}</span>`,
       ...losers.map(t => `<span class="glow-red text-red-400">📉 ${t.symbol}: ${t.price_change_percentage_24h.toFixed(2)}%</span>`)
     ];
-    marquee.innerHTML = marqueeItems.join('');
-    setTimeout(updateMarquee, 30000); // Rotate pun after each marquee cycle (30s)
+    // Double the content to eliminate blank space
+    const doubledItems = [...marqueeItems, ...marqueeItems];
+    marquee.innerHTML = doubledItems.join('');
+    setTimeout(updateMarquee, 20000); // Match the CSS animation duration (20s)
   }
   updateMarquee();
 
@@ -413,7 +415,7 @@ function generateMockAlerts() {
   return alerts;
 }
 
-// Fetch logs from Better Stack Live Tail API or use mock data
+// Fetch logs from Better Stack Live Tail API via proxy or use mock data
 async function initLogStream() {
   const wsStatus = document.getElementById('ws-status');
   const alertList = document.getElementById('alert-list');
@@ -426,7 +428,6 @@ async function initLogStream() {
       console.log('Fetching logs from:', url);
       const response = await fetch(url, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${BETTERSTACK_TOKEN}` },
         redirect: 'follow'
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
