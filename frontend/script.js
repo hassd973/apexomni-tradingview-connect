@@ -1,12 +1,13 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
 const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
+const COINGECKO_OHLC_API = 'https://api.coingecko.com/api/v3/coins/{id}/ohlc?vs_currency=usd&days={days}';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/explore-logs';
 const SOURCE_ID = '1303816';
 const POLLING_INTERVAL = 15000;
-const PRICE_UPDATE_INTERVAL = 10000;
+const LIVE_DATA_INTERVAL = 10000; // Update live data every 10 seconds
 
 // Mock token data for fallback, including ConstitutionDAO
 const mockTokens = [
@@ -35,6 +36,7 @@ const iceKingPuns = [
 
 // Global Chart.js instance and state
 let priceChart = null;
+let volumeChart = null;
 let currentToken = null;
 let compareToken = null;
 let currentTimeframe = 1; // Default to 1 day
@@ -46,7 +48,7 @@ async function fetchWithRetry(url, retries = 3, delay = 1000) {
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-      return await response.json();
+      return await response.text(); // Return text for JSONEachRow or JSON
     } catch (error) {
       if (i === retries - 1) throw error;
       console.warn(`Retrying fetch (${i + 1}/${retries})...`, error);
@@ -60,7 +62,7 @@ async function fetchLivePrice(tokenId) {
   try {
     const url = COINGECKO_PRICE_API.replace('{id}', encodeURIComponent(tokenId));
     const data = await fetchWithRetry(url);
-    return data[tokenId]?.usd || 'N/A';
+    return JSON.parse(data)[tokenId]?.usd || 'N/A';
   } catch (error) {
     console.error(`Error fetching live price for ${tokenId}:`, error);
     return 'N/A';
@@ -207,6 +209,7 @@ async function fetchLowVolumeTokens() {
       currentToken = token;
       showPriceChart(token, compareToken, currentTimeframe);
       updateLivePrice();
+      updateLiveData();
     });
     tokenList.appendChild(li);
   });
@@ -270,12 +273,14 @@ async function fetchLowVolumeTokens() {
     showPriceChart(sortedTokens[0], null, currentTimeframe);
     updateLivePrice();
     setInterval(updateLivePrice, PRICE_UPDATE_INTERVAL);
+    updateLiveData();
+    setInterval(updateLiveData, LIVE_DATA_INTERVAL);
   }
 
   loader.style.display = 'none';
 }
 
-// Show Price Chart using Chart.js with CoinGecko data
+// Show Price Chart using Chart.js with candlestick and volume
 async function showPriceChart(token, compareToken, days) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
@@ -293,101 +298,120 @@ async function showPriceChart(token, compareToken, days) {
     chartTitle.style.opacity = '1';
   };
 
-  // Clear and destroy existing chart if it exists
+  // Clear and destroy existing charts if they exist
   if (priceChart) {
     priceChart.destroy();
     priceChart = null;
   }
-
-  // Remove existing canvas and create a new one
-  let chartCanvas = document.getElementById('chart-canvas');
-  if (chartCanvas) {
-    chartCanvas.remove();
+  if (volumeChart) {
+    volumeChart.destroy();
+    volumeChart = null;
   }
-  chartCanvas = document.createElement('canvas');
-  chartCanvas.id = 'chart-canvas';
-  chartCanvas.style.width = '100%';
-  chartCanvas.style.height = '100%';
-  chartContainer.appendChild(chartCanvas);
 
-  // Ensure canvas is in DOM before proceeding
-  if (!chartCanvas || !chartCanvas.getContext) {
+  // Remove existing canvases and create new ones
+  let chartCanvas = document.getElementById('chart-canvas');
+  let volumeCanvas = document.getElementById('volume-canvas');
+  if (chartCanvas) chartCanvas.remove();
+  if (volumeCanvas) volumeCanvas.remove();
+  chartCanvas = document.createElement('canvas');
+  volumeCanvas = document.createElement('canvas');
+  chartCanvas.id = 'chart-canvas';
+  volumeCanvas.id = 'volume-canvas';
+  chartCanvas.style.width = '100%';
+  chartCanvas.style.height = '60%';
+  volumeCanvas.style.width = '100%';
+  volumeCanvas.style.height = '40%';
+  chartContainer.appendChild(chartCanvas);
+  chartContainer.appendChild(volumeCanvas);
+
+  // Ensure canvases are in DOM before proceeding
+  if (!chartCanvas.getContext || !volumeCanvas.getContext) {
     console.error('Canvas creation failed');
     chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to create chart canvas.</div>';
     return;
   }
 
   try {
-    // Fetch historical price data for primary token
-    const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id)).replace('{days}', days);
-    let chartData;
+    // Fetch OHLC data for candlestick chart
+    const ohlcUrl = COINGECKO_OHLC_API.replace('{id}', encodeURIComponent(token.id)).replace('{days}', days);
+    let ohlcData;
     try {
-      chartData = await fetchWithRetry(chartUrl);
-      console.log(`Chart data for ${token.id} (${days} days):`, chartData);
+      const text = await fetchWithRetry(ohlcUrl);
+      ohlcData = JSON.parse(text);
+      console.log(`OHLC data for ${token.id} (${days} days):`, ohlcData);
     } catch (error) {
-      console.warn(`Failed to fetch chart data for ${token.id}. Using mock data.`, error);
-      chartData = mockChartData;
+      console.warn(`Failed to fetch OHLC data for ${token.id}. Using mock data.`, error);
+      ohlcData = mockChartData.prices.map(([time, price]) => [time, price, price, price, price]); // Mock OHLC
     }
 
-    if (!chartData.prices || !Array.isArray(chartData.prices)) {
-      throw new Error('Invalid chart data format: prices array missing');
+    const labels = ohlcData.map(item => new Date(item[0]).toLocaleString());
+    const ohlc = ohlcData.map(item => ({
+      x: item[0],
+      o: item[1], // Open
+      h: item[2], // High
+      l: item[3], // Low
+      c: item[4]  // Close
+    }));
+
+    // Fetch volume data
+    let volumeData;
+    try {
+      const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id)).replace('{days}', days);
+      const text = await fetchWithRetry(chartUrl);
+      const chartData = JSON.parse(text);
+      volumeData = chartData.total_volumes || chartData.prices.map(() => [0, Math.random() * 1000000]); // Fallback to random volume
+      console.log(`Volume data for ${token.id} (${days} days):`, volumeData);
+    } catch (error) {
+      console.warn(`Failed to fetch volume data for ${token.id}. Using mock data.`, error);
+      volumeData = mockChartData.prices.map(() => [0, Math.random() * 1000000]);
     }
 
-    const prices = chartData.prices; // Array of [timestamp, price]
-    const labels = prices.map(price => new Date(price[0]).toLocaleString());
-    const data = prices.map(price => price[1]);
+    const volumes = volumeData.map(item => ({
+      x: item[0],
+      y: item[1] || 0
+    }));
 
     // Fetch data for comparison token if selected
-    let compareData = null;
+    let compareOHLC = null;
+    let compareVolume = null;
     if (compareToken) {
+      const compareOHLCUrl = COINGECKO_OHLC_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', days);
       const compareChartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', days);
       try {
-        compareData = await fetchWithRetry(compareChartUrl);
-        console.log(`Chart data for ${compareToken.id} (${days} days):`, compareData);
+        const compareText = await fetchWithRetry(compareOHLCUrl);
+        compareOHLC = JSON.parse(compareText);
+        const compareChartText = await fetchWithRetry(compareChartUrl);
+        const compareChartData = JSON.parse(compareChartText);
+        compareVolume = compareChartData.total_volumes || compareChartData.prices.map(() => [0, Math.random() * 1000000]);
       } catch (error) {
-        console.warn(`Failed to fetch chart data for ${compareToken.id}.`, error);
-        compareData = null;
+        console.warn(`Failed to fetch data for ${compareToken.id}.`, error);
       }
     }
 
-    // Prepare datasets
-    const datasets = [
-      {
-        label: `${token.symbol}/USD Price`,
-        data: data,
-        borderColor: '#9333ea',
-        backgroundColor: 'rgba(147, 51, 234, 0.2)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-      }
-    ];
-
-    if (compareData && compareData.prices && Array.isArray(compareData.prices)) {
-      const comparePrices = compareData.prices;
-      const compareDataPoints = comparePrices.map(price => price[1]);
-      datasets.push({
-        label: `${compareToken.symbol}/USD Price`,
-        data: compareDataPoints,
-        borderColor: '#34d399',
-        backgroundColor: 'rgba(52, 211, 153, 0.2)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-      });
-    }
-
-    // Create new Chart.js chart
+    // Create candlestick chart
     const ctx = chartCanvas.getContext('2d');
-    if (!ctx) {
-      throw new Error('Failed to get canvas 2D context');
-    }
-
     priceChart = new Chart(ctx, {
-      type: 'line',
+      type: 'candlestick',
       data: {
-        labels: labels,
-        datasets: datasets
+        datasets: [{
+          label: `${token.symbol}/USD Price`,
+          data: ohlc,
+          borderColor: (ctx) => (ctx.raw.c > ctx.raw.o ? '#34d399' : '#f87171'),
+          backgroundColor: (ctx) => (ctx.raw.c > ctx.raw.o ? 'rgba(52, 211, 153, 0.5)' : 'rgba(248, 113, 113, 0.5)'),
+          borderWidth: 1
+        }].concat(compareOHLC ? [{
+          label: `${compareToken.symbol}/USD Price`,
+          data: compareOHLC.map(item => ({
+            x: item[0],
+            o: item[1],
+            h: item[2],
+            l: item[3],
+            c: item[4]
+          })),
+          borderColor: (ctx) => (ctx.raw.c > ctx.raw.o ? '#9333ea' : '#a855f7'),
+          backgroundColor: (ctx) => (ctx.raw.c > ctx.raw.o ? 'rgba(147, 51, 234, 0.5)' : 'rgba(168, 85, 247, 0.5)'),
+          borderWidth: 1
+        }] : [])
       },
       options: {
         responsive: true,
@@ -432,18 +456,135 @@ async function showPriceChart(token, compareToken, days) {
               color: '#d1d4dc'
             }
           }
+        }
+      }
+    });
+
+    // Create volume chart
+    const volumeCtx = volumeCanvas.getContext('2d');
+    volumeChart = new Chart(volumeCtx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: `${token.symbol} Volume`,
+          data: volumes.map(item => item.y),
+          backgroundColor: 'rgba(59, 130, 246, 0.7)',
+          borderColor: 'rgba(59, 130, 246, 1)',
+          borderWidth: 1
+        }].concat(compareVolume ? [{
+          label: `${compareToken.symbol} Volume`,
+          data: compareVolume.map(item => item[1] || 0),
+          backgroundColor: 'rgba(147, 51, 234, 0.7)',
+          borderColor: 'rgba(147, 51, 234, 1)',
+          borderWidth: 1
+        }] : [])
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Time',
+              color: '#d1d4dc'
+            },
+            ticks: {
+              color: '#d1d4dc',
+              maxTicksLimit: 7
+            },
+            grid: {
+              color: 'rgba(59, 130, 246, 0.1)'
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Volume',
+              color: '#d1d4dc'
+            },
+            ticks: {
+              color: '#d1d4dc',
+              callback: function(value) {
+                return value.toLocaleString();
+              }
+            },
+            grid: {
+              color: 'rgba(59, 130, 246, 0.1)'
+            }
+          }
         },
-        elements: {
-          line: {
-            borderWidth: 2
+        plugins: {
+          legend: {
+            labels: {
+              color: '#d1d4dc'
+            }
           }
         }
       }
     });
+
     console.log(`Chart rendered for ${token.id}${compareToken ? ` vs ${compareToken.id}` : ''} (${days} days)`);
   } catch (error) {
     console.error('Error rendering chart:', error);
     chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
+  }
+}
+
+// Update chart with live data
+async function updateLiveData() {
+  if (!currentToken || !priceChart || !volumeChart) return;
+
+  try {
+    const ohlcUrl = COINGECKO_OHLC_API.replace('{id}', encodeURIComponent(currentToken.id)).replace('{days}', '0.01'); // Latest 14.4 minutes
+    const text = await fetchWithRetry(ohlcUrl);
+    const liveOHLC = JSON.parse(text);
+    const latestOHLC = liveOHLC[liveOHLC.length - 1];
+    priceChart.data.datasets[0].data.push({
+      x: latestOHLC[0],
+      o: latestOHLC[1],
+      h: latestOHLC[2],
+      l: latestOHLC[3],
+      c: latestOHLC[4]
+    });
+    if (priceChart.data.datasets[0].data.length > 100) priceChart.data.datasets[0].data.shift(); // Limit to 100 data points
+
+    const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(currentToken.id)).replace('{days}', '0.01');
+    const chartText = await fetchWithRetry(chartUrl);
+    const chartData = JSON.parse(chartText);
+    const latestVolume = chartData.total_volumes ? chartData.total_volumes[chartData.total_volumes.length - 1][1] : Math.random() * 1000000;
+    volumeChart.data.datasets[0].data.push(latestVolume);
+    if (volumeChart.data.datasets[0].data.length > 100) volumeChart.data.datasets[0].data.shift();
+
+    if (compareToken) {
+      const compareOHLCUrl = COINGECKO_OHLC_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', '0.01');
+      const compareText = await fetchWithRetry(compareOHLCUrl);
+      const compareLiveOHLC = JSON.parse(compareText);
+      const latestCompareOHLC = compareLiveOHLC[compareLiveOHLC.length - 1];
+      priceChart.data.datasets[1].data.push({
+        x: latestCompareOHLC[0],
+        o: latestCompareOHLC[1],
+        h: latestCompareOHLC[2],
+        l: latestCompareOHLC[3],
+        c: latestCompareOHLC[4]
+      });
+      if (priceChart.data.datasets[1].data.length > 100) priceChart.data.datasets[1].data.shift();
+
+      const compareChartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', '0.01');
+      const compareChartText = await fetchWithRetry(compareChartUrl);
+      const compareChartData = JSON.parse(compareChartText);
+      const latestCompareVolume = compareChartData.total_volumes ? compareChartData.total_volumes[compareChartData.total_volumes.length - 1][1] : Math.random() * 1000000;
+      volumeChart.data.datasets[1].data.push(latestCompareVolume);
+      if (volumeChart.data.datasets[1].data.length > 100) volumeChart.data.datasets[1].data.shift();
+    }
+
+    priceChart.update();
+    volumeChart.update();
+  } catch (error) {
+    console.error('Error updating live data:', error);
   }
 }
 
@@ -465,13 +606,6 @@ function processAlert(alert) {
 async function initLogStream() {
   const alertList = document.getElementById('alert-list');
   const wsStatus = document.getElementById('ws-status');
-  if (!wsStatus) {
-    const alertSection = document.querySelector('section:nth-child(2)');
-    wsStatus = document.createElement('p');
-    wsStatus.id = 'ws-status';
-    wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
-    alertSection.insertBefore(wsStatus, alertList);
-  }
 
   async function fetchLogs() {
     const now = new Date().toISOString();
@@ -488,26 +622,28 @@ async function initLogStream() {
       const text = await response.text();
       const logs = text.trim().split('\n').filter(line => line.trim()).map(line => JSON.parse(line));
       if (logs.length > 0) {
+        alertList.innerHTML = ''; // Clear existing alerts
         logs.forEach(log => alertList.prepend(processAlert(log)));
         while (alertList.children.length > 20) {
           alertList.removeChild(alertList.lastChild);
         }
-        wsStatus.textContent = 'Live logs active';
+        wsStatus.innerHTML = '<span class="status-dot green"></span>Live logs active';
         wsStatus.className = 'mb-2 text-green-400 text-xs sm:text-sm';
       } else {
-        wsStatus.textContent = 'No new logs...';
+        wsStatus.innerHTML = '<span class="status-dot yellow"></span>No new logs...';
         wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
       }
     } catch (error) {
       console.error('Log fetch error:', error);
-      wsStatus.textContent = `Error: ${error.message}. Using mock data.`;
+      wsStatus.innerHTML = '<span class="status-dot red"></span>Error: ' + error.message;
       wsStatus.className = 'mb-2 text-red-400 text-xs sm:text-sm';
       const mockAlerts = generateMockAlerts();
+      alertList.innerHTML = ''; // Clear existing alerts
       mockAlerts.forEach(alert => alertList.prepend(processAlert(alert)));
     }
   }
 
-  wsStatus.textContent = 'Starting with mock data...';
+  wsStatus.innerHTML = '<span class="status-dot yellow"></span>Starting with mock data...';
   wsStatus.className = 'mb-2 text-yellow-400 text-xs sm:text-sm';
   fetchLogs();
   setInterval(fetchLogs, POLLING_INTERVAL);
