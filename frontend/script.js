@@ -1,10 +1,9 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_API = 'https://s1303816.eu-nbg-2.betterstackdata.com';
+const BETTERSTACK_WS = 'wss://eu-nbg-2-vec.betterstackdata.com:6514';
 const BETTERSTACK_TOKEN = 'x5nvK7DNDURcpAHEBuCbHrza';
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
-const FETCH_TIMEOUT = 10000; // 10-second timeout
 
 // Fetch low-volume tokens and top pairs
 async function fetchLowVolumeTokens() {
@@ -227,101 +226,91 @@ function generateMockAlerts() {
   return alerts;
 }
 
-// Fetch logs from Better Stack or use mock data
-async function initLogStream() {
+// Fetch logs from Better Stack WebSocket or use mock data
+function initLogStream() {
   const wsStatus = document.getElementById('ws-status');
   const alertList = document.getElementById('alert-list');
   const toggleLive = document.getElementById('toggle-live');
   let isLive = false;
-  let offset = 0;
 
-  async function pollLogs() {
-    try {
-      if (isLive) {
-        const query = `SELECT * FROM t371838.ice_king_logs WHERE type = 'debug' ORDER BY timestamp DESC LIMIT 100 OFFSET ${offset}`;
-        console.debug(`Fetching Better Stack logs: Query=${query}`);
+  function connectWebSocket() {
+    const ws = new WebSocket(`${BETTERSTACK_WS}?token=${BETTERSTACK_TOKEN}`);
+    ws.onopen = () => {
+      console.log('WebSocket connection opened');
+      wsStatus.textContent = 'Connected to Better Stack WebSocket';
+      wsStatus.className = 'mb-4 text-green-400';
+    };
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
-        const response = await fetch(BETTERSTACK_API, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain',
-            'Authorization': `Bearer ${BETTERSTACK_TOKEN}`,
-            'Accept': 'application/json'
-          },
-          body: query,
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: Failed to fetch logs`);
-        }
-
-        const contentType = response.headers.get('content-type');
-        if (!contentType || !contentType.includes('application/json')) {
-          throw new Error(`Unexpected response format: Content-Type=${contentType}`);
-        }
-
-        const data = await response.json();
-        const logs = Array.isArray(data) ? data : data.data || [];
-        if (logs.length > 0) {
-          logs.forEach((log, index) => {
-            try {
-              const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
-              if (alert.type === 'debug' && alert.event) {
-                const li = processAlert(alert);
-                alertList.prepend(li);
-                while (alertList.children.length > 20) {
-                  alertList.removeChild(alertList.lastChild);
-                }
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const logs = Array.isArray(data) ? data : [data];
+        logs.forEach((log, index) => {
+          try {
+            const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
+            if (alert.type === 'debug' && alert.event) {
+              const li = processAlert(alert);
+              alertList.prepend(li);
+              while (alertList.children.length > 20) {
+                alertList.removeChild(alertList.lastChild);
               }
-            } catch (error) {
-              console.warn(`Invalid log format at index ${index}:`, error);
             }
-          });
-          wsStatus.textContent = 'Receiving live logs from Better Stack';
-          wsStatus.className = 'mb-4 text-green-400';
-          offset += logs.length;
-        } else {
-          wsStatus.textContent = 'Waiting for new logs...';
-          wsStatus.className = 'mb-4 text-gray-400';
-        }
-      } else {
-        const mockAlerts = generateMockAlerts();
-        mockAlerts.forEach(alert => {
-          const li = processAlert(alert);
-          alertList.prepend(li);
-          while (alertList.children.length > 20) {
-            alertList.removeChild(alertList.lastChild);
+          } catch (error) {
+            console.warn(`Invalid log format at index ${index}:`, error);
           }
         });
-        wsStatus.textContent = 'Using mock data. Set up a proxy for live logs.';
-        wsStatus.className = 'mb-4 text-yellow-400';
+      } catch (error) {
+        console.error('Failed to parse WebSocket message:', error);
       }
-    } catch (error) {
-      console.error('Log polling error:', error);
-      wsStatus.textContent = `Error: ${error.message}. Using mock data or check proxy setup.`;
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      wsStatus.textContent = 'WebSocket error. Using mock data or check proxy.';
       wsStatus.className = 'mb-4 text-red-400';
-      if (!isLive) generateMockAlerts().forEach(alert => alertList.prepend(processAlert(alert)));
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+      wsStatus.textContent = 'WebSocket disconnected. Retrying...';
+      wsStatus.className = 'mb-4 text-yellow-400';
+      setTimeout(connectWebSocket, 5000); // Retry after 5 seconds
+    };
+
+    return ws;
+  }
+
+  let ws = null;
+
+  function updateAlerts() {
+    alertList.innerHTML = '';
+    if (isLive) {
+      if (!ws || ws.readyState === WebSocket.CLOSED) {
+        ws = connectWebSocket();
+      }
+    } else {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+      generateMockAlerts().forEach(alert => alertList.prepend(processAlert(alert)));
+      wsStatus.textContent = 'Using mock data. Set up a proxy for live logs.';
+      wsStatus.className = 'mb-4 text-yellow-400';
     }
-    setTimeout(pollLogs, POLLING_INTERVAL);
+    while (alertList.children.length > 20) {
+      alertList.removeChild(alertList.lastChild);
+    }
   }
 
   toggleLive.addEventListener('click', () => {
     isLive = !isLive;
     toggleLive.textContent = `${isLive ? 'Live Data' : 'Mock Data'} (Toggle ${isLive ? 'Mock' : 'Live'})`;
-    alertList.innerHTML = '';
-    offset = 0;
-    pollLogs();
+    updateAlerts();
   });
 
   wsStatus.textContent = 'Starting with mock data...';
   wsStatus.className = 'mb-4 text-yellow-400';
-  pollLogs();
+  updateAlerts();
 }
 
 // Initialize both functionalities
