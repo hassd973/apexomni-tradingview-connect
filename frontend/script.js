@@ -7,10 +7,11 @@ const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
 const SOURCE_ID = '1303816';
 const POLLING_INTERVAL = 15000;
 
-// Mock token data for fallback
+// Mock token data for fallback, including ConstitutionDAO
 const mockTokens = [
   { id: 'floki', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
-  { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 }
+  { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 },
+  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'CryptoCompare', score: 70.6 }
 ];
 
 // Mock historical data for chart fallback
@@ -30,6 +31,9 @@ const iceKingPuns = [
   "I’m the coolest king around! 👑❄️",
   "Penguin power activate! 🐧🧊😂"
 ];
+
+// Global Chart.js instance
+let priceChart = null;
 
 // Retry fetch with delay
 async function fetchWithRetry(url, retries = 3, delay = 1000) {
@@ -201,7 +205,7 @@ async function fetchLowVolumeTokens() {
       ...losers.map(t => `<span class="glow-red text-red-400">📉 ${t.symbol}: ${t.price_change_percentage_24h.toFixed(2)}%</span>`)
     ];
     marquee.innerHTML = marqueeItems.join('');
-    setTimeout(updateMarquee, 5000); // Rotate pun every 5 seconds
+    setTimeout(updateMarquee, 30000); // Rotate pun after each marquee cycle (30s)
   }
   updateMarquee();
 
@@ -217,7 +221,7 @@ async function fetchLowVolumeTokens() {
 
 // Show Price Chart using Chart.js with CoinGecko data
 async function showPriceChart(token) {
-  const chartCanvas = document.getElementById('chart-canvas');
+  const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
 
@@ -237,14 +241,23 @@ async function showPriceChart(token) {
     priceChart = null;
   }
 
-  // Clear the canvas and recreate it to avoid rendering issues
-  const parent = chartCanvas.parentElement;
-  chartCanvas.remove();
-  const newCanvas = document.createElement('canvas');
-  newCanvas.id = 'chart-canvas';
-  newCanvas.style.width = '100%';
-  newCanvas.style.height = '100%';
-  parent.appendChild(newCanvas);
+  // Remove existing canvas and create a new one
+  let chartCanvas = document.getElementById('chart-canvas');
+  if (chartCanvas) {
+    chartCanvas.remove();
+  }
+  chartCanvas = document.createElement('canvas');
+  chartCanvas.id = 'chart-canvas';
+  chartCanvas.style.width = '100%';
+  chartCanvas.style.height = '100%';
+  chartContainer.appendChild(chartCanvas);
+
+  // Ensure canvas is in DOM before proceeding
+  if (!chartCanvas || !chartCanvas.getContext) {
+    console.error('Canvas creation failed');
+    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to create chart canvas.</div>';
+    return;
+  }
 
   try {
     // Fetch historical price data from CoinGecko with retry
@@ -267,7 +280,11 @@ async function showPriceChart(token) {
     const data = prices.map(price => price[1]);
 
     // Create new Chart.js chart
-    const ctx = newCanvas.getContext('2d');
+    const ctx = chartCanvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Failed to get canvas 2D context');
+    }
+
     priceChart = new Chart(ctx, {
       type: 'line',
       data: {
@@ -336,7 +353,7 @@ async function showPriceChart(token) {
     console.log(`Chart rendered for ${token.id}`);
   } catch (error) {
     console.error('Error rendering chart:', error);
-    newCanvas.parentElement.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
+    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
   }
 }
 
