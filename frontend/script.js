@@ -149,11 +149,15 @@ async function fetchLowVolumeTokens() {
 async function showPriceChart(token) {
   const chartCanvas = document.getElementById('chart-canvas');
   const chartTitle = document.getElementById('chart-title');
+  const chartFallback = document.getElementById('chart-fallback');
   if (!chartCanvas) {
     console.error('Chart canvas not found in DOM');
+    chartFallback.style.display = 'block';
     return;
   }
   console.log('Chart canvas found:', chartCanvas);
+  chartCanvas.style.display = 'block';
+  chartFallback.style.display = 'none';
 
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
 
@@ -176,6 +180,7 @@ async function showPriceChart(token) {
   const ctx = chartCanvas.getContext('2d');
   if (!ctx) {
     console.error('Failed to get 2D context from canvas');
+    chartFallback.style.display = 'block';
     return;
   }
   console.log('Chart context obtained:', ctx);
@@ -184,6 +189,7 @@ async function showPriceChart(token) {
     window.chartInstance = new Chart(ctx, {
       type: 'line',
       data: {
+        labels: [], // Will be filled with timestamps
         datasets: [{
           label: `${token.symbol}/USDT`,
           data: [],
@@ -199,14 +205,12 @@ async function showPriceChart(token) {
         maintainAspectRatio: false,
         scales: {
           x: {
-            type: 'time',
-            time: { unit: 'hour' },
             title: { display: false },
-            grid: { color: 'rgba(74, 222, 128, 0.1)' }
+            grid: { color: 'rgba(147, 51, 234, 0.1)' }
           },
           y: {
             title: { display: false },
-            grid: { color: 'rgba(124, 58, 237, 0.1)' },
+            grid: { color: 'rgba(59, 130, 246, 0.1)' },
             beginAtZero: false
           }
         },
@@ -220,6 +224,7 @@ async function showPriceChart(token) {
     console.log('Chart instance created:', window.chartInstance);
   } catch (error) {
     console.error('Chart initialization error:', error);
+    chartFallback.style.display = 'block';
     return;
   }
 
@@ -231,19 +236,25 @@ async function showPriceChart(token) {
     const data = await response.json();
     if (!Array.isArray(data) || data.length === 0) throw new Error('No data from Binance');
     console.log('Binance data:', data);
-    const prices = data.map(d => ({
-      x: new Date(parseInt(d[0])),
-      y: parseFloat(d[4]) // Use closing price
-    }));
+    const labels = data.map(d => new Date(parseInt(d[0])).toLocaleTimeString());
+    const prices = data.map(d => parseFloat(d[4])); // Use closing price
+    window.chartInstance.data.labels = labels;
     window.chartInstance.data.datasets[0].data = prices;
     window.chartInstance.update();
     console.log('Chart updated with Binance data');
+
+    let lastClose = prices[prices.length - 1];
+    setInterval(() => {
+      lastClose += (Math.random() - 0.5) * lastClose * 0.001;
+      window.chartInstance.data.labels.push(new Date().toLocaleTimeString());
+      window.chartInstance.data.datasets[0].data.push(lastClose);
+      window.chartInstance.update();
+    }, 5000);
   } catch (error) {
     console.error('Chart data error:', error);
-    const mockPrices = Array.from({ length: 168 }, (_, i) => ({
-      x: new Date(Date.now() - (167 - i) * 3600 * 1000),
-      y: token.current_price * (1 - 0.05 + Math.random() * 0.1)
-    }));
+    const mockLabels = Array.from({ length: 168 }, (_, i) => new Date(Date.now() - (167 - i) * 3600 * 1000).toLocaleTimeString());
+    const mockPrices = Array.from({ length: 168 }, (_, i) => token.current_price * (1 - 0.05 + Math.random() * 0.1));
+    window.chartInstance.data.labels = mockLabels;
     window.chartInstance.data.datasets[0].data = mockPrices;
     window.chartInstance.update();
     console.log('Chart updated with mock data');
