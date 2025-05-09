@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🧊 ICE KING DASHBOARD 👑</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     body {
       font-family: 'Orbitron', sans-serif;
@@ -109,6 +109,14 @@
       transform: scale(1.02);
       transition: all 0.3s ease;
     }
+    .hover-performance-green:hover {
+      box-shadow: 0 0 15px rgba(74, 222, 128, 0.8), 0 0 25px rgba(74, 222, 128, 0.5);
+      transition: all 0.3s ease;
+    }
+    .hover-performance-red:hover {
+      box-shadow: 0 0 15px rgba(248, 113, 113, 0.8), 0 0 25px rgba(248, 113, 113, 0.5);
+      transition: all 0.3s ease;
+    }
     .gradient-bg {
       background: linear-gradient(135deg, rgba(17, 24, 39, 0.6), rgba(45, 55, 72, 0.4));
       border: 1px solid rgba(59, 130, 246, 0.2);
@@ -118,10 +126,11 @@
       height: 300px;
       max-width: 1000px;
       margin: 0 auto;
-      visibility: visible !important;
+      width: 100%;
     }
     #chart-canvas {
-      visibility: visible !important;
+      width: 100% !important;
+      height: 100% !important;
     }
     @media (min-width: 640px) {
       .chart-container {
@@ -137,10 +146,7 @@
     <div class="text-center w-full px-2">
       <h1 class="text-2xl sm:text-3xl font-bold glow-blue">🧊 ICE KING DASHBOARD 👑</h1>
       <p class="text-sm sm:text-base mt-1 text-gray-300">Live Price Chart</p>
-      <div id="chart-container" class="mt-2">
-        <canvas id="chart-canvas" class="w-full h-full bg-transparent rounded-lg shadow-md border border-gray-700/50"></canvas>
-        <div id="chart-fallback" class="text-gray-400 text-sm" style="display: none;">Chart failed to load. Check console for errors.</div>
-      </div>
+      <div id="chart-container" class="mt-2"></div>
       <h3 id="chart-title" class="text-sm sm:text-lg font-medium mt-2 text-gray-200 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
     </div>
   </header>
