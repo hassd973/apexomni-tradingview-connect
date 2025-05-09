@@ -4,21 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ICE KING 🌍🧊👑 Trading Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles.css">
   <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
   <header class="w-full bg-gray-800/30 backdrop-blur-md p-6 flex justify-center items-center">
-    <div class="text-center">
+    <div class="text-center w-full">
       <h1 class="text-4xl font-bold">ICE KING 🌍🧊👑 Trading Dashboard</h1>
-      <p class="text-lg mt-2">Top Performing Token Chart</p>
-      <div id="chart-container" class="mt-4">
-        <h3 id="chart-title" class="text-xl font-medium mb-4"></h3>
-        <div class="flex justify-center">
-          <div id="chart-canvas" class="w-[90%] max-w-[1000px] h-[400px] bg-transparent backdrop-blur-md rounded-xl shadow-lg border border-gray-700/50"></div>
-        </div>
+      <p class="text-lg mt-2">Top Performing Token Live Chart</p>
+      <div id="chart-container" class="mt-4 flex justify-center">
+        <div id="chart-canvas" class="w-full max-w-[1200px] h-[500px] bg-transparent backdrop-blur-md rounded-xl shadow-lg border border-gray-700/50"></div>
       </div>
+      <h3 id="chart-title" class="text-xl font-medium mt-4"></h3>
     </div>
   </header>
   <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
