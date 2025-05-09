@@ -13,6 +13,7 @@
       background: linear-gradient(135deg, #0d1b2a, #1b263b);
       overflow-x: hidden;
     }
+    /* Futuristic Grid Background */
     .grid-bg {
       position: fixed;
       top: 0;
@@ -41,6 +42,7 @@
       5% { transform: translate(2px, -2px); opacity: 0.5; }
       10% { transform: translate(-2px, 2px); opacity: 0.9; }
     }
+    /* Star Animation */
     .particles {
       position: fixed;
       top: 0;
@@ -63,6 +65,7 @@
       50% { opacity: 0.8; }
       100% { transform: translate(100px, -100px); opacity: 0; }
     }
+    /* Glow Effects */
     @keyframes glow-blue {
       0% { text-shadow: 0 0 5px rgba(59, 130, 246, 0.5), 0 0 10px rgba(59, 130, 246, 0.3); }
       50% { text-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.5); }
@@ -149,6 +152,7 @@
         height: 700px;
       }
     }
+    /* Dynamic Tooltip with Performance Color */
     [data-tooltip] {
       position: relative;
     }
@@ -167,6 +171,7 @@
       z-index: 10;
       animation: var(--tooltip-glow, glow-blue) 2s infinite;
     }
+    /* Wall Street Marquee */
     .marquee-container {
       background: #111827;
       border: 1px solid rgba(59, 130, 246, 0.3);
@@ -202,17 +207,6 @@
     .marquee-container:hover .marquee {
       animation-play-state: running;
     }
-    .status-dot {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 4px;
-      vertical-align: middle;
-    }
-    .status-dot.green { background-color: #34d399; }
-    .status-dot.red { background-color: #f87171; }
-    .status-dot.yellow { background-color: #facc15; }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col">
@@ -262,17 +256,11 @@
     </section>
     <section class="gradient-bg p-3 rounded-lg shadow-md mt-4">
       <h2 class="text-xl sm:text-2xl font-semibold mb-2 glow-purple">Alerts</h2>
-      <div id="ws-status" class="mb-2 text-yellow-400 text-xs sm:text-sm">
-        <span class="status-dot yellow"></span>Setting up Better Stack logging...
-      </div>
       <ul id="alert-list" class="space-y-2 max-h-[400px] overflow-y-auto text-sm sm:text-base"></ul>
     </section>
-    <div id="error-fallback" class="text-red-400 text-sm mt-4">
-      Failed to load data. Check console for details or verify internet connection/API setup.
-    </div>
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-400 text-xs sm:text-sm">
-    <p>Powered by CoinGecko, CoinMarketCap, CryptoCompare, Better Stack</p>
+    <p>Powered by CoinGecko, CoinMarketCap, CryptoCompare</p>
   </footer>
   <script>
     // Add stars
@@ -285,7 +273,12 @@
       star.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(star);
     }
+    // Load script after DOM
+    document.addEventListener('DOMContentLoaded', () => {
+      const script = document.createElement('script');
+      script.src = 'script.js';
+      document.body.appendChild(script);
+    });
   </script>
-  <script src="script.js"></script>
 </body>
 </html>
