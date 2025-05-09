@@ -1,9 +1,8 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_API = 'https://eu-nbg-2-connect.betterstackdata.com';
-const BETTERSTACK_USERNAME = 'ua439SvEJ8fzbFUfZLgfrngQ0hPAJWpeW';
-const BETTERSTACK_PASSWORD = 'ACTAv2qyDnjVwEoeByXTZzY7LT0CBcT4Zd86AjYnE7fy6kPB5TYr4pjFqIfTjiPs';
+const BETTERSTACK_API = 'https://s1303816.eu-nbg-2.betterstackdata.com';
+const BETTERSTACK_TOKEN = 'x5nvK7DNDURcpAHEBuCbHrza';
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 const FETCH_TIMEOUT = 10000; // 10-second timeout
 
@@ -166,12 +165,14 @@ async function showPriceChart(token) {
   });
   window.chart = chart;
 
-  // Simulate historical data (replace with TradingView API call via proxy)
+  // Fetch historical data from Binance API
   const pair = `${token.symbol.toLowerCase()}usdt`;
   try {
     const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1d&limit=30`);
     if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch data for ${pair}`);
     const data = await response.json();
+    if (!data || data.length === 0) throw new Error(`No data returned for ${pair}`);
+
     const candles = data.map(([time, open, high, low, close]) => ({
       time: parseInt(time) / 1000,
       open: parseFloat(open),
@@ -182,9 +183,12 @@ async function showPriceChart(token) {
 
     const candleSeries = chart.addCandlestickSeries();
     candleSeries.setData(candles);
+
+    // Auto-scale the chart
+    chart.timeScale().fitContent();
   } catch (error) {
     console.error(`Chart error for ${token.name} (${pair}):`, error);
-    chartDiv.innerHTML = `<p class="text-red-400">Failed to load chart for ${token.name}: ${error.message}. Consider setting up a proxy for TradingView API.</p>`;
+    chartDiv.innerHTML = `<p class="text-red-400">Failed to load chart for ${token.name}: ${error.message}. Pair may not be supported on Binance or requires a proxy.</p>`;
   }
 }
 
@@ -218,7 +222,7 @@ function processAlert(alert) {
   return li;
 }
 
-// Fetch logs from Better Stack ClickHouse
+// Fetch logs from Better Stack
 async function initLogStream() {
   const wsStatus = document.getElementById('ws-status');
   const alertList = document.getElementById('alert-list');
@@ -232,14 +236,17 @@ async function initLogStream() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
-      const response = await fetch(`${BETTERSTACK_API}?output_format_pretty_row_numbers=0`, {
+      const response = await fetch(BETTERSTACK_API, {
         method: 'POST',
         headers: {
-          'Content-Type': 'plain/text',
-          'Authorization': 'Basic ' + btoa(`${BETTERSTACK_USERNAME}:${BETTERSTACK_PASSWORD}`),
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${BETTERSTACK_TOKEN}`,
           'Accept': 'application/json'
         },
-        body: query,
+        body: JSON.stringify({
+          dt: new Date().toISOString(),
+          message: query
+        }),
         signal: controller.signal
       });
 
@@ -251,8 +258,8 @@ async function initLogStream() {
         let userMessage = 'Error fetching logs. Check console and Network tab (F12 > Network) for details.';
 
         if (response.status === 401) {
-          errorMessage = `HTTP 401 Unauthorized: Invalid username/password. Check BETTERSTACK_USERNAME and BETTERSTACK_PASSWORD.`;
-          userMessage = 'Invalid credentials. Verify username/password in Better Stack.';
+          errorMessage = `HTTP 401 Unauthorized: Invalid Bearer token. Check BETTERSTACK_TOKEN.`;
+          userMessage = 'Invalid credentials. Verify Bearer token in Better Stack.';
         } else if (response.status === 400) {
           errorMessage = `HTTP 400 Bad Request: Invalid query or table. Query: ${query}. Response: ${errorText}`;
           userMessage = 'Invalid query or table. Verify t371838.ice_king_logs exists.';
@@ -279,14 +286,8 @@ async function initLogStream() {
       const data = await response.json();
       console.debug('Better Stack response:', data);
 
-      if (!data.data) {
-        console.warn('No data field in response. Possible empty logs or table issue.', data);
-        wsStatus.textContent = 'No logs received. Check if logs exist in Better Stack > ice_king_logs.';
-        wsStatus.className = 'mb-4 text-gray-400';
-        return;
-      }
-
-      const logs = data.data || [];
+      // Adjust based on actual response structure
+      const logs = Array.isArray(data) ? data : data.data || [];
       if (logs.length > 0) {
         console.debug(`Received ${logs.length} logs from Better Stack.`);
         logs.forEach((log, index) => {
@@ -295,7 +296,7 @@ async function initLogStream() {
               console.warn(`Log ${index} has no message field:`, log);
               return;
             }
-            const alert = JSON.parse(log.message);
+            const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
             if (alert.type === 'debug' && alert.event) {
               console.debug(`Processing valid ICE KING alert:`, alert);
               const li = processAlert(alert);
@@ -335,7 +336,7 @@ async function initLogStream() {
         possibleCauses: [
           'CORS restriction: Better Stack API may not allow browser requests. Use a backend proxy.',
           'Network issue: Render IPs may be blocked or API is down.',
-          'Invalid credentials: Verify BETTERSTACK_USERNAME and BETTERSTACK_PASSWORD.',
+          'Invalid token: Verify BETTERSTACK_TOKEN.',
           'Table issue: Verify t371838.ice_king_logs exists.'
         ]
       });
