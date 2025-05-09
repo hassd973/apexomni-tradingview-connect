@@ -23,9 +23,9 @@
         </div>
         <div id="loader-tokens" class="text-center text-gray-400">Loading tokens...</div>
         <ul id="token-list" class="space-y-4 max-h-[600px] overflow-y-auto"></ul>
-        <div id="chart-container" class="mt-6 hidden">
+        <div id="chart-container" class="mt-6">
           <h3 id="chart-title" class="text-xl font-medium mb-4"></h3>
-          <canvas id="price-chart"></canvas>
+          <canvas id="price-chart" class="w-full"></canvas>
         </div>
         <div class="mt-6">
           <h3 class="text-xl font-medium mb-4">Top USDT Pairs</h3>
@@ -35,7 +35,7 @@
       <!-- Alerts Section -->
       <section class="bg-gray-800/50 p-6 rounded-lg shadow-lg">
         <h2 class="text-2xl font-semibold mb-4">TradingView Alerts</h2>
-        <p id="ws-status" class="mb-4 text-gray-400">Connecting to Better Stack Live Tail...</p>
+        <p id="ws-status" class="mb-4 text-gray-400">Connecting to Better Stack...</p>
         <ul id="alert-list" class="space-y-4 max-h-[600px] overflow-y-auto"></ul>
       </section>
     </div>
