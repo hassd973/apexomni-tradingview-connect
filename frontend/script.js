@@ -5,7 +5,6 @@ const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tai
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
 const SOURCE_ID = '1303816';
 const POLLING_INTERVAL = 15000;
-const BINANCE_API = 'https://api.binance.com/api/v3/klines';
 
 // Mock token data for fallback
 const mockTokens = [
@@ -19,6 +18,7 @@ async function fetchLowVolumeTokens() {
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
   let tokens = [];
+  let selectedTokenLi = null;
 
   try {
     const cgResponse = await fetch(COINGECKO_API);
@@ -108,6 +108,7 @@ async function fetchLowVolumeTokens() {
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
     li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} ${hoverClass}`;
+    li.setAttribute('data-tooltip', 'Click to toggle chart');
     const priceChange = token.price_change_percentage_24h;
     const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
     const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
@@ -122,7 +123,14 @@ async function fetchLowVolumeTokens() {
           <p class="${priceChangeColor}">24h: ${priceChange.toFixed(2)}% ${priceChangeEmoji}</p>
         </div>
       </div>`;
-    li.addEventListener('click', () => showPriceChart(token));
+    li.addEventListener('click', () => {
+      if (selectedTokenLi) {
+        selectedTokenLi.classList.remove('selected-token');
+      }
+      li.classList.add('selected-token');
+      selectedTokenLi = li;
+      showPriceChart(token);
+    });
     tokenList.appendChild(li);
   });
 
@@ -141,15 +149,18 @@ async function fetchLowVolumeTokens() {
   }).join('');
 
   if (sortedTokens.length > 0) {
+    const firstTokenLi = tokenList.children[0];
+    firstTokenLi.classList.add('selected-token');
+    selectedTokenLi = firstTokenLi;
     showPriceChart(sortedTokens[0]);
   }
 
   loader.style.display = 'none';
 }
 
-// Show TradingView Lightweight Chart
-async function showPriceChart(token) {
-  const chartContainer = document.getElementById('chart-container');
+// Show CoinGecko Chart via iframe
+function showPriceChart(token) {
+  const chartIframe = document.getElementById('chart-iframe');
   const chartTitle = document.getElementById('chart-title');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
 
@@ -163,114 +174,15 @@ async function showPriceChart(token) {
     chartTitle.style.opacity = '1';
   };
 
-  // Clear existing chart
-  chartContainer.innerHTML = '';
-  const chartElement = document.createElement('div');
-  chartElement.id = 'chart-canvas';
-  chartElement.style.width = '100%';
-  chartElement.style.height = '100%';
-  chartContainer.appendChild(chartElement);
-
+  // Update iframe with CoinGecko chart
   try {
-    const chart = LightweightCharts.createChart(chartElement, {
-      width: chartContainer.clientWidth,
-      height: chartContainer.clientHeight,
-      layout: {
-        background: { type: 'solid', color: 'transparent' },
-        textColor: '#d1d4dc',
-      },
-      grid: {
-        vertLines: { color: 'rgba(59, 130, 246, 0.1)' },
-        horzLines: { color: 'rgba(59, 130, 246, 0.1)' },
-      },
-      timeScale: {
-        borderColor: 'rgba(59, 130, 246, 0.2)',
-      },
-      rightPriceScale: {
-        borderColor: 'rgba(59, 130, 246, 0.2)',
-      },
-      crosshair: {
-        mode: LightweightCharts.CrosshairMode.Normal,
-      },
-    });
-
-    console.log('Chart container size:', chartContainer.clientWidth, chartContainer.clientHeight);
-    console.log('TradingView chart created:', chart);
-
-    const candleSeries = chart.addCandlestickSeries({
-      upColor: '#4ade80',
-      downColor: '#f87171',
-      wickUpColor: '#9333ea',
-      wickDownColor: '#9333ea',
-      borderVisible: false,
-      priceLineVisible: false,
-    });
-
-    // Test with mock data first
-    const mockData = Array.from({ length: 100 }, (_, i) => ({
-      time: Date.now() / 1000 - (99 - i) * 3600,
-      open: token.current_price * (1 + (Math.random() - 0.5) * 0.05),
-      high: token.current_price * (1 + (Math.random() - 0.5) * 0.06),
-      low: token.current_price * (1 + (Math.random() - 0.5) * 0.04),
-      close: token.current_price * (1 + (Math.random() - 0.5) * 0.05),
-    }));
-    candleSeries.setData(mockData);
-    chart.timeScale().fitContent();
-    console.log('Chart initialized with mock data');
-
-    // Attempt to fetch real data
-    const symbol = `${token.symbol.toLowerCase()}usdt`;
-    try {
-      const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1h&limit=168`);
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-      const data = await response.json();
-      if (!Array.isArray(data) || data.length === 0) throw new Error('No data from Binance');
-      console.log('Binance data:', data);
-      const chartData = data.map(d => ({
-        time: parseInt(d[0]) / 1000,
-        open: parseFloat(d[1]),
-        high: parseFloat(d[2]),
-        low: parseFloat(d[3]),
-        close: parseFloat(d[4]),
-      }));
-      candleSeries.setData(chartData);
-      chart.timeScale().fitContent();
-      console.log('Chart updated with Binance data');
-
-      let lastClose = chartData[chartData.length - 1].close;
-      setInterval(() => {
-        lastClose += (Math.random() - 0.5) * lastClose * 0.001;
-        const newPoint = {
-          time: Math.floor(Date.now() / 1000),
-          open: lastClose * (1 - 0.005),
-          high: lastClose * (1 + 0.005),
-          low: lastClose * (1 - 0.005),
-          close: lastClose,
-        };
-        candleSeries.update(newPoint);
-      }, 5000);
-    } catch (error) {
-      console.error('Chart data fetch error:', error);
-    }
-
-    // Ensure chart resizes properly
-    const resizeObserver = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        chart.resize(entry.contentRect.width, entry.contentRect.height);
-        chart.timeScale().fitContent();
-        console.log('Chart resized to:', entry.contentRect.width, entry.contentRect.height);
-      }
-    });
-    resizeObserver.observe(chartContainer);
-
-    window.addEventListener('resize', () => {
-      chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
-      chart.timeScale().fitContent();
-      console.log('Chart resized on window resize');
-    });
+    const chartUrl = `https://www.coingecko.com/en/coins/${token.id}/usd#chart`;
+    chartIframe.src = chartUrl;
+    console.log(`Chart updated to: ${chartUrl}`);
   } catch (error) {
-    console.error('TradingView chart initialization error:', error);
-    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Chart failed to load. Check console for errors.</div>';
+    console.error('Error updating chart:', error);
+    chartIframe.src = '';
+    chartIframe.parentElement.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart. Try another token.</div>';
   }
 }
 
