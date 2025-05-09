@@ -94,22 +94,19 @@ async function fetchLowVolumeTokens() {
     const li = document.createElement('li');
     const opacity = 50 + (index / sortedTokens.length) * 50;
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
-    li.className = `p-4 rounded-md shadow hover:bg-gray-700 transition cursor-pointer ${bgColor}`;
+    li.className = `p-2 rounded-md shadow hover:bg-gray-700 transition cursor-pointer ${bgColor}`;
     const priceChange = token.price_change_percentage_24h;
     const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
     const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
     li.innerHTML = `
-      <div class="flex flex-col space-y-2">
+      <div class="flex flex-col space-y-1">
         <div class="flex items-center justify-between">
-          <span class="font-medium truncate">🍀 ${token.name} (${token.symbol}) [Score: ${token.score.toFixed(1)}]</span>
-          <span class="text-sm text-gray-400">Vol: $${token.total_volume.toLocaleString()}</span>
+          <span class="font-medium truncate">🍀 ${token.name} (${token.symbol}) [${token.score.toFixed(1)}]</span>
+          <span class="text-xs">Vol: $${token.total_volume.toLocaleString()}</span>
         </div>
-        <div class="text-sm text-gray-300">
-          <p>Price: $${token.current_price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 6 })}</p>
-          <p class="${priceChangeColor}">24h Change: ${priceChange.toFixed(2)}% ${priceChangeEmoji}</p>
-          <p>Market Cap: $${token.market_cap.toLocaleString()}</p>
-          <p>Circulating Supply: ${token.circulating_supply.toLocaleString(undefined, { maximumFractionDigits: 0 })} ${token.symbol}</p>
-          <p>Source: ${token.source}</p>
+        <div class="text-xs">
+          <p>Price: $${token.current_price.toLocaleString()}</p>
+          <p class="${priceChangeColor}">24h: ${priceChange.toFixed(2)}% ${priceChangeEmoji}</p>
         </div>
       </div>`;
     li.addEventListener('click', () => showPriceChart(token));
@@ -117,12 +114,16 @@ async function fetchLowVolumeTokens() {
   });
 
   if (sortedTokens.length === 0) {
-    tokenList.innerHTML = '<p class="text-gray-400">No tokens under $5M volume at this time.</p>';
+    tokenList.innerHTML = '<p class="text-gray-400 text-xs">No tokens under $5M volume.</p>';
   }
 
-  // Top pairs
-  const topTokens = sortedTokens.slice(0, 5).map(token => `${token.symbol}/USDT`);
-  topPairs.innerHTML = topTokens.map(pair => `<li>${pair}</li>`).join('');
+  // Top pairs with transparent colors
+  const topTokens = sortedTokens.slice(0, 5).map(token => token.symbol);
+  topPairs.innerHTML = topTokens.map((pair, index) => {
+    const opacity = 20 + (index / 4) * 30;
+    const bgColor = `bg-gradient-to-r from-green-500/${opacity} to-gray-800/${opacity}`;
+    return `<li class="px-2 py-1 rounded ${bgColor}">${pair}/USDT</li>`;
+  }).join('');
 
   // Default chart to highest-performing token
   if (sortedTokens.length > 0) {
@@ -138,9 +139,9 @@ async function showPriceChart(token) {
   const chartTitle = document.getElementById('chart-title');
   const chartDiv = document.getElementById('chart-canvas');
   chartContainer.innerHTML = ''; // Reset container
-  chartContainer.appendChild(chartTitle);
   chartContainer.appendChild(chartDiv);
-  chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Live Chart`;
+  chartContainer.appendChild(chartTitle);
+  chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
 
   // Destroy existing chart if it exists
   if (window.chart) window.chart.remove();
@@ -148,26 +149,27 @@ async function showPriceChart(token) {
   // Initialize Lightweight Charts
   const chart = LightweightCharts.createChart(chartDiv, {
     width: chartDiv.clientWidth,
-    height: 500,
+    height: 300,
     layout: { background: { color: 'transparent' }, textColor: '#d1d5db' },
-    grid: { vertLines: { color: 'rgba(255, 255, 255, 0.1)' }, horzLines: { color: 'rgba(255, 255, 255, 0.1)' } },
-    timeScale: { timeVisible: true, secondsVisible: false }
+    grid: { vertLines: { color: 'rgba(255, 255, 255, 0.05)' }, horzLines: { color: 'rgba(255, 255, 255, 0.05)' } },
+    timeScale: { timeVisible: true, secondsVisible: false },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
   });
   window.chart = chart;
 
   // Fetch historical data from Binance
   const symbol = `${token.symbol.toLowerCase()}usdt`;
   try {
-    const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1h&limit=168`); // 7 days of hourly data
-    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch data`);
+    const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1h&limit=168`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     const data = await response.json();
-    if (!Array.isArray(data) || data.length === 0) throw new Error('No data returned');
+    if (!Array.isArray(data) || data.length === 0) throw new Error('No data from Binance');
     const candlestickSeries = chart.addCandlestickSeries({
-      upColor: '#4ade80',
-      downColor: '#f87171',
+      upColor: 'rgba(74, 222, 128, 0.7)',
+      downColor: 'rgba(248, 113, 113, 0.7)',
       borderVisible: false,
-      wickUpColor: '#4ade80',
-      wickDownColor: '#f87171'
+      wickUpColor: 'rgba(74, 222, 128, 0.9)',
+      wickDownColor: 'rgba(248, 113, 113, 0.9)'
     });
     const candles = data.map(d => ({
       time: parseInt(d[0]) / 1000,
@@ -200,18 +202,18 @@ async function showPriceChart(token) {
       close: token.current_price * (1 - 0.05 + Math.random() * 0.1)
     }));
     const candlestickSeries = chart.addCandlestickSeries({
-      upColor: '#4ade80',
-      downColor: '#f87171',
+      upColor: 'rgba(74, 222, 128, 0.7)',
+      downColor: 'rgba(248, 113, 113, 0.7)',
       borderVisible: false,
-      wickUpColor: '#4ade80',
-      wickDownColor: '#f87171'
+      wickUpColor: 'rgba(74, 222, 128, 0.9)',
+      wickDownColor: 'rgba(248, 113, 113, 0.9)'
     });
     candlestickSeries.setData(mockCandles);
   }
 
-  // Resize handler for responsiveness
+  // Ensure responsiveness
   window.addEventListener('resize', () => {
-    chart.applyOptions({ width: chartDiv.clientWidth });
+    chart.applyOptions({ width: chartDiv.clientWidth, height: chartDiv.clientHeight || 300 });
     chart.timeScale().fitContent();
   });
 }
@@ -219,7 +221,7 @@ async function showPriceChart(token) {
 // Process alert data for display
 function processAlert(alert) {
   const li = document.createElement('li');
-  li.className = 'bg-gray-700/50 p-4 rounded-md shadow hover:bg-gray-600 transition';
+  li.className = 'bg-gray-700/50 p-2 rounded-md shadow hover:bg-gray-600 transition';
   const eventType = alert.event || 'unknown';
   const signal = alert.signal || '';
   const market = alert.market || 'N/A';
@@ -234,14 +236,14 @@ function processAlert(alert) {
     message = `${signal.toUpperCase()} Exit on ${market} at ${timestamp}`;
   } else if (eventType === 'filter_blocked') {
     emoji = '🧊';
-    message = `Blocked ${signal.toUpperCase()} Signal on ${market} (${alert.filter}) at ${timestamp}`;
+    message = `Blocked ${signal.toUpperCase()} on ${market} (${alert.filter}) at ${timestamp}`;
   } else {
     message = `${eventType} on ${market} at ${timestamp}`;
   }
   li.innerHTML = `
     <div class="flex items-center justify-between">
       <span class="font-medium truncate">${emoji} ${message}</span>
-      <span class="text-sm text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
+      <span class="text-xs">${new Date(timestamp).toLocaleTimeString()}</span>
     </div>`;
   return li;
 }
@@ -283,12 +285,12 @@ async function initLogStream() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch logs`);
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       }
 
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        throw new Error(`Unexpected response format: Content-Type=${contentType}`);
+        throw new Error(`Unexpected response format: ${contentType}`);
       }
 
       const data = await response.json();
@@ -310,30 +312,30 @@ async function initLogStream() {
             console.warn(`Invalid log format at index ${index}:`, error);
           }
         });
-        wsStatus.textContent = 'Receiving live logs from Better Stack';
-        wsStatus.className = 'mb-4 text-green-400';
+        wsStatus.textContent = 'Live logs active';
+        wsStatus.className = 'mb-2 text-green-400 text-xs sm:text-sm';
       } else {
-        wsStatus.textContent = 'Waiting for new logs...';
-        wsStatus.className = 'mb-4 text-gray-400';
+        wsStatus.textContent = 'Waiting for logs...';
+        wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
       }
     } catch (error) {
-      console.error('Log fetching error:', error);
-      wsStatus.textContent = `Error: ${error.message}. Using mock data or check proxy setup.`;
-      wsStatus.className = 'mb-4 text-red-400';
+      console.error('Log fetch error:', error);
+      wsStatus.textContent = `Error: ${error.message}. Using mock data.';
+      wsStatus.className = 'mb-2 text-red-400 text-xs sm:text-sm';
       if (!isLive) generateMockAlerts().forEach(alert => alertList.prepend(processAlert(alert)));
     }
   }
 
   toggleLive.addEventListener('click', () => {
     isLive = !isLive;
-    toggleLive.textContent = `${isLive ? 'Live Data' : 'Mock Data'} (Toggle ${isLive ? 'Mock' : 'Live'})`;
+    toggleLive.textContent = `${isLive ? 'Live' : 'Mock'} (Toggle ${isLive ? 'Mock' : 'Live'})`;
     alertList.innerHTML = '';
     nextUrl = null;
     fetchLogs();
   });
 
   wsStatus.textContent = 'Starting with mock data...';
-  wsStatus.className = 'mb-4 text-yellow-400';
+  wsStatus.className = 'mb-2 text-yellow-400 text-xs sm:text-sm';
   fetchLogs();
   setInterval(fetchLogs, POLLING_INTERVAL);
 }
