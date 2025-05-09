@@ -2,7 +2,7 @@ const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currenc
 const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days=7';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
+const BETTERSTACK_API = '/proxy/live-tail'; // Use proxy endpoint
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
 const SOURCE_ID = '1303816';
 const POLLING_INTERVAL = 15000;
@@ -164,6 +164,9 @@ async function fetchLowVolumeTokens() {
         <div class="text-xs">
           <p>Price: $${token.current_price.toLocaleString()}</p>
           <p class="${priceChangeColor}">24h: ${priceChange.toFixed(2)}% ${priceChangeEmoji}</p>
+          <p>Market Cap: $${token.market_cap.toLocaleString()}</p>
+          <p>Circulating Supply: ${token.circulating_supply.toLocaleString()} ${token.symbol}</p>
+          <p>Source: ${token.source}</p>
         </div>
       </div>`;
     li.addEventListener('click', () => {
@@ -420,7 +423,6 @@ async function initLogStream() {
       console.log('Fetching logs from:', url);
       const response = await fetch(url, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${BETTERSTACK_TOKEN}` },
         redirect: 'follow'
       });
 
