@@ -142,7 +142,7 @@
         height: 600px;
       }
     }
-    /* Tooltip for click hint */
+    /* Dynamic Tooltip with Performance Color */
     [data-tooltip] {
       position: relative;
     }
@@ -152,13 +152,14 @@
       bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(59, 130, 246, 0.9);
+      background: var(--tooltip-bg, rgba(59, 130, 246, 0.9));
       color: white;
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 12px;
       white-space: nowrap;
       z-index: 10;
+      animation: var(--tooltip-glow, glow-blue) 2s infinite;
     }
   </style>
 </head>
