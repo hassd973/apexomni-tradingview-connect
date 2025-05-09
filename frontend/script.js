@@ -1,7 +1,6 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/';
 const BETTERSTACK_API = 'https://eu-nbg-2-connect.betterstackdata.com';
 const BETTERSTACK_USERNAME = 'ua439SvEJ8fzbFUfZLgfrngQ0hPAJWpeW';
 const BETTERSTACK_PASSWORD = 'ACTAv2qyDnjVwEoeByXTZzY7LT0CBcT4Zd86AjYnE7fy6kPB5TYr4pjFqIfTjiPs';
@@ -23,7 +22,7 @@ async function fetchLowVolumeTokens() {
     const cgResponse = await fetch(COINGECKO_API);
     const cgData = await cgResponse.json();
     tokens.push(...cgData.filter(token => token.total_volume < volumeThreshold).map(token => ({
-      id: token.id, // CoinGecko ID (e.g., 'bitcoin')
+      id: token.id,
       name: token.name,
       symbol: token.symbol.toUpperCase(),
       total_volume: token.total_volume,
@@ -45,7 +44,7 @@ async function fetchLowVolumeTokens() {
     });
     const cmcData = await cmcResponse.json();
     tokens.push(...cmcData.data.filter(token => token.quote.USD.volume_24h < volumeThreshold).map(token => ({
-      id: token.slug, // Map to CoinGecko ID (e.g., 'bitcoin')
+      id: token.slug,
       name: token.name,
       symbol: token.symbol.toUpperCase(),
       total_volume: token.quote.USD.volume_24h,
@@ -65,7 +64,7 @@ async function fetchLowVolumeTokens() {
     const ccResponse = await fetch(CRYPTOCOMPARE_API);
     const ccData = await ccResponse.json();
     tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < volumeThreshold).map(token => ({
-      id: token.CoinInfo.Name.toLowerCase(), // Map to CoinGecko ID (e.g., 'btc')
+      id: token.CoinInfo.Name.toLowerCase(),
       name: token.CoinInfo.FullName,
       symbol: token.CoinInfo.Name.toUpperCase(),
       total_volume: token.RAW?.USD?.VOLUME24HOURTO || 0,
@@ -143,59 +142,49 @@ async function fetchLowVolumeTokens() {
   renderTokens();
 }
 
-// Show price chart
+// Show TradingView chart
 async function showPriceChart(token) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
-  const canvas = document.getElementById('price-chart');
+  const chartDiv = document.getElementById('tradingview-chart');
   chartContainer.innerHTML = ''; // Reset container
   chartContainer.appendChild(chartTitle);
-  chartContainer.appendChild(canvas);
+  chartContainer.appendChild(chartDiv);
   chartContainer.classList.remove('hidden');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Movement`;
-  canvas.style.display = 'block';
 
+  // Destroy existing chart if it exists
+  if (window.chart) window.chart.remove();
+
+  // Initialize TradingView Lightweight Chart
+  const chart = LightweightCharts.createChart(chartDiv, {
+    width: chartDiv.clientWidth,
+    height: 300,
+    layout: { backgroundColor: '#1A202C', textColor: '#FFFFFF' },
+    grid: { vertLines: { color: '#2D3748' }, horzLines: { color: '#2D3748' } },
+    timeScale: { timeVisible: true, secondsVisible: false },
+  });
+  window.chart = chart;
+
+  // Simulate historical data (replace with TradingView API call via proxy)
+  const pair = `${token.symbol.toLowerCase()}usdt`;
   try {
-    // Fetch 7-day price data
-    const response = await fetch(`${COINGECKO_CHART_API}${token.id}/market_chart?vs_currency=usd&days=7`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch chart data for ${token.id}`);
+    const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1d&limit=30`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch data for ${pair}`);
     const data = await response.json();
-    if (!data.prices || data.prices.length === 0) throw new Error(`No price data available for ${token.id}`);
-
-    const prices = data.prices.map(([timestamp, price]) => ({
-      x: new Date(timestamp).toLocaleDateString(),
-      y: price
+    const candles = data.map(([time, open, high, low, close]) => ({
+      time: parseInt(time) / 1000,
+      open: parseFloat(open),
+      high: parseFloat(high),
+      low: parseFloat(low),
+      close: parseFloat(close)
     }));
 
-    // Destroy existing chart if it exists
-    if (window.priceChart) window.priceChart.destroy();
-
-    // Create new chart
-    const ctx = canvas.getContext('2d');
-    window.priceChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        datasets: [{
-          label: `${token.symbol}/USDT`,
-          data: prices,
-          borderColor: 'rgba(59, 130, 246, 1)',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: { title: { display: true, text: 'Date' } },
-          y: { title: { display: true, text: 'Price (USD)' } }
-        }
-      }
-    });
+    const candleSeries = chart.addCandlestickSeries();
+    candleSeries.setData(candles);
   } catch (error) {
-    console.error(`Chart error for ${token.name} (${token.id}):`, error);
-    canvas.style.display = 'none';
-    chartContainer.innerHTML = `<p class="text-red-400">Failed to load chart for ${token.name}: ${error.message}. Possible ID mismatch or rate limit.</p>`;
+    console.error(`Chart error for ${token.name} (${pair}):`, error);
+    chartDiv.innerHTML = `<p class="text-red-400">Failed to load chart for ${token.name}: ${error.message}. Consider setting up a proxy for TradingView API.</p>`;
   }
 }
 
@@ -337,14 +326,14 @@ async function initLogStream() {
         errorMessage = `Request timed out after ${FETCH_TIMEOUT}ms. Possible network issue or API unreachable.`;
         userMessage = 'Connection to Better Stack timed out. Check Network tab (F12 > Network).';
       } else if (errorMessage.includes('Failed to fetch')) {
-        errorMessage = `Failed to fetch: Possible CORS issue, network error, or API unreachable. Check Network tab (F12 > Network).`;
+        errorMessage = `Failed to fetch: Likely CORS issue, network error, or API unreachable. Check Network tab (F12 > Network) for CORS headers (e.g., Access-Control-Allow-Origin).`;
         userMessage = 'Failed to connect to Better Stack. Check Network tab (F12 > Network) for CORS or network issues.';
       }
 
       console.error(`Better Stack polling error: ${errorMessage}`, {
         query,
         possibleCauses: [
-          'CORS restriction: Better Stack API may not allow browser requests.',
+          'CORS restriction: Better Stack API may not allow browser requests. Use a backend proxy.',
           'Network issue: Render IPs may be blocked or API is down.',
           'Invalid credentials: Verify BETTERSTACK_USERNAME and BETTERSTACK_PASSWORD.',
           'Table issue: Verify t371838.ice_king_logs exists.'
