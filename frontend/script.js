@@ -278,7 +278,15 @@ async function showPriceChart(token, compareToken, days) {
         scales: {
           x: {
             type: 'time',
-            time: { unit: days <= 1 ? 'hour' : 'day' },
+            time: { 
+              unit: days <= 0.0417 ? 'minute' : days <= 1 ? 'hour' : 'day', // Adjust unit based on timeframe
+              tooltipFormat: 'MMM d, yyyy HH:mm',
+              displayFormats: {
+                minute: 'HH:mm',
+                hour: 'MMM d HH:mm',
+                day: 'MMM d'
+              }
+            },
             title: { display: true, text: 'Time', color: '#d1d4dc' },
             ticks: { color: '#d1d4dc', maxTicksLimit: 7 },
             grid: { color: 'rgba(59, 130, 246, 0.1)' }
@@ -389,7 +397,14 @@ function processAlert(alert) {
 
 // Setup chart timeframe and sticky toggle
 function setupChartControls() {
-  const timeframes = { 'timeframe-1d': 1, 'timeframe-7d': 7, 'timeframe-30d': 30 };
+  const timeframes = {
+    'timeframe-1min': 1 / 1440,  // 1 minute in days (1/1440)
+    'timeframe-5min': 5 / 1440,  // 5 minutes
+    'timeframe-15min': 15 / 1440, // 15 minutes
+    'timeframe-1hr': 1 / 24,     // 1 hour
+    'timeframe-4hr': 4 / 24,     // 4 hours
+    'timeframe-1d': 1            // 1 day
+  };
   Object.keys(timeframes).forEach(id => {
     const btn = document.getElementById(id);
     if (btn) {
