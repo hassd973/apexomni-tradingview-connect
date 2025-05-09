@@ -3,8 +3,9 @@ const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/l
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
-const SOURCE_ID = '1303816'; // Replace with actual source ID from Better Stack Sources API
+const SOURCE_ID = '1303816'; // Provided source ID
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
+const BINANCE_API = 'https://api.binance.com/api/v3/klines';
 
 // Fetch low-volume tokens and top pairs
 async function fetchLowVolumeTokens() {
@@ -131,56 +132,87 @@ async function fetchLowVolumeTokens() {
   loader.style.display = 'none';
 }
 
-// Show Chart.js chart
-function showPriceChart(token) {
+// Show Lightweight Charts candlestick
+async function showPriceChart(token) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
-  const canvas = document.getElementById('chart-canvas');
+  const chartDiv = document.getElementById('chart-canvas');
   chartContainer.innerHTML = ''; // Reset container
   chartContainer.appendChild(chartTitle);
-  chartContainer.appendChild(canvas);
-  chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Trend`;
+  chartContainer.appendChild(chartDiv);
+  chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Live Chart`;
 
   // Destroy existing chart if it exists
-  if (window.myChart) window.myChart.destroy();
+  if (window.chart) window.chart.remove();
 
-  // Simulated 30-day price data
-  const days = 30;
-  const basePrice = token.current_price;
-  const changePercent = token.price_change_percentage_24h / 100;
-  const data = Array.from({ length: days }, (_, i) => {
-    const dayChange = changePercent * (Math.random() * 0.5 + 0.75);
-    return basePrice * (1 + dayChange * (i / days));
+  // Initialize Lightweight Charts
+  const chart = LightweightCharts.createChart(chartDiv, {
+    width: chartDiv.clientWidth,
+    height: 400,
+    layout: { background: { color: 'transparent' }, textColor: '#d1d5db' },
+    grid: { vertLines: { color: 'rgba(255, 255, 255, 0.1)' }, horzLines: { color: 'rgba(255, 255, 255, 0.1)' } },
+    timeScale: { timeVisible: true, secondsVisible: false },
+    responsive: true
   });
+  window.chart = chart;
 
-  // Chart.js configuration
-  window.myChart = new Chart(canvas, {
-    type: 'line', // Can switch to 'candlestick' if Chart.js candlestick plugin is added
-    data: {
-      labels: Array.from({ length: days }, (_, i) => `Day ${i + 1}`),
-      datasets: [{
-        label: `${token.symbol}/USDT Price`,
-        data: data,
-        borderColor: 'rgba(74, 222, 128, 0.8)', // Green with transparency
-        backgroundColor: 'rgba(74, 222, 128, 0.2)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-        borderWidth: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top', labels: { color: '#fff' } },
-        tooltip: { mode: 'index', intersect: false }
-      },
-      scales: {
-        x: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-        y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, beginAtZero: false }
-      }
-    }
+  // Fetch historical data from Binance
+  const symbol = `${token.symbol.toLowerCase()}usdt`;
+  try {
+    const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1d&limit=30`);
+    const data = await response.json();
+    const candlestickSeries = chart.addCandlestickSeries({
+      upColor: '#4ade80',
+      downColor: '#f87171',
+      borderVisible: false,
+      wickUpColor: '#4ade80',
+      wickDownColor: '#f87171'
+    });
+    const candles = data.map(d => ({
+      time: parseInt(d[0]) / 1000,
+      open: parseFloat(d[1]),
+      high: parseFloat(d[2]),
+      low: parseFloat(d[3]),
+      close: parseFloat(d[4])
+    }));
+    candlestickSeries.setData(candles);
+
+    // Simulate live updates (replace with real WebSocket if available)
+    let lastClose = candles[candles.length - 1].close;
+    setInterval(() => {
+      lastClose += (Math.random() - 0.5) * lastClose * 0.001;
+      candlestickSeries.update({
+        time: Math.floor(Date.now() / 1000),
+        open: lastClose * 0.99,
+        high: lastClose * 1.01,
+        low: lastClose * 0.99,
+        close: lastClose
+      });
+    }, 5000);
+  } catch (error) {
+    console.error('Chart data error:', error);
+    // Fallback to mock data if API fails
+    const mockCandles = Array.from({ length: 30 }, (_, i) => ({
+      time: Math.floor(Date.now() / 1000) - (29 - i) * 86400,
+      open: token.current_price * (1 - 0.05 + Math.random() * 0.1),
+      high: token.current_price * (1 + 0.05 + Math.random() * 0.1),
+      low: token.current_price * (1 - 0.05 - Math.random() * 0.1),
+      close: token.current_price * (1 - 0.05 + Math.random() * 0.1)
+    }));
+    const candlestickSeries = chart.addCandlestickSeries({
+      upColor: '#4ade80',
+      downColor: '#f87171',
+      borderVisible: false,
+      wickUpColor: '#4ade80',
+      wickDownColor: '#f87171'
+    });
+    candlestickSeries.setData(mockCandles);
+  }
+
+  // Resize handler for responsiveness
+  window.addEventListener('resize', () => {
+    chart.applyOptions({ width: chartDiv.clientWidth });
+    chart.timeScale().fitContent();
   });
 }
 
