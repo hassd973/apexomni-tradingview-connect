@@ -1,8 +1,8 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
-const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days=7';
+const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail'; // Direct endpoint
+const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
 const SOURCE_ID = '1303816';
 const POLLING_INTERVAL = 15000;
@@ -32,8 +32,10 @@ const iceKingPuns = [
   "Penguin power activate! 🐧🧊😂"
 ];
 
-// Global Chart.js instance
+// Global Chart.js instance and state
 let priceChart = null;
+let currentToken = null;
+let currentTimeframe = 7; // Default to 7 days
 
 // Retry fetch with delay
 async function fetchWithRetry(url, retries = 3, delay = 1000) {
@@ -175,7 +177,8 @@ async function fetchLowVolumeTokens() {
       }
       li.classList.add('selected-token');
       selectedTokenLi = li;
-      showPriceChart(token);
+      currentToken = token;
+      showPriceChart(token, currentTimeframe);
     });
     tokenList.appendChild(li);
   });
@@ -216,14 +219,15 @@ async function fetchLowVolumeTokens() {
     const firstTokenLi = tokenList.children[0];
     firstTokenLi.classList.add('selected-token');
     selectedTokenLi = firstTokenLi;
-    showPriceChart(sortedTokens[0]);
+    currentToken = sortedTokens[0];
+    showPriceChart(sortedTokens[0], currentTimeframe);
   }
 
   loader.style.display = 'none';
 }
 
 // Show Price Chart using Chart.js with CoinGecko data
-async function showPriceChart(token) {
+async function showPriceChart(token, days) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
@@ -264,11 +268,11 @@ async function showPriceChart(token) {
 
   try {
     // Fetch historical price data from CoinGecko with retry
-    const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id));
+    const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id)).replace('{days}', days);
     let chartData;
     try {
       chartData = await fetchWithRetry(chartUrl);
-      console.log(`Chart data for ${token.id}:`, chartData);
+      console.log(`Chart data for ${token.id} (${days} days):`, chartData);
     } catch (error) {
       console.warn(`Failed to fetch chart data for ${token.id}. Using mock data.`, error);
       chartData = mockChartData;
@@ -353,7 +357,7 @@ async function showPriceChart(token) {
         }
       }
     });
-    console.log(`Chart rendered for ${token.id}`);
+    console.log(`Chart rendered for ${token.id} (${days} days)`);
   } catch (error) {
     console.error('Error rendering chart:', error);
     chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
@@ -415,11 +419,10 @@ async function initLogStream() {
   const alertList = document.getElementById('alert-list');
   const toggleLive = document.getElementById('toggle-live');
   let isLive = false;
-  let nextUrl = null;
 
   async function fetchLogs() {
     try {
-      const url = nextUrl || `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=type%3Ddebug&batch=50&from=${new Date(Date.now() - 30 * 60 * 1000).toISOString()}&to=${new Date().toISOString()}&order=newest_first`;
+      const url = `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=type%3Ddebug`;
       console.log('Fetching logs from:', url);
       const response = await fetch(url, {
         method: 'GET',
@@ -430,7 +433,6 @@ async function initLogStream() {
 
       const data = await response.json();
       console.log('Response data:', data);
-      nextUrl = data.pagination?.next || null;
 
       const logs = data.rows || [];
       if (logs.length > 0) {
@@ -462,7 +464,6 @@ async function initLogStream() {
     isLive = !isLive;
     toggleLive.textContent = `${isLive ? 'Live' : 'Mock'} (Toggle ${isLive ? 'Mock' : 'Live'})`;
     alertList.innerHTML = '';
-    nextUrl = null;
     fetchLogs();
   });
 
@@ -472,5 +473,41 @@ async function initLogStream() {
   setInterval(fetchLogs, POLLING_INTERVAL);
 }
 
+// Setup chart timeframe and sticky toggle
+function setupChartControls() {
+  const timeframes = {
+    'timeframe-1d': 1,
+    'timeframe-7d': 7,
+    'timeframe-30d': 30,
+    'timeframe-90d': 90
+  };
+
+  // Timeframe buttons
+  Object.keys(timeframes).forEach(id => {
+    const btn = document.getElementById(id);
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTimeframe = timeframes[id];
+      if (currentToken) {
+        showPriceChart(currentToken, currentTimeframe);
+      }
+    });
+  });
+
+  // Sticky toggle
+  const toggleStickyBtn = document.getElementById('toggle-sticky');
+  const chartWrapper = document.querySelector('.chart-wrapper');
+  let isSticky = true; // Default to sticky
+  toggleStickyBtn.addEventListener('click', () => {
+    isSticky = !isSticky;
+    chartWrapper.classList.toggle('unlocked', !isSticky);
+    toggleStickyBtn.textContent = isSticky ? 'Lock Chart' : 'Unlock Chart';
+    toggleStickyBtn.classList.toggle('bg-blue-500', isSticky);
+    toggleStickyBtn.classList.toggle('bg-blue-600', !isSticky);
+  });
+}
+
 fetchLowVolumeTokens();
 initLogStream();
+setupChartControls();
