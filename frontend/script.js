@@ -1,4 +1,5 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
+const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days=7';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
@@ -11,6 +12,9 @@ const mockTokens = [
   { id: 'floki', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
   { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 }
 ];
+
+// Chart.js instance
+let priceChart = null;
 
 // Fetch low-volume tokens and top pairs
 async function fetchLowVolumeTokens() {
@@ -158,9 +162,9 @@ async function fetchLowVolumeTokens() {
   loader.style.display = 'none';
 }
 
-// Show CoinGecko Chart via iframe
-function showPriceChart(token) {
-  const chartIframe = document.getElementById('chart-iframe');
+// Show Price Chart using Chart.js with CoinGecko data
+async function showPriceChart(token) {
+  const chartCanvas = document.getElementById('chart-canvas');
   const chartTitle = document.getElementById('chart-title');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
 
@@ -174,15 +178,93 @@ function showPriceChart(token) {
     chartTitle.style.opacity = '1';
   };
 
-  // Update iframe with CoinGecko chart
+  // Destroy existing chart if it exists
+  if (priceChart) {
+    priceChart.destroy();
+  }
+
   try {
-    const chartUrl = `https://www.coingecko.com/en/coins/${token.id}/usd#chart`;
-    chartIframe.src = chartUrl;
-    console.log(`Chart updated to: ${chartUrl}`);
+    // Fetch historical price data from CoinGecko
+    const chartUrl = COINGECKO_CHART_API.replace('{id}', token.id);
+    const response = await fetch(chartUrl);
+    if (!response.ok) throw new Error(`CoinGecko Chart HTTP ${response.status}`);
+    const chartData = await response.json();
+    console.log(`Chart data for ${token.id}:`, chartData);
+
+    const prices = chartData.prices; // Array of [timestamp, price]
+    const labels = prices.map(price => new Date(price[0]).toLocaleDateString());
+    const data = prices.map(price => price[1]);
+
+    // Create new Chart.js chart
+    priceChart = new Chart(chartCanvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: `${token.symbol}/USD Price`,
+          data: data,
+          borderColor: '#9333ea',
+          backgroundColor: 'rgba(147, 51, 234, 0.2)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Date',
+              color: '#d1d4dc'
+            },
+            ticks: {
+              color: '#d1d4dc',
+              maxTicksLimit: 7
+            },
+            grid: {
+              color: 'rgba(59, 130, 246, 0.1)'
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Price (USD)',
+              color: '#d1d4dc'
+            },
+            ticks: {
+              color: '#d1d4dc',
+              callback: function(value) {
+                return '$' + value.toFixed(6);
+              }
+            },
+            grid: {
+              color: 'rgba(59, 130, 246, 0.1)'
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#d1d4dc'
+            }
+          }
+        },
+        elements: {
+          line: {
+            borderWidth: 2
+          }
+        }
+      }
+    });
+    console.log(`Chart rendered for ${token.id}`);
   } catch (error) {
-    console.error('Error updating chart:', error);
-    chartIframe.src = '';
-    chartIframe.parentElement.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart. Try another token.</div>';
+    console.error('Error rendering chart:', error);
+    chartCanvas.parentElement.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token.</div>';
   }
 }
 
