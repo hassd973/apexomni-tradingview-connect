@@ -4,14 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ICE KING 🌍🧊👑 Trading Dashboard</title>
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
   <header class="bg-gray-800/50 backdrop-blur-md p-6 text-center">
     <h1 class="text-4xl font-bold">ICE KING 🌍🧊👑 Trading Dashboard</h1>
-    <p class="text-lg mt-2">Real-time TradingView Alerts & Low-Volume Tokens</p>
+    <p class="text-lg mt-2">Real-time Alerts & Low-Volume Tokens</p>
   </header>
   <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -25,7 +24,7 @@
         <ul id="token-list" class="space-y-4 max-h-[600px] overflow-y-auto"></ul>
         <div id="chart-container" class="mt-6">
           <h3 id="chart-title" class="text-xl font-medium mb-4"></h3>
-          <div id="tradingview-chart" class="w-full h-[300px]"></div>
+          <canvas id="custom-chart" class="w-full h-[300px] bg-gray-800 rounded-lg"></canvas>
         </div>
         <div class="mt-6">
           <h3 class="text-xl font-medium mb-4">Top USDT Pairs</h3>
@@ -34,8 +33,11 @@
       </section>
       <!-- Alerts Section -->
       <section class="bg-gray-800/50 p-6 rounded-lg shadow-lg">
-        <h2 class="text-2xl font-semibold mb-4">TradingView Alerts</h2>
-        <p id="ws-status" class="mb-4 text-gray-400">Connecting to Better Stack...</p>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-semibold">TradingView Alerts</h2>
+          <button id="toggle-live" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-sm">Mock Data (Toggle Live)</button>
+        </div>
+        <p id="ws-status" class="mb-4 text-gray-400">Using mock data. Set up a proxy for live Better Stack logs.</p>
         <ul id="alert-list" class="space-y-4 max-h-[600px] overflow-y-auto"></ul>
       </section>
     </div>
