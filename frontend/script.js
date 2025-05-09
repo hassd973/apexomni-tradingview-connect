@@ -1,13 +1,13 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
 const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
-const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
+const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const POLLING_INTERVAL = 15000;
 const PRICE_UPDATE_INTERVAL = 10000;
+const CMC_API_KEY = 'bef090eb-323d-4ae8-86dd-266236262f19'; // Provided API key
 
-// Ice King puns for marquee
 const iceKingPuns = [
   "I’m chilling like the Ice King! ❄️👑",
   "Penguins are my royal guards! 🐧🧊",
@@ -17,29 +17,29 @@ const iceKingPuns = [
   "Penguin power activate! 🐧🧊😂"
 ];
 
-// Global Chart.js instance and state
 let priceChart = null;
 let currentToken = null;
 let compareToken = null;
 let currentTimeframe = 1;
 let allTokens = [];
 
-// Retry fetch with delay
 async function fetchWithRetry(url, retries = 3, delay = 1000, options = {}) {
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status}: ${text}`);
+      }
       return await response.json();
     } catch (error) {
       if (i === retries - 1) throw error;
-      console.warn(`Retrying fetch (${i + 1}/${retries})...`, error);
+      console.warn(`Retrying fetch (${i + 1}/${retries}) for ${url}:`, error);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 }
 
-// Fetch live price for a token
 async function fetchLivePrice(tokenId) {
   try {
     const url = COINGECKO_PRICE_API.replace('{id}', encodeURIComponent(tokenId));
@@ -51,7 +51,6 @@ async function fetchLivePrice(tokenId) {
   }
 }
 
-// Update live price display
 async function updateLivePrice() {
   if (!currentToken) return;
   const livePriceElements = [
@@ -64,7 +63,6 @@ async function updateLivePrice() {
   });
 }
 
-// Fetch logs from Betterstack API
 async function fetchLogs(sourceId) {
   const url = BETTERSTACK_API;
   const options = {
@@ -86,7 +84,6 @@ async function fetchLogs(sourceId) {
   }
 }
 
-// Update alerts with fetched logs
 function updateAlertsWithLogs(sourceId) {
   const alertList = document.getElementById('alert-list');
   fetchLogs(sourceId).then(logs => {
@@ -108,7 +105,6 @@ function updateAlertsWithLogs(sourceId) {
   });
 }
 
-// Fetch low-volume tokens, rank by performance, and update marquee with puns
 async function fetchLowVolumeTokens() {
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
@@ -124,33 +120,13 @@ async function fetchLowVolumeTokens() {
   let tokens = [];
   let selectedTokenLi = null;
 
+  // Try CoinMarketCap first
   try {
-    const cgResponse = await fetch(COINGECKO_API);
-    if (!cgResponse.ok) throw new Error(`CoinGecko HTTP ${cgResponse.status}`);
-    const cgData = await cgResponse.json();
-    tokens.push(...cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
-      id: token.id,
-      name: token.name,
-      symbol: token.symbol.toUpperCase(),
-      total_volume: token.total_volume,
-      current_price: token.current_price,
-      price_change_percentage_24h: token.price_change_percentage_24h,
-      market_cap: token.market_cap,
-      circulating_supply: token.circulating_supply,
-      source: 'CoinGecko',
-      score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
-    })));
-  } catch (error) {
-    console.error('CoinGecko error:', error);
-  }
-
-  try {
-    const cmcResponse = await fetch(COINMARKETCAP_API, {
-      headers: { 'X-CMC_PRO_API_KEY': 'bef090eb-323d-4ae8-86dd-266236262f19' }
+    const cmcResponse = await fetchWithRetry(`${COINMARKETCAP_API}?start=1&limit=250&convert=USD`, 3, 1000, {
+      headers: { 'X-CMC_PRO_API_KEY': CMC_API_KEY }
     });
-    if (!cmcResponse.ok) throw new Error(`CoinMarketCap HTTP ${cmcResponse.status}`);
-    const cmcData = await cmcResponse.json();
-    tokens.push(...cmcData.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
+    console.log('CoinMarketCap response:', cmcResponse);
+    tokens.push(...cmcResponse.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
       id: token.slug,
       name: token.name,
       symbol: token.symbol.toUpperCase(),
@@ -166,28 +142,56 @@ async function fetchLowVolumeTokens() {
     console.error('CoinMarketCap error:', error);
   }
 
-  try {
-    const ccResponse = await fetch(CRYPTOCOMPARE_API);
-    if (!ccResponse.ok) throw new Error(`CryptoCompare HTTP ${ccResponse.status}`);
-    const ccData = await ccResponse.json();
-    tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
-      id: token.CoinInfo.Name.toLowerCase(),
-      name: token.CoinInfo.FullName,
-      symbol: token.CoinInfo.Name.toUpperCase(),
-      total_volume: token.RAW?.USD?.VOLUME24HOURTO || 0,
-      current_price: token.RAW?.USD?.PRICE || 0,
-      price_change_percentage_24h: token.RAW?.USD?.CHANGEPCT24HOUR || 0,
-      market_cap: token.RAW?.USD?.MKTCAP || 0,
-      circulating_supply: token.RAW?.USD?.SUPPLY || 0,
-      source: 'CryptoCompare',
-      score: Math.min(100, Math.max(0, ((token.RAW?.USD?.CHANGEPCT24HOUR || 0) + 100) / 2))
-    })));
-  } catch (error) {
-    console.error('CryptoCompare error:', error);
+  // Fallback to CoinGecko if CoinMarketCap fails or returns no data
+  if (tokens.length === 0) {
+    try {
+      const cgResponse = await fetch(COINGECKO_API);
+      if (!cgResponse.ok) throw new Error(`CoinGecko HTTP ${cgResponse.status}`);
+      const cgData = await cgResponse.json();
+      console.log('CoinGecko response:', cgData);
+      tokens.push(...cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
+        id: token.id,
+        name: token.name,
+        symbol: token.symbol.toUpperCase(),
+        total_volume: token.total_volume,
+        current_price: token.current_price,
+        price_change_percentage_24h: token.price_change_percentage_24h,
+        market_cap: token.market_cap,
+        circulating_supply: token.circulating_supply,
+        source: 'CoinGecko',
+        score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
+      })));
+    } catch (error) {
+      console.error('CoinGecko error:', error);
+    }
+  }
+
+  // Fallback to CryptoCompare if both fail
+  if (tokens.length === 0) {
+    try {
+      const ccResponse = await fetch(CRYPTOCOMPARE_API);
+      if (!ccResponse.ok) throw new Error(`CryptoCompare HTTP ${ccResponse.status}`);
+      const ccData = await ccResponse.json();
+      console.log('CryptoCompare response:', ccData);
+      tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
+        id: token.CoinInfo.Name.toLowerCase(),
+        name: token.CoinInfo.FullName,
+        symbol: token.CoinInfo.Name.toUpperCase(),
+        total_volume: token.RAW?.USD?.VOLUME24HOURTO || 0,
+        current_price: token.RAW?.USD?.PRICE || 0,
+        price_change_percentage_24h: token.RAW?.USD?.CHANGEPCT24HOUR || 0,
+        market_cap: token.RAW?.USD?.MKTCAP || 0,
+        circulating_supply: token.RAW?.USD?.SUPPLY || 0,
+        source: 'CryptoCompare',
+        score: Math.min(100, Math.max(0, ((token.RAW?.USD?.CHANGEPCT24HOUR || 0) + 100) / 2))
+      })));
+    } catch (error) {
+      console.error('CryptoCompare error:', error);
+    }
   }
 
   if (tokens.length === 0) {
-    tokenList.innerHTML = '<p class="text-gray-400 text-xs">Failed to fetch token data. Please try again later.</p>';
+    tokenList.innerHTML = '<p class="text-gray-400 text-xs">Failed to fetch token data from all sources. Please try again later or check API status.</p>';
     loader.style.display = 'none';
     return;
   }
