@@ -7,14 +7,12 @@ const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tai
 const POLLING_INTERVAL = 15000;
 const PRICE_UPDATE_INTERVAL = 10000;
 
-// Mock token data for fallback, including ConstitutionDAO
 const mockTokens = [
   { id: 'floki', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
   { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 },
   { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'CryptoCompare', score: 70.6 }
 ];
 
-// Mock historical data for chart fallback
 const mockChartData = {
   prices: Array.from({ length: 7 }, (_, i) => [
     Date.now() - (6 - i) * 24 * 60 * 60 * 1000,
@@ -22,7 +20,6 @@ const mockChartData = {
   ])
 };
 
-// Ice King puns for marquee
 const iceKingPuns = [
   "I’m chilling like the Ice King! ❄️👑",
   "Penguins are my royal guards! 🐧🧊",
@@ -32,14 +29,12 @@ const iceKingPuns = [
   "Penguin power activate! 🐧🧊😂"
 ];
 
-// Global Chart.js instance and state
 let priceChart = null;
 let currentToken = null;
 let compareToken = null;
 let currentTimeframe = 1;
 let allTokens = [];
 
-// Retry fetch with delay
 async function fetchWithRetry(url, retries = 3, delay = 1000, options = {}) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -54,7 +49,6 @@ async function fetchWithRetry(url, retries = 3, delay = 1000, options = {}) {
   }
 }
 
-// Fetch live price for a token
 async function fetchLivePrice(tokenId) {
   try {
     const url = COINGECKO_PRICE_API.replace('{id}', encodeURIComponent(tokenId));
@@ -66,7 +60,6 @@ async function fetchLivePrice(tokenId) {
   }
 }
 
-// Update live price display
 async function updateLivePrice() {
   if (!currentToken) return;
   const livePriceElements = [
@@ -79,7 +72,6 @@ async function updateLivePrice() {
   });
 }
 
-// Fetch logs from Betterstack API
 async function fetchLogs(sourceId) {
   const url = BETTERSTACK_API;
   const options = {
@@ -101,7 +93,6 @@ async function fetchLogs(sourceId) {
   }
 }
 
-// Update alerts with fetched logs
 function updateAlertsWithLogs(sourceId) {
   const alertList = document.getElementById('alert-list');
   fetchLogs(sourceId).then(logs => {
@@ -123,7 +114,6 @@ function updateAlertsWithLogs(sourceId) {
   });
 }
 
-// Fetch low-volume tokens, rank by performance, and update marquee with puns
 async function fetchLowVolumeTokens() {
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
@@ -143,7 +133,6 @@ async function fetchLowVolumeTokens() {
     const cgResponse = await fetch(COINGECKO_API);
     if (!cgResponse.ok) throw new Error(`CoinGecko HTTP ${cgResponse.status}`);
     const cgData = await cgResponse.json();
-    console.log('CoinGecko data:', cgData);
     tokens.push(...cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
       id: token.id,
       name: token.name,
@@ -166,7 +155,6 @@ async function fetchLowVolumeTokens() {
     });
     if (!cmcResponse.ok) throw new Error(`CoinMarketCap HTTP ${cmcResponse.status}`);
     const cmcData = await cmcResponse.json();
-    console.log('CoinMarketCap data:', cmcData);
     tokens.push(...cmcData.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
       id: token.slug,
       name: token.name,
@@ -187,7 +175,6 @@ async function fetchLowVolumeTokens() {
     const ccResponse = await fetch(CRYPTOCOMPARE_API);
     if (!ccResponse.ok) throw new Error(`CryptoCompare HTTP ${ccResponse.status}`);
     const ccData = await ccResponse.json();
-    console.log('CryptoCompare data:', ccData);
     tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
       id: token.CoinInfo.Name.toLowerCase(),
       name: token.CoinInfo.FullName,
@@ -228,11 +215,8 @@ async function fetchLowVolumeTokens() {
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
-    const tooltipBg = token.price_change_percentage_24h >= 0 ? 'rgba(74, 222, 128, 0.9)' : 'rgba(248, 113, 113, 0.9)';
-    const tooltipGlow = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} ${hoverClass} z-20`;
     li.setAttribute('data-tooltip', 'Click to toggle chart');
-    li.setAttribute('style', `--tooltip-bg: ${tooltipBg}; --tooltip-glow: ${tooltipGlow};`);
     const priceChange = token.price_change_percentage_24h;
     const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
     const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
@@ -308,7 +292,6 @@ async function fetchLowVolumeTokens() {
   loader.style.display = 'none';
 }
 
-// Fetch chart data and display it
 async function fetchChartData(tokenId, days) {
   try {
     const url = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(tokenId)).replace('{days}', days);
@@ -320,8 +303,7 @@ async function fetchChartData(tokenId, days) {
   }
 }
 
-// Show price chart
-async function showPriceChart(token, compareTokenId, days, containerType) {
+async function showPriceChart(token, compareToken, days, containerType) {
   if (priceChart) {
     priceChart.destroy();
     priceChart = null;
@@ -339,8 +321,8 @@ async function showPriceChart(token, compareTokenId, days, containerType) {
   const prices = data.map(d => d[1]);
 
   let compareData = [];
-  if (compareTokenId) {
-    const compareChartData = await fetchChartData(compareTokenId, days);
+  if (compareToken) {
+    const compareChartData = await fetchChartData(compareToken.id, days);
     compareData = compareChartData.map(d => d[1]);
   }
 
@@ -357,8 +339,8 @@ async function showPriceChart(token, compareTokenId, days, containerType) {
           fill: true,
           tension: 0.1
         },
-        ...(compareTokenId ? [{
-          label: `${compareTokenId.name} (${compareTokenId.symbol})`,
+        ...(compareToken ? [{
+          label: `${compareToken.name} (${compareToken.symbol})`,
           data: compareData,
           borderColor: 'rgba(147, 51, 234, 1)',
           backgroundColor: 'rgba(147, 51, 234, 0.2)',
@@ -385,14 +367,12 @@ async function showPriceChart(token, compareTokenId, days, containerType) {
   tickerMarquee.innerHTML = `<span class="glow-green">${token.symbol}: $${prices[prices.length - 1].toLocaleString()}</span>`;
 }
 
-// Reinitialize chart based on container type
 window.reinitializeChart = function(containerType) {
   if (currentToken) {
     showPriceChart(currentToken, compareToken, currentTimeframe, containerType);
   }
 };
 
-// Setup timeframe controls
 function setupChartControls(containerType) {
   const timeframes = {
     '1min': 1 / (24 * 60),
@@ -419,7 +399,6 @@ function setupChartControls(containerType) {
   });
 }
 
-// Initialize the dashboard
 document.addEventListener('DOMContentLoaded', async () => {
   setupChartControls('header');
   setupChartControls('modal');
