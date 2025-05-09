@@ -1,8 +1,9 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_LOGS_API = 'https://in.logs.betterstack.com/api/v1/query';
+const BETTERSTACK_LIVE_TAIL_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL'; // Global API token
+const BETTERSTACK_SOURCE_IDS = 'YOUR_SOURCE_ID'; // Replace with your source ID from Better Stack
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 
 // Fetch low-volume tokens from multiple sources
@@ -137,30 +138,32 @@ function processAlert(alert) {
   return li;
 }
 
-// Fetch live logs from Better Stack
+// Fetch live logs from Better Stack Live Tail
 async function initLogStream() {
   const wsStatus = document.getElementById('ws-status');
   const alertList = document.getElementById('alert-list');
-  let lastTimestamp = new Date(Date.now() - 60000).toISOString(); // Start 1 minute ago
+  let nextUrl = null;
 
   async function pollLogs() {
     try {
-      const query = `SELECT * FROM logs WHERE dt > '${lastTimestamp}' ORDER BY dt DESC LIMIT 20`;
-      const response = await fetch(`${BETTERSTACK_LOGS_API}?query=${encodeURIComponent(query)}`, {
+      // Build initial query or use nextUrl
+      const url = nextUrl || `${BETTERSTACK_LIVE_TAIL_API}?source_ids=${BETTERSTACK_SOURCE_IDS}&query=type=debug&batch=100&order=newest_first&from=${encodeURIComponent(new Date(Date.now() - 30000).toISOString())}`;
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${BETTERSTACK_TOKEN}`
-        }
+        },
+        redirect: 'follow'
       });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       const data = await response.json();
-      console.log('Better Stack API response:', data); // Debug raw response
+      console.log('Better Stack Live Tail response:', data); // Debug raw response
       const logs = data.data || [];
+      nextUrl = data.pagination?.next || null; // Update next URL for pagination
 
       if (logs.length > 0) {
-        lastTimestamp = logs[0].dt; // Update to latest timestamp
         logs.reverse().forEach(log => {
           try {
             const alert = JSON.parse(log.message); // Assume log.message is JSON
@@ -185,11 +188,12 @@ async function initLogStream() {
       console.error('Better Stack polling error:', error);
       wsStatus.textContent = `Error fetching logs: ${error.message}. Retrying...`;
       wsStatus.className = 'mb-4 text-danger';
+      nextUrl = null; // Reset pagination on error
     }
     setTimeout(pollLogs, POLLING_INTERVAL);
   }
 
-  wsStatus.textContent = 'Connecting to Better Stack logs...';
+  wsStatus.textContent = 'Connecting to Better Stack Live Tail...';
   wsStatus.className = 'mb-4 text-gray-400';
   pollLogs();
 }
