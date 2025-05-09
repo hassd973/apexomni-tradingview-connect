@@ -2,9 +2,9 @@ const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currenc
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/';
-const BETTERSTACK_LIVE_TAIL_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
-const BETTERSTACK_TOKEN = 'x5nvK7DNDURcpAHEBuCbHrza'; // Source token for ice_king
-const BETTERSTACK_SOURCE_IDS = '1303816'; // Numeric source ID for ice_king
+const BETTERSTACK_API = 'https://eu-nbg-2-connect.betterstackdata.com';
+const BETTERSTACK_USERNAME = 'ua439SvEJ8fzbFUfZLgfrngQ0hPAJWpeW';
+const BETTERSTACK_PASSWORD = 'ACTAv2qyDnjVwEoeByXTZzY7LT0CBcT4Zd86AjYnE7fy6kPB5TYr4pjFqIfTjiPs';
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 const FETCH_TIMEOUT = 10000; // 10-second timeout
 
@@ -31,7 +31,8 @@ async function fetchLowVolumeTokens() {
       price_change_percentage_24h: token.price_change_percentage_24h,
       market_cap: token.market_cap,
       circulating_supply: token.circulating_supply,
-      source: 'CoinGecko'
+      source: 'CoinGecko',
+      score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2)) // Normalize -100% to +100% to 0-100
     })));
   } catch (error) {
     console.error('CoinGecko error:', error);
@@ -52,7 +53,8 @@ async function fetchLowVolumeTokens() {
       price_change_percentage_24h: token.quote.USD.percent_change_24h,
       market_cap: token.quote.USD.market_cap,
       circulating_supply: token.circulating_supply,
-      source: 'CoinMarketCap'
+      source: 'CoinMarketCap',
+      score: Math.min(100, Math.max(0, (token.quote.USD.percent_change_24h + 100) / 2))
     })));
   } catch (error) {
     console.error('CoinMarketCap error:', error);
@@ -71,7 +73,8 @@ async function fetchLowVolumeTokens() {
       price_change_percentage_24h: token.RAW?.USD?.CHANGEPCT24HOUR || 0,
       market_cap: token.RAW?.USD?.MKTCAP || 0,
       circulating_supply: token.RAW?.USD?.SUPPLY || 0,
-      source: 'CryptoCompare'
+      source: 'CryptoCompare',
+      score: Math.min(100, Math.max(0, ((token.RAW?.USD?.CHANGEPCT24HOUR || 0) + 100) / 2))
     })));
   } catch (error) {
     console.error('CryptoCompare error:', error);
@@ -106,7 +109,7 @@ async function fetchLowVolumeTokens() {
       li.innerHTML = `
         <div class="flex flex-col space-y-2">
           <div class="flex items-center justify-between">
-            <span class="font-medium truncate">🍀 ${token.name} (${token.symbol})</span>
+            <span class="font-medium truncate">🍀 ${token.name} (${token.symbol}) [Score: ${token.score.toFixed(1)}]</span>
             <span class="text-sm text-gray-400">Vol: $${token.total_volume.toLocaleString()}</span>
           </div>
           <div class="text-sm text-gray-300">
@@ -147,28 +150,34 @@ async function showPriceChart(token) {
   const canvas = document.getElementById('price-chart');
   chartContainer.classList.remove('hidden');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Movement`;
+  canvas.style.display = 'block';
 
   try {
     const response = await fetch(`${COINGECKO_CHART_API}${token.id}/market_chart?vs_currency=usd&days=7`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch chart data`);
     const data = await response.json();
+    if (!data.prices || data.prices.length === 0) throw new Error('No price data available');
+
     const prices = data.prices.map(([timestamp, price]) => ({
       x: new Date(timestamp).toLocaleDateString(),
       y: price
     }));
 
     if (window.priceChart) window.priceChart.destroy();
-    window.priceChart = new Chart(canvas, {
+    window.priceChart = new Chart(canvas.getContext('2d'), {
       type: 'line',
       data: {
         datasets: [{
           label: `${token.symbol}/USDT`,
           data: prices,
           borderColor: 'rgba(59, 130, 246, 1)',
-          fill: false
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          fill: true
         }]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         scales: {
           x: { title: { display: true, text: 'Date' } },
           y: { title: { display: true, text: 'Price (USD)' } }
@@ -177,7 +186,8 @@ async function showPriceChart(token) {
     });
   } catch (error) {
     console.error(`Chart error for ${token.name}:`, error);
-    chartContainer.innerHTML = `<p class="text-red-400">Failed to load chart for ${token.name}.</p>`;
+    canvas.style.display = 'none';
+    chartContainer.innerHTML = `<p class="text-red-400">Failed to load chart for ${token.name}: ${error.message}</p>`;
   }
 }
 
@@ -211,34 +221,27 @@ function processAlert(alert) {
   return li;
 }
 
-// Fetch live logs from Better Stack Live Tail
+// Fetch logs from Better Stack ClickHouse
 async function initLogStream() {
   const wsStatus = document.getElementById('ws-status');
   const alertList = document.getElementById('alert-list');
-  let nextUrl = null;
+  let offset = 0;
 
   async function pollLogs() {
     try {
-      // Build initial query or use nextUrl
-      const baseUrl = nextUrl || BETTERSTACK_LIVE_TAIL_API;
-      const params = nextUrl ? {} : {
-        source_ids: BETTERSTACK_SOURCE_IDS,
-        query: 'type=debug',
-        batch: '100',
-        order: 'newest_first',
-        from: new Date(Date.now() - 30000).toISOString()
-      };
-      const url = nextUrl || `${baseUrl}?${new URLSearchParams(params).toString()}`;
-      console.debug(`Fetching Better Stack Live Tail: URL=${url}, Token=${BETTERSTACK_TOKEN.slice(0, 4)}...`);
+      const query = `SELECT * FROM t371838.ice_king_logs WHERE type = 'debug' ORDER BY timestamp DESC LIMIT 100 OFFSET ${offset}`;
+      console.debug(`Fetching Better Stack logs: Query=${query}`);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
-      const response = await fetch(url, {
+      const response = await fetch(`${BETTERSTACK_API}?output_format_pretty_row_numbers=0`, {
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${BETTERSTACK_TOKEN}`
+          'Content-Type': 'plain/text',
+          'Authorization': 'Basic ' + btoa(`${BETTERSTACK_USERNAME}:${BETTERSTACK_PASSWORD}`)
         },
-        redirect: 'follow',
+        body: query,
         signal: controller.signal
       });
 
@@ -250,42 +253,36 @@ async function initLogStream() {
         let userMessage = 'Error fetching logs. Check console and Network tab (F12 > Network) for details.';
 
         if (response.status === 401) {
-          errorMessage = `HTTP 401 Unauthorized: Invalid or expired token. Check BETTERSTACK_TOKEN (${BETTERSTACK_TOKEN.slice(0, 4)}...).`;
-          userMessage = 'Invalid token. Verify source token in Better Stack > Sources > ice_king.';
+          errorMessage = `HTTP 401 Unauthorized: Invalid username/password. Check BETTERSTACK_USERNAME and BETTERSTACK_PASSWORD.`;
+          userMessage = 'Invalid credentials. Verify username/password in Better Stack.';
         } else if (response.status === 400) {
-          errorMessage = `HTTP 400 Bad Request: Likely invalid source_ids (${BETTERSTACK_SOURCE_IDS}) or query parameters. Response: ${errorText}`;
-          userMessage = `Invalid source ID or query. Verify source_ids (${BETTERSTACK_SOURCE_IDS}) in Better Stack > Sources > ice_king.`;
+          errorMessage = `HTTP 400 Bad Request: Invalid query or table. Query: ${query}. Response: ${errorText}`;
+          userMessage = 'Invalid query or table. Verify t371838.ice_king_logs exists.';
         } else if (response.status >= 500) {
-          errorMessage = `HTTP ${response.status} Server Error: Better Stack API issue. Response: ${errorText}`;
-          userMessage = 'Better Stack API server error. Try again later or contact support.';
+          errorMessage = `HTTP ${response.status} Server Error: Better Stack issue. Response: ${errorText}`;
+          userMessage = 'Better Stack server error. Try again later or contact support.';
         }
 
-        console.error(`Better Stack polling error: ${errorMessage}`, {
-          url,
-          status: response.status,
-          responseText: errorText
-        });
+        console.error(`Better Stack polling error: ${errorMessage}`, { query, status: response.status, responseText: errorText });
         wsStatus.textContent = userMessage;
         wsStatus.className = 'mb-4 text-red-400';
         throw new Error(errorMessage);
       }
 
       const data = await response.json();
-      console.debug('Better Stack Live Tail response:', data);
+      console.debug('Better Stack response:', data);
 
       if (!data.data) {
-        console.warn('No data field in response. Possible API change or empty logs.', data);
-        wsStatus.textContent = 'No logs received. Check if logs exist in Better Stack > ice_king.';
+        console.warn('No data field in response. Possible empty logs or table issue.', data);
+        wsStatus.textContent = 'No logs received. Check if logs exist in Better Stack > ice_king_logs.';
         wsStatus.className = 'mb-4 text-gray-400';
         return;
       }
 
       const logs = data.data || [];
-      nextUrl = data.pagination?.next || null;
-
       if (logs.length > 0) {
         console.debug(`Received ${logs.length} logs from Better Stack.`);
-        logs.reverse().forEach((log, index) => {
+        logs.forEach((log, index) => {
           try {
             if (!log.message) {
               console.warn(`Log ${index} has no message field:`, log);
@@ -308,6 +305,7 @@ async function initLogStream() {
         });
         wsStatus.textContent = 'Receiving live logs from Better Stack';
         wsStatus.className = 'mb-4 text-green-400';
+        offset += logs.length; // Update offset for pagination
       } else {
         console.debug('No new logs received from Better Stack.');
         wsStatus.textContent = 'Waiting for new logs...';
@@ -319,29 +317,29 @@ async function initLogStream() {
 
       if (error.name === 'AbortError') {
         errorMessage = `Request timed out after ${FETCH_TIMEOUT}ms. Possible network issue or API unreachable.`;
-        userMessage = 'Connection to Better Stack timed out. Check Network tab (F12 > Network) and verify API access.';
+        userMessage = 'Connection to Better Stack timed out. Check Network tab (F12 > Network).';
       } else if (errorMessage.includes('Failed to fetch')) {
-        errorMessage = `Failed to fetch: Possible network error, CORS issue, or API unreachable. Check Network tab (F12 > Network) for details.`;
-        userMessage = 'Failed to connect to Better Stack. Check Network tab (F12 > Network) and verify API access.';
+        errorMessage = `Failed to fetch: Possible network error, CORS issue, or API unreachable. Check Network tab (F12 > Network).`;
+        userMessage = 'Failed to connect to Better Stack. Check Network tab (F12 > Network).';
       }
 
       console.error(`Better Stack polling error: ${errorMessage}`, {
-        url,
+        query,
         possibleCauses: [
           'CORS restriction: Better Stack API may not allow browser requests.',
           'Network issue: Render IPs may be blocked or API is down.',
-          'Invalid URL: Verify BETTERSTACK_LIVE_TAIL_API.',
-          'Token issue: May still be invalid despite no 401.'
+          'Invalid credentials: Verify BETTERSTACK_USERNAME and BETTERSTACK_PASSWORD.',
+          'Table issue: Verify t371838.ice_king_logs exists.'
         ]
       });
       wsStatus.textContent = userMessage;
       wsStatus.className = 'mb-4 text-red-400';
-      nextUrl = null; // Reset pagination on error
+      offset = 0; // Reset offset on error
     }
     setTimeout(pollLogs, POLLING_INTERVAL);
   }
 
-  wsStatus.textContent = 'Connecting to Better Stack Live Tail...';
+  wsStatus.textContent = 'Connecting to Better Stack...';
   wsStatus.className = 'mb-4 text-gray-400';
   pollLogs();
 }
