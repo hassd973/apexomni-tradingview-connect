@@ -156,46 +156,90 @@ async function initLogStream() {
         from: new Date(Date.now() - 30000).toISOString()
       };
       const url = nextUrl || `${baseUrl}?${new URLSearchParams(params).toString()}`;
+      console.debug(`Fetching Better Stack Live Tail: URL=${url}`);
+
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${BETTERSTACK_TOKEN}`
         },
         redirect: 'follow'
       });
+
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
+        let errorMessage = `HTTP ${response.status}: ${errorText}`;
+        let userMessage = 'Error fetching logs. Check console for details.';
+
+        if (response.status === 401) {
+          errorMessage = `HTTP 401 Unauthorized: Invalid or expired token. Check BETTERSTACK_TOKEN (${BETTERSTACK_TOKEN.slice(0, 4)}...).`;
+          userMessage = 'Invalid token. Verify source token in Better Stack > Sources > ice_king.';
+        } else if (response.status === 400) {
+          errorMessage = `HTTP 400 Bad Request: Likely invalid source_ids (${BETTERSTACK_SOURCE_IDS}) or query parameters. Response: ${errorText}`;
+          userMessage = `Invalid source ID or query. Verify source_ids (${BETTERSTACK_SOURCE_IDS}) in Better Stack > Sources > ice_king.`;
+        } else if (response.status >= 500) {
+          errorMessage = `HTTP ${response.status} Server Error: Better Stack API issue. Response: ${errorText}`;
+          userMessage = 'Better Stack API server error. Try again later or contact support.';
+        }
+
+        console.error(`Better Stack polling error: ${errorMessage}`, {
+          url,
+          status: response.status,
+          responseText: errorText
+        });
+        wsStatus.textContent = userMessage;
+        wsStatus.className = 'mb-4 text-danger';
+        throw new Error(errorMessage);
       }
+
       const data = await response.json();
-      console.log('Better Stack Live Tail response:', data); // Debug raw response
+      console.debug('Better Stack Live Tail response:', data);
+
+      if (!data.data) {
+        console.warn('No data field in response. Possible API change or empty logs.', data);
+        wsStatus.textContent = 'No logs received. Check if logs exist in Better Stack > ice_king.';
+        wsStatus.className = 'mb-4 text-gray-400';
+        return;
+      }
+
       const logs = data.data || [];
-      nextUrl = data.pagination?.next || null; // Update next URL for pagination
+      nextUrl = data.pagination?.next || null;
 
       if (logs.length > 0) {
-        logs.reverse().forEach(log => {
+        console.debug(`Received ${logs.length} logs from Better Stack.`);
+        logs.reverse().forEach((log, index) => {
           try {
-            const alert = JSON.parse(log.message); // Assume log.message is JSON
-            if (alert.type === 'debug' && alert.event) { // Filter ICE KING alerts
+            if (!log.message) {
+              console.warn(`Log ${index} has no message field:`, log);
+              return;
+            }
+            const alert = JSON.parse(log.message);
+            if (alert.type === 'debug' && alert.event) {
+              console.debug(`Processing valid ICE KING alert:`, alert);
               const li = processAlert(alert);
               alertList.prepend(li);
               while (alertList.children.length > 20) {
                 alertList.removeChild(alertList.lastChild);
               }
+            } else {
+              console.debug(`Skipping log ${index}: Not a debug alert or missing event.`, alert);
             }
           } catch (error) {
-            console.warn('Invalid log message format:', log.message);
+            console.warn(`Invalid log message format in log ${index}:`, log.message, error);
           }
         });
         wsStatus.textContent = 'Receiving live logs from Better Stack';
         wsStatus.className = 'mb-4 text-success';
       } else {
+        console.debug('No new logs received from Better Stack.');
         wsStatus.textContent = 'Waiting for new logs...';
         wsStatus.className = 'mb-4 text-gray-400';
       }
     } catch (error) {
       console.error('Better Stack polling error:', error);
-      wsStatus.textContent = `Error fetching logs: ${error.message}. Retrying...`;
-      wsStatus.className = 'mb-4 text-danger';
+      if (!wsStatus.textContent.includes('Error fetching logs')) {
+        wsStatus.textContent = `Error fetching logs: ${error.message}. Check console for details.`;
+        wsStatus.className = 'mb-4 text-danger';
+      }
       nextUrl = null; // Reset pagination on error
     }
     setTimeout(pollLogs, POLLING_INTERVAL);
