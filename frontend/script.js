@@ -15,7 +15,6 @@ async function fetchLowVolumeTokens() {
   let tokens = [];
   const volumeThreshold = 5_000_000;
 
-  // CoinGecko
   try {
     const cgResponse = await fetch(COINGECKO_API);
     const cgData = await cgResponse.json();
@@ -35,7 +34,6 @@ async function fetchLowVolumeTokens() {
     console.error('CoinGecko error:', error);
   }
 
-  // CoinMarketCap
   try {
     const cmcResponse = await fetch(COINMARKETCAP_API, {
       headers: { 'X-CMC_PRO_API_KEY': 'bef090eb-323d-4ae8-86dd-266236262f19' }
@@ -57,7 +55,6 @@ async function fetchLowVolumeTokens() {
     console.error('CoinMarketCap error:', error);
   }
 
-  // CryptoCompare
   try {
     const ccResponse = await fetch(CRYPTOCOMPARE_API);
     const ccData = await ccResponse.json();
@@ -77,7 +74,6 @@ async function fetchLowVolumeTokens() {
     console.error('CryptoCompare error:', error);
   }
 
-  // Deduplicate
   const uniqueTokens = [];
   const seenSymbols = new Set();
   for (const token of tokens) {
@@ -87,17 +83,16 @@ async function fetchLowVolumeTokens() {
     }
   }
 
-  // Sort by performance and render
   const sortedTokens = [...uniqueTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
   tokenList.innerHTML = '';
   sortedTokens.forEach((token, index) => {
     const li = document.createElement('li');
-    const opacity = 50 + (index / sortedTokens.length) * 50;
+    const opacity = 30 + (index / sortedTokens.length) * 40;
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
-    li.className = `p-2 rounded-md shadow hover:bg-gray-700 transition cursor-pointer ${bgColor}`;
+    li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in`;
     const priceChange = token.price_change_percentage_24h;
     const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
-    const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
+    const priceChangeColor = priceChange >= 0 a ? 'text-green-400' : 'text-red-400';
     li.innerHTML = `
       <div class="flex flex-col space-y-1">
         <div class="flex items-center justify-between">
@@ -117,15 +112,13 @@ async function fetchLowVolumeTokens() {
     tokenList.innerHTML = '<p class="text-gray-400 text-xs">No tokens under $5M volume.</p>';
   }
 
-  // Top pairs with transparent colors
   const topTokens = sortedTokens.slice(0, 5).map(token => token.symbol);
   topPairs.innerHTML = topTokens.map((pair, index) => {
     const opacity = 20 + (index / 4) * 30;
-    const bgColor = `bg-gradient-to-r from-green-500/${opacity} to-gray-800/${opacity}`;
-    return `<li class="px-2 py-1 rounded ${bgColor}">${pair}/USDT</li>`;
+    const bgColor = `bg-gradient-to-r from-purple-500/${opacity} to-gray-800/${opacity}`;
+    return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition">${pair}/USDT</li>`;
   }).join('');
 
-  // Default chart to highest-performing token
   if (sortedTokens.length > 0) {
     showPriceChart(sortedTokens[0]);
   }
@@ -138,39 +131,44 @@ async function showPriceChart(token) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
   const chartDiv = document.getElementById('chart-canvas');
-  chartContainer.innerHTML = ''; // Reset container
+  chartContainer.innerHTML = '';
   chartContainer.appendChild(chartDiv);
   chartContainer.appendChild(chartTitle);
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
 
-  // Destroy existing chart if it exists
   if (window.chart) window.chart.remove();
 
-  // Initialize Lightweight Charts
   const chart = LightweightCharts.createChart(chartDiv, {
     width: chartDiv.clientWidth,
-    height: 300,
-    layout: { background: { color: 'transparent' }, textColor: '#d1d5db' },
-    grid: { vertLines: { color: 'rgba(255, 255, 255, 0.05)' }, horzLines: { color: 'rgba(255, 255, 255, 0.05)' } },
+    height: window.innerWidth < 640 ? 300 : 400,
+    layout: {
+      background: { color: 'rgba(17, 24, 39, 0.8)' },
+      textColor: '#d1d5db'
+    },
+    grid: {
+      vertLines: { color: 'rgba(74, 222, 128, 0.1)', style: LightweightCharts.LineStyle.Dashed },
+      horzLines: { color: 'rgba(124, 58, 237, 0.1)', style: LightweightCharts.LineStyle.Dashed }
+    },
     timeScale: { timeVisible: true, secondsVisible: false },
-    crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    priceScale: { borderColor: 'rgba(255, 255, 255, 0.1)' }
   });
   window.chart = chart;
 
-  // Fetch historical data from Binance
+  const candlestickSeries = chart.addCandlestickSeries({
+    upColor: 'rgba(74, 222, 128, 0.8)',
+    downColor: 'rgba(124, 58, 237, 0.8)',
+    borderVisible: false,
+    wickUpColor: 'rgba(74, 222, 128, 1)',
+    wickDownColor: 'rgba(124, 58, 237, 1)'
+  });
+
   const symbol = `${token.symbol.toLowerCase()}usdt`;
   try {
     const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1h&limit=168`);
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
     const data = await response.json();
     if (!Array.isArray(data) || data.length === 0) throw new Error('No data from Binance');
-    const candlestickSeries = chart.addCandlestickSeries({
-      upColor: 'rgba(74, 222, 128, 0.7)',
-      downColor: 'rgba(248, 113, 113, 0.7)',
-      borderVisible: false,
-      wickUpColor: 'rgba(74, 222, 128, 0.9)',
-      wickDownColor: 'rgba(248, 113, 113, 0.9)'
-    });
     const candles = data.map(d => ({
       time: parseInt(d[0]) / 1000,
       open: parseFloat(d[1]),
@@ -180,7 +178,6 @@ async function showPriceChart(token) {
     }));
     candlestickSeries.setData(candles);
 
-    // Simulate live updates
     let lastClose = candles[candles.length - 1].close;
     setInterval(() => {
       lastClose += (Math.random() - 0.5) * lastClose * 0.001;
@@ -201,19 +198,11 @@ async function showPriceChart(token) {
       low: token.current_price * (1 - 0.05 - Math.random() * 0.1),
       close: token.current_price * (1 - 0.05 + Math.random() * 0.1)
     }));
-    const candlestickSeries = chart.addCandlestickSeries({
-      upColor: 'rgba(74, 222, 128, 0.7)',
-      downColor: 'rgba(248, 113, 113, 0.7)',
-      borderVisible: false,
-      wickUpColor: 'rgba(74, 222, 128, 0.9)',
-      wickDownColor: 'rgba(248, 113, 113, 0.9)'
-    });
     candlestickSeries.setData(mockCandles);
   }
 
-  // Ensure responsiveness
   window.addEventListener('resize', () => {
-    chart.applyOptions({ width: chartDiv.clientWidth, height: chartDiv.clientHeight || 300 });
+    chart.applyOptions({ width: chartDiv.clientWidth, height: window.innerWidth < 640 ? 300 : 400 });
     chart.timeScale().fitContent();
   });
 }
@@ -221,7 +210,7 @@ async function showPriceChart(token) {
 // Process alert data for display
 function processAlert(alert) {
   const li = document.createElement('li');
-  li.className = 'bg-gray-700/50 p-2 rounded-md shadow hover:bg-gray-600 transition';
+  li.className = 'bg-gray-700/40 p-2 rounded-md shadow hover-glow transition fade-in';
   const eventType = alert.event || 'unknown';
   const signal = alert.signal || '';
   const market = alert.market || 'N/A';
@@ -230,20 +219,20 @@ function processAlert(alert) {
   let emoji = '✅';
   if (eventType.includes('entry')) {
     emoji = eventType.includes('long') ? '🚀' : '🧪';
-    message = `${signal.toUpperCase()} Entry on ${market} at ${timestamp}`;
+    message = `${signal.toUpperCase()} Entry on ${market}`;
   } else if (eventType.includes('exit')) {
     emoji = eventType.includes('protect') ? '🛡️' : '🏁';
-    message = `${signal.toUpperCase()} Exit on ${market} at ${timestamp}`;
+    message = `${signal.toUpperCase()} Exit on ${market}`;
   } else if (eventType === 'filter_blocked') {
     emoji = '🧊';
-    message = `Blocked ${signal.toUpperCase()} on ${market} (${alert.filter}) at ${timestamp}`;
+    message = `Blocked ${signal.toUpperCase()} on ${market} (${alert.filter})`;
   } else {
-    message = `${eventType} on ${market} at ${timestamp}`;
+    message = `${eventType} on ${market}`;
   }
   li.innerHTML = `
     <div class="flex items-center justify-between">
-      <span class="font-medium truncate">${emoji} ${message}</span>
-      <span class="text-xs">${new Date(timestamp).toLocaleTimeString()}</span>
+      <span class="font-medium truncate text-gray-200">${emoji} ${message}</span>
+      <span class="text-xs text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
     </div>`;
   return li;
 }
@@ -278,29 +267,37 @@ async function initLogStream() {
   async function fetchLogs() {
     try {
       const url = nextUrl || `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=type%3Ddebug&batch=100&from=${new Date(Date.now() - 30 * 60 * 1000).toISOString()}&to=${new Date().toISOString()}&order=newest_first`;
+      console.log('Fetching logs from:', url);
       const response = await fetch(url, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${BETTERSTACK_TOKEN}` },
         redirect: 'follow'
       });
 
+      console.log('Response status:', response.status);
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
       const contentType = response.headers.get('content-type');
+      console.log('Content-Type:', contentType);
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error(`Unexpected response format: ${contentType}`);
       }
 
       const data = await response.json();
+      console.log('Response data:', data);
       nextUrl = data.pagination?.next || null;
+      console.log('Next URL:', nextUrl);
 
       const logs = data.rows || [];
       if (logs.length > 0) {
         logs.forEach((log, index) => {
           try {
+            console.log(`Processing log ${index}:`, log);
             const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
+            console.log(`Parsed alert ${index}:`, alert);
             if (alert.type === 'debug' && alert.event) {
               const li = processAlert(alert);
               alertList.prepend(li);
@@ -315,12 +312,12 @@ async function initLogStream() {
         wsStatus.textContent = 'Live logs active';
         wsStatus.className = 'mb-2 text-green-400 text-xs sm:text-sm';
       } else {
-        wsStatus.textContent = 'Waiting for logs...';
+        wsStatus.textContent = 'No new logs...';
         wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
       }
     } catch (error) {
       console.error('Log fetch error:', error);
-      wsStatus.textContent = `Error: ${error.message}. Using mock data.';
+      wsStatus.textContent = `Error: ${error.message}. Using mock data.`;
       wsStatus.className = 'mb-2 text-red-400 text-xs sm:text-sm';
       if (!isLive) generateMockAlerts().forEach(alert => alertList.prepend(processAlert(alert)));
     }
@@ -340,6 +337,5 @@ async function initLogStream() {
   setInterval(fetchLogs, POLLING_INTERVAL);
 }
 
-// Initialize both functionalities
 fetchLowVolumeTokens();
 initLogStream();
