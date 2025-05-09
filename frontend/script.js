@@ -2,7 +2,7 @@ const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currenc
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_LOGS_API = 'https://in.logs.betterstack.com/api/v1/query';
-const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL'; // Replace with your Better Stack source token
+const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL'; // Global API token
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 
 // Fetch low-volume tokens from multiple sources
@@ -141,7 +141,7 @@ function processAlert(alert) {
 async function initLogStream() {
   const wsStatus = document.getElementById('ws-status');
   const alertList = document.getElementById('alert-list');
-  let lastTimestamp = new Date().toISOString(); // Track last log timestamp
+  let lastTimestamp = new Date(Date.now() - 60000).toISOString(); // Start 1 minute ago
 
   async function pollLogs() {
     try {
@@ -151,8 +151,12 @@ async function initLogStream() {
           'Authorization': `Bearer ${BETTERSTACK_TOKEN}`
         }
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
       const data = await response.json();
+      console.log('Better Stack API response:', data); // Debug raw response
       const logs = data.data || [];
 
       if (logs.length > 0) {
