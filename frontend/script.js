@@ -2,7 +2,7 @@ const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currenc
 const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days=7';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_API = '/proxy/live-tail'; // Use proxy endpoint
+const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail'; // Direct endpoint
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
 const SOURCE_ID = '1303816';
 const POLLING_INTERVAL = 15000;
@@ -423,42 +423,25 @@ async function initLogStream() {
       console.log('Fetching logs from:', url);
       const response = await fetch(url, {
         method: 'GET',
+        headers: { 'Authorization': `Bearer ${BETTERSTACK_TOKEN}` },
         redirect: 'follow'
       });
-
-      console.log('Response status:', response.status);
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-
-      const contentType = response.headers.get('content-type');
-      console.log('Content-Type:', contentType);
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error(`Unexpected response format: ${contentType}`);
-      }
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
 
       const data = await response.json();
       console.log('Response data:', data);
       nextUrl = data.pagination?.next || null;
-      console.log('Next URL:', nextUrl);
 
       const logs = data.rows || [];
       if (logs.length > 0) {
-        logs.forEach((log, index) => {
-          try {
-            console.log(`Processing log ${index}:`, log);
-            const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
-            console.log(`Parsed alert ${index}:`, alert);
-            if (alert.type === 'debug' && alert.event) {
-              const li = processAlert(alert);
-              alertList.prepend(li);
-              while (alertList.children.length > 20) {
-                alertList.removeChild(alertList.lastChild);
-              }
+        logs.forEach(log => {
+          const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
+          if (alert.type === 'debug' && alert.event) {
+            const li = processAlert(alert);
+            alertList.prepend(li);
+            while (alertList.children.length > 20) {
+              alertList.removeChild(alertList.lastChild);
             }
-          } catch (error) {
-            console.warn(`Invalid log format at index ${index}:`, error);
           }
         });
         wsStatus.textContent = 'Live logs active';
