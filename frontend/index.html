@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🧊 ICE KING DASHBOARD 👑</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <style>
     body {
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, #0d1b2a, #1b263b);
+      font-family: 'Fira Code', monospace;
+      background: #0a0f14;
+      color: #00ff00; /* Green terminal text */
       overflow-x: hidden;
     }
     /* Futuristic Grid Background */
@@ -22,15 +23,15 @@
       height: 100%;
       background: repeating-linear-gradient(
         0deg,
-        rgba(59, 130, 246, 0.1),
-        rgba(59, 130, 246, 0.1) 1px,
+        rgba(0, 255, 0, 0.05),
+        rgba(0, 255, 0, 0.05) 1px,
         transparent 1px,
         transparent 20px
       ),
       repeating-linear-gradient(
         90deg,
-        rgba(59, 130, 246, 0.1),
-        rgba(59, 130, 246, 0.1) 1px,
+        rgba(0, 255, 0, 0.05),
+        rgba(0, 255, 0, 0.05) 1px,
         transparent 1px,
         transparent 20px
       );
@@ -56,7 +57,7 @@
       position: absolute;
       width: 2px;
       height: 2px;
-      background: rgba(147, 51, 234, 0.7);
+      background: rgba(0, 255, 0, 0.7); /* Green stars */
       border-radius: 50%;
       animation: float 10s infinite linear;
     }
@@ -72,14 +73,14 @@
       100% { text-shadow: 0 0 5px rgba(59, 130, 246, 0.5), 0 0 10px rgba(59, 130, 246, 0.3); }
     }
     @keyframes glow-green {
-      0% { box-shadow: 0 0 5px rgba(74, 222, 128, 0.5), 0 0 10px rgba(74, 222, 128, 0.3); }
-      50% { box-shadow: 0 0 15px rgba(74, 222, 128, 0.8), 0 0 25px rgba(74, 222, 128, 0.5); }
-      100% { box-shadow: 0 0 5px rgba(74, 222, 128, 0.5), 0 0 10px rgba(74, 222, 128, 0.3); }
+      0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
     }
     @keyframes glow-red {
-      0% { box-shadow: 0 0 5px rgba(248, 113, 113, 0.5), 0 0 10px rgba(248, 113, 113, 0.3); }
-      50% { box-shadow: 0 0 15px rgba(248, 113, 113, 0.8), 0 0 25px rgba(248, 113, 113, 0.5); }
-      100% { box-shadow: 0 0 5px rgba(248, 113, 113, 0.5), 0 0 10px rgba(248, 113, 113, 0.3); }
+      0% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
     }
     @keyframes glow-purple {
       0% { text-shadow: 0 0 5px rgba(147, 51, 234, 0.5), 0 0 10px rgba(147, 51, 234, 0.3); }
@@ -110,21 +111,21 @@
       transition: all 0.3s ease;
     }
     .hover-performance-green:hover {
-      box-shadow: 0 0 15px rgba(74, 222, 128, 0.8), 0 0 25px rgba(74, 222, 128, 0.5);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); /* Green hover */
       transition: all 0.3s ease;
     }
     .hover-performance-red:hover {
-      box-shadow: 0 0 15px rgba(248, 113, 113, 0.8), 0 0 25px rgba(248, 113, 113, 0.5);
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); /* Red hover */
       transition: all 0.3s ease;
     }
     .selected-token {
-      border: 2px solid rgba(147, 51, 234, 0.8);
-      box-shadow: 0 0 15px rgba(147, 51, 234, 0.5);
+      border: 2px solid rgba(0, 255, 0, 0.8); /* Green border */
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
       background-opacity: 0.9 !important;
     }
     .gradient-bg {
-      background: linear-gradient(135deg, rgba(17, 24, 39, 0.6), rgba(45, 55, 72, 0.4));
-      border: 1px solid rgba(59, 130, 246, 0.2);
+      background: linear-gradient(135deg, rgba(0, 15, 0, 0.6), rgba(0, 30, 0, 0.4)); /* Dark green gradient */
+      border: 1px solid rgba(0, 255, 0, 0.2); /* Green border */
     }
     .chart-container {
       position: relative;
@@ -133,15 +134,34 @@
       margin: 0 auto;
       width: 100%;
     }
-    .chart-wrapper {
-      position: sticky;
+    .chart-modal {
+      display: none;
+      position: fixed;
       top: 0;
-      z-index: 20;
-      background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(45, 55, 72, 0.7));
-      padding-bottom: 8px;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7); /* Dark overlay */
+      z-index: 50;
+      justify-content: center;
+      align-items: center;
     }
-    .chart-wrapper.unlocked {
-      position: static;
+    .chart-modal.active {
+      display: flex;
+    }
+    .chart-modal-content {
+      background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7)); /* Dark green modal */
+      padding: 20px;
+      border: 2px solid rgba(0, 255, 0, 0.5); /* Green border */
+      border-radius: 5px;
+      width: 90%;
+      max-width: 1200px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
+    .chart-wrapper {
+      position: relative;
       z-index: 0;
     }
     #chart-canvas {
@@ -149,15 +169,18 @@
       height: 100% !important;
     }
     #token-list {
-      z-index: 30; /* Ensure tokens are above chart controls */
+      z-index: 10;
     }
     #token-list li {
-      z-index: 30; /* Ensure individual tokens are clickable */
+      z-index: 10;
       position: relative;
     }
     @media (min-width: 640px) {
       .chart-container {
         height: 700px;
+      }
+      .chart-modal-content {
+        width: 80%;
       }
     }
     /* Dynamic Tooltip with Performance Color */
@@ -170,18 +193,18 @@
       bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--tooltip-bg, rgba(59, 130, 246, 0.9));
-      color: white;
+      background: rgba(0, 255, 0, 0.9); /* Green tooltip */
+      color: #000;
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 12px;
       white-space: nowrap;
-      z-index: 40;
+      z-index: 60;
     }
     /* Wall Street Marquee */
     .marquee-container {
-      background: #111827;
-      border: 1px solid rgba(59, 130, 246, 0.3);
+      background: #000;
+      border: 1px solid rgba(0, 255, 0, 0.3); /* Green border */
       overflow: hidden;
       white-space: nowrap;
       padding: 4px 0;
@@ -205,6 +228,7 @@
     .marquee span {
       margin-right: 20px;
       font-size: 12px;
+      color: #00ff00; /* Green text */
     }
     @media (min-width: 640px) {
       .marquee span {
@@ -213,6 +237,17 @@
     }
     .marquee-container:hover .marquee {
       animation-play-state: running;
+    }
+    /* Custom Button Styling for Lock Chart */
+    #toggle-sticky {
+      animation: glow-green 2s infinite; /* Glowing green effect */
+      background-color: #00ff00;
+      color: #000;
+      border: 1px solid #00ff00;
+    }
+    #toggle-sticky:hover {
+      background-color: #00cc00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
     }
   </style>
 </head>
@@ -226,47 +261,77 @@
       <div class="chart-wrapper">
         <div class="flex justify-between items-center mb-2">
           <div class="flex space-x-2 flex-wrap">
-            <button id="timeframe-1min" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">1M</button>
-            <button id="timeframe-5min" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">5M</button>
-            <button id="timeframe-15min" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">15M</button>
-            <button id="timeframe-1hr" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">1H</button>
-            <button id="timeframe-4hr" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">4H</button>
-            <button id="timeframe-1d" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm active">1D</button>
+            <button id="timeframe-1min" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">1M</button>
+            <button id="timeframe-5min" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">5M</button>
+            <button id="timeframe-15min" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">15M</button>
+            <button id="timeframe-1hr" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">1H</button>
+            <button id="timeframe-4hr" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">4H</button>
+            <button id="timeframe-1d" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm active">1D</button>
           </div>
           <button id="toggle-sticky" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs sm:text-sm">Lock Chart</button>
         </div>
         <div class="flex justify-between items-center mb-2">
-          <div id="live-price" class="text-sm sm:text-base text-gray-200 glow-blue">Live Price: Loading...</div>
-          <select id="compare-token" class="bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">
+          <div id="live-price" class="text-sm sm:text-base text-gray-300 glow-blue">Live Price: Loading...</div>
+          <select id="compare-token" class="bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">
             <option value="">Compare with...</option>
           </select>
         </div>
         <div id="chart-container" class="mt-2">
           <canvas id="chart-canvas"></canvas>
         </div>
-        <h3 id="chart-title" class="text-sm sm:text-lg font-medium mt-2 text-gray-200 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
+        <h3 id="chart-title" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee"></div>
         </div>
       </div>
     </div>
   </header>
+  <div class="chart-modal" id="chart-modal">
+    <div class="chart-modal-content">
+      <div class="chart-wrapper">
+        <div class="flex justify-between items-center mb-2">
+          <div class="flex space-x-2 flex-wrap">
+            <button id="timeframe-1min" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">1M</button>
+            <button id="timeframe-5min" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">5M</button>
+            <button id="timeframe-15min" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">15M</button>
+            <button id="timeframe-1hr" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">1H</button>
+            <button id="timeframe-4hr" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">4H</button>
+            <button id="timeframe-1d" class="timeframe-btn bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm active">1D</button>
+          </div>
+          <button id="toggle-sticky" class="glow-green bg-green-500 hover:bg-green-600 text-black px-2 py-1 rounded text-xs sm:text-sm">Unlock Chart</button>
+        </div>
+        <div class="flex justify-between items-center mb-2">
+          <div id="live-price" class="text-sm sm:text-base text-gray-300 glow-blue">Live Price: Loading...</div>
+          <select id="compare-token" class="bg-green-900 hover:bg-green-800 text-white px-2 py-1 rounded text-xs sm:text-sm">
+            <option value="">Compare with...</option>
+          </select>
+        </div>
+        <div id="chart-container" class="mt-2">
+          <canvas id="chart-canvas"></canvas>
+        </div>
+        <h3 id="chart-title" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
+        <div class="marquee-container">
+          <div class="marquee" id="ticker-marquee"></div>
+        </div>
+      </div>
+    </div>
+  </div>
   <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
     <section class="gradient-bg p-3 rounded-lg shadow-md">
-      <h2 class="text-xl sm:text-2xl font-semibold mb-2 glow-purple">Low-Volume Tokens 🍀</h2>
-      <div id="loader-tokens" class="text-center text-gray-400 text-sm">Loading...</div>
+      <h2 class="text-xl sm:text-2xl font-bold mb-2 glow-purple">Low-Volume Tokens 🍀</h2>
+      <div id="loader-tokens" class="text-center text-gray-500 text-sm">Loading...</div>
       <ul id="token-list" class="space-y-2 max-h-[400px] overflow-y-auto text-sm sm:text-base"></ul>
       <div class="mt-4">
-        <h3 class="text-lg sm:text-xl font-medium mb-2 glow-purple">Top USDT Pairs</h3>
-        <ul id="top-pairs" class="text-xs sm:text-sm text-gray-300 flex flex-wrap gap-2"></ul>
+        <h3 class="text-lg sm:text-xl font-bold mb-2 glow-purple">Top USDT Pairs</h3>
+        <ul id="top-pairs" class="text-xs sm:text-sm text-gray-500 flex flex-wrap gap-2"></ul>
       </div>
     </section>
     <section class="gradient-bg p-3 rounded-lg shadow-md mt-4">
-      <h2 class="text-xl sm:text-2xl font-semibold mb-2 glow-purple">Alerts</h2>
+      <h2 class="text-xl sm:text-2xl font-bold mb-2 glow-purple">Alerts</h2>
       <ul id="alert-list" class="space-y-2 max-h-[400px] overflow-y-auto text-sm sm:text-base"></ul>
     </section>
   </main>
-  <footer class="gradient-bg p-2 text-center text-gray-400 text-xs sm:text-sm">
+  <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
     <p>Powered by CoinGecko, CoinMarketCap, CryptoCompare</p>
   </footer>
   <script>
@@ -280,10 +345,27 @@
       star.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(star);
     }
-    // Load script after DOM
+    // Load script after DOM and handle chart lock toggle
     document.addEventListener('DOMContentLoaded', () => {
       const script = document.createElement('script');
       script.src = 'script.js';
       document.body.appendChild(script);
+
+      const toggleStickyBtn = document.getElementById('toggle-sticky');
+      const chartModal = document.getElementById('chart-modal');
+      let isLocked = false;
+
+      toggleStickyBtn.addEventListener('click', () => {
+        isLocked = !isLocked;
+        chartModal.classList.toggle('active', isLocked);
+        toggleStickyBtn.textContent = isLocked ? 'Unlock Chart' : 'Lock Chart';
+        toggleStickyBtn.classList.toggle('bg-green-500', isLocked);
+        toggleStickyBtn.classList.toggle('bg-blue-500', !isLocked);
+        toggleStickyBtn.classList.toggle('glow-green', isLocked);
+        toggleStickyBtn.classList.toggle('hover:bg-green-600', isLocked);
+        toggleStickyBtn.classList.toggle('hover:bg-blue-600', !isLocked);
+      });
     });
   </script>
+</body>
+</html>
