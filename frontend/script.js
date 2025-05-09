@@ -141,55 +141,41 @@ async function fetchLowVolumeTokens() {
   renderTokens();
 }
 
-// Show custom Canvas chart
+// Show TradingView widget
 function showPriceChart(token) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
-  const canvas = document.getElementById('custom-chart');
-  const ctx = canvas.getContext('2d');
+  const widgetDiv = document.getElementById('tradingview-widget');
   chartContainer.innerHTML = ''; // Reset container
   chartContainer.appendChild(chartTitle);
-  chartContainer.appendChild(canvas);
+  chartContainer.appendChild(widgetDiv);
   chartContainer.classList.remove('hidden');
-  chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Trend (Simulated)`;
+  chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Chart`;
 
-  // Clear previous chart
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Destroy existing widget if it exists
+  if (window.tvWidget) window.tvWidget.remove();
 
-  // Simulated 30-day price data based on current price and 24h change
-  const days = 30;
-  const basePrice = token.current_price;
-  const changePercent = token.price_change_percentage_24h / 100;
-  const data = Array.from({ length: days }, (_, i) => {
-    const dayChange = changePercent * (Math.random() * 0.5 + 0.75); // Random variation
-    return basePrice * (1 + dayChange * (i / days));
-  });
-
-  // Draw chart
-  const step = canvas.width / (days - 1);
-  ctx.beginPath();
-  ctx.strokeStyle = '#4CAF50';
-  ctx.lineWidth = 2;
-  ctx.moveTo(0, canvas.height - (data[0] / Math.max(...data)) * (canvas.height - 20));
-  for (let i = 1; i < days; i++) {
-    ctx.lineTo(i * step, canvas.height - (data[i] / Math.max(...data)) * (canvas.height - 20));
-  }
-  ctx.stroke();
-
-  // Add axes and labels
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = '12px Arial';
-  ctx.fillText('Price', 10, 15);
-  ctx.fillText('Days', canvas.width - 40, canvas.height - 5);
-  for (let i = 0; i < 5; i++) {
-    const y = canvas.height - (i / 4) * (canvas.height - 20);
-    ctx.fillText((Math.max(...data) * (i / 4)).toFixed(2), 0, y);
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(10, y);
-    ctx.strokeStyle = '#666';
-    ctx.stroke();
-  }
+  // TradingView widget embed
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.innerHTML = `
+    new TradingView.widget({
+      width: '100%',
+      height: 300,
+      symbol: 'BINANCE:${token.symbol.toUpperCase()}USDT',
+      interval: '1D',
+      timezone: 'Etc/UTC',
+      theme: 'dark',
+      style: '1',
+      locale: 'en',
+      toolbar_bg: '#1A202C',
+      enable_publishing: false,
+      allow_symbol_change: true,
+      container_id: 'tradingview-widget'
+    });
+  `;
+  widgetDiv.innerHTML = '';
+  widgetDiv.appendChild(script);
 }
 
 // Process alert data for display
@@ -261,14 +247,11 @@ async function initLogStream() {
         const response = await fetch(BETTERSTACK_API, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'text/plain',
             'Authorization': `Bearer ${BETTERSTACK_TOKEN}`,
             'Accept': 'application/json'
           },
-          body: JSON.stringify({
-            dt: new Date().toISOString(),
-            message: query
-          }),
+          body: query,
           signal: controller.signal
         });
 
