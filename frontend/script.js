@@ -3,7 +3,7 @@ const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/l
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_LIVE_TAIL_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const BETTERSTACK_TOKEN = 'x5nvK7DNDURcpAHEBuCbHrza'; // Source token for ice_king
-const BETTERSTACK_SOURCE_IDS = 'ice_king'; // Replace with numeric ID for ice_king
+const BETTERSTACK_SOURCE_IDS = '1303816'; // Numeric source ID for ice_king
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 
 // Fetch low-volume tokens from multiple sources
