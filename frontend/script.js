@@ -7,21 +7,6 @@ const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tai
 const POLLING_INTERVAL = 15000;
 const PRICE_UPDATE_INTERVAL = 10000;
 
-// Mock token data for fallback, including ConstitutionDAO
-const mockTokens = [
-  { id: 'floki', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
-  { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 },
-  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'CryptoCompare', score: 70.6 }
-];
-
-// Mock historical data for chart fallback
-const mockChartData = {
-  prices: Array.from({ length: 7 }, (_, i) => [
-    Date.now() - (6 - i) * 24 * 60 * 60 * 1000,
-    0.00015 + (Math.random() - 0.5) * 0.00002
-  ])
-};
-
 // Ice King puns for marquee
 const iceKingPuns = [
   "I’m chilling like the Ice King! ❄️👑",
@@ -36,7 +21,7 @@ const iceKingPuns = [
 let priceChart = null;
 let currentToken = null;
 let compareToken = null;
-let currentTimeframe = 1; // Default to 1 day
+let currentTimeframe = 1;
 let allTokens = [];
 
 // Retry fetch with delay
@@ -69,9 +54,14 @@ async function fetchLivePrice(tokenId) {
 // Update live price display
 async function updateLivePrice() {
   if (!currentToken) return;
-  const livePriceElement = document.getElementById('live-price');
+  const livePriceElements = [
+    document.getElementById('live-price-header'),
+    document.getElementById('live-price-modal')
+  ];
   const price = await fetchLivePrice(currentToken.id);
-  livePriceElement.textContent = `Live Price: $${price !== 'N/A' ? price.toLocaleString() : 'N/A'}`;
+  livePriceElements.forEach(element => {
+    if (element) element.textContent = `Live Price: $${price !== 'N/A' ? price.toLocaleString() : 'N/A'}`;
+  });
 }
 
 // Fetch logs from Betterstack API
@@ -123,8 +113,14 @@ async function fetchLowVolumeTokens() {
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
-  const marquee = document.getElementById('ticker-marquee');
-  const compareDropdown = document.getElementById('compare-token');
+  const marqueeElements = [
+    document.getElementById('ticker-marquee-header'),
+    document.getElementById('ticker-marquee-modal')
+  ];
+  const compareDropdowns = [
+    document.getElementById('compare-token-header'),
+    document.getElementById('compare-token-modal')
+  ];
   let tokens = [];
   let selectedTokenLi = null;
 
@@ -132,7 +128,6 @@ async function fetchLowVolumeTokens() {
     const cgResponse = await fetch(COINGECKO_API);
     if (!cgResponse.ok) throw new Error(`CoinGecko HTTP ${cgResponse.status}`);
     const cgData = await cgResponse.json();
-    console.log('CoinGecko data:', cgData);
     tokens.push(...cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
       id: token.id,
       name: token.name,
@@ -153,9 +148,8 @@ async function fetchLowVolumeTokens() {
     const cmcResponse = await fetch(COINMARKETCAP_API, {
       headers: { 'X-CMC_PRO_API_KEY': 'bef090eb-323d-4ae8-86dd-266236262f19' }
     });
-    if (!cmcResponse.ok) throw new Error(`CoinMarketCap HTTP ${cgResponse.status}`);
+    if (!cmcResponse.ok) throw new Error(`CoinMarketCap HTTP ${cmcResponse.status}`);
     const cmcData = await cmcResponse.json();
-    console.log('CoinMarketCap data:', cmcData);
     tokens.push(...cmcData.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
       id: token.slug,
       name: token.name,
@@ -176,7 +170,6 @@ async function fetchLowVolumeTokens() {
     const ccResponse = await fetch(CRYPTOCOMPARE_API);
     if (!ccResponse.ok) throw new Error(`CryptoCompare HTTP ${ccResponse.status}`);
     const ccData = await ccResponse.json();
-    console.log('CryptoCompare data:', ccData);
     tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
       id: token.CoinInfo.Name.toLowerCase(),
       name: token.CoinInfo.FullName,
@@ -194,8 +187,9 @@ async function fetchLowVolumeTokens() {
   }
 
   if (tokens.length === 0) {
-    console.warn('No token data fetched. Using mock data.');
-    tokens = mockTokens;
+    tokenList.innerHTML = '<p class="text-gray-400 text-xs">Failed to fetch token data. Please try again later.</p>';
+    loader.style.display = 'none';
+    return;
   }
 
   const uniqueTokens = [];
@@ -207,10 +201,8 @@ async function fetchLowVolumeTokens() {
     }
   }
 
-  // Store tokens globally for comparison dropdown
   allTokens = uniqueTokens;
 
-  // Sort tokens by performance (price_change_percentage_24h)
   const sortedTokens = [...uniqueTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
   tokenList.innerHTML = '';
   sortedTokens.forEach((token, index) => {
@@ -219,11 +211,8 @@ async function fetchLowVolumeTokens() {
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
-    const tooltipBg = token.price_change_percentage_24h >= 0 ? 'rgba(74, 222, 128, 0.9)' : 'rgba(248, 113, 113, 0.9)';
-    const tooltipGlow = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} ${hoverClass} z-20`;
     li.setAttribute('data-tooltip', 'Click to toggle chart');
-    li.setAttribute('style', `--tooltip-bg: ${tooltipBg}; --tooltip-glow: ${tooltipGlow};`);
     const priceChange = token.price_change_percentage_24h;
     const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
     const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
@@ -248,17 +237,12 @@ async function fetchLowVolumeTokens() {
       li.classList.add('selected-token');
       selectedTokenLi = li;
       currentToken = token;
-      showPriceChart(token, compareToken, currentTimeframe);
+      showPriceChart(token, compareToken, currentTimeframe, document.getElementById('chart-modal').classList.contains('active') ? 'modal' : 'header');
       updateLivePrice();
     });
     tokenList.appendChild(li);
   });
 
-  if (sortedTokens.length === 0) {
-    tokenList.innerHTML = '<p class="text-gray-400 text-xs">No tokens under $5M volume.</p>';
-  }
-
-  // Populate top pairs
   const topTokens = sortedTokens.slice(0, 5).map(token => token.symbol);
   topPairs.innerHTML = topTokens.map((pair, index) => {
     const token = sortedTokens[index];
@@ -269,7 +253,6 @@ async function fetchLowVolumeTokens() {
     return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition ${glowClass} ${hoverClass}">${pair}/USDT</li>`;
   }).join('');
 
-  // Populate marquee with top 3 winners, Ice King puns, and top 3 losers
   let punIndex = 0;
   function updateMarquee() {
     const winners = sortedTokens.filter(t => t.price_change_percentage_24h > 0).slice(0, 3);
@@ -281,27 +264,21 @@ async function fetchLowVolumeTokens() {
       `<span class="glow-purple text-purple-400">${currentPun}</span>`,
       ...losers.map(t => `<span class="glow-red text-red-400">📉 ${t.symbol}: ${t.price_change_percentage_24h.toFixed(2)}%</span>`)
     ];
-    // Double the content to eliminate blank space
     const doubledItems = [...marqueeItems, ...marqueeItems];
-    marquee.innerHTML = doubledItems.join('');
-    setTimeout(updateMarquee, 20000); // Match the CSS animation duration (20s)
+    marqueeElements.forEach(element => {
+      if (element) element.innerHTML = doubledItems.join('');
+    });
+    setTimeout(updateMarquee, 20000);
   }
   updateMarquee();
 
-  // Populate compare dropdown
-  compareDropdown.innerHTML = '<option value="">Compare with...</option>';
-  sortedTokens.forEach(token => {
-    const option = document.createElement('option');
-    option.value = token.id;
-    option.textContent = `${token.name} (${token.symbol})`;
-    compareDropdown.appendChild(option);
-  });
-
-  compareDropdown.addEventListener('change', () => {
-    const selectedId = compareDropdown.value;
-    compareToken = selectedId ? allTokens.find(t => t.id === selectedId) : null;
-    if (currentToken) {
-      showPriceChart(currentToken, compareToken, currentTimeframe);
+  compareDropdowns.forEach(dropdown => {
+    if (dropdown) {
+      dropdown.innerHTML = '<option value="">Compare with...</option>' + allTokens.map(t => `<option value="${t.id}">${t.name} (${t.symbol})</option>`).join('');
+      dropdown.addEventListener('change', (e) => {
+        compareToken = allTokens.find(t => t.id === e.target.value) || null;
+        showPriceChart(currentToken, compareToken, currentTimeframe, document.getElementById('chart-modal').classList.contains('active') ? 'modal' : 'header');
+      });
     }
   });
 
@@ -310,7 +287,7 @@ async function fetchLowVolumeTokens() {
     firstTokenLi.classList.add('selected-token');
     selectedTokenLi = firstTokenLi;
     currentToken = sortedTokens[0];
-    showPriceChart(sortedTokens[0], null, currentTimeframe);
+    showPriceChart(sortedTokens[0], null, currentTimeframe, 'header');
     updateLivePrice();
     setInterval(updateLivePrice, PRICE_UPDATE_INTERVAL);
   }
@@ -318,15 +295,56 @@ async function fetchLowVolumeTokens() {
   loader.style.display = 'none';
 }
 
-// Show Price Chart using Chart.js with CoinGecko data
-async function showPriceChart(token, compareToken, days) {
-  const chartContainer = document.getElementById('chart-container');
-  const chartTitle = document.getElementById('chart-title');
+async function fetchChartData(tokenId, days) {
+  try {
+    const url = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(tokenId)).replace('{days}', days);
+    const data = await fetchWithRetry(url);
+    if (!data.prices || !Array.isArray(data.prices)) {
+      throw new Error('Invalid chart data format: prices array missing');
+    }
+    return data.prices;
+  } catch (error) {
+    console.error(`Error fetching chart data for ${tokenId}:`, error);
+    throw error;
+  }
+}
+
+async function showPriceChart(token, compareToken, days, containerType) {
+  if (priceChart) {
+    priceChart.destroy();
+    priceChart = null;
+  }
+
+  const chartContainer = containerType === 'modal' ? document.getElementById('chart-container-modal') : document.getElementById('chart-container-header');
+  const chartCanvasId = containerType === 'modal' ? 'chart-canvas-modal' : 'chart-canvas-header';
+  const chartTitle = containerType === 'modal' ? document.getElementById('chart-title-modal') : document.getElementById('chart-title-header');
+  const tickerMarquee = containerType === 'modal' ? document.getElementById('ticker-marquee-modal') : document.getElementById('ticker-marquee-header');
+
+  if (!chartContainer || !chartTitle || !tickerMarquee || !token) {
+    console.error('Missing required elements for chart rendering');
+    return;
+  }
+
+  let chartCanvas = document.getElementById(chartCanvasId);
+  if (chartCanvas) {
+    chartCanvas.remove();
+  }
+  chartCanvas = document.createElement('canvas');
+  chartCanvas.id = chartCanvasId;
+  chartCanvas.style.width = '100%';
+  chartCanvas.style.height = '100%';
+  chartContainer.appendChild(chartCanvas);
+
+  if (!chartCanvas || !chartCanvas.getContext) {
+    console.error('Canvas creation failed');
+    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to create chart canvas.</div>';
+    return;
+  }
+
   chartTitle.textContent = compareToken
     ? `${token.name} (${token.symbol}/USDT) vs ${compareToken.name} (${compareToken.symbol}/USDT)`
     : `${token.name} (${token.symbol}/USDT)`;
 
-  // Update chart title hover effect based on performance
   chartTitle.onmouseover = () => {
     chartTitle.style.color = token.price_change_percentage_24h >= 0 ? 'rgba(74, 222, 128, 0.8)' : 'rgba(248, 113, 113, 0.8)';
     chartTitle.style.opacity = '0.75';
@@ -336,91 +354,17 @@ async function showPriceChart(token, compareToken, days) {
     chartTitle.style.opacity = '1';
   };
 
-  // Clear and destroy existing chart if it exists
-  if (priceChart) {
-    priceChart.destroy();
-    priceChart = null;
-  }
-
-  // Remove existing canvas and create a new one
-  let chartCanvas = document.getElementById('chart-canvas');
-  if (chartCanvas) {
-    chartCanvas.remove();
-  }
-  chartCanvas = document.createElement('canvas');
-  chartCanvas.id = 'chart-canvas';
-  chartCanvas.style.width = '100%';
-  chartCanvas.style.height = '100%';
-  chartContainer.appendChild(chartCanvas);
-
-  // Ensure canvas is in DOM before proceeding
-  if (!chartCanvas || !chartCanvas.getContext) {
-    console.error('Canvas creation failed');
-    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to create chart canvas.</div>';
-    return;
-  }
-
   try {
-    // Fetch historical price data for primary token
-    const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id)).replace('{days}', days);
-    let chartData;
-    try {
-      chartData = await fetchWithRetry(chartUrl);
-      console.log(`Chart data for ${token.id} (${days} days):`, chartData);
-    } catch (error) {
-      console.warn(`Failed to fetch chart data for ${token.id}. Using mock data.`, error);
-      chartData = mockChartData;
-    }
+    const data = await fetchChartData(token.id, days);
+    const labels = data.map(d => new Date(d[0]).toLocaleDateString());
+    const prices = data.map(d => d[1]);
 
-    if (!chartData.prices || !Array.isArray(chartData.prices)) {
-      throw new Error('Invalid chart data format: prices array missing');
-    }
-
-    const prices = chartData.prices; // Array of [timestamp, price]
-    const labels = prices.map(price => new Date(price[0]).toLocaleString());
-    const data = prices.map(price => price[1]);
-
-    // Fetch data for comparison token if selected
-    let compareData = null;
+    let compareData = [];
     if (compareToken) {
-      const compareChartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', days);
-      try {
-        compareData = await fetchWithRetry(compareChartUrl);
-        console.log(`Chart data for ${compareToken.id} (${days} days):`, compareData);
-      } catch (error) {
-        console.warn(`Failed to fetch chart data for ${compareToken.id}.`, error);
-        compareData = null;
-      }
+      const compareChartData = await fetchChartData(compareToken.id, days);
+      compareData = compareChartData.map(d => d[1]);
     }
 
-    // Prepare datasets
-    const datasets = [
-      {
-        label: `${token.symbol}/USD Price`,
-        data: data,
-        borderColor: '#9333ea',
-        backgroundColor: 'rgba(147, 51, 234, 0.2)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-      }
-    ];
-
-    if (compareData && compareData.prices && Array.isArray(compareData.prices)) {
-      const comparePrices = compareData.prices;
-      const compareDataPoints = comparePrices.map(price => price[1]);
-      datasets.push({
-        label: `${compareToken.symbol}/USD Price`,
-        data: compareDataPoints,
-        borderColor: '#34d399',
-        backgroundColor: 'rgba(52, 211, 153, 0.2)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-      });
-    }
-
-    // Create new Chart.js chart
     const ctx = chartCanvas.getContext('2d');
     if (!ctx) {
       throw new Error('Failed to get canvas 2D context');
@@ -430,7 +374,26 @@ async function showPriceChart(token, compareToken, days) {
       type: 'line',
       data: {
         labels: labels,
-        datasets: datasets
+        datasets: [
+          {
+            label: `${token.symbol}/USD Price`,
+            data: prices,
+            borderColor: '#9333ea',
+            backgroundColor: 'rgba(147, 51, 234, 0.2)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+          },
+          ...(compareToken ? [{
+            label: `${compareToken.symbol}/USD Price`,
+            data: compareData,
+            borderColor: '#34d399',
+            backgroundColor: 'rgba(52, 211, 153, 0.2)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+          }] : [])
+        ]
       },
       options: {
         responsive: true,
@@ -483,53 +446,52 @@ async function showPriceChart(token, compareToken, days) {
         }
       }
     });
-    console.log(`Chart rendered for ${token.id}${compareToken ? ` vs ${compareToken.id}` : ''} (${days} days)`);
+
+    tickerMarquee.innerHTML = `<span class="glow-green">${token.symbol}: $${prices[prices.length - 1].toLocaleString()}</span>`;
   } catch (error) {
     console.error('Error rendering chart:', error);
     chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
   }
 }
 
-// Setup chart timeframe and sticky toggle
+window.reinitializeChart = function(containerType) {
+  if (currentToken) {
+    showPriceChart(currentToken, compareToken, currentTimeframe, containerType);
+  }
+};
+
 function setupChartControls() {
   const timeframes = {
-    'timeframe-1min': 1 / 1440,   // 1 minute in days
-    'timeframe-5min': 5 / 1440,   // 5 minutes in days
-    'timeframe-15min': 15 / 1440, // 15 minutes in days
-    'timeframe-1hr': 1 / 24,      // 1 hour in days
-    'timeframe-4hr': 4 / 24,      // 4 hours in days
-    'timeframe-1d': 1             // 1 day
+    '1min': 1 / 1440,
+    '5min': 5 / 1440,
+    '15min': 15 / 1440,
+    '1hr': 1 / 24,
+    '4hr': 4 / 24,
+    '1d': 1
   };
 
-  // Timeframe buttons
-  Object.keys(timeframes).forEach(id => {
-    const btn = document.getElementById(id);
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentTimeframe = timeframes[id];
-      if (currentToken) {
-        showPriceChart(currentToken, compareToken, currentTimeframe);
+  ['header', 'modal'].forEach(containerType => {
+    const prefix = containerType === 'modal' ? 'modal-' : 'header-';
+    Object.entries(timeframes).forEach(([id, days]) => {
+      const btn = document.getElementById(`${prefix}timeframe-${id}`);
+      if (btn) {
+        btn.addEventListener('click', () => {
+          currentTimeframe = days;
+          document.querySelectorAll(`[id^="${prefix}timeframe-"]`).forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          if (currentToken) {
+            showPriceChart(currentToken, compareToken, currentTimeframe, containerType);
+          }
+        });
       }
     });
   });
-
-  // Sticky toggle
-  const toggleStickyBtn = document.getElementById('toggle-sticky');
-  const chartWrapper = document.querySelector('.chart-wrapper');
-  let isSticky = true; // Default to sticky
-  toggleStickyBtn.addEventListener('click', () => {
-    isSticky = !isSticky;
-    chartWrapper.classList.toggle('unlocked', !isSticky);
-    toggleStickyBtn.textContent = isSticky ? 'Lock Chart' : 'Unlock Chart';
-    toggleStickyBtn.classList.toggle('bg-blue-500', isSticky);
-    toggleStickyBtn.classList.toggle('bg-blue-600', !isSticky);
-  });
 }
 
-// Initialize with a placeholder sourceId (replace with actual SOURCE_ID)
-const SOURCE_ID = 'your-source-id-here'; // Replace with actual source ID
-fetchLowVolumeTokens();
-updateAlertsWithLogs(SOURCE_ID);
-setInterval(() => updateAlertsWithLogs(SOURCE_ID), POLLING_INTERVAL);
-setupChartControls();
+document.addEventListener('DOMContentLoaded', async () => {
+  const SOURCE_ID = 'source_123';
+  await fetchLowVolumeTokens();
+  updateAlertsWithLogs(SOURCE_ID);
+  setInterval(() => updateAlertsWithLogs(SOURCE_ID), POLLING_INTERVAL);
+  setupChartControls();
+});
