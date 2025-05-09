@@ -141,65 +141,54 @@ async function fetchLowVolumeTokens() {
   renderTokens();
 }
 
-// Show TradingView chart
-async function showPriceChart(token) {
+// Show custom Canvas chart
+function showPriceChart(token) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
-  const chartDiv = document.getElementById('tradingview-chart');
+  const canvas = document.getElementById('custom-chart');
+  const ctx = canvas.getContext('2d');
   chartContainer.innerHTML = ''; // Reset container
   chartContainer.appendChild(chartTitle);
-  chartContainer.appendChild(chartDiv);
+  chartContainer.appendChild(canvas);
   chartContainer.classList.remove('hidden');
-  chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Movement`;
+  chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Trend (Simulated)`;
 
-  // Destroy existing chart if it exists
-  if (window.chart) window.chart.remove();
+  // Clear previous chart
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Check if LightweightCharts is available
-  if (typeof LightweightCharts === 'undefined') {
-    chartDiv.innerHTML = `<p class="text-red-400">LightweightCharts library failed to load. Check network and console.</p>`;
-    console.error('LightweightCharts is not defined. Ensure the CDN script is loaded.');
-    return;
-  }
-
-  // Initialize TradingView Lightweight Chart
-  const chart = LightweightCharts.createChart(chartDiv, {
-    width: chartDiv.clientWidth,
-    height: 300,
-    layout: { backgroundColor: '#1A202C', textColor: '#FFFFFF' },
-    grid: { vertLines: { color: '#2D3748' }, horzLines: { color: '#2D3748' } },
-    timeScale: { timeVisible: true, secondsVisible: false },
+  // Simulated 30-day price data based on current price and 24h change
+  const days = 30;
+  const basePrice = token.current_price;
+  const changePercent = token.price_change_percentage_24h / 100;
+  const data = Array.from({ length: days }, (_, i) => {
+    const dayChange = changePercent * (Math.random() * 0.5 + 0.75); // Random variation
+    return basePrice * (1 + dayChange * (i / days));
   });
-  window.chart = chart;
 
-  // Fetch historical data from Binance API
-  const pair = `${token.symbol.toLowerCase()}usdt`;
-  try {
-    const response = await fetch(`https://api.binance.com/api/v3/klines?symbol=${pair.toUpperCase()}&interval=1d&limit=30`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch data for ${pair}`);
-    const data = await response.json();
+  // Draw chart
+  const step = canvas.width / (days - 1);
+  ctx.beginPath();
+  ctx.strokeStyle = '#4CAF50';
+  ctx.lineWidth = 2;
+  ctx.moveTo(0, canvas.height - (data[0] / Math.max(...data)) * (canvas.height - 20));
+  for (let i = 1; i < days; i++) {
+    ctx.lineTo(i * step, canvas.height - (data[i] / Math.max(...data)) * (canvas.height - 20));
+  }
+  ctx.stroke();
 
-    // Validate response format
-    if (!Array.isArray(data) || data.length === 0 || !Array.isArray(data[0]) || data[0].length < 5) {
-      throw new Error('Unexpected response format or no data for ' + pair);
-    }
-
-    const candles = data.map(([time, open, high, low, close]) => ({
-      time: parseInt(time) / 1000,
-      open: parseFloat(open),
-      high: parseFloat(high),
-      low: parseFloat(low),
-      close: parseFloat(close)
-    }));
-
-    const candleSeries = chart.addCandlestickSeries();
-    candleSeries.setData(candles);
-
-    // Auto-scale the chart
-    chart.timeScale().fitContent();
-  } catch (error) {
-    console.error(`Chart error for ${token.name} (${pair}):`, error);
-    chartDiv.innerHTML = `<p class="text-red-400">Failed to load chart for ${token.name}: ${error.message}. Pair may not be supported on Binance or requires a proxy.</p>`;
+  // Add axes and labels
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '12px Arial';
+  ctx.fillText('Price', 10, 15);
+  ctx.fillText('Days', canvas.width - 40, canvas.height - 5);
+  for (let i = 0; i < 5; i++) {
+    const y = canvas.height - (i / 4) * (canvas.height - 20);
+    ctx.fillText((Math.max(...data) * (i / 4)).toFixed(2), 0, y);
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(10, y);
+    ctx.strokeStyle = '#666';
+    ctx.stroke();
   }
 }
 
@@ -233,133 +222,122 @@ function processAlert(alert) {
   return li;
 }
 
-// Fetch logs from Better Stack
+// Mock alert generator
+function generateMockAlerts() {
+  const alerts = [];
+  const events = ['long_entry', 'short_entry', 'exit', 'protect_exit', 'filter_blocked'];
+  const markets = ['BTC-USDT', 'ETH-USDT', 'FLOKI-USDT'];
+  for (let i = 0; i < 10; i++) {
+    const event = events[Math.floor(Math.random() * events.length)];
+    alerts.push({
+      type: 'debug',
+      event: event,
+      signal: event.includes('entry') ? 'buy' : 'sell',
+      market: markets[Math.floor(Math.random() * markets.length)],
+      timestamp: new Date(Date.now() - Math.random() * 86400000 * 10).toISOString(),
+      filter: event === 'filter_blocked' ? 'low_volume' : undefined
+    });
+  }
+  return alerts;
+}
+
+// Fetch logs from Better Stack or use mock data
 async function initLogStream() {
   const wsStatus = document.getElementById('ws-status');
   const alertList = document.getElementById('alert-list');
+  const toggleLive = document.getElementById('toggle-live');
+  let isLive = false;
   let offset = 0;
 
   async function pollLogs() {
     try {
-      const query = `SELECT * FROM t371838.ice_king_logs WHERE type = 'debug' ORDER BY timestamp DESC LIMIT 100 OFFSET ${offset}`;
-      console.debug(`Fetching Better Stack logs: Query=${query}`);
+      if (isLive) {
+        const query = `SELECT * FROM t371838.ice_king_logs WHERE type = 'debug' ORDER BY timestamp DESC LIMIT 100 OFFSET ${offset}`;
+        console.debug(`Fetching Better Stack logs: Query=${query}`);
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
 
-      const response = await fetch(BETTERSTACK_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${BETTERSTACK_TOKEN}`,
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          dt: new Date().toISOString(),
-          message: query
-        }),
-        signal: controller.signal
-      });
+        const response = await fetch(BETTERSTACK_API, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${BETTERSTACK_TOKEN}`,
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            dt: new Date().toISOString(),
+            message: query
+          }),
+          signal: controller.signal
+        });
 
-      clearTimeout(timeoutId);
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage = `HTTP ${response.status}: ${errorText}`;
-        let userMessage = 'Error fetching logs. Check console and Network tab (F12 > Network) for details.';
-
-        if (response.status === 401) {
-          errorMessage = `HTTP 401 Unauthorized: Invalid Bearer token. Check BETTERSTACK_TOKEN.`;
-          userMessage = 'Invalid credentials. Verify Bearer token in Better Stack.';
-        } else if (response.status === 400) {
-          errorMessage = `HTTP 400 Bad Request: Invalid query or table. Query: ${query}. Response: ${errorText}`;
-          userMessage = 'Invalid query or table. Verify t371838.ice_king_logs exists.';
-        } else if (response.status >= 500) {
-          errorMessage = `HTTP ${response.status} Server Error: Better Stack issue. Response: ${errorText}`;
-          userMessage = 'Better Stack server error. Try again later or contact support.';
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to fetch logs`);
         }
 
-        console.error(`Better Stack polling error: ${errorMessage}`, { query, status: response.status, responseText: errorText });
-        wsStatus.textContent = userMessage;
-        wsStatus.className = 'mb-4 text-red-400';
-        throw new Error(errorMessage);
-      }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error(`Unexpected response format: Content-Type=${contentType}`);
+        }
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const errorText = await response.text();
-        console.error(`Unexpected response format: Content-Type=${contentType}`, { responseText: errorText });
-        wsStatus.textContent = 'Unexpected response format. Check console and Network tab for details.';
-        wsStatus.className = 'mb-4 text-red-400';
-        throw new Error(`Unexpected response format: Content-Type=${contentType}`);
-      }
-
-      const data = await response.json();
-      console.debug('Better Stack response:', data);
-
-      // Adjust based on actual response structure
-      const logs = Array.isArray(data) ? data : data.data || [];
-      if (logs.length > 0) {
-        console.debug(`Received ${logs.length} logs from Better Stack.`);
-        logs.forEach((log, index) => {
-          try {
-            if (!log.message) {
-              console.warn(`Log ${index} has no message field:`, log);
-              return;
-            }
-            const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
-            if (alert.type === 'debug' && alert.event) {
-              console.debug(`Processing valid ICE KING alert:`, alert);
-              const li = processAlert(alert);
-              alertList.prepend(li);
-              while (alertList.children.length > 20) {
-                alertList.removeChild(alertList.lastChild);
+        const data = await response.json();
+        const logs = Array.isArray(data) ? data : data.data || [];
+        if (logs.length > 0) {
+          logs.forEach((log, index) => {
+            try {
+              const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
+              if (alert.type === 'debug' && alert.event) {
+                const li = processAlert(alert);
+                alertList.prepend(li);
+                while (alertList.children.length > 20) {
+                  alertList.removeChild(alertList.lastChild);
+                }
               }
-            } else {
-              console.debug(`Skipping log ${index}: Not a debug alert or missing event.`, alert);
+            } catch (error) {
+              console.warn(`Invalid log format at index ${index}:`, error);
             }
-          } catch (error) {
-            console.warn(`Invalid log message format in log ${index}:`, log.message, error);
+          });
+          wsStatus.textContent = 'Receiving live logs from Better Stack';
+          wsStatus.className = 'mb-4 text-green-400';
+          offset += logs.length;
+        } else {
+          wsStatus.textContent = 'Waiting for new logs...';
+          wsStatus.className = 'mb-4 text-gray-400';
+        }
+      } else {
+        const mockAlerts = generateMockAlerts();
+        mockAlerts.forEach(alert => {
+          const li = processAlert(alert);
+          alertList.prepend(li);
+          while (alertList.children.length > 20) {
+            alertList.removeChild(alertList.lastChild);
           }
         });
-        wsStatus.textContent = 'Receiving live logs from Better Stack';
-        wsStatus.className = 'mb-4 text-green-400';
-        offset += logs.length; // Update offset for pagination
-      } else {
-        console.debug('No new logs received from Better Stack.');
-        wsStatus.textContent = 'Waiting for new logs...';
-        wsStatus.className = 'mb-4 text-gray-400';
+        wsStatus.textContent = 'Using mock data. Set up a proxy for live logs.';
+        wsStatus.className = 'mb-4 text-yellow-400';
       }
     } catch (error) {
-      let errorMessage = error.message;
-      let userMessage = `Error fetching logs: ${errorMessage}. Check console and Network tab (F12 > Network) for details.`;
-
-      if (error.name === 'AbortError') {
-        errorMessage = `Request timed out after ${FETCH_TIMEOUT}ms. Possible network issue or API unreachable.`;
-        userMessage = 'Connection to Better Stack timed out. Check Network tab (F12 > Network).';
-      } else if (errorMessage.includes('Failed to fetch')) {
-        errorMessage = `Failed to fetch: Likely CORS issue, network error, or API unreachable. Check Network tab (F12 > Network) for CORS headers (e.g., Access-Control-Allow-Origin).`;
-        userMessage = 'Failed to connect to Better Stack. Check Network tab (F12 > Network) for CORS or network issues.';
-      }
-
-      console.error(`Better Stack polling error: ${errorMessage}`, {
-        query,
-        possibleCauses: [
-          'CORS restriction: Better Stack API may not allow browser requests. Use a backend proxy.',
-          'Network issue: Render IPs may be blocked or API is down.',
-          'Invalid token: Verify BETTERSTACK_TOKEN.',
-          'Table issue: Verify t371838.ice_king_logs exists.'
-        ]
-      });
-      wsStatus.textContent = userMessage;
+      console.error('Log polling error:', error);
+      wsStatus.textContent = `Error: ${error.message}. Using mock data or check proxy setup.`;
       wsStatus.className = 'mb-4 text-red-400';
-      offset = 0; // Reset offset on error
+      if (!isLive) generateMockAlerts().forEach(alert => alertList.prepend(processAlert(alert)));
     }
     setTimeout(pollLogs, POLLING_INTERVAL);
   }
 
-  wsStatus.textContent = 'Connecting to Better Stack...';
-  wsStatus.className = 'mb-4 text-gray-400';
+  toggleLive.addEventListener('click', () => {
+    isLive = !isLive;
+    toggleLive.textContent = `${isLive ? 'Live Data' : 'Mock Data'} (Toggle ${isLive ? 'Mock' : 'Live'})`;
+    alertList.innerHTML = '';
+    offset = 0;
+    pollLogs();
+  });
+
+  wsStatus.textContent = 'Starting with mock data...';
+  wsStatus.className = 'mb-4 text-yellow-400';
   pollLogs();
 }
 
