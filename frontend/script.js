@@ -167,6 +167,8 @@ async function showPriceChart(token) {
   chartContainer.innerHTML = '';
   const chartElement = document.createElement('div');
   chartElement.id = 'chart-canvas';
+  chartElement.style.width = '100%';
+  chartElement.style.height = '100%';
   chartContainer.appendChild(chartElement);
 
   try {
@@ -192,16 +194,26 @@ async function showPriceChart(token) {
       },
     });
 
+    console.log('Chart container size:', chartContainer.clientWidth, chartContainer.clientHeight);
+    console.log('TradingView chart created:', chart);
+
     const lineSeries = chart.addLineSeries({
       color: token.price_change_percentage_24h >= 0 ? '#4ade80' : '#f87171',
       lineWidth: 2,
     });
 
-    console.log('TradingView chart created:', chart);
+    // Test with mock data first
+    const mockData = Array.from({ length: 100 }, (_, i) => ({
+      time: Date.now() / 1000 - (99 - i) * 3600,
+      value: token.current_price * (1 + (Math.random() - 0.5) * 0.1),
+    }));
+    lineSeries.setData(mockData);
+    chart.timeScale().fitContent();
+    console.log('Chart initialized with mock data');
 
+    // Attempt to fetch real data
     const symbol = `${token.symbol.toLowerCase()}usdt`;
     try {
-      console.log('Fetching Binance data for:', symbol);
       const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1h&limit=168`);
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       const data = await response.json();
@@ -218,31 +230,46 @@ async function showPriceChart(token) {
       let lastClose = chartData[chartData.length - 1].value;
       setInterval(() => {
         lastClose += (Math.random() - 0.5) * lastClose * 0.001;
-        const newPoint = {
-          time: Math.floor(Date.now() / 1000),
-          value: lastClose,
-        };
+        const newPoint = { time: Math.floor(Date.now() / 1000), value: lastClose };
         lineSeries.update(newPoint);
       }, 5000);
     } catch (error) {
-      console.error('Chart data error:', error);
-      const mockData = Array.from({ length: 168 }, (_, i) => ({
-        time: Math.floor((Date.now() - (167 - i) * 3600 * 1000) / 1000),
-        value: token.current_price * (1 - 0.05 + Math.random() * 0.1),
-      }));
-      lineSeries.setData(mockData);
-      chart.timeScale().fitContent();
-      console.log('Chart updated with mock data');
+      console.error('Chart data fetch error:', error);
     }
+
+    // Ensure chart resizes properly
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        chart.resize(entry.contentRect.width, entry.contentRect.height);
+        chart.timeScale().fitContent();
+        console.log('Chart resized to:', entry.contentRect.width, entry.contentRect.height);
+      }
+    });
+    resizeObserver.observe(chartContainer);
 
     window.addEventListener('resize', () => {
       chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
       chart.timeScale().fitContent();
-      console.log('Chart resized');
+      console.log('Chart resized on window resize');
     });
   } catch (error) {
     console.error('TradingView chart initialization error:', error);
     chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Chart failed to load. Check console for errors.</div>';
+    // Fallback Canvas Chart
+    const canvas = document.createElement('canvas');
+    canvas.id = 'fallback-canvas';
+    canvas.width = chartContainer.clientWidth;
+    canvas.height = chartContainer.clientHeight;
+    chartContainer.appendChild(canvas);
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.fillStyle = 'rgba(74, 222, 128, 0.2)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#d1d4dc';
+      ctx.font = '16px Orbitron';
+      ctx.fillText('Fallback Chart', 10, 20);
+      console.log('Fallback canvas chart rendered');
+    }
   }
 }
 
