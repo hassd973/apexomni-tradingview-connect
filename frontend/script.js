@@ -2,8 +2,8 @@ const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currenc
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_LIVE_TAIL_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
-const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL'; // Global API token
-const BETTERSTACK_SOURCE_IDS = 'YOUR_SOURCE_ID'; // Replace with your source ID from Better Stack
+const BETTERSTACK_TOKEN = 'x5nvK7DNDURcpAHEBuCbHrza'; // Source token for ice_king
+const BETTERSTACK_SOURCE_IDS = 'ice_king'; // Replace with numeric ID for ice_king
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 
 // Fetch low-volume tokens from multiple sources
@@ -147,7 +147,15 @@ async function initLogStream() {
   async function pollLogs() {
     try {
       // Build initial query or use nextUrl
-      const url = nextUrl || `${BETTERSTACK_LIVE_TAIL_API}?source_ids=${BETTERSTACK_SOURCE_IDS}&query=type=debug&batch=100&order=newest_first&from=${encodeURIComponent(new Date(Date.now() - 30000).toISOString())}`;
+      const baseUrl = nextUrl || BETTERSTACK_LIVE_TAIL_API;
+      const params = nextUrl ? {} : {
+        source_ids: BETTERSTACK_SOURCE_IDS,
+        query: 'type=debug',
+        batch: '100',
+        order: 'newest_first',
+        from: new Date(Date.now() - 30000).toISOString()
+      };
+      const url = nextUrl || `${baseUrl}?${new URLSearchParams(params).toString()}`;
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${BETTERSTACK_TOKEN}`
