@@ -1,10 +1,10 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
-const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
+const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
-const SOURCE_ID = '1303816'; // Provided source ID
-const POLLING_INTERVAL = 10000; // Poll every 10 seconds
+const SOURCE_ID = '1303816';
+const POLLING_INTERVAL = 10000;
 const BINANCE_API = 'https://api.binance.com/api/v3/klines';
 
 // Fetch low-volume tokens and top pairs
@@ -13,7 +13,7 @@ async function fetchLowVolumeTokens() {
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
   let tokens = [];
-  const volumeThreshold = 5_000_000; // $5M threshold
+  const volumeThreshold = 5_000_000;
 
   // CoinGecko
   try {
@@ -148,19 +148,20 @@ async function showPriceChart(token) {
   // Initialize Lightweight Charts
   const chart = LightweightCharts.createChart(chartDiv, {
     width: chartDiv.clientWidth,
-    height: 400,
+    height: 500,
     layout: { background: { color: 'transparent' }, textColor: '#d1d5db' },
     grid: { vertLines: { color: 'rgba(255, 255, 255, 0.1)' }, horzLines: { color: 'rgba(255, 255, 255, 0.1)' } },
-    timeScale: { timeVisible: true, secondsVisible: false },
-    responsive: true
+    timeScale: { timeVisible: true, secondsVisible: false }
   });
   window.chart = chart;
 
   // Fetch historical data from Binance
   const symbol = `${token.symbol.toLowerCase()}usdt`;
   try {
-    const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1d&limit=30`);
+    const response = await fetch(`${BINANCE_API}?symbol=${symbol.toUpperCase()}&interval=1h&limit=168`); // 7 days of hourly data
+    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch data`);
     const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) throw new Error('No data returned');
     const candlestickSeries = chart.addCandlestickSeries({
       upColor: '#4ade80',
       downColor: '#f87171',
@@ -177,23 +178,22 @@ async function showPriceChart(token) {
     }));
     candlestickSeries.setData(candles);
 
-    // Simulate live updates (replace with real WebSocket if available)
+    // Simulate live updates
     let lastClose = candles[candles.length - 1].close;
     setInterval(() => {
       lastClose += (Math.random() - 0.5) * lastClose * 0.001;
       candlestickSeries.update({
         time: Math.floor(Date.now() / 1000),
-        open: lastClose * 0.99,
-        high: lastClose * 1.01,
-        low: lastClose * 0.99,
+        open: lastClose * 0.999,
+        high: lastClose * 1.001,
+        low: lastClose * 0.998,
         close: lastClose
       });
     }, 5000);
   } catch (error) {
     console.error('Chart data error:', error);
-    // Fallback to mock data if API fails
-    const mockCandles = Array.from({ length: 30 }, (_, i) => ({
-      time: Math.floor(Date.now() / 1000) - (29 - i) * 86400,
+    const mockCandles = Array.from({ length: 168 }, (_, i) => ({
+      time: Math.floor(Date.now() / 1000) - (167 - i) * 3600,
       open: token.current_price * (1 - 0.05 + Math.random() * 0.1),
       high: token.current_price * (1 + 0.05 + Math.random() * 0.1),
       low: token.current_price * (1 - 0.05 - Math.random() * 0.1),
@@ -275,11 +275,11 @@ async function initLogStream() {
 
   async function fetchLogs() {
     try {
-      const url = nextUrl || `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=level%3Dinfo&batch=100&from=${new Date(Date.now() - 30 * 60 * 1000).toISOString()}&to=${new Date().toISOString()}&order=newest_first`;
+      const url = nextUrl || `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=type%3Ddebug&batch=100&from=${new Date(Date.now() - 30 * 60 * 1000).toISOString()}&to=${new Date().toISOString()}&order=newest_first`;
       const response = await fetch(url, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${BETTERSTACK_TOKEN}` },
-        redirect: 'follow' // Follow redirects as per API docs
+        redirect: 'follow'
       });
 
       if (!response.ok) {
