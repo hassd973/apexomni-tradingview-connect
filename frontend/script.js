@@ -13,14 +13,38 @@ const mockTokens = [
   { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 }
 ];
 
+// Mock historical data for chart fallback
+const mockChartData = {
+  prices: Array.from({ length: 7 }, (_, i) => [
+    Date.now() - (6 - i) * 24 * 60 * 60 * 1000,
+    0.00015 + (Math.random() - 0.5) * 0.00002
+  ])
+};
+
 // Chart.js instance
 let priceChart = null;
 
-// Fetch low-volume tokens and top pairs
+// Retry fetch with delay
+async function fetchWithRetry(url, retries = 3, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      return await response.json();
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      console.warn(`Retrying fetch (${i + 1}/${retries})...`, error);
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+}
+
+// Fetch low-volume tokens, rank by performance, and update marquee
 async function fetchLowVolumeTokens() {
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
+  const marquee = document.getElementById('ticker-marquee');
   let tokens = [];
   let selectedTokenLi = null;
 
@@ -103,6 +127,7 @@ async function fetchLowVolumeTokens() {
     }
   }
 
+  // Sort tokens by performance (price_change_percentage_24h)
   const sortedTokens = [...uniqueTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
   tokenList.innerHTML = '';
   sortedTokens.forEach((token, index) => {
@@ -145,6 +170,7 @@ async function fetchLowVolumeTokens() {
     tokenList.innerHTML = '<p class="text-gray-400 text-xs">No tokens under $5M volume.</p>';
   }
 
+  // Populate top pairs
   const topTokens = sortedTokens.slice(0, 5).map(token => token.symbol);
   topPairs.innerHTML = topTokens.map((pair, index) => {
     const token = sortedTokens[index];
@@ -154,6 +180,15 @@ async function fetchLowVolumeTokens() {
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
     return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition ${glowClass} ${hoverClass}">${pair}/USDT</li>`;
   }).join('');
+
+  // Populate marquee with top 3 winners and losers
+  const winners = sortedTokens.filter(t => t.price_change_percentage_24h > 0).slice(0, 3);
+  const losers = sortedTokens.filter(t => t.price_change_percentage_24h < 0).slice(-3);
+  const marqueeItems = [
+    ...winners.map(t => `<span class="glow-green text-green-400">🏆 ${t.symbol}: +${t.price_change_percentage_24h.toFixed(2)}%</span>`),
+    ...losers.map(t => `<span class="glow-red text-red-400">📉 ${t.symbol}: ${t.price_change_percentage_24h.toFixed(2)}%</span>`)
+  ];
+  marquee.innerHTML = marqueeItems.join('');
 
   if (sortedTokens.length > 0) {
     const firstTokenLi = tokenList.children[0];
@@ -181,18 +216,32 @@ async function showPriceChart(token) {
     chartTitle.style.opacity = '1';
   };
 
-  // Destroy existing chart if it exists
+  // Clear and destroy existing chart if it exists
   if (priceChart) {
     priceChart.destroy();
+    priceChart = null;
   }
 
+  // Clear the canvas and recreate it to avoid rendering issues
+  const parent = chartCanvas.parentElement;
+  chartCanvas.remove();
+  const newCanvas = document.createElement('canvas');
+  newCanvas.id = 'chart-canvas';
+  newCanvas.style.width = '100%';
+  newCanvas.style.height = '100%';
+  parent.appendChild(newCanvas);
+
   try {
-    // Fetch historical price data from CoinGecko
+    // Fetch historical price data from CoinGecko with retry
     const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id));
-    const response = await fetch(chartUrl);
-    if (!response.ok) throw new Error(`CoinGecko Chart HTTP ${response.status}: ${await response.text()}`);
-    const chartData = await response.json();
-    console.log(`Chart data for ${token.id}:`, chartData);
+    let chartData;
+    try {
+      chartData = await fetchWithRetry(chartUrl);
+      console.log(`Chart data for ${token.id}:`, chartData);
+    } catch (error) {
+      console.warn(`Failed to fetch chart data for ${token.id}. Using mock data.`, error);
+      chartData = mockChartData;
+    }
 
     if (!chartData.prices || !Array.isArray(chartData.prices)) {
       throw new Error('Invalid chart data format: prices array missing');
@@ -203,7 +252,7 @@ async function showPriceChart(token) {
     const data = prices.map(price => price[1]);
 
     // Create new Chart.js chart
-    const ctx = chartCanvas.getContext('2d');
+    const ctx = newCanvas.getContext('2d');
     priceChart = new Chart(ctx, {
       type: 'line',
       data: {
@@ -272,7 +321,7 @@ async function showPriceChart(token) {
     console.log(`Chart rendered for ${token.id}`);
   } catch (error) {
     console.error('Error rendering chart:', error);
-    chartCanvas.parentElement.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
+    newCanvas.parentElement.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
   }
 }
 
