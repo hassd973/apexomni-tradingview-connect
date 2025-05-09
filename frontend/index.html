@@ -4,16 +4,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ICE KING 🌍🧊👑 Trading Dashboard</title>
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
-    @keyframes glow {
-      0% { text-shadow: 0 0 5px rgba(74, 222, 128, 0.5); }
-      50% { text-shadow: 0 0 15px rgba(74, 222, 128, 0.8), 0 0 25px rgba(74, 222, 128, 0.4); }
-      100% { text-shadow: 0 0 5px rgba(74, 222, 128, 0.5); }
+    @keyframes glow-blue {
+      0% { text-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+      50% { text-shadow: 0 0 15px rgba(59, 130, 246, 0.8), 0 0 25px rgba(59, 130, 246, 0.4); }
+      100% { text-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
     }
-    .glow-text {
-      animation: glow 2s infinite;
+    @keyframes glow-green {
+      0% { box-shadow: 0 0 5px rgba(74, 222, 128, 0.5); }
+      50% { box-shadow: 0 0 15px rgba(74, 222, 128, 0.8), 0 0 25px rgba(74, 222, 128, 0.4); }
+      100% { box-shadow: 0 0 5px rgba(74, 222, 128, 0.5); }
+    }
+    @keyframes glow-red {
+      0% { box-shadow: 0 0 5px rgba(248, 113, 113, 0.5); }
+      50% { box-shadow: 0 0 15px rgba(248, 113, 113, 0.8), 0 0 25px rgba(248, 113, 113, 0.4); }
+      100% { box-shadow: 0 0 5px rgba(248, 113, 113, 0.5); }
+    }
+    .glow-blue {
+      animation: glow-blue 2s infinite;
+    }
+    .glow-green {
+      animation: glow-green 2s infinite;
+    }
+    .glow-red {
+      animation: glow-red 2s infinite;
     }
     .fade-in {
       animation: fadeIn 0.5s ease-in;
@@ -23,24 +40,34 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .hover-glow:hover {
-      box-shadow: 0 0 15px rgba(124, 58, 237, 0.5);
       transform: scale(1.02);
       transition: all 0.3s ease;
     }
     .gradient-bg {
       background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(45, 55, 72, 0.7));
     }
+    .chart-container {
+      position: relative;
+      height: 300px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    @media (min-width: 640px) {
+      .chart-container {
+        height: 400px;
+      }
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col font-mono">
   <header class="w-full gradient-bg backdrop-blur-lg p-3 flex justify-center items-center">
     <div class="text-center w-full px-2">
-      <h1 class="text-2xl sm:text-3xl font-bold glow-text">ICE KING 🌍🧊👑</h1>
+      <h1 class="text-2xl sm:text-3xl font-bold glow-blue">ICE KING 🌍🧊👑</h1>
       <p class="text-sm sm:text-base mt-1 text-gray-300">Live Price Chart</p>
-      <div id="chart-container" class="mt-2 flex justify-center">
-        <div id="chart-canvas" class="w-full max-w-[1000px] h-[300px] sm:h-[400px] bg-transparent rounded-lg shadow-md border border-gray-700/50"></div>
+      <div id="chart-container" class="mt-2">
+        <canvas id="chart-canvas" class="w-full h-full bg-transparent rounded-lg shadow-md border border-gray-700/50"></canvas>
       </div>
-      <h3 id="chart-title" class="text-sm sm:text-lg font-medium mt-2 text-gray-200"></h3>
+      <h3 id="chart-title" class="text-sm sm:text-lg font-medium mt-2 text-gray-200 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
     </div>
   </header>
   <main class="flex-1 p-3 max-w-7xl mx-auto w-full">
