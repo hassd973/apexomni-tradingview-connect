@@ -1,7 +1,7 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
-const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
 const COINGECKO_OHLC_API = 'https://api.coingecko.com/api/v3/coins/{id}/ohlc?vs_currency=usd&days={days}';
+const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/explore-logs';
@@ -16,13 +16,15 @@ const mockTokens = [
   { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'CryptoCompare', score: 70.6 }
 ];
 
-// Mock historical data for chart fallback
-const mockChartData = {
-  prices: Array.from({ length: 7 }, (_, i) => [
-    Date.now() - (6 - i) * 24 * 60 * 60 * 1000,
-    0.00015 + (Math.random() - 0.5) * 0.00002
-  ])
-};
+// Mock OHLC data for chart fallback
+const mockOHLCData = Array.from({ length: 10 }, (_, i) => [
+  Date.now() - (9 - i) * 24 * 60 * 60 * 1000,
+  0.00015 + (Math.random() - 0.5) * 0.00002,
+  0.00016 + (Math.random() - 0.5) * 0.00002,
+  0.00014 + (Math.random() - 0.5) * 0.00002,
+  0.00015 + (Math.random() - 0.5) * 0.00002
+]);
+const mockVolumeData = Array.from({ length: 10 }, (_, i) => [Date.now() - (9 - i) * 24 * 60 * 60 * 1000, Math.random() * 1000000]);
 
 // Ice King puns for marquee
 const iceKingPuns = [
@@ -338,20 +340,27 @@ async function showPriceChart(token, compareToken, days) {
     try {
       const text = await fetchWithRetry(ohlcUrl);
       ohlcData = JSON.parse(text);
-      console.log(`OHLC data for ${token.id} (${days} days):`, ohlcData);
+      console.log('Raw OHLC data:', ohlcData);
+      if (!Array.isArray(ohlcData) || ohlcData.length === 0) throw new Error('Invalid OHLC data format');
+      ohlcData = ohlcData.map(item => ({
+        x: item[0],
+        o: item[1],
+        h: item[2],
+        l: item[3],
+        c: item[4]
+      }));
     } catch (error) {
-      console.warn(`Failed to fetch OHLC data for ${token.id}. Using mock data.`, error);
-      ohlcData = mockChartData.prices.map(([time, price]) => [time, price, price, price, price]); // Mock OHLC
+      console.warn('Failed to fetch OHLC data, using mock data:', error);
+      ohlcData = mockOHLCData.map(item => ({
+        x: item[0],
+        o: item[1],
+        h: item[2],
+        l: item[3],
+        c: item[4]
+      }));
     }
 
-    const labels = ohlcData.map(item => new Date(item[0]).toLocaleString());
-    const ohlc = ohlcData.map(item => ({
-      x: item[0],
-      o: item[1], // Open
-      h: item[2], // High
-      l: item[3], // Low
-      c: item[4]  // Close
-    }));
+    const labels = ohlcData.map(item => new Date(item.x).toLocaleString());
 
     // Fetch volume data
     let volumeData;
@@ -359,17 +368,22 @@ async function showPriceChart(token, compareToken, days) {
       const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id)).replace('{days}', days);
       const text = await fetchWithRetry(chartUrl);
       const chartData = JSON.parse(text);
-      volumeData = chartData.total_volumes || chartData.prices.map(() => [0, Math.random() * 1000000]); // Fallback to random volume
-      console.log(`Volume data for ${token.id} (${days} days):`, volumeData);
+      console.log('Raw chart data:', chartData);
+      volumeData = (chartData.total_volumes || chartData.prices.map(() => [0, Math.random() * 1000000])).map(item => ({
+        x: item[0],
+        y: item[1]
+      }));
+      if (volumeData.length !== ohlcData.length) {
+        console.warn('Volume data length mismatch, padding with zeros');
+        volumeData = ohlcData.map((ohlc, i) => ({
+          x: ohlc.x,
+          y: volumeData[i]?.y || 0
+        }));
+      }
     } catch (error) {
-      console.warn(`Failed to fetch volume data for ${token.id}. Using mock data.`, error);
-      volumeData = mockChartData.prices.map(() => [0, Math.random() * 1000000]);
+      console.warn('Failed to fetch volume data, using mock data:', error);
+      volumeData = mockVolumeData.map(item => ({ x: item[0], y: item[1] }));
     }
-
-    const volumes = volumeData.map(item => ({
-      x: item[0],
-      y: item[1] || 0
-    }));
 
     // Fetch data for comparison token if selected
     let compareOHLC = null;
@@ -379,12 +393,28 @@ async function showPriceChart(token, compareToken, days) {
       const compareChartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', days);
       try {
         const compareText = await fetchWithRetry(compareOHLCUrl);
-        compareOHLC = JSON.parse(compareText);
+        compareOHLC = JSON.parse(compareText).map(item => ({
+          x: item[0],
+          o: item[1],
+          h: item[2],
+          l: item[3],
+          c: item[4]
+        }));
         const compareChartText = await fetchWithRetry(compareChartUrl);
         const compareChartData = JSON.parse(compareChartText);
-        compareVolume = compareChartData.total_volumes || compareChartData.prices.map(() => [0, Math.random() * 1000000]);
+        compareVolume = (compareChartData.total_volumes || compareChartData.prices.map(() => [0, Math.random() * 1000000])).map(item => ({
+          x: item[0],
+          y: item[1]
+        }));
+        if (compareVolume.length !== compareOHLC.length) {
+          console.warn('Compare volume data length mismatch, padding with zeros');
+          compareVolume = compareOHLC.map((ohlc, i) => ({
+            x: ohlc.x,
+            y: compareVolume[i]?.y || 0
+          }));
+        }
       } catch (error) {
-        console.warn(`Failed to fetch data for ${compareToken.id}.`, error);
+        console.warn(`Failed to fetch data for ${compareToken.id}:`, error);
       }
     }
 
@@ -395,19 +425,13 @@ async function showPriceChart(token, compareToken, days) {
       data: {
         datasets: [{
           label: `${token.symbol}/USD Price`,
-          data: ohlc,
+          data: ohlcData,
           borderColor: (ctx) => (ctx.raw.c > ctx.raw.o ? '#34d399' : '#f87171'),
           backgroundColor: (ctx) => (ctx.raw.c > ctx.raw.o ? 'rgba(52, 211, 153, 0.5)' : 'rgba(248, 113, 113, 0.5)'),
           borderWidth: 1
         }].concat(compareOHLC ? [{
           label: `${compareToken.symbol}/USD Price`,
-          data: compareOHLC.map(item => ({
-            x: item[0],
-            o: item[1],
-            h: item[2],
-            l: item[3],
-            c: item[4]
-          })),
+          data: compareOHLC,
           borderColor: (ctx) => (ctx.raw.c > ctx.raw.o ? '#9333ea' : '#a855f7'),
           backgroundColor: (ctx) => (ctx.raw.c > ctx.raw.o ? 'rgba(147, 51, 234, 0.5)' : 'rgba(168, 85, 247, 0.5)'),
           borderWidth: 1
@@ -418,6 +442,10 @@ async function showPriceChart(token, compareToken, days) {
         maintainAspectRatio: false,
         scales: {
           x: {
+            type: 'time',
+            time: {
+              unit: days < 1 ? 'minute' : 'day'
+            },
             display: true,
             title: {
               display: true,
@@ -465,19 +493,26 @@ async function showPriceChart(token, compareToken, days) {
     volumeChart = new Chart(volumeCtx, {
       type: 'bar',
       data: {
-        labels: labels,
         datasets: [{
           label: `${token.symbol} Volume`,
-          data: volumes.map(item => item.y),
+          data: volumeData,
           backgroundColor: 'rgba(59, 130, 246, 0.7)',
           borderColor: 'rgba(59, 130, 246, 1)',
-          borderWidth: 1
+          borderWidth: 1,
+          parsing: {
+            xAxisKey: 'x',
+            yAxisKey: 'y'
+          }
         }].concat(compareVolume ? [{
           label: `${compareToken.symbol} Volume`,
-          data: compareVolume.map(item => item[1] || 0),
+          data: compareVolume,
           backgroundColor: 'rgba(147, 51, 234, 0.7)',
           borderColor: 'rgba(147, 51, 234, 1)',
-          borderWidth: 1
+          borderWidth: 1,
+          parsing: {
+            xAxisKey: 'x',
+            yAxisKey: 'y'
+          }
         }] : [])
       },
       options: {
@@ -485,6 +520,10 @@ async function showPriceChart(token, compareToken, days) {
         maintainAspectRatio: false,
         scales: {
           x: {
+            type: 'time',
+            time: {
+              unit: days < 1 ? 'minute' : 'day'
+            },
             display: true,
             title: {
               display: true,
@@ -529,8 +568,8 @@ async function showPriceChart(token, compareToken, days) {
 
     console.log(`Chart rendered for ${token.id}${compareToken ? ` vs ${compareToken.id}` : ''} (${days} days)`);
   } catch (error) {
-    console.error('Error rendering chart:', error);
-    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
+    console.error('Chart rendering error:', error);
+    chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Check console for details.</div>';
   }
 }
 
@@ -550,13 +589,13 @@ async function updateLiveData() {
       l: latestOHLC[3],
       c: latestOHLC[4]
     });
-    if (priceChart.data.datasets[0].data.length > 100) priceChart.data.datasets[0].data.shift(); // Limit to 100 data points
+    if (priceChart.data.datasets[0].data.length > 100) priceChart.data.datasets[0].data.shift();
 
     const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(currentToken.id)).replace('{days}', '0.01');
     const chartText = await fetchWithRetry(chartUrl);
     const chartData = JSON.parse(chartText);
-    const latestVolume = chartData.total_volumes ? chartData.total_volumes[chartData.total_volumes.length - 1][1] : Math.random() * 1000000;
-    volumeChart.data.datasets[0].data.push(latestVolume);
+    const latestVolume = (chartData.total_volumes || [[0, Math.random() * 1000000]])[0][1];
+    volumeChart.data.datasets[0].data.push({ x: latestOHLC[0], y: latestVolume });
     if (volumeChart.data.datasets[0].data.length > 100) volumeChart.data.datasets[0].data.shift();
 
     if (compareToken) {
@@ -576,8 +615,8 @@ async function updateLiveData() {
       const compareChartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', '0.01');
       const compareChartText = await fetchWithRetry(compareChartUrl);
       const compareChartData = JSON.parse(compareChartText);
-      const latestCompareVolume = compareChartData.total_volumes ? compareChartData.total_volumes[compareChartData.total_volumes.length - 1][1] : Math.random() * 1000000;
-      volumeChart.data.datasets[1].data.push(latestCompareVolume);
+      const latestCompareVolume = (compareChartData.total_volumes || [[0, Math.random() * 1000000]])[0][1];
+      volumeChart.data.datasets[1].data.push({ x: latestCompareOHLC[0], y: latestCompareVolume });
       if (volumeChart.data.datasets[1].data.length > 100) volumeChart.data.datasets[1].data.shift();
     }
 
@@ -602,51 +641,27 @@ function processAlert(alert) {
   return li;
 }
 
-// Fetch logs from Better Stack API
+// Fetch logs from Better Stack API with Docker setup
 async function initLogStream() {
   const alertList = document.getElementById('alert-list');
   const wsStatus = document.getElementById('ws-status');
 
-  async function fetchLogs() {
-    const now = new Date().toISOString();
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
-    const url = `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=SELECT%20time%2C%20JSONExtract(json%2C%20'level'%2C%20'Nullable(String)')%20AS%20level%20FROM%20source%20WHERE%20time%20BETWEEN%20'${thirtyMinutesAgo}'%20AND%20'${now}'`;
-    try {
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Authorization': 'Bearer WGdCT5KhHtg4kiGWAbdXRaSL'
-        }
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-      const text = await response.text();
-      const logs = text.trim().split('\n').filter(line => line.trim()).map(line => JSON.parse(line));
-      if (logs.length > 0) {
-        alertList.innerHTML = ''; // Clear existing alerts
-        logs.forEach(log => alertList.prepend(processAlert(log)));
-        while (alertList.children.length > 20) {
-          alertList.removeChild(alertList.lastChild);
-        }
-        wsStatus.innerHTML = '<span class="status-dot green"></span>Live logs active';
-        wsStatus.className = 'mb-2 text-green-400 text-xs sm:text-sm';
-      } else {
-        wsStatus.innerHTML = '<span class="status-dot yellow"></span>No new logs...';
-        wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
-      }
-    } catch (error) {
-      console.error('Log fetch error:', error);
-      wsStatus.innerHTML = '<span class="status-dot red"></span>Error: ' + error.message;
-      wsStatus.className = 'mb-2 text-red-400 text-xs sm:text-sm';
-      const mockAlerts = generateMockAlerts();
-      alertList.innerHTML = ''; // Clear existing alerts
-      mockAlerts.forEach(alert => alertList.prepend(processAlert(alert)));
-    }
+  function displaySetupInstructions() {
+    wsStatus.innerHTML = `
+      <span class="status-dot yellow"></span>
+      <strong>Better Stack Docker Logging Setup:</strong><br>
+      1. Grant permissions: <code>usermod -a -G docker vector</code><br>
+      2. Install Vector: <code>curl -sSL https://telemetry.betterstack.com/setup-vector/docker/x5nvK7DNDURcpAHEBuCbHrza -o /tmp/setup-vector.sh && bash /tmp/setup-vector.sh</code><br>
+      - Logs will appear in Better Stack → Live tail after 2 minutes.<br>
+      - Check metrics in Docker dashboard.<br>
+      - If no logs, run: <code>usermod -aG docker vector && service vector restart</code>
+    `;
+    wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
+    alertList.innerHTML = '<p class="text-gray-400 text-xs">Follow setup to see logs.</p>';
   }
 
-  wsStatus.innerHTML = '<span class="status-dot yellow"></span>Starting with mock data...';
-  wsStatus.className = 'mb-2 text-yellow-400 text-xs sm:text-sm';
-  fetchLogs();
-  setInterval(fetchLogs, POLLING_INTERVAL);
+  displaySetupInstructions();
+  setInterval(displaySetupInstructions, POLLING_INTERVAL); // Refresh instructions periodically
 }
 
 // Mock alert generator (fallback)
