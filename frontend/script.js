@@ -4,7 +4,7 @@ const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfu
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
 const SOURCE_ID = '1303816';
-const POLLING_INTERVAL = 15000; // Increased to avoid rate limits
+const POLLING_INTERVAL = 15000;
 const BINANCE_API = 'https://api.binance.com/api/v3/klines';
 
 // Mock token data for fallback
@@ -142,41 +142,51 @@ async function fetchLowVolumeTokens() {
   loader.style.display = 'none';
 }
 
-// Show Lightweight Charts candlestick
+// Show Chart.js candlestick chart
 async function showPriceChart(token) {
-  const chartContainer = document.getElementById('chart-container');
+  const chartCanvas = document.getElementById('chart-canvas');
   const chartTitle = document.getElementById('chart-title');
-  const chartDiv = document.getElementById('chart-canvas');
-  chartContainer.innerHTML = '';
-  chartContainer.appendChild(chartDiv);
-  chartContainer.appendChild(chartTitle);
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
 
-  if (window.chart) window.chart.remove();
+  // Destroy existing chart if it exists
+  if (window.chartInstance) {
+    window.chartInstance.destroy();
+  }
 
-  const chart = LightweightCharts.createChart(chartDiv, {
-    width: chartDiv.clientWidth,
-    height: window.innerWidth < 640 ? 300 : 400,
-    layout: {
-      background: { color: 'rgba(17, 24, 39, 0.8)' },
-      textColor: '#d1d5db'
+  const ctx = chartCanvas.getContext('2d');
+  window.chartInstance = new Chart(ctx, {
+    type: 'candlestick',
+    data: {
+      datasets: [{
+        label: `${token.symbol}/USDT`,
+        data: [],
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: (ctx) => ctx.raw.y[3] < ctx.raw.y[0] ? 'rgba(124, 58, 237, 0.8)' : 'rgba(74, 222, 128, 0.8)',
+        borderWidth: 1
+      }]
     },
-    grid: {
-      vertLines: { color: 'rgba(74, 222, 128, 0.1)', style: LightweightCharts.LineStyle.Dashed },
-      horzLines: { color: 'rgba(124, 58, 237, 0.1)', style: LightweightCharts.LineStyle.Dashed }
-    },
-    timeScale: { timeVisible: true, secondsVisible: false },
-    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-    priceScale: { borderColor: 'rgba(255, 255, 255, 0.1)' }
-  });
-  window.chart = chart;
-
-  const candlestickSeries = chart.addCandlestickSeries({
-    upColor: 'rgba(74, 222, 128, 0.8)',
-    downColor: 'rgba(124, 58, 237, 0.8)',
-    borderVisible: false,
-    wickUpColor: 'rgba(74, 222, 128, 1)',
-    wickDownColor: 'rgba(124, 58, 237, 1)'
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: 'time',
+          time: { unit: 'hour' },
+          title: { display: false },
+          grid: { color: 'rgba(74, 222, 128, 0.1)' }
+        },
+        y: {
+          title: { display: false },
+          grid: { color: 'rgba(124, 58, 237, 0.1)' },
+          beginAtZero: false
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'nearest', intersect: false }
+      },
+      animation: { duration: 0 }
+    }
   });
 
   const symbol = `${token.symbol.toLowerCase()}usdt`;
@@ -186,40 +196,43 @@ async function showPriceChart(token) {
     const data = await response.json();
     if (!Array.isArray(data) || data.length === 0) throw new Error('No data from Binance');
     const candles = data.map(d => ({
-      time: parseInt(d[0]) / 1000,
-      open: parseFloat(d[1]),
-      high: parseFloat(d[2]),
-      low: parseFloat(d[3]),
-      close: parseFloat(d[4])
+      x: new Date(parseInt(d[0])),
+      o: parseFloat(d[1]),
+      h: parseFloat(d[2]),
+      l: parseFloat(d[3]),
+      c: parseFloat(d[4])
     }));
-    candlestickSeries.setData(candles);
+    window.chartInstance.data.datasets[0].data = candles;
+    window.chartInstance.update();
 
-    let lastClose = candles[candles.length - 1].close;
+    let lastClose = candles[candles.length - 1].c;
     setInterval(() => {
       lastClose += (Math.random() - 0.5) * lastClose * 0.001;
-      candlestickSeries.update({
-        time: Math.floor(Date.now() / 1000),
-        open: lastClose * 0.999,
-        high: lastClose * 1.001,
-        low: lastClose * 0.998,
-        close: lastClose
-      });
+      const newCandle = {
+        x: new Date(),
+        o: lastClose * 0.999,
+        h: lastClose * 1.001,
+        l: lastClose * 0.998,
+        c: lastClose
+      };
+      window.chartInstance.data.datasets[0].data.push(newCandle);
+      window.chartInstance.update();
     }, 5000);
   } catch (error) {
     console.error('Chart data error:', error);
     const mockCandles = Array.from({ length: 168 }, (_, i) => ({
-      time: Math.floor(Date.now() / 1000) - (167 - i) * 3600,
-      open: token.current_price * (1 - 0.05 + Math.random() * 0.1),
-      high: token.current_price * (1 + 0.05 + Math.random() * 0.1),
-      low: token.current_price * (1 - 0.05 - Math.random() * 0.1),
-      close: token.current_price * (1 - 0.05 + Math.random() * 0.1)
+      x: new Date(Date.now() - (167 - i) * 3600 * 1000),
+      o: token.current_price * (1 - 0.05 + Math.random() * 0.1),
+      h: token.current_price * (1 + 0.05 + Math.random() * 0.1),
+      l: token.current_price * (1 - 0.05 - Math.random() * 0.1),
+      c: token.current_price * (1 - 0.05 + Math.random() * 0.1)
     }));
-    candlestickSeries.setData(mockCandles);
+    window.chartInstance.data.datasets[0].data = mockCandles;
+    window.chartInstance.update();
   }
 
   window.addEventListener('resize', () => {
-    chart.applyOptions({ width: chartDiv.clientWidth, height: window.innerWidth < 640 ? 300 : 400 });
-    chart.timeScale().fitContent();
+    window.chartInstance.resize();
   });
 }
 
