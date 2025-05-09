@@ -7,7 +7,6 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <style>
     body {
       font-family: 'Orbitron', sans-serif;
@@ -126,7 +125,7 @@
     }
     .chart-container {
       position: relative;
-      height: 400px;
+      height: 500px;
       max-width: 100%;
       margin: 0 auto;
       width: 100%;
@@ -147,7 +146,7 @@
     }
     @media (min-width: 640px) {
       .chart-container {
-        height: 500px;
+        height: 700px;
       }
     }
     [data-tooltip] {
@@ -226,9 +225,12 @@
       <div class="chart-wrapper">
         <div class="flex justify-between items-center mb-2">
           <div class="flex space-x-2 flex-wrap">
+            <button id="timeframe-1min" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">1M</button>
+            <button id="timeframe-5min" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">5M</button>
+            <button id="timeframe-15min" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">15M</button>
+            <button id="timeframe-1hr" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">1H</button>
+            <button id="timeframe-4hr" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">4H</button>
             <button id="timeframe-1d" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm active">1D</button>
-            <button id="timeframe-7d" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">7D</button>
-            <button id="timeframe-30d" class="timeframe-btn bg-purple-500 hover:bg-purple-600 text-white px-2 py-1 rounded text-xs sm:text-sm">30D</button>
           </div>
           <button id="toggle-sticky" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-xs sm:text-sm">Lock Chart</button>
         </div>
