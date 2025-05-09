@@ -23,7 +23,7 @@ async function fetchLowVolumeTokens() {
     const cgResponse = await fetch(COINGECKO_API);
     const cgData = await cgResponse.json();
     tokens.push(...cgData.filter(token => token.total_volume < volumeThreshold).map(token => ({
-      id: token.id,
+      id: token.id, // CoinGecko ID (e.g., 'bitcoin')
       name: token.name,
       symbol: token.symbol.toUpperCase(),
       total_volume: token.total_volume,
@@ -32,7 +32,7 @@ async function fetchLowVolumeTokens() {
       market_cap: token.market_cap,
       circulating_supply: token.circulating_supply,
       source: 'CoinGecko',
-      score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2)) // Normalize -100% to +100% to 0-100
+      score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
     })));
   } catch (error) {
     console.error('CoinGecko error:', error);
@@ -45,7 +45,7 @@ async function fetchLowVolumeTokens() {
     });
     const cmcData = await cmcResponse.json();
     tokens.push(...cmcData.data.filter(token => token.quote.USD.volume_24h < volumeThreshold).map(token => ({
-      id: token.slug,
+      id: token.slug, // Map to CoinGecko ID (e.g., 'bitcoin')
       name: token.name,
       symbol: token.symbol.toUpperCase(),
       total_volume: token.quote.USD.volume_24h,
@@ -65,7 +65,7 @@ async function fetchLowVolumeTokens() {
     const ccResponse = await fetch(CRYPTOCOMPARE_API);
     const ccData = await ccResponse.json();
     tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < volumeThreshold).map(token => ({
-      id: token.CoinInfo.Name.toLowerCase(),
+      id: token.CoinInfo.Name.toLowerCase(), // Map to CoinGecko ID (e.g., 'btc')
       name: token.CoinInfo.FullName,
       symbol: token.CoinInfo.Name.toUpperCase(),
       total_volume: token.RAW?.USD?.VOLUME24HOURTO || 0,
@@ -148,23 +148,31 @@ async function showPriceChart(token) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
   const canvas = document.getElementById('price-chart');
+  chartContainer.innerHTML = ''; // Reset container
+  chartContainer.appendChild(chartTitle);
+  chartContainer.appendChild(canvas);
   chartContainer.classList.remove('hidden');
   chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Movement`;
   canvas.style.display = 'block';
 
   try {
+    // Fetch 7-day price data
     const response = await fetch(`${COINGECKO_CHART_API}${token.id}/market_chart?vs_currency=usd&days=7`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch chart data`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}: Failed to fetch chart data for ${token.id}`);
     const data = await response.json();
-    if (!data.prices || data.prices.length === 0) throw new Error('No price data available');
+    if (!data.prices || data.prices.length === 0) throw new Error(`No price data available for ${token.id}`);
 
     const prices = data.prices.map(([timestamp, price]) => ({
       x: new Date(timestamp).toLocaleDateString(),
       y: price
     }));
 
+    // Destroy existing chart if it exists
     if (window.priceChart) window.priceChart.destroy();
-    window.priceChart = new Chart(canvas.getContext('2d'), {
+
+    // Create new chart
+    const ctx = canvas.getContext('2d');
+    window.priceChart = new Chart(ctx, {
       type: 'line',
       data: {
         datasets: [{
@@ -185,9 +193,9 @@ async function showPriceChart(token) {
       }
     });
   } catch (error) {
-    console.error(`Chart error for ${token.name}:`, error);
+    console.error(`Chart error for ${token.name} (${token.id}):`, error);
     canvas.style.display = 'none';
-    chartContainer.innerHTML = `<p class="text-red-400">Failed to load chart for ${token.name}: ${error.message}</p>`;
+    chartContainer.innerHTML = `<p class="text-red-400">Failed to load chart for ${token.name}: ${error.message}. Possible ID mismatch or rate limit.</p>`;
   }
 }
 
@@ -239,7 +247,8 @@ async function initLogStream() {
         method: 'POST',
         headers: {
           'Content-Type': 'plain/text',
-          'Authorization': 'Basic ' + btoa(`${BETTERSTACK_USERNAME}:${BETTERSTACK_PASSWORD}`)
+          'Authorization': 'Basic ' + btoa(`${BETTERSTACK_USERNAME}:${BETTERSTACK_PASSWORD}`),
+          'Accept': 'application/json'
         },
         body: query,
         signal: controller.signal
@@ -267,6 +276,15 @@ async function initLogStream() {
         wsStatus.textContent = userMessage;
         wsStatus.className = 'mb-4 text-red-400';
         throw new Error(errorMessage);
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const errorText = await response.text();
+        console.error(`Unexpected response format: Content-Type=${contentType}`, { responseText: errorText });
+        wsStatus.textContent = 'Unexpected response format. Check console and Network tab for details.';
+        wsStatus.className = 'mb-4 text-red-400';
+        throw new Error(`Unexpected response format: Content-Type=${contentType}`);
       }
 
       const data = await response.json();
@@ -319,8 +337,8 @@ async function initLogStream() {
         errorMessage = `Request timed out after ${FETCH_TIMEOUT}ms. Possible network issue or API unreachable.`;
         userMessage = 'Connection to Better Stack timed out. Check Network tab (F12 > Network).';
       } else if (errorMessage.includes('Failed to fetch')) {
-        errorMessage = `Failed to fetch: Possible network error, CORS issue, or API unreachable. Check Network tab (F12 > Network).`;
-        userMessage = 'Failed to connect to Better Stack. Check Network tab (F12 > Network).';
+        errorMessage = `Failed to fetch: Possible CORS issue, network error, or API unreachable. Check Network tab (F12 > Network).`;
+        userMessage = 'Failed to connect to Better Stack. Check Network tab (F12 > Network) for CORS or network issues.';
       }
 
       console.error(`Better Stack polling error: ${errorMessage}`, {
