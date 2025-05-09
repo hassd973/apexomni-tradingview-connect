@@ -136,16 +136,24 @@
     .chart-wrapper {
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 20;
       background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(45, 55, 72, 0.7));
       padding-bottom: 8px;
     }
     .chart-wrapper.unlocked {
       position: static;
+      z-index: 0;
     }
     #chart-canvas {
       width: 100% !important;
       height: 100% !important;
+    }
+    #token-list {
+      z-index: 30; /* Ensure tokens are above chart controls */
+    }
+    #token-list li {
+      z-index: 30; /* Ensure individual tokens are clickable */
+      position: relative;
     }
     @media (min-width: 640px) {
       .chart-container {
@@ -168,8 +176,7 @@
       border-radius: 4px;
       font-size: 12px;
       white-space: nowrap;
-      z-index: 10;
-      animation: var(--tooltip-glow, glow-blue) 2s infinite;
+      z-index: 40;
     }
     /* Wall Street Marquee */
     .marquee-container {
@@ -280,5 +287,3 @@
       document.body.appendChild(script);
     });
   </script>
-</body>
-</html>
