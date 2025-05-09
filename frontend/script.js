@@ -156,7 +156,7 @@ async function initLogStream() {
         from: new Date(Date.now() - 30000).toISOString()
       };
       const url = nextUrl || `${baseUrl}?${new URLSearchParams(params).toString()}`;
-      console.debug(`Fetching Better Stack Live Tail: URL=${url}`);
+      console.debug(`Fetching Better Stack Live Tail: URL=${url}, Token=${BETTERSTACK_TOKEN.slice(0, 4)}...`);
 
       const response = await fetch(url, {
         headers: {
@@ -168,7 +168,7 @@ async function initLogStream() {
       if (!response.ok) {
         const errorText = await response.text();
         let errorMessage = `HTTP ${response.status}: ${errorText}`;
-        let userMessage = 'Error fetching logs. Check console for details.';
+        let userMessage = 'Error fetching logs. Check console and Network tab (F12 > Network) for details.';
 
         if (response.status === 401) {
           errorMessage = `HTTP 401 Unauthorized: Invalid or expired token. Check BETTERSTACK_TOKEN (${BETTERSTACK_TOKEN.slice(0, 4)}...).`;
@@ -235,11 +235,26 @@ async function initLogStream() {
         wsStatus.className = 'mb-4 text-gray-400';
       }
     } catch (error) {
-      console.error('Better Stack polling error:', error);
-      if (!wsStatus.textContent.includes('Error fetching logs')) {
-        wsStatus.textContent = `Error fetching logs: ${error.message}. Check console for details.`;
-        wsStatus.className = 'mb-4 text-danger';
+      let errorMessage = error.message;
+      let userMessage = `Error fetching logs: ${errorMessage}. Check console and Network tab (F12 > Network) for details.`;
+
+      if (errorMessage.includes('Failed to fetch')) {
+        errorMessage = `Failed to fetch: Possible network error, CORS issue, or API unreachable. Check Network tab (F12 > Network) for details.`;
+        userMessage = 'Failed to connect to Better Stack. Check Network tab (F12 > Network) and verify API access.';
+        console.error(errorMessage, {
+          url,
+          possibleCauses: [
+            'CORS restriction: Better Stack API may not allow browser requests.',
+            'Network issue: Render IPs may be blocked or API is down.',
+            'Invalid URL: Verify BETTERSTACK_LIVE_TAIL_API.',
+            'Token issue: May still be invalid despite no 401.'
+          ]
+        });
       }
+
+      console.error(`Better Stack polling error: ${errorMessage}`, error);
+      wsStatus.textContent = userMessage;
+      wsStatus.className = 'mb-4 text-danger';
       nextUrl = null; // Reset pagination on error
     }
     setTimeout(pollLogs, POLLING_INTERVAL);
