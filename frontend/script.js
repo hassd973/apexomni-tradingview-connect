@@ -1,19 +1,21 @@
-const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
-const COINGECKO_API = `${PROXY_URL}https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1`;
-const COINGECKO_CHART_API = `${PROXY_URL}https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}`;
-const COINGECKO_PRICE_API = `${PROXY_URL}https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd`;
-const COINMARKETCAP_API = `${PROXY_URL}https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD`;
-const CRYPTOCOMPARE_API = `${PROXY_URL}https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD`;
-const BETTERSTACK_API = `${PROXY_URL}https://telemetry.betterstack.com/api/v2/query/explore-logs`;
-const SOURCE_ID = '1303816';
+const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
+const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
+const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
 const POLLING_INTERVAL = 15000;
 const PRICE_UPDATE_INTERVAL = 10000;
 
-// Mock token data for fallback, including ConstitutionDAO
+// Mock token data for fallback (expanded to 10 tokens)
 const mockTokens = [
   { id: 'floki', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
   { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 },
-  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'CryptoCompare', score: 70.6 }
+  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', score: 70.6 },
+  { id: 'dogecoin', name: 'Dogecoin', symbol: 'DOGE', total_volume: 2000000, current_price: 0.12, price_change_percentage_24h: 3.5, market_cap: 17000000000, circulating_supply: 140000000000, source: 'Mock', score: 51.8 },
+  { id: 'safemoon', name: 'SafeMoon', symbol: 'SAFEMOON', total_volume: 1500000, current_price: 0.0000000012, price_change_percentage_24h: -4.8, market_cap: 600000000, circulating_supply: 500000000000000, source: 'Mock', score: 47.6 },
+  { id: 'binancecoin', name: 'Binance Coin', symbol: 'BNB', total_volume: 4800000, current_price: 590.45, price_change_percentage_24h: 1.8, market_cap: 90000000000, circulating_supply: 153000000, source: 'Mock', score: 50.9 },
+  { id: 'cardano', name: 'Cardano', symbol: 'ADA', total_volume: 2500000, current_price: 0.45, price_change_percentage_24h: -1.2, market_cap: 16000000000, circulating_supply: 36000000000, source: 'Mock', score: 49.4 },
+  { id: 'solana', name: 'Solana', symbol: 'SOL', total_volume: 3500000, current_price: 145.67, price_change_percentage_24h: 6.9, market_cap: 65000000000, circulating_supply: 450000000, source: 'Mock', score: 53.5 },
+  { id: 'avalanche-2', name: 'Avalanche', symbol: 'AVAX', total_volume: 1800000, current_price: 30.12, price_change_percentage_24h: -3.4, market_cap: 12000000000, circulating_supply: 400000000, source: 'Mock', score: 48.3 },
+  { id: 'polkadot', name: 'Polkadot', symbol: 'DOT', total_volume: 2200000, current_price: 8.95, price_change_percentage_24h: 2.3, market_cap: 11000000000, circulating_supply: 1200000000, source: 'Mock', score: 51.2 }
 ];
 
 // Mock historical data for chart fallback
@@ -34,6 +36,9 @@ const iceKingPuns = [
   "Penguin power activate! 🐧🧊😂"
 ];
 
+// Top USDT pairs (limited to three)
+const topPairs = ['BTC-USDT', 'ETH-USDT', 'FLOKI-USDT'];
+
 // Global Chart.js instance and state
 let priceChart = null;
 let currentToken = null;
@@ -42,18 +47,18 @@ let currentTimeframe = 1; // Default to 1 day
 let allTokens = [];
 
 // Retry fetch with delay
-async function fetchWithRetry(url, retries = 5, delay = 2000) {
+async function fetchWithRetry(url, retries = 3, delay = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url, {
-        headers: url.includes(COINMARKETCAP_API) ? { 'X-CMC_PRO_API_KEY': 'bef090eb-323d-4ae8-86dd-266236262f19' } :
-                url.includes(BETTERSTACK_API) ? { 'Authorization': 'Bearer WGdCT5KhHtg4kiGWAbdXRaSL' } : {}
-      });
+      const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       return await response.json();
     } catch (error) {
-      console.error(`Fetch attempt ${i + 1}/${retries} for ${url} failed:`, error);
-      if (i === retries - 1) throw error;
+      if (i === retries - 1) {
+        console.error(`Fetch failed after ${retries} retries:`, error);
+        throw error;
+      }
+      console.warn(`Retrying fetch (${i + 1}/${retries})...`, error);
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
@@ -83,16 +88,16 @@ async function updateLivePrice() {
 async function fetchLowVolumeTokens() {
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
-  const topPairs = document.getElementById('top-pairs');
+  const topPairsElement = document.getElementById('top-pairs');
   const marquee = document.getElementById('ticker-marquee');
   const compareDropdown = document.getElementById('compare-token');
-  const errorFallback = document.getElementById('error-fallback');
   let tokens = [];
+  let selectedTokenLi = null;
 
   try {
     const cgData = await fetchWithRetry(COINGECKO_API);
     console.log('CoinGecko data:', cgData);
-    tokens.push(...cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
+    tokens = cgData.filter(token => token.total_volume < 5_000_000).map(token => ({
       id: token.id,
       name: token.name,
       symbol: token.symbol.toUpperCase(),
@@ -103,51 +108,9 @@ async function fetchLowVolumeTokens() {
       circulating_supply: token.circulating_supply,
       source: 'CoinGecko',
       score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
-    })));
+    }));
   } catch (error) {
     console.error('CoinGecko error:', error);
-  }
-
-  try {
-    const cmcData = await fetchWithRetry(COINMARKETCAP_API);
-    console.log('CoinMarketCap data:', cmcData);
-    tokens.push(...cmcData.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
-      id: token.slug,
-      name: token.name,
-      symbol: token.symbol.toUpperCase(),
-      total_volume: token.quote.USD.volume_24h,
-      current_price: token.quote.USD.price,
-      price_change_percentage_24h: token.quote.USD.percent_change_24h,
-      market_cap: token.quote.USD.market_cap,
-      circulating_supply: token.circulating_supply,
-      source: 'CoinMarketCap',
-      score: Math.min(100, Math.max(0, (token.quote.USD.percent_change_24h + 100) / 2))
-    })));
-  } catch (error) {
-    console.error('CoinMarketCap error:', error);
-  }
-
-  try {
-    const ccData = await fetchWithRetry(CRYPTOCOMPARE_API);
-    console.log('CryptoCompare data:', ccData);
-    tokens.push(...ccData.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
-      id: token.CoinInfo.Name.toLowerCase(),
-      name: token.CoinInfo.FullName,
-      symbol: token.CoinInfo.Name.toUpperCase(),
-      total_volume: token.RAW?.USD?.VOLUME24HOURTO || 0,
-      current_price: token.RAW?.USD?.PRICE || 0,
-      price_change_percentage_24h: token.RAW?.USD?.CHANGEPCT24HOUR || 0,
-      market_cap: token.RAW?.USD?.MKTCAP || 0,
-      circulating_supply: token.RAW?.USD?.SUPPLY || 0,
-      source: 'CryptoCompare',
-      score: Math.min(100, Math.max(0, ((token.RAW?.USD?.CHANGEPCT24HOUR || 0) + 100) / 2))
-    })));
-  } catch (error) {
-    console.error('CryptoCompare error:', error);
-  }
-
-  if (tokens.length === 0) {
-    console.warn('No token data fetched. Using mock data.');
     tokens = mockTokens;
   }
 
@@ -160,10 +123,11 @@ async function fetchLowVolumeTokens() {
     }
   }
 
-  allTokens = uniqueTokens;
-  const sortedTokens = [...uniqueTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-  tokenList.innerHTML = '';
+  allTokens = uniqueTokens.length > 0 ? uniqueTokens : mockTokens;
 
+  // Sort tokens by performance (price_change_percentage_24h)
+  const sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+  tokenList.innerHTML = '';
   sortedTokens.forEach((token, index) => {
     const li = document.createElement('li');
     const opacity = 30 + (index / sortedTokens.length) * 40;
@@ -182,348 +146,4 @@ async function fetchLowVolumeTokens() {
       <div class="flex flex-col space-y-1">
         <div class="flex items-center justify-between">
           <span class="font-medium truncate">🍀 ${token.name} (${token.symbol}) [${token.score.toFixed(1)}]</span>
-          <span class="text-xs">Vol: $${token.total_volume.toLocaleString()}</span>
-        </div>
-        <div class="text-xs">
-          <p>Price: $${token.current_price.toLocaleString()}</p>
-          <p class="${priceChangeColor}">24h: ${priceChange.toFixed(2)}% ${priceChangeEmoji}</p>
-          <p>Market Cap: $${token.market_cap.toLocaleString()}</p>
-          <p>Circulating Supply: ${token.circulating_supply.toLocaleString()} ${token.symbol}</p>
-          <p>Source: ${token.source}</p>
-        </div>
-      </div>`;
-    li.addEventListener('click', () => {
-      document.querySelectorAll('#token-list li').forEach(el => el.classList.remove('selected-token'));
-      li.classList.add('selected-token');
-      currentToken = token;
-      showPriceChart(token, compareToken, currentTimeframe);
-      updateLivePrice();
-    });
-    tokenList.appendChild(li);
-  });
-
-  if (sortedTokens.length === 0) {
-    tokenList.innerHTML = '<p class="text-gray-400 text-sm">No tokens under $5M volume.</p>';
-  }
-
-  const topTokens = sortedTokens.slice(0, 5).map(token => token.symbol);
-  topPairs.innerHTML = topTokens.map((pair, index) => {
-    const token = sortedTokens[index];
-    const opacity = 20 + (index / 4) * 30;
-    const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
-    const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
-    const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
-    return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition ${glowClass} ${hoverClass}">${pair}/USDT</li>`;
-  }).join('');
-
-  let punIndex = 0;
-  function updateMarquee() {
-    const winners = sortedTokens.filter(t => t.price_change_percentage_24h > 0).slice(0, 3);
-    const losers = sortedTokens.filter(t => t.price_change_percentage_24h < 0).slice(-3);
-    const currentPun = iceKingPuns[punIndex];
-    punIndex = (punIndex + 1) % iceKingPuns.length;
-    const marqueeItems = [
-      ...winners.map(t => `<span class="glow-green text-green-400">🏆 ${t.symbol}: +${t.price_change_percentage_24h.toFixed(2)}%</span>`),
-      `<span class="glow-purple text-purple-400">${currentPun}</span>`,
-      ...losers.map(t => `<span class="glow-red text-red-400">📉 ${t.symbol}: ${t.price_change_percentage_24h.toFixed(2)}%</span>`)
-    ];
-    const doubledItems = [...marqueeItems, ...marqueeItems];
-    marquee.innerHTML = doubledItems.join('');
-    setTimeout(updateMarquee, 20000);
-  }
-  updateMarquee();
-
-  compareDropdown.innerHTML = '<option value="">Compare with...</option>';
-  sortedTokens.forEach(token => {
-    const option = document.createElement('option');
-    option.value = token.id;
-    option.textContent = `${token.name} (${token.symbol})`;
-    compareDropdown.appendChild(option);
-  });
-
-  compareDropdown.addEventListener('change', () => {
-    const selectedId = compareDropdown.value;
-    compareToken = selectedId ? allTokens.find(t => t.id === selectedId) : null;
-    if (currentToken) showPriceChart(currentToken, compareToken, currentTimeframe);
-  });
-
-  if (sortedTokens.length > 0) {
-    const firstTokenLi = tokenList.children[0];
-    firstTokenLi.classList.add('selected-token');
-    currentToken = sortedTokens[0];
-    showPriceChart(sortedTokens[0], null, currentTimeframe);
-    updateLivePrice();
-    setInterval(updateLivePrice, PRICE_UPDATE_INTERVAL);
-  }
-
-  loader.style.display = 'none';
-}
-
-// Show Price Chart using Chart.js with CoinGecko data
-async function showPriceChart(token, compareToken, days) {
-  const chartContainer = document.getElementById('chart-container');
-  const chartTitle = document.getElementById('chart-title');
-  chartTitle.textContent = compareToken
-    ? `${token.name} (${token.symbol}/USDT) vs ${compareToken.name} (${compareToken.symbol}/USDT)`
-    : `${token.name} (${token.symbol}/USDT)`;
-
-  chartTitle.onmouseover = () => {
-    chartTitle.style.color = token.price_change_percentage_24h >= 0 ? 'rgba(74, 222, 128, 0.8)' : 'rgba(248, 113, 113, 0.8)';
-    chartTitle.style.opacity = '0.75';
-  };
-  chartTitle.onmouseout = () => {
-    chartTitle.style.color = '';
-    chartTitle.style.opacity = '1';
-  };
-
-  if (priceChart) {
-    priceChart.destroy();
-    priceChart = null;
-  }
-
-  let chartCanvas = document.getElementById('chart-canvas');
-  if (chartCanvas) chartCanvas.remove();
-  chartCanvas = document.createElement('canvas');
-  chartCanvas.id = 'chart-canvas';
-  chartContainer.appendChild(chartCanvas);
-
-  if (!chartCanvas.getContext) {
-    chartContainer.innerHTML = '<div class="text-red-400 text-sm">Canvas not supported. Update your browser.</div>';
-    return;
-  }
-
-  try {
-    const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id)).replace('{days}', days);
-    let chartData;
-    try {
-      chartData = await fetchWithRetry(chartUrl);
-      console.log(`Chart data for ${token.id} (${days} days):`, chartData);
-    } catch (error) {
-      console.warn(`Failed to fetch chart data for ${token.id}. Using mock data.`, error);
-      chartData = mockChartData;
-    }
-
-    if (!chartData.prices || !Array.isArray(chartData.prices)) {
-      throw new Error('Invalid chart data format: prices array missing');
-    }
-
-    const priceData = chartData.prices.map(item => ({
-      x: new Date(item[0]),
-      y: item[1]
-    }));
-
-    let comparePriceData = null;
-    if (compareToken) {
-      const compareChartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', days);
-      let compareData;
-      try {
-        compareData = await fetchWithRetry(compareChartUrl);
-        console.log(`Chart data for ${compareToken.id} (${days} days):`, compareData);
-      } catch (error) {
-        console.warn(`Failed to fetch chart data for ${compareToken.id}.`, error);
-        compareData = null;
-      }
-      if (compareData && compareData.prices && Array.isArray(compareData.prices)) {
-        comparePriceData = compareData.prices.map(item => ({
-          x: new Date(item[0]),
-          y: item[1]
-        }));
-      }
-    }
-
-    const ctx = chartCanvas.getContext('2d');
-    priceChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        datasets: [{
-          label: `${token.symbol}/USD Price`,
-          data: priceData,
-          borderColor: '#9333ea',
-          backgroundColor: 'rgba(147, 51, 234, 0.2)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0
-        }].concat(comparePriceData ? [{
-          label: `${compareToken.symbol}/USD Price`,
-          data: comparePriceData,
-          borderColor: '#34d399',
-          backgroundColor: 'rgba(52, 211, 153, 0.2)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0
-        }] : [])
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          x: {
-            type: 'time',
-            time: { 
-              unit: days <= 0.0417 ? 'minute' : days <= 1 ? 'hour' : 'day',
-              tooltipFormat: 'MMM d, yyyy HH:mm',
-              displayFormats: {
-                minute: 'HH:mm',
-                hour: 'MMM d HH:mm',
-                day: 'MMM d'
-              }
-            },
-            title: { display: true, text: 'Time', color: '#d1d4dc' },
-            ticks: { color: '#d1d4dc', maxTicksLimit: 7 },
-            grid: { color: 'rgba(59, 130, 246, 0.1)' }
-          },
-          y: {
-            title: { display: true, text: 'Price (USD)', color: '#d1d4dc' },
-            ticks: { color: '#d1d4dc', callback: value => '$' + value.toFixed(6) },
-            grid: { color: 'rgba(59, 130, 246, 0.1)' }
-          }
-        },
-        plugins: { legend: { labels: { color: '#d1d4dc' } } }
-      }
-    });
-    console.log(`Chart rendered for ${token.id}${compareToken ? ` vs ${compareToken.id}` : ''} (${days} days)`);
-  } catch (error) {
-    console.error('Chart error:', error);
-    chartContainer.innerHTML = '<div class="text-red-400 text-sm">Chart failed to load. Check console.</div>';
-  }
-}
-
-// Fetch and display Better Stack logs
-async function initLogStream() {
-  const alertList = document.getElementById('alert-list');
-  const wsStatus = document.getElementById('ws-status');
-
-  async function fetchLogs() {
-    const now = new Date().toISOString();
-    const twoMinutesAgo = new Date(Date.now() - 2 * 60 * 1000).toISOString();
-    const url = `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=SELECT%20time%2C%20JSONExtract(json%2C%20'message'%2C%20'Nullable(String)')%20AS%20message%20FROM%20source%20WHERE%20time%20BETWEEN%20'${twoMinutesAgo}'%20AND%20'${now}'`;
-    try {
-      const response = await fetch(url, {
-        headers: { 'Authorization': 'Bearer WGdCT5KhHtg4kiGWAbdXRaSL' }
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-      const text = await response.text();
-      const logs = text.trim().split('\n').filter(line => line.trim()).map(line => JSON.parse(line));
-      if (logs.length > 0) {
-        wsStatus.innerHTML = '<span class="status-dot green"></span>Live logs active';
-        wsStatus.className = 'mb-2 text-green-400 text-xs sm:text-sm';
-        alertList.innerHTML = '';
-        logs.forEach(log => alertList.prepend(processAlert({ event: 'log', message: log.message, timestamp: log.time })));
-        while (alertList.children.length > 20) alertList.removeChild(alertList.lastChild);
-      } else {
-        wsStatus.innerHTML = '<span class="status-dot yellow"></span>No logs yet. Check setup.';
-        wsStatus.className = 'mb-2 text-yellow-400 text-xs sm:text-sm';
-        alertList.innerHTML = '<p class="text-gray-400 text-xs">No logs received. Verify Vector setup.</p>';
-      }
-    } catch (error) {
-      console.error('Log fetch error:', error);
-      wsStatus.innerHTML = '<span class="status-dot red"></span>Error fetching logs: ' + error.message;
-      wsStatus.className = 'mb-2 text-red-400 text-xs sm:text-sm';
-      alertList.innerHTML = '<p class="text-red-400 text-xs">Failed to fetch logs. Falling back to mock alerts.</p>';
-      generateMockAlerts().forEach(alert => alertList.prepend(processAlert(alert)));
-    }
-  }
-
-  wsStatus.innerHTML = `
-    <span class="status-dot yellow"></span>
-    Setup required on your Docker host:<br>
-    1. Grant permissions: <code>usermod -a -G docker vector</code><br>
-    2. Install Vector: <code>curl -sSL https://telemetry.betterstack.com/setup-vector/docker/x5nvK7DNDURcpAHEBuCbHrza -o /tmp/setup-vector.sh && bash /tmp/setup-vector.sh</code><br>
-    - Logs will appear after 2 minutes. Check Better Stack → Live tail.<br>
-    - Ensure internet connection and verify token (WGdCT5KhHtg4kiGWAbdXRaSL).
-  `;
-  wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
-
-  fetchLogs();
-  setInterval(fetchLogs, POLLING_INTERVAL);
-}
-
-// Process alert data for display
-function processAlert(alert) {
-  const li = document.createElement('li');
-  li.className = 'bg-gray-700/40 p-2 rounded-md shadow hover-glow transition fade-in';
-  const eventType = alert.event || 'unknown';
-  const message = alert.message || '';
-  const timestamp = alert.timestamp || new Date().toISOString();
-  let displayMessage = message;
-  let emoji = '✅';
-  if (eventType.includes('entry')) {
-    emoji = eventType.includes('long') ? '🚀' : '🧪';
-    displayMessage = `${message || 'Entry'}`;
-  } else if (eventType.includes('exit')) {
-    emoji = eventType.includes('protect') ? '🛡️' : '🏁';
-    displayMessage = `${message || 'Exit'}`;
-  } else if (eventType === 'filter_blocked') {
-    emoji = '🧊';
-    displayMessage = `${message || 'Blocked'}`;
-  } else if (eventType === 'log') {
-    emoji = '📜';
-    displayMessage = message || 'Log message';
-  }
-  li.innerHTML = `
-    <div class="flex items-center justify-between">
-      <span class="font-medium truncate text-gray-200">${emoji} ${displayMessage}</span>
-      <span class="text-xs text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
-    </div>`;
-  return li;
-}
-
-// Mock alert generator
-function generateMockAlerts() {
-  const alerts = [];
-  const events = ['long_entry', 'short_entry', 'exit', 'protect_exit', 'filter_blocked'];
-  const markets = ['BTC-USDT', 'ETH-USDT', 'FLOKI-USDT'];
-  for (let i = 0; i < 10; i++) {
-    const event = events[Math.floor(Math.random() * events.length)];
-    alerts.push({
-      type: 'debug',
-      event: event,
-      signal: event.includes('entry') ? 'buy' : 'sell',
-      market: markets[Math.floor(Math.random() * markets.length)],
-      timestamp: new Date(Date.now() - Math.random() * 86400000 * 10).toISOString(),
-      message: `${event.includes('entry') ? 'Buy' : 'Sell'} signal on ${markets[Math.floor(Math.random() * markets.length)]}`
-    });
-  }
-  return alerts;
-}
-
-// Setup chart timeframe and sticky toggle
-function setupChartControls() {
-  const timeframes = {
-    'timeframe-1min': 1 / 1440,
-    'timeframe-5min': 5 / 1440,
-    'timeframe-15min': 15 / 1440,
-    'timeframe-1hr': 1 / 24,
-    'timeframe-4hr': 4 / 24,
-    'timeframe-1d': 1
-  };
-  Object.keys(timeframes).forEach(id => {
-    const btn = document.getElementById(id);
-    if (btn) {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.timeframe-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentTimeframe = timeframes[id];
-        if (currentToken) showPriceChart(currentToken, compareToken, currentTimeframe);
-      });
-    }
-  });
-
-  const toggleStickyBtn = document.getElementById('toggle-sticky');
-  const chartWrapper = document.querySelector('.chart-wrapper');
-  let isSticky = true;
-  if (toggleStickyBtn) {
-    toggleStickyBtn.addEventListener('click', () => {
-      isSticky = !isSticky;
-      chartWrapper.classList.toggle('unlocked', !isSticky);
-      toggleStickyBtn.textContent = isSticky ? 'Lock Chart' : 'Unlock Chart';
-      toggleStickyBtn.classList.toggle('bg-blue-500', isSticky);
-      toggleStickyBtn.classList.toggle('bg-blue-600', !isSticky);
-    });
-  }
-}
-
-// Initialize
-fetchLowVolumeTokens();
-initLogStream();
-setupChartControls();
+          <span class="text-xs">Vol: $${token.total_volume
