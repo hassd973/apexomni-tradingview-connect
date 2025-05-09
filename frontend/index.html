@@ -42,7 +42,7 @@
       5% { transform: translate(2px, -2px); opacity: 0.5; }
       10% { transform: translate(-2px, 2px); opacity: 0.9; }
     }
-    /* Particle Animation */
+    /* Particle Animation (Stars, Spaceships, Penguins) */
     .particles {
       position: fixed;
       top: 0;
@@ -52,18 +52,44 @@
       pointer-events: none;
       z-index: -1;
     }
-    .particle {
+    .star {
       position: absolute;
       width: 2px;
       height: 2px;
       background: rgba(147, 51, 234, 0.7);
       border-radius: 50%;
-      animation: float 10s infinite;
+      animation: float 10s infinite linear;
+    }
+    .spaceship {
+      position: absolute;
+      width: 20px;
+      height: 10px;
+      background: linear-gradient(90deg, #ff00ff, #00ffff);
+      clip-path: polygon(0 50%, 100% 0, 100% 100%);
+      animation: drift 20s infinite linear;
+      opacity: 0.8;
+    }
+    .penguin {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      background: radial-gradient(circle, #fff 50%, #000 70%);
+      border-radius: 50% 50% 0 0;
+      animation: waddle 8s infinite ease-in-out;
+      opacity: 0.9;
     }
     @keyframes float {
       0% { transform: translate(0, 0); opacity: 0; }
       50% { opacity: 0.8; }
       100% { transform: translate(100px, -100px); opacity: 0; }
+    }
+    @keyframes drift {
+      0% { transform: translate(-50px, 0); }
+      100% { transform: translate(110%, 50px); }
+    }
+    @keyframes waddle {
+      0%, 100% { transform: translate(0, 0) rotate(-5deg); }
+      50% { transform: translate(50px, -20px) rotate(5deg); }
     }
     /* Glow Effects */
     @keyframes glow-blue {
@@ -173,15 +199,33 @@
     <p>Powered by CoinGecko, CoinMarketCap, CryptoCompare, Better Stack</p>
   </footer>
   <script>
-    // Add particles
+    // Add particles (stars, spaceships, penguins)
     const particleContainer = document.getElementById('particles');
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 100; i++) {
       const particle = document.createElement('div');
-      particle.className = 'particle';
+      particle.className = 'star';
       particle.style.left = `${Math.random() * 100}%`;
       particle.style.top = `${Math.random() * 100}%`;
       particle.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(particle);
+    }
+    for (let i = 0; i < 5; i++) {
+      if (Math.random() < 0.3) { // 30% chance for spaceship
+        const spaceship = document.createElement('div');
+        spaceship.className = 'spaceship';
+        spaceship.style.left = `${Math.random() * 100}%`;
+        spaceship.style.top = `${Math.random() * 100}%`;
+        spaceship.style.animationDelay = `${Math.random() * 20}s`;
+        particleContainer.appendChild(spaceship);
+      }
+      if (Math.random() < 0.2) { // 20% chance for penguin
+        const penguin = document.createElement('div');
+        penguin.className = 'penguin';
+        penguin.style.left = `${Math.random() * 100}%`;
+        penguin.style.top = `${Math.random() * 100}%`;
+        penguin.style.animationDelay = `${Math.random() * 8}s`;
+        particleContainer.appendChild(penguin);
+      }
     }
     // Load script after DOM
     document.addEventListener('DOMContentLoaded', () => {
