@@ -1,11 +1,12 @@
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
 const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
+const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_API = '/proxy/live-tail'; // Use proxy endpoint to bypass CORS
-const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
+const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/explore-logs';
 const SOURCE_ID = '1303816';
 const POLLING_INTERVAL = 15000;
+const PRICE_UPDATE_INTERVAL = 10000;
 
 // Mock token data for fallback, including ConstitutionDAO
 const mockTokens = [
@@ -35,7 +36,9 @@ const iceKingPuns = [
 // Global Chart.js instance and state
 let priceChart = null;
 let currentToken = null;
-let currentTimeframe = 7; // Default to 7 days
+let compareToken = null;
+let currentTimeframe = 1; // Default to 1 day
+let allTokens = [];
 
 // Retry fetch with delay
 async function fetchWithRetry(url, retries = 3, delay = 1000) {
@@ -52,12 +55,33 @@ async function fetchWithRetry(url, retries = 3, delay = 1000) {
   }
 }
 
+// Fetch live price for a token
+async function fetchLivePrice(tokenId) {
+  try {
+    const url = COINGECKO_PRICE_API.replace('{id}', encodeURIComponent(tokenId));
+    const data = await fetchWithRetry(url);
+    return data[tokenId]?.usd || 'N/A';
+  } catch (error) {
+    console.error(`Error fetching live price for ${tokenId}:`, error);
+    return 'N/A';
+  }
+}
+
+// Update live price display
+async function updateLivePrice() {
+  if (!currentToken) return;
+  const livePriceElement = document.getElementById('live-price');
+  const price = await fetchLivePrice(currentToken.id);
+  livePriceElement.textContent = `Live Price: $${price !== 'N/A' ? price.toLocaleString() : 'N/A'}`;
+}
+
 // Fetch low-volume tokens, rank by performance, and update marquee with puns
 async function fetchLowVolumeTokens() {
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
   const marquee = document.getElementById('ticker-marquee');
+  const compareDropdown = document.getElementById('compare-token');
   let tokens = [];
   let selectedTokenLi = null;
 
@@ -140,6 +164,9 @@ async function fetchLowVolumeTokens() {
     }
   }
 
+  // Store tokens globally for comparison dropdown
+  allTokens = uniqueTokens;
+
   // Sort tokens by performance (price_change_percentage_24h)
   const sortedTokens = [...uniqueTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
   tokenList.innerHTML = '';
@@ -178,7 +205,8 @@ async function fetchLowVolumeTokens() {
       li.classList.add('selected-token');
       selectedTokenLi = li;
       currentToken = token;
-      showPriceChart(token, currentTimeframe);
+      showPriceChart(token, compareToken, currentTimeframe);
+      updateLivePrice();
     });
     tokenList.appendChild(li);
   });
@@ -217,22 +245,43 @@ async function fetchLowVolumeTokens() {
   }
   updateMarquee();
 
+  // Populate compare dropdown
+  compareDropdown.innerHTML = '<option value="">Compare with...</option>';
+  sortedTokens.forEach(token => {
+    const option = document.createElement('option');
+    option.value = token.id;
+    option.textContent = `${token.name} (${token.symbol})`;
+    compareDropdown.appendChild(option);
+  });
+
+  compareDropdown.addEventListener('change', () => {
+    const selectedId = compareDropdown.value;
+    compareToken = selectedId ? allTokens.find(t => t.id === selectedId) : null;
+    if (currentToken) {
+      showPriceChart(currentToken, compareToken, currentTimeframe);
+    }
+  });
+
   if (sortedTokens.length > 0) {
     const firstTokenLi = tokenList.children[0];
     firstTokenLi.classList.add('selected-token');
     selectedTokenLi = firstTokenLi;
     currentToken = sortedTokens[0];
-    showPriceChart(sortedTokens[0], currentTimeframe);
+    showPriceChart(sortedTokens[0], null, currentTimeframe);
+    updateLivePrice();
+    setInterval(updateLivePrice, PRICE_UPDATE_INTERVAL);
   }
 
   loader.style.display = 'none';
 }
 
 // Show Price Chart using Chart.js with CoinGecko data
-async function showPriceChart(token, days) {
+async function showPriceChart(token, compareToken, days) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
-  chartTitle.textContent = `${token.name} (${token.symbol}/USDT)`;
+  chartTitle.textContent = compareToken
+    ? `${token.name} (${token.symbol}/USDT) vs ${compareToken.name} (${compareToken.symbol}/USDT)`
+    : `${token.name} (${token.symbol}/USDT)`;
 
   // Update chart title hover effect based on performance
   chartTitle.onmouseover = () => {
@@ -269,7 +318,7 @@ async function showPriceChart(token, days) {
   }
 
   try {
-    // Fetch historical price data from CoinGecko with retry
+    // Fetch historical price data for primary token
     const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id)).replace('{days}', days);
     let chartData;
     try {
@@ -285,8 +334,48 @@ async function showPriceChart(token, days) {
     }
 
     const prices = chartData.prices; // Array of [timestamp, price]
-    const labels = prices.map(price => new Date(price[0]).toLocaleDateString());
+    const labels = prices.map(price => new Date(price[0]).toLocaleString());
     const data = prices.map(price => price[1]);
+
+    // Fetch data for comparison token if selected
+    let compareData = null;
+    if (compareToken) {
+      const compareChartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', days);
+      try {
+        compareData = await fetchWithRetry(compareChartUrl);
+        console.log(`Chart data for ${compareToken.id} (${days} days):`, compareData);
+      } catch (error) {
+        console.warn(`Failed to fetch chart data for ${compareToken.id}.`, error);
+        compareData = null;
+      }
+    }
+
+    // Prepare datasets
+    const datasets = [
+      {
+        label: `${token.symbol}/USD Price`,
+        data: data,
+        borderColor: '#9333ea',
+        backgroundColor: 'rgba(147, 51, 234, 0.2)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+      }
+    ];
+
+    if (compareData && compareData.prices && Array.isArray(compareData.prices)) {
+      const comparePrices = compareData.prices;
+      const compareDataPoints = comparePrices.map(price => price[1]);
+      datasets.push({
+        label: `${compareToken.symbol}/USD Price`,
+        data: compareDataPoints,
+        borderColor: '#34d399',
+        backgroundColor: 'rgba(52, 211, 153, 0.2)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+      });
+    }
 
     // Create new Chart.js chart
     const ctx = chartCanvas.getContext('2d');
@@ -298,15 +387,7 @@ async function showPriceChart(token, days) {
       type: 'line',
       data: {
         labels: labels,
-        datasets: [{
-          label: `${token.symbol}/USD Price`,
-          data: data,
-          borderColor: '#9333ea',
-          backgroundColor: 'rgba(147, 51, 234, 0.2)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 0,
-        }]
+        datasets: datasets
       },
       options: {
         responsive: true,
@@ -316,7 +397,7 @@ async function showPriceChart(token, days) {
             display: true,
             title: {
               display: true,
-              text: 'Date',
+              text: 'Time',
               color: '#d1d4dc'
             },
             ticks: {
@@ -359,7 +440,7 @@ async function showPriceChart(token, days) {
         }
       }
     });
-    console.log(`Chart rendered for ${token.id} (${days} days)`);
+    console.log(`Chart rendered for ${token.id}${compareToken ? ` vs ${compareToken.id}` : ''} (${days} days)`);
   } catch (error) {
     console.error('Error rendering chart:', error);
     chartContainer.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
@@ -370,33 +451,69 @@ async function showPriceChart(token, days) {
 function processAlert(alert) {
   const li = document.createElement('li');
   li.className = 'bg-gray-700/40 p-2 rounded-md shadow hover-glow transition fade-in';
-  const eventType = alert.event || 'unknown';
-  const signal = alert.signal || '';
-  const market = alert.market || 'N/A';
-  const timestamp = alert.timestamp || new Date().toISOString();
-  let message = '';
-  let emoji = '✅';
-  if (eventType.includes('entry')) {
-    emoji = eventType.includes('long') ? '🚀' : '🧪';
-    message = `${signal.toUpperCase()} Entry on ${market}`;
-  } else if (eventType.includes('exit')) {
-    emoji = eventType.includes('protect') ? '🛡️' : '🏁';
-    message = `${signal.toUpperCase()} Exit on ${market}`;
-  } else if (eventType === 'filter_blocked') {
-    emoji = '🧊';
-    message = `Blocked ${signal.toUpperCase()} on ${market} (${alert.filter})`;
-  } else {
-    message = `${eventType} on ${market}`;
-  }
+  const time = alert.time || new Date().toISOString();
+  const level = alert.level || 'unknown';
   li.innerHTML = `
     <div class="flex items-center justify-between">
-      <span class="font-medium truncate text-gray-200">${emoji} ${message}</span>
-      <span class="text-xs text-gray-400">${new Date(timestamp).toLocaleTimeString()}</span>
+      <span class="font-medium truncate text-gray-200">${level.toUpperCase()} Alert</span>
+      <span class="text-xs text-gray-400">${new Date(time).toLocaleTimeString()}</span>
     </div>`;
   return li;
 }
 
-// Mock alert generator
+// Fetch logs from Better Stack API
+async function initLogStream() {
+  const alertList = document.getElementById('alert-list');
+  const wsStatus = document.getElementById('ws-status');
+  if (!wsStatus) {
+    const alertSection = document.querySelector('section:nth-child(2)');
+    wsStatus = document.createElement('p');
+    wsStatus.id = 'ws-status';
+    wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
+    alertSection.insertBefore(wsStatus, alertList);
+  }
+
+  async function fetchLogs() {
+    const now = new Date().toISOString();
+    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    const url = `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=SELECT%20time%2C%20JSONExtract(json%2C%20'level'%2C%20'Nullable(String)')%20AS%20level%20FROM%20source%20WHERE%20time%20BETWEEN%20'${thirtyMinutesAgo}'%20AND%20'${now}'`;
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': 'Bearer WGdCT5KhHtg4kiGWAbdXRaSL'
+        }
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      const text = await response.text();
+      const logs = text.trim().split('\n').filter(line => line.trim()).map(line => JSON.parse(line));
+      if (logs.length > 0) {
+        logs.forEach(log => alertList.prepend(processAlert(log)));
+        while (alertList.children.length > 20) {
+          alertList.removeChild(alertList.lastChild);
+        }
+        wsStatus.textContent = 'Live logs active';
+        wsStatus.className = 'mb-2 text-green-400 text-xs sm:text-sm';
+      } else {
+        wsStatus.textContent = 'No new logs...';
+        wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
+      }
+    } catch (error) {
+      console.error('Log fetch error:', error);
+      wsStatus.textContent = `Error: ${error.message}. Using mock data.`;
+      wsStatus.className = 'mb-2 text-red-400 text-xs sm:text-sm';
+      const mockAlerts = generateMockAlerts();
+      mockAlerts.forEach(alert => alertList.prepend(processAlert(alert)));
+    }
+  }
+
+  wsStatus.textContent = 'Starting with mock data...';
+  wsStatus.className = 'mb-2 text-yellow-400 text-xs sm:text-sm';
+  fetchLogs();
+  setInterval(fetchLogs, POLLING_INTERVAL);
+}
+
+// Mock alert generator (fallback)
 function generateMockAlerts() {
   const alerts = [];
   const events = ['long_entry', 'short_entry', 'exit', 'protect_exit', 'filter_blocked'];
@@ -412,75 +529,18 @@ function generateMockAlerts() {
       filter: event === 'filter_blocked' ? 'low_volume' : undefined
     });
   }
-  return alerts;
-}
-
-// Fetch logs from Better Stack Live Tail API via proxy or use mock data
-async function initLogStream() {
-  const wsStatus = document.getElementById('ws-status');
-  const alertList = document.getElementById('alert-list');
-  const toggleLive = document.getElementById('toggle-live');
-  let isLive = false;
-
-  async function fetchLogs() {
-    try {
-      const url = `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=type%3Ddebug`;
-      console.log('Fetching logs from:', url);
-      const response = await fetch(url, {
-        method: 'GET',
-        redirect: 'follow'
-      });
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-
-      const data = await response.json();
-      console.log('Response data:', data);
-
-      const logs = data.rows || [];
-      if (logs.length > 0) {
-        logs.forEach(log => {
-          const alert = typeof log.message === 'string' ? JSON.parse(log.message) : log.message;
-          if (alert.type === 'debug' && alert.event) {
-            const li = processAlert(alert);
-            alertList.prepend(li);
-            while (alertList.children.length > 20) {
-              alertList.removeChild(alertList.lastChild);
-            }
-          }
-        });
-        wsStatus.textContent = 'Live logs active';
-        wsStatus.className = 'mb-2 text-green-400 text-xs sm:text-sm';
-      } else {
-        wsStatus.textContent = 'No new logs...';
-        wsStatus.className = 'mb-2 text-gray-400 text-xs sm:text-sm';
-      }
-    } catch (error) {
-      console.error('Log fetch error:', error);
-      wsStatus.textContent = `Error: ${error.message}. Using mock data.`;
-      wsStatus.className = 'mb-2 text-red-400 text-xs sm:text-sm';
-      if (!isLive) generateMockAlerts().forEach(alert => alertList.prepend(processAlert(alert)));
-    }
-  }
-
-  toggleLive.addEventListener('click', () => {
-    isLive = !isLive;
-    toggleLive.textContent = `${isLive ? 'Live' : 'Mock'} (Toggle ${isLive ? 'Mock' : 'Live'})`;
-    alertList.innerHTML = '';
-    fetchLogs();
-  });
-
-  wsStatus.textContent = 'Starting with mock data...';
-  wsStatus.className = 'mb-2 text-yellow-400 text-xs sm:text-sm';
-  fetchLogs();
-  setInterval(fetchLogs, POLLING_INTERVAL);
+  return alerts.map(alert => ({ time: alert.timestamp, level: alert.event }));
 }
 
 // Setup chart timeframe and sticky toggle
 function setupChartControls() {
   const timeframes = {
-    'timeframe-1d': 1,
-    'timeframe-7d': 7,
-    'timeframe-30d': 30,
-    'timeframe-90d': 90
+    'timeframe-1min': 1 / 1440,   // 1 minute in days
+    'timeframe-5min': 5 / 1440,   // 5 minutes in days
+    'timeframe-15min': 15 / 1440, // 15 minutes in days
+    'timeframe-1hr': 1 / 24,      // 1 hour in days
+    'timeframe-4hr': 4 / 24,      // 4 hours in days
+    'timeframe-1d': 1             // 1 day
   };
 
   // Timeframe buttons
@@ -491,7 +551,7 @@ function setupChartControls() {
       btn.classList.add('active');
       currentTimeframe = timeframes[id];
       if (currentToken) {
-        showPriceChart(currentToken, currentTimeframe);
+        showPriceChart(currentToken, compareToken, currentTimeframe);
       }
     });
   });
