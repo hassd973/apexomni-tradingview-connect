@@ -2,7 +2,7 @@ const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currenc
 const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
 const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
-const BETTERSTACK_TOKEN = 'x5nvK7DNDURcpAHEBuCbHrza';
+const BETTERSTACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
 const SOURCE_ID = '12345'; // Replace with actual source ID from Better Stack Sources API
 const POLLING_INTERVAL = 10000; // Poll every 10 seconds
 
@@ -131,40 +131,57 @@ async function fetchLowVolumeTokens() {
   loader.style.display = 'none';
 }
 
-// Show TradingView widget
+// Show Chart.js chart
 function showPriceChart(token) {
   const chartContainer = document.getElementById('chart-container');
   const chartTitle = document.getElementById('chart-title');
-  const widgetDiv = document.getElementById('tradingview-widget');
+  const canvas = document.getElementById('chart-canvas');
   chartContainer.innerHTML = ''; // Reset container
   chartContainer.appendChild(chartTitle);
-  chartContainer.appendChild(widgetDiv);
-  chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Chart`;
+  chartContainer.appendChild(canvas);
+  chartTitle.textContent = `${token.name} (${token.symbol}/USDT) Price Trend`;
 
-  // Destroy existing widget if it exists
-  if (window.tvWidget) window.tvWidget.remove();
+  // Destroy existing chart if it exists
+  if (window.myChart) window.myChart.destroy();
 
-  // TradingView widget embed
-  const script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.innerHTML = `
-    new TradingView.widget({
-      width: '100%',
-      height: 400,
-      symbol: 'BINANCE:${token.symbol.toUpperCase()}USDT',
-      interval: '1D',
-      timezone: 'Etc/UTC',
-      theme: 'dark',
-      style: '1',
-      locale: 'en',
-      toolbar_bg: '#1A202C',
-      enable_publishing: false,
-      allow_symbol_change: true,
-      container_id: 'tradingview-widget'
-    });
-  `;
-  widgetDiv.innerHTML = '';
-  widgetDiv.appendChild(script);
+  // Simulated 30-day price data
+  const days = 30;
+  const basePrice = token.current_price;
+  const changePercent = token.price_change_percentage_24h / 100;
+  const data = Array.from({ length: days }, (_, i) => {
+    const dayChange = changePercent * (Math.random() * 0.5 + 0.75);
+    return basePrice * (1 + dayChange * (i / days));
+  });
+
+  // Chart.js configuration
+  window.myChart = new Chart(canvas, {
+    type: 'line', // Can switch to 'candlestick' if Chart.js candlestick plugin is added
+    data: {
+      labels: Array.from({ length: days }, (_, i) => `Day ${i + 1}`),
+      datasets: [{
+        label: `${token.symbol}/USDT Price`,
+        data: data,
+        borderColor: 'rgba(74, 222, 128, 0.8)', // Green with transparency
+        backgroundColor: 'rgba(74, 222, 128, 0.2)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { color: '#fff' } },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+        y: { ticks: { color: '#d1d5db' }, grid: { color: 'rgba(255, 255, 255, 0.1)' }, beginAtZero: false }
+      }
+    }
+  });
 }
 
 // Process alert data for display
@@ -226,7 +243,7 @@ async function initLogStream() {
 
   async function fetchLogs() {
     try {
-      const url = nextUrl || `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=type%3Ddebug&batch=100&from=${new Date(Date.now() - 30 * 60 * 1000).toISOString()}&to=${new Date().toISOString()}&order=newest_first`;
+      const url = nextUrl || `${BETTERSTACK_API}?source_ids=${SOURCE_ID}&query=level%3Dinfo&batch=100&from=${new Date(Date.now() - 30 * 60 * 1000).toISOString()}&to=${new Date().toISOString()}&order=newest_first`;
       const response = await fetch(url, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${BETTERSTACK_TOKEN}` },
