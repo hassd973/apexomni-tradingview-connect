@@ -111,8 +111,11 @@ async function fetchLowVolumeTokens() {
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
+    const tooltipBg = token.price_change_percentage_24h >= 0 ? 'rgba(74, 222, 128, 0.9)' : 'rgba(248, 113, 113, 0.9)';
+    const tooltipGlow = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} ${hoverClass}`;
     li.setAttribute('data-tooltip', 'Click to toggle chart');
+    li.setAttribute('style', `--tooltip-bg: ${tooltipBg}; --tooltip-glow: ${tooltipGlow};`);
     const priceChange = token.price_change_percentage_24h;
     const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
     const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
@@ -185,18 +188,23 @@ async function showPriceChart(token) {
 
   try {
     // Fetch historical price data from CoinGecko
-    const chartUrl = COINGECKO_CHART_API.replace('{id}', token.id);
+    const chartUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id));
     const response = await fetch(chartUrl);
-    if (!response.ok) throw new Error(`CoinGecko Chart HTTP ${response.status}`);
+    if (!response.ok) throw new Error(`CoinGecko Chart HTTP ${response.status}: ${await response.text()}`);
     const chartData = await response.json();
     console.log(`Chart data for ${token.id}:`, chartData);
+
+    if (!chartData.prices || !Array.isArray(chartData.prices)) {
+      throw new Error('Invalid chart data format: prices array missing');
+    }
 
     const prices = chartData.prices; // Array of [timestamp, price]
     const labels = prices.map(price => new Date(price[0]).toLocaleDateString());
     const data = prices.map(price => price[1]);
 
     // Create new Chart.js chart
-    priceChart = new Chart(chartCanvas, {
+    const ctx = chartCanvas.getContext('2d');
+    priceChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: labels,
@@ -264,7 +272,7 @@ async function showPriceChart(token) {
     console.log(`Chart rendered for ${token.id}`);
   } catch (error) {
     console.error('Error rendering chart:', error);
-    chartCanvas.parentElement.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token.</div>';
+    chartCanvas.parentElement.innerHTML = '<div class="text-gray-400 text-sm">Failed to load chart data. Try another token or check console.</div>';
   }
 }
 
