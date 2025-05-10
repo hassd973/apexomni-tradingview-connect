@@ -1,15 +1,15 @@
 {
-  "name": "ice-king-trading-dashboard",
+  "name": "apexomni-backend",
   "version": "1.0.0",
-  "description": "Static website for ICE KING trading dashboard with CoinGecko data and TradingView alerts",
+  "description": "Backend for ApexOmni TradingView Connect",
+  "main": "server.js",
   "scripts": {
-    "start": "npx serve .",
-    "build": "npm run zip",
-    "zip": "zip -r ice-king-trading-dashboard.zip . -x '*.git*'"
+    "start": "node server.js"
   },
   "dependencies": {
-    "serve": "^14.2.3"
-  },
-  "author": "",
-  "license": "MIT"
+    "axios": "^1.7.7",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "winston": "^3.14.2"
+  }
 }
