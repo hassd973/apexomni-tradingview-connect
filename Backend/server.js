@@ -10,48 +10,95 @@ const port = process.env.PORT || 3001;
 app.use(cors()); // Enable CORS for frontend
 app.use(express.json());
 
-// Better Stack API configuration
-const BETTER_STACK_API_KEY = process.env.BETTER_STACK_API_KEY;
-const BETTER_STACK_LOGS_ENDPOINT = 'https://api.betterstack.com/logs'; // Replace with actual endpoint
+// API configurations
+const BETTER_STACK_TOKEN = process.env.BETTER_STACK_TOKEN;
+const BETTER_STACK_LOGS_ENDPOINT = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
+const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY;
+const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3/coins/markets';
+const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY;
+const COINMARKETCAP_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 
-// Token stats API configuration (placeholder; replace with Omni Exchange or other API)
-const TOKEN_STATS_API_URL = 'https://api.example.com/token-stats'; // Replace with actual API
-const TOKEN_STATS_API_KEY = process.env.TOKEN_STATS_API_KEY;
-
-// Endpoint to fetch live log data from Better Stack
+// Endpoint to fetch live logs from Better Stack
 app.get('/logs', async (req, res) => {
   try {
+    const params = {
+      source_ids: '1303816', // Provided source ID
+      query: req.query.query || 'level=info', // Default to info logs; frontend can override
+      batch: req.query.batch || 100, // Default to 100 rows
+      from: req.query.from || new Date(Date.now() - 30 * 60 * 1000).toISOString(), // Last 30 minutes
+      to: req.query.to || new Date().toISOString(), // Current time
+      order: req.query.order || 'newest_first', // Default to newest first
+    };
+
     const response = await axios.get(BETTER_STACK_LOGS_ENDPOINT, {
       headers: {
-        Authorization: `Bearer ${BETTER_STACK_API_KEY}`,
+        Authorization: `Bearer ${BETTER_STACK_TOKEN}`,
       },
-      params: {
-        limit: req.query.limit || 50, // Number of logs to fetch
-        from: req.query.from || new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // Last 24 hours
-      },
+      params,
+      maxRedirects: 5, // Follow redirects as per Better Stack docs
     });
-    res.json(response.data);
+
+    res.json({
+      logs: response.data.data, // Return log rows
+      next: response.data.pagination?.next, // Pagination URL for next batch
+    });
   } catch (error) {
     console.error('Error fetching logs:', error.message);
     res.status(500).json({ error: 'Failed to fetch logs' });
   }
 });
 
-// Endpoint to fetch live token statistics
+// Endpoint to fetch token statistics (CoinGecko by default, CoinMarketCap optional)
 app.get('/token-stats', async (req, res) => {
+  const provider = req.query.provider || 'coingecko'; // Default to CoinGecko
+  const symbols = req.query.symbols?.split(',') || ['bitcoin', 'ethereum', 'binancecoin']; // Default tokens
+
   try {
-    const response = await axios.get(TOKEN_STATS_API_URL, {
-      headers: {
-        Authorization: `Bearer ${TOKEN_STATS_API_KEY}`,
-      },
-      params: {
-        symbols: req.query.symbols || 'ETH,BNB,ADA', // Default tokens; frontend can override
-      },
-    });
-    res.json(response.data);
+    if (provider === 'coinmarketcap') {
+      // CoinMarketCap API
+      const response = await axios.get(COINMARKETCAP_API_URL, {
+        headers: {
+          'X-CMC_PRO_API_KEY': COINMARKETCAP_API_KEY,
+        },
+        params: {
+          limit: 100, // Adjust as needed
+        },
+      });
+
+      // Filter for requested symbols
+      const filteredData = response.data.data.filter(coin =>
+        symbols.includes(coin.slug)
+      ).map(coin => ({
+        id: coin.slug,
+        name: coin.name,
+        symbol: coin.symbol,
+        price: coin.quote.USD.price,
+        volume_24h: coin.quote.USD.volume_24h,
+        market_cap: coin.quote.USD.market_cap,
+      }));
+
+      res.json(filteredData);
+    } else {
+      // CoinGecko API
+      const response = await axios.get(COINGECKO_API_URL, {
+        headers: {
+          'x-cg-api-key': COINGECKO_API_KEY,
+        },
+        params: {
+          vs_currency: 'usd',
+          ids: symbols.join(','),
+          order: 'market_cap_desc',
+          per_page: 100,
+          page: 1,
+          sparkline: false,
+        },
+      });
+
+      res.json(response.data);
+    }
   } catch (error) {
-    console.error('Error fetching token stats:', error.message);
-    res.status(500).json({ error: 'Failed to fetch token stats' });
+    console.error(`Error fetching token stats from ${provider}:`, error.message);
+    res.status(500).json({ error: `Failed to fetch token stats from ${provider}` });
   }
 });
 
