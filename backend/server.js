@@ -15,24 +15,44 @@ app.use(rateLimit({
   max: 100 // Limit each IP to 100 requests per windowMs
 }));
 
-// Token Stats Endpoint
+// Simple in-memory throttle for API calls
+const apiThrottle = {
+  lastCall: 0,
+  minInterval: 1200, // ~50 calls/min (60s / 50 = 1.2s)
+  async wait() {
+    const now = Date.now();
+    const timeSinceLast = now - this.lastCall;
+    if (timeSinceLast < this.minInterval) {
+      await new Promise(resolve => setTimeout(resolve, this.minInterval - timeSinceLast));
+    }
+    this.lastCall = Date.now();
+  }
+};
+
+// Root Route
+app.get('/', (req, res) => {
+  res.json({ message: 'ApexOmni Backend Running', endpoints: ['/health', '/token-stats', '/logs'] });
+});
+
+// Token Stats Endpoint (Using CoinMarketCap)
 app.get('/token-stats', async (req, res) => {
   try {
-    const symbols = req.query.symbols ? req.query.symbols.split(',') : ['bitcoin', 'ethereum', 'binancecoin'];
-    const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${symbols.join(',')}&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
+    await apiThrottle.wait();
+    const symbols = req.query.symbols ? req.query.symbols.split(',') : ['BTC', 'ETH', 'BNB', 'FLOKI', 'SHIB', 'PEOPLE'];
+    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbols.join(',')}&convert=USD`;
     const response = await axios.get(url, {
-      headers: { 'x-cg-api-key': process.env.COINGECKO_API_KEY }
+      headers: { 'X-CMC_PRO_API_KEY': process.env.COINMARKETCAP_API_KEY }
     });
-    const formattedData = response.data.map(item => ({
-      id: item.id,
+    const formattedData = Object.values(response.data.data).map(item => ({
+      id: item.slug,
       name: item.name,
       symbol: item.symbol.toUpperCase(),
-      total_volume: item.total_volume,
-      current_price: item.current_price,
-      price_change_percentage_24h: item.price_change_percentage_24h,
-      market_cap: item.market_cap,
-      circulating_supply: item.circulating_supply,
-      source: 'CoinGecko'
+      total_volume: item.quote.USD.volume_24h || 0,
+      current_price: item.quote.USD.price || 0,
+      price_change_percentage_24h: item.quote.USD.percent_change_24h || 0,
+      market_cap: item.quote.USD.market_cap || 0,
+      circulating_supply: item.circulating_supply || 0,
+      source: 'CoinMarketCap'
     }));
     res.json(formattedData);
   } catch (error) {
@@ -41,16 +61,16 @@ app.get('/token-stats', async (req, res) => {
   }
 });
 
-// Logs Endpoint
+// Logs Endpoint (Mocked Temporarily)
 app.get('/logs', async (req, res) => {
   try {
-    const query = req.query.query || 'level=info';
-    const batch = parseInt(req.query.batch) || 50;
-    const url = `https://logs.betterstack.com/api/v1/query?${query}&batch=${batch}&source_ids=1303816`;
-    const response = await axios.get(url, {
-      headers: { Authorization: `Bearer ${process.env.BETTER_STACK_TOKEN}` }
-    });
-    res.json(response.data);
+    // Mock logs until Better Stack issue is resolved
+    const mockLogs = [
+      { dt: new Date().toISOString(), message: 'Mock log: Server started', level: 'info' },
+      { dt: new Date().toISOString(), message: 'Mock log: Processing tokens', level: 'info' },
+      { dt: new Date().toISOString(), message: 'Mock log: Rate limit warning', level: 'warn' }
+    ];
+    res.json({ logs: mockLogs });
   } catch (error) {
     console.error('[ERROR] Logs:', error.message);
     res.status(500).json({ error: 'Failed to fetch logs', details: error.message });
