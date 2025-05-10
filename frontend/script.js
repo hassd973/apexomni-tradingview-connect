@@ -1,13 +1,12 @@
 // === Ice King Dashboard Script ===
-// Author: Grok 3 @ xAI
-// Purpose: Display real and mock token data with TradingView chart
-// Features: Terminal-style UI, sticky chart toggle, real data with fallback
+// Author: ZEL
+// Purpose: Display token data and logs with TradingView chart
+// Features: Terminal-style UI, sticky chart toggle, backend integration
 
 // --- Constants and Configuration ---
-const BINANCE_API = 'https://api.binance.com/api/v3';
-const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
-const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/'; // Public proxy, use with caution
+const BACKEND_URL = 'https://your-backend-url.onrender.com'; // Replace with your Render URL
 const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
+const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
@@ -20,13 +19,13 @@ const mockTokens = [
 
 // --- Ice King Puns for Marquee ---
 const iceKingPuns = [
-  "I’m chilling like the Ice King! ❄️👑",
+  "Everything is gonna be alright! ❄️👑",
   "Penguins are my royal guards! 🐧🧊",
   "Time to freeze the market! ❄️😂",
   "Ice to meet you, traders! 🧊🐧",
   "I’m the coolest king around! 👑❄️",
   "Penguin power activate! 🐧🧊😂",
-  "Snow way I’m missing this trade! ❄️📈",
+  "Snow way I’m missing this trade! �4️📈",
   "Freeze your doubts, let’s trade! 🧊💸",
   "I’m skating through the market! ⛸️❄️",
   "Cold cash, hot trades! 🥶💰",
@@ -49,11 +48,11 @@ let selectedTokenLi = null;
 
 // --- Utility Functions ---
 
-// Fetch with retry and proxy
+// Fetch with retry
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(`${CORS_PROXY}${url}`);
+      const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       const data = await response.json();
       return data;
@@ -68,93 +67,70 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
 // Validate and sanitize token data
 function sanitizeTokenData(data) {
   if (!Array.isArray(data)) return [];
-  return data.map(token => {
-    return {
-      id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
-      name: String(token.name || 'Unknown').substring(0, 50),
-      symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
-      total_volume: Number(token.total_volume) || 0,
-      current_price: Number(token.current_price) || 0,
-      price_change_percentage_24h: Number(token.price_change_percentage_24h) || 0,
-      market_cap: Number(token.market_cap) || 0,
-      circulating_supply: Number(token.circulating_supply) || 0,
-      source: String(token.source || 'Unknown'),
-      score: Math.min(100, Math.max(0, (Number(token.price_change_percentage_24h) + 100) / 2)) || 0
-    };
-  }).filter(token => token.symbol && token.current_price > 0);
+  return data.map(token => ({
+    id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
+    name: String(token.name || 'Unknown').substring(0, 50),
+    symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
+    total_volume: Number(token.total_volume) || 0,
+    current_price: Number(token.current_price) || 0,
+    price_change_percentage_24h: Number(token.price_change_percentage_24h) || 0,
+    market_cap: Number(token.market_cap) || 0,
+    circulating_supply: Number(token.circulating_supply) || 0,
+    source: String(token.source || 'CoinGecko'),
+    score: Math.min(100, Math.max(0, (Number(token.price_change_percentage_24h) + 100) / 2)) || 0
+  })).filter(token => token.symbol && token.current_price > 0);
 }
 
-// Fetch all available pairs from Binance
-async function fetchBinancePairs() {
-  console.log('[DEBUG] Fetching Binance pairs');
-  try {
-    const response = await fetchWithRetry(`${BINANCE_API}/exchangeInfo`);
-    if (response && response.symbols) {
-      return response.symbols
-        .filter(s => s.quoteAsset === 'USDT' && s.status === 'TRADING')
-        .map(s => s.symbol)
-        .slice(0, 250); // Limit to 250 pairs to manage load
-    }
-    return [];
-  } catch (error) {
-    console.error('[ERROR] Failed to fetch Binance pairs:', error);
-    return [];
-  }
-}
-
-// Fetch token data for given pairs
-async function fetchTokenData(pairs) {
-  console.log('[DEBUG] Fetching token data for pairs:', pairs.length);
-  const batchSize = 10; // Respect rate limits
-  let allData = [];
-
-  for (let i = 0; i < pairs.length; i += batchSize) {
-    const batch = pairs.slice(i, i + batchSize);
-    const tickerUrl = `${BINANCE_API}/ticker/24hr?symbols=[${JSON.stringify(batch)}]`;
-    const data = await fetchWithRetry(tickerUrl);
-    if (data) {
-      allData = allData.concat(data.map(ticker => ({
-        id: ticker.symbol.replace('USDT', '').toLowerCase(),
-        name: ticker.symbol.replace('USDT', ''),
-        symbol: ticker.symbol.replace('USDT', ''),
-        total_volume: Number(ticker.volume) * Number(ticker.lastPrice),
-        current_price: Number(ticker.lastPrice),
-        price_change_percentage_24h: Number(ticker.priceChangePercent),
-        market_cap: 0, // Binance doesn't provide this directly, estimate later
-        circulating_supply: 0, // Requires external data
-        source: 'Binance'
-      })));
-    }
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Rate limit delay
-  }
-
-  // Fallback to CoinGecko if data is insufficient
-  if (allData.length < pairs.length / 2) {
-    console.warn('[WARN] Insufficient Binance data, falling back to CoinGecko');
-    const coinGeckoData = await fetchWithRetry(COINGECKO_API);
-    if (coinGeckoData) {
-      allData = allData.concat(sanitizeTokenData(coinGeckoData));
-    }
-  }
-
-  return allData;
+// Validate and sanitize log data
+function sanitizeLogData(logs) {
+  if (!Array.isArray(logs)) return [];
+  return logs.map(log => ({
+    timestamp: log.dt || new Date().toISOString(),
+    message: String(log.message || 'No message').substring(0, 200),
+    level: String(log.level || 'info').toLowerCase()
+  }));
 }
 
 // Cache data
-function cacheData(data) {
-  localStorage.setItem('tokenData', JSON.stringify(data));
-  localStorage.setItem('lastUpdate', Date.now());
+function cacheData(data, type = 'tokens') {
+  localStorage.setItem(`${type}Data`, JSON.stringify(data));
+  localStorage.setItem(`${type}LastUpdate`, Date.now());
 }
 
 // Load cached data
-function loadCachedData() {
-  const cached = localStorage.getItem('tokenData');
-  const lastUpdate = localStorage.getItem('lastUpdate');
+function loadCachedData(type = 'tokens') {
+  const cached = localStorage.getItem(`${type}Data`);
+  const lastUpdate = localStorage.getItem(`${type}LastUpdate`);
   if (cached && lastUpdate && (Date.now() - lastUpdate < 5 * 60 * 1000)) { // 5-minute cache
-    console.log('[DEBUG] Using cached data');
+    console.log(`[DEBUG] Using cached ${type} data`);
     return JSON.parse(cached);
   }
   return null;
+}
+
+// Fetch token data from backend
+async function fetchTokenData() {
+  console.log('[DEBUG] Fetching token data from backend');
+  const symbols = 'bitcoin,ethereum,binancecoin,floki-inu,shiba-inu,constitutiondao'; // Customize as needed
+  const url = `${BACKEND_URL}/token-stats?symbols=${symbols}`;
+  const data = await fetchWithRetry(url);
+  if (data) {
+    return sanitizeTokenData(data);
+  }
+  console.warn('[WARN] No backend token data, using mock data');
+  return mockTokens;
+}
+
+// Fetch logs from backend
+async function fetchLogs() {
+  console.log('[DEBUG] Fetching logs from backend');
+  const url = `${BACKEND_URL}/logs?query=level=info&batch=50`;
+  const data = await fetchWithRetry(url);
+  if (data && data.logs) {
+    return sanitizeLogData(data.logs);
+  }
+  console.warn('[WARN] No log data, returning empty array');
+  return [];
 }
 
 // Update tokens
@@ -170,21 +146,12 @@ async function updateTokens() {
   }
 
   loader.style.display = 'flex';
-  console.log('[DEBUG] DOM elements found, starting data fetch');
+  console.log('[DEBUG] DOM elements found, starting token fetch');
 
-  let tokens = loadCachedData();
+  let tokens = loadCachedData('tokens');
   if (!tokens) {
-    const pairs = await fetchBinancePairs();
-    if (pairs.length > 0) {
-      tokens = await fetchTokenData(pairs);
-      tokens = sanitizeTokenData(tokens);
-      cacheData(tokens);
-    }
-  }
-
-  if (!tokens || tokens.length === 0) {
-    console.warn('[WARN] No real data, using mock data');
-    tokens = mockTokens;
+    tokens = await fetchTokenData();
+    cacheData(tokens, 'tokens');
   }
 
   allTokens = tokens;
@@ -249,6 +216,45 @@ async function updateTokens() {
   console.log('[DEBUG] Tokens updated');
 }
 
+// Update logs
+async function updateLogs() {
+  console.log('[DEBUG] Entering updateLogs');
+  const logList = document.getElementById('log-list');
+  const loader = document.getElementById('loader-logs');
+
+  if (!logList || !loader) {
+    console.error('[ERROR] DOM elements missing: logList=', logList, 'loader=', loader);
+    return;
+  }
+
+  loader.style.display = 'flex';
+  console.log('[DEBUG] DOM elements found, starting log fetch');
+
+  let logs = loadCachedData('logs');
+  if (!logs) {
+    logs = await fetchLogs();
+    cacheData(logs, 'logs');
+  }
+
+  // Render log list
+  logList.innerHTML = '';
+  logs.forEach(log => {
+    console.log('[DEBUG] Rendering log:', log.message);
+    const li = document.createElement('li');
+    const levelColor = log.level === 'error' ? 'text-red-400 glow-red' : log.level === 'warn' ? 'text-yellow-400' : 'text-green-400 glow-green';
+    li.className = `p-2 rounded-md bg-gray-800/50 text-xs fade-in ${levelColor}`;
+    li.innerHTML = `
+      <div class="flex flex-col">
+        <span>[${new Date(log.timestamp).toLocaleString()}]</span>
+        <span>[${log.level.toUpperCase()}] ${log.message}</span>
+      </div>`;
+    logList.appendChild(li);
+  });
+
+  loader.style.display = 'none';
+  console.log('[DEBUG] Logs updated');
+}
+
 // Show price chart using TradingView
 function showPriceChart(token, timeframe, context = 'header') {
   console.log(`[DEBUG] Showing price chart for ${token.symbol} (Timeframe: ${timeframe}) in ${context} context`);
@@ -266,7 +272,10 @@ function showPriceChart(token, timeframe, context = 'header') {
   const symbolMap = {
     'FLOKI': 'BINANCE:FLOKIUSDT',
     'SHIB': 'BINANCE:SHIBUSDT',
-    'PEOPLE': 'BINANCE:PEOPLEUSDT'
+    'PEOPLE': 'BINANCE:PEOPLEUSDT',
+    'BTC': 'BINANCE:BTCUSDT',
+    'ETH': 'BINANCE:ETHUSDT',
+    'BNB': 'BINANCE:BNBUSDT'
   };
   const tvSymbol = symbolMap[token.symbol] || `BINANCE:${token.symbol}USDT`;
 
@@ -363,6 +372,8 @@ function initializeDashboard() {
   console.log('[DEBUG] Initializing Ice King Dashboard...');
   updateTokens();
   setInterval(updateTokens, TOKEN_REFRESH_INTERVAL);
+  updateLogs();
+  setInterval(updateLogs, LOG_REFRESH_INTERVAL);
   updateMarquee();
   setInterval(updateMarquee, 20000);
 
