@@ -6,7 +6,6 @@
   <title>🧊 ICE KING DASHBOARD 👑</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Include TradingView widget script -->
   <script src="https://s3.tradingview.com/tv.js"></script>
   <style>
     body {
@@ -117,11 +116,9 @@
     .marquee span { margin-right: 20px; font-size: 12px; color: #00ff00; }
     @media (min-width: 640px) { .marquee span { font-size: 14px; } }
     .marquee-container:hover .marquee { animation-play-state: running; }
-    #toggle-sticky-header, #toggle-sticky-modal, #toggle-data, .timeframe-btn { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; }
-    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, #toggle-data:hover, .timeframe-btn:hover { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
+    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; }
+    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .timeframe-btn.active { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
-    .compare-dropdown { background: #00ff00; color: #000; border: 1px solid #00ff00; }
-    .compare-dropdown:hover { background: #00cc00; }
     .loader { display: flex; justify-content: center; align-items: center; padding: 1rem; }
     .loader::after { content: ''; width: 24px; height: 24px; border: 4px solid #00ff00; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -147,7 +144,6 @@
       line-height: 1;
       margin-bottom: 0.5rem;
     }
-    /* TradingView Widget Styling */
     .tradingview-widget-container {
       border: 1px solid rgba(0, 255, 0, 0.5);
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
@@ -178,14 +174,10 @@
           </div>
           <div class="flex space-x-2">
             <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded text-xs sm:text-sm">[Lock Chart]</button>
-            <button id="toggle-data" class="text-black px-2 py-1 rounded text-xs sm:text-sm">[Toggle Mock Data: ON]</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div id="live-price-header" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
-          <select id="compare-token-header" class="compare-dropdown px-2 py-1 rounded text-xs sm:text-sm">
-            <option value="">[Compare with...]</option>
-          </select>
         </div>
         <div id="chart-container-header" class="chart-container mt-2"></div>
         <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
@@ -211,9 +203,6 @@
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div id="live-price-modal" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
-          <select id="compare-token-modal" class="compare-dropdown px-2 py-1 rounded text-xs sm:text-sm">
-            <option value="">[Compare with...]</option>
-          </select>
         </div>
         <div id="chart-container-modal" class="chart-container mt-2"></div>
         <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
@@ -233,10 +222,6 @@
         <ul id="top-pairs" class="text-xs sm:text-sm text-gray-500 flex flex-wrap gap-2"></ul>
       </div>
     </section>
-    <section class="gradient-bg p-3 rounded-lg shadow-md mt-4">
-      <h2 class="text-xl sm:text-2xl font-bold mb-2 glow-purple typewriter">> Alerts</h2>
-      <ul id="alert-list" class="space-y-2 max-h-[400px] overflow-y-auto text-sm sm:text-base"></ul>
-    </section>
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
     <p class="typewriter">> Powered by TradingView</p>
@@ -251,11 +236,7 @@
       star.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(star);
     }
-    document.addEventListener('DOMContentLoaded', () => {
-      const script = document.createElement('script');
-      script.src = 'script.js';
-      document.body.appendChild(script);
-    });
   </script>
+  <script src="script.js"></script>
 </body>
 </html>
