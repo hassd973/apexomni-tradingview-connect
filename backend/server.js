@@ -19,7 +19,7 @@ const logger = winston.createLogger({
   ]
 });
 
-// Initialize logs.json if it doesn't exist
+// Initialize logs.json
 async function initializeLogs() {
   try {
     await fs.access(path.join(__dirname, 'logs.json'));
@@ -42,42 +42,26 @@ initializeLogs().then(() => {
   logger.info(`Server started on port ${port}`);
 });
 
-const COINGECKO_API = 'https://api.coingecko.com/api/v3';
-const BINANCE_API = 'https://api.binance.com/api/v3';
+const CMC_API = 'https://pro-api.coinmarketcap.com';
+const CMC_API_KEY = process.env.CMC_API_KEY || 'bef090eb-323d-4ae8-86dd-266236262f19';
 
-async function fetchCoinGeckoData(symbols) {
+async function fetchCMCData(symbols) {
   try {
-    const ids = symbols.join(',');
-    const response = await axios.get(`${COINGECKO_API}/coins/markets`, {
+    const response = await axios.get(`${CMC_API}/v1/cryptocurrency/quotes/latest`, {
       params: {
-        vs_currency: 'usd',
-        ids,
-        order: 'market_cap_desc',
-        per_page: 100,
-        page: 1,
-        sparkline: false
+        symbol: symbols.join(','),
+        convert: 'USD'
       },
-      headers: { 'Accept': 'application/json' }
+      headers: {
+        'X-CMC_PRO_API_KEY': CMC_API_KEY,
+        'Accept': 'application/json'
+      }
     });
-    logger.info(`Fetched CoinGecko data for ${ids}`);
-    return response.data;
+    logger.info(`Fetched CMC data for ${symbols.join(',')}`);
+    return response.data.data;
   } catch (error) {
-    logger.error(`CoinGecko fetch failed: ${error.message}`);
-    return [];
-  }
-}
-
-async function fetchBinanceData(symbol) {
-  try {
-    const response = await axios.get(`${BINANCE_API}/ticker/24hr`, {
-      params: { symbol: `${symbol}USDT` },
-      headers: { 'Accept': 'application/json' }
-    });
-    logger.info(`Fetched Binance data for ${symbol}USDT`);
-    return response.data;
-  } catch (error) {
-    logger.error(`Binance fetch failed for ${symbol}: ${error.message}`);
-    return null;
+    logger.error(`CMC fetch failed: ${error.response?.data?.status?.error_message || error.message}`);
+    return {};
   }
 }
 
@@ -113,42 +97,42 @@ app.get('/health', (req, res) => {
 app.get('/tokens/enhanced', async (req, res) => {
   try {
     const symbols = req.query.symbols ? req.query.symbols.split(',') : [
-      'bitcoin', 'ethereum', 'binancecoin', 'floki-inu', 'shiba-inu', 'constitutiondao'
+      'BTC', 'ETH', 'BNB', 'FLOKI', 'SHIB', 'PEOPLE'
     ];
-    const coingeckoData = await fetchCoinGeckoData(symbols);
-    if (!coingeckoData.length) {
-      logger.warn('No CoinGecko data returned');
+    const cmcData = await fetchCMCData(symbols);
+    if (!Object.keys(cmcData).length) {
+      logger.warn('No CMC data returned');
       return res.status(500).json({ error: 'No token data available' });
     }
 
-    const enhancedData = await Promise.all(coingeckoData.map(async (coin) => {
-      const binanceData = await fetchBinanceData(coin.symbol.toUpperCase());
+    const enhancedData = Object.values(cmcData).map(coin => {
+      const quote = coin.quote.USD;
       const sentimentScore = Math.random() * 0.5 + 0.5;
       const sentimentMentions = Math.floor(Math.random() * 1000);
-      const liquidityRatio = (coin.total_volume / coin.market_cap) || 0;
+      const liquidityRatio = (quote.volume_24h / quote.market_cap) || 0;
       const score = (
-        (coin.price_change_percentage_24h || 0) * 0.4 +
+        (quote.percent_change_24h || 0) * 0.4 +
         (sentimentScore * 100) * 0.3 +
         (liquidityRatio * 100) * 0.2 +
-        (coin.total_volume / 1000000) * 0.1
+        (quote.volume_24h / 1000000) * 0.1
       ).toFixed(2);
 
       return {
-        id: coin.id,
+        id: coin.slug,
         name: coin.name,
         symbol: coin.symbol.toUpperCase(),
-        total_volume: coin.total_volume || 0,
-        current_price: coin.current_price || 0,
-        price_change_percentage_24h: coin.price_change_percentage_24h || 0,
-        market_cap: coin.market_cap || 0,
+        total_volume: quote.volume_24h || 0,
+        current_price: quote.price || 0,
+        price_change_percentage_24h: quote.percent_change_24h || 0,
+        market_cap: quote.market_cap || 0,
         circulating_supply: coin.circulating_supply || 0,
         liquidity_ratio: liquidityRatio,
         sentiment_score: sentimentScore,
         sentiment_mentions: sentimentMentions,
         score: parseFloat(score),
-        source: 'CoinGecko+Binance'
+        source: 'CoinMarketCap'
       };
-    }));
+    });
 
     logger.info(`Returning ${enhancedData.length} enhanced tokens`);
     res.json(enhancedData);
