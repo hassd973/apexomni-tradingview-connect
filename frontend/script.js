@@ -35,7 +35,7 @@ const iceKingPuns = [
 // Global State
 let usedPuns = [];
 let currentToken = null;
-let currentTimeframe = '1D';
+let currentTimeframe = '1d';
 let allTokens = [];
 let sortedTokens = [];
 let isChartLocked = false;
@@ -105,12 +105,12 @@ function sanitizeTokenData(data) {
     current_price: Number(token.current_price) || 0,
     price_change_percentage_24h: Number(token.price_change_percentage_24h) || 0,
     market_cap: Number(token.market_cap) || 0,
-    circulating_supply: Number(token.circulating_supply) || 0,
+    circulating_supp ly: Number(token.circulating_supply) || 0,
     liquidity_ratio: Number(token.liquidity_ratio) || 0,
     sentiment_score: Number(token.sentiment_score) || 0.5,
     sentiment_mentions: Number(token.sentiment_mentions) || 0,
     score: Number(token.score) || 0,
-    source: String(token.source || 'CoinMarketCap')
+    source: String(token.source || 'Moralis')
   })).filter(token => token.symbol && token.current_price > 0);
   console.log('[DEBUG] Sanitized token data:', sanitized);
   return sanitized;
@@ -123,7 +123,7 @@ function sanitizeLogData(logs) {
   }
   const sanitized = logs.map(log => ({
     timestamp: log.dt || new Date().toISOString(),
-    message: String(log.message || log.body || 'No message').substring(0, 200),
+    message: String(log.message || 'No message').substring(0, 200),
     level: String(log.level || 'info').toLowerCase()
   }));
   console.log('[DEBUG] Sanitized log data:', sanitized);
@@ -217,7 +217,7 @@ async function updateTokens() {
 
   tokenList.innerHTML = sortedTokens.map((token, index) => {
     const opacity = 30 + (index / sortedTokens.length) * 40;
-    const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
+    const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500 bg-opacity-${opacity}` : `bg-red-500 bg-opacity-${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
     const priceChange = token.price_change_percentage_24h;
@@ -244,7 +244,7 @@ async function updateTokens() {
 
   topPairs.innerHTML = sortedTokens.slice(0, 5).map((token, index) => {
     const opacity = 20 + (index / 4) * 30;
-    const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
+    const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500 bg-opacity-${opacity}` : `bg-red-500 bg-opacity-${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
     return `<li class="px-2 py-1 rounded ${bgColor} hover-glow ${glowClass} ${hoverClass}">[${token.symbol}/USDT]</li>`;
@@ -265,7 +265,7 @@ async function updateTokens() {
       const token = allTokens.find(t => t.symbol === item.dataset.token);
       if (token) {
         currentToken = token;
-        showPricePriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
+        showPriceChart(currentToken, currentTimeframe, isChartLocked ? 'modal' : 'header');
       }
     });
   });
@@ -442,7 +442,7 @@ function showPriceChart(token, timeframe, context = 'header') {
     '15min': '15',
     '1hr': '60',
     '4hr': '240',
-    '1D': 'D'
+    '1d': 'D'
   };
   const interval = timeframeMap[timeframe] || 'D';
   const containerId = `tradingview_${context}_${Date.now()}`;
@@ -537,7 +537,7 @@ function initializeDashboard() {
   setInterval(updateLogs, LOG_REFRESH_INTERVAL);
   initializeChatbot();
 
-  const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1D'];
+  const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
   ['header', 'modal'].forEach(context => {
     timeframes.forEach(tf => {
       const btn = document.getElementById(`${context}-timeframe-${tf}`);
