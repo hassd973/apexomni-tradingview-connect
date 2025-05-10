@@ -1,47 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const winston = require('winston');
-const TransportStream = require('winston-transport');
+const { Logtail } = require('@logtail/node');
+const { LogtailTransport } = require('@logtail/winston');
 const axios = require('axios');
 const app = express();
 const port = process.env.PORT || 3000;
 
-class BetterStackTransport extends TransportStream {
-  constructor(options = {}) {
-    super(options);
-    this.name = 'betterStack';
-    this.level = options.level || 'info';
-    this.token = 'WGdCT5KhHtg4kiGWAbdXRaSL'; // Hardcoded token for log ingestion
-    this.url = 'https://in.logs.betterstack.com';
-  }
+// Create a Logtail client
+const logtail = new Logtail('x5nvK7DNDURcpAHEBuCbHrza', {
+  endpoint: 'https://s1303816.eu-nbg-2.betterstackdata.com',
+});
 
-  log(info, callback) {
-    setImmediate(() => {
-      this.emit('logged', info);
-    });
-
-    const logEntry = {
-      dt: info.timestamp || new Date().toISOString(),
-      message: info.message,
-      level: info.level
-    };
-
-    axios.post(this.url, logEntry, {
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(() => {
-        callback();
-      })
-      .catch(error => {
-        console.error(`[ERROR] Failed to send log to BetterStack: ${error.message}`);
-        callback(error);
-      });
-  }
-}
-
+// Create a Winston logger with Logtail transport
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -50,21 +21,15 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
-    new BetterStackTransport({
-      level: 'info'
-    })
+    new LogtailTransport(logtail)
   ],
   exceptionHandlers: [
     new winston.transports.Console(),
-    new BetterStackTransport({
-      level: 'error'
-    })
+    new LogtailTransport(logtail)
   ],
   rejectionHandlers: [
     new winston.transports.Console(),
-    new BetterStackTransport({
-      level: 'error'
-    })
+    new LogtailTransport(logtail)
   ]
 });
 
