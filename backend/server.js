@@ -56,23 +56,26 @@ app.get('/token-stats', async (req, res) => {
     }));
     res.json(formattedData);
   } catch (error) {
-    console.error('[ERROR] Token Stats:', error.message);
+    console.error('[ERROR] Token Stats:', error.message, error.response?.data);
     res.status(500).json({ error: 'Failed to fetch token stats', details: error.message });
   }
 });
 
-// Logs Endpoint (Mocked Temporarily)
+// Logs Endpoint (Using Better Stack)
 app.get('/logs', async (req, res) => {
   try {
-    // Mock logs until Better Stack issue is resolved
-    const mockLogs = [
-      { dt: new Date().toISOString(), message: 'Mock log: Server started', level: 'info' },
-      { dt: new Date().toISOString(), message: 'Mock log: Processing tokens', level: 'info' },
-      { dt: new Date().toISOString(), message: 'Mock log: Rate limit warning', level: 'warn' }
-    ];
-    res.json({ logs: mockLogs });
+    await apiThrottle.wait();
+    const query = req.query.query || 'level=info';
+    const batch = parseInt(req.query.batch) || 50;
+    const sourceIds = '1303816'; // ice_king source ID
+    const url = `https://telemetry.betterstack.com/api/v2/query/live-tail?source_ids=${sourceIds}&query=${encodeURIComponent(query)}&batch=${batch}`;
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${process.env.BETTER_STACK_TOKEN}` }
+    });
+    console.log('[DEBUG] Better Stack response:', response.data);
+    res.json({ logs: response.data.events || [] });
   } catch (error) {
-    console.error('[ERROR] Logs:', error.message);
+    console.error('[ERROR] Logs:', error.message, error.response?.data);
     res.status(500).json({ error: 'Failed to fetch logs', details: error.message });
   }
 });
