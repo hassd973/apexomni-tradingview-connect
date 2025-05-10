@@ -1,99 +1,82 @@
 const express = require('express');
 const cors = require('cors');
 const winston = require('winston');
-const TransportStream = require('winston-transport');
 const axios = require('axios');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
-// Custom BetterStack Transport
-class BetterStackTransport extends TransportStream {
-  constructor(options = {}) {
-    super(options);
-    this.name = 'betterStack';
-    this.level = options.level || 'info';
-    this.token = options.token || process.env.BETTERSTACK_TOKEN;
-    this.url = 'https://in.logs.betterstack.com';
-  }
+// ⚠️ HARDCODED CONFIG (REMOVE BEFORE DEPLOYING!)
+const CONFIG = {
+  BETTERSTACK_TOKEN: "WGdCT5KhHtg4kiGWAbdXRaSL", // Telemetry token (exposed, rotate ASAP)
+  UPTIME_TOKEN: "kbwEU9ZqoTy2JHtpHda8dpKm",      // Uptime token (exposed, rotate ASAP)
+  SOURCE_ID: "1303816",                           // Your BetterStack source ID
+  ALLOWED_ORIGINS: [
+    "https://ice-king-dashboard-tm48.onrender.com",
+    "http://localhost:3000"
+  ]
+};
 
-  log(info, callback) {
-    setImmediate(() => {
-      this.emit('logged', info);
-    });
-
-    const logEntry = {
-      dt: info.timestamp || new Date().toISOString(),
-      message: info.message,
-      level: info.level
-    };
-
-    axios.post(this.url, logEntry, {
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(() => {
-        callback();
-      })
-      .catch(error => {
-        console.error(`[ERROR] Failed to send log to BetterStack: ${error.message}`);
-        callback(error);
-      });
-  }
-}
-
-// Configure Winston logger
+// Logger setup
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' }),
+    winston.format.timestamp(),
     winston.format.json()
   ),
-  transports: [
-    new winston.transports.Console(), // For local debugging
-    new BetterStackTransport({
-      level: 'info',
-      token: process.env.BETTERSTACK_TOKEN
-    })
-  ],
-  exceptionHandlers: [
-    new winston.transports.Console(),
-    new BetterStackTransport({
-      level: 'error',
-      token: process.env.BETTERSTACK_TOKEN
-    })
-  ],
-  rejectionHandlers: [
-    new winston.transports.Console(),
-    new BetterStackTransport({
-      level: 'error',
-      token: process.env.BETTERSTACK_TOKEN
-    })
-  ]
+  transports: [new winston.transports.Console()]
 });
 
 // Middleware
-app.use(cors({
-  origin: ['https://ice-king-dashboard-tm48.onrender.com', 'http://localhost:3000'],
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Accept']
-}));
+app.use(cors({ origin: CONFIG.ALLOWED_ORIGINS }));
 app.use(express.json());
 
-// Log server start
-logger.info(`Server started on port ${port}`);
+// Fetch logs from BetterStack
+app.get('/logs', async (req, res) => {
+  try {
+    const response = await axios.get(
+      'https://telemetry.betterstack.com/api/v2/query/live-tail',
+      {
+        params: {
+          source_ids: CONFIG.SOURCE_ID,
+          query: 'level=info'
+        },
+        headers: {
+          Authorization: `Bearer ${CONFIG.BETTERSTACK_TOKEN}`
+        }
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    logger.error("Failed to fetch logs:", error.message);
+    res.status(500).json({ error: "Log retrieval failed" });
+  }
+});
 
-// Routes
+// List all sources (for debugging)
+app.get('/sources', async (req, res) => {
+  try {
+    const response = await axios.get(
+      'https://telemetry.betterstack.com/api/v1/sources',
+      {
+        headers: {
+          Authorization: `Bearer ${CONFIG.BETTERSTACK_TOKEN}`
+        }
+      }
+    );
+    res.json(response.data);
+  } catch (error) {
+    logger.error("Failed to fetch sources:", error.message);
+    res.status(500).json({ error: "Failed to list sources" });
+  }
+});
+
+// Health check
 app.get('/health', (req, res) => {
-  logger.info('Health check requested');
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ status: "OK", time: new Date().toISOString() });
 });
 
 // Start server
 app.listen(port, () => {
-  logger.info(`Server listening on port ${port}`);
-}).on('error', (error) => {
-  logger.error(`Server startup failed: ${error.message}`);
-  process.exit(1);
+  logger.warn(`🚨 Server running with HARDCODED TOKENS (UNSAFE!)`);
+  logger.info(`Server started on http://localhost:${port}`);
 });
