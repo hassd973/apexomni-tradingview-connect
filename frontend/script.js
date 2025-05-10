@@ -1,8 +1,9 @@
 const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
+const BACKEND_IPS = ['44.226.145.213', '54.187.200.255', '34.213.214.55', '35.164.95.156', '44.230.95.183', '44.229.200.200'];
 const TOKEN_REFRESH_INTERVAL = 60000;
 const LOG_REFRESH_INTERVAL = 30000;
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
+const MAX_RETRIES = 5; // Increased retries
+const RETRY_DELAY = 2000; // Increased delay for stability
 
 // Mock Data (Fallback)
 const mockTokens = [
@@ -73,10 +74,11 @@ ws.onerror = (error) => {
 
 // Utility Functions
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
+  // Try primary backend URL first
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`[DEBUG] Fetching ${url} (Attempt ${i + 1}/${retries})`);
-      const response = await fetch(url);
+      const response = await fetch(url, { mode: 'cors', headers: { 'Accept': 'application/json' } });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
@@ -85,14 +87,40 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       console.log(`[DEBUG] Fetch successful for ${url}`);
       return data;
     } catch (error) {
-      console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
+      console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}: ${error.message}`);
       if (i === retries - 1) {
-        console.error(`[ERROR] All retries failed for ${url}`);
-        return null;
+        console.warn(`[WARN] Primary URL failed, trying IPs...`);
+        break;
       }
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
+
+  // Try each backend IP
+  for (const ip of BACKEND_IPS) {
+    const ipUrl = url.replace(BACKEND_URL, `http://${ip}`);
+    for (let i = 0; i < retries; i++) {
+      try {
+        console.log(`[DEBUG] Fetching ${ipUrl} via IP ${ip} (Attempt ${i + 1}/${retries})`);
+        const response = await fetch(ipUrl, { mode: 'cors', headers: { 'Accept': 'application/json' } });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+        const data = await response.json();
+        console.log(`[DEBUG] Fetch successful for ${ipUrl} via IP ${ip}`);
+        return data;
+      } catch (error) {
+        console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${ipUrl}: ${error.message}`);
+        if (i === retries - 1 && ip === BACKEND_IPS[BACKEND_IPS.length - 1]) {
+          console.error(`[ERROR] All retries and IPs failed for ${url}`);
+          return null;
+        }
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  return null;
 }
 
 function sanitizeTokenData(data) {
@@ -339,7 +367,7 @@ async function initializeChatbot() {
       try {
         const data = await fetchTopTokens();
         if (data.length === 0) {
-          await addMessage('No rising tokens found at the moment.');
+          await addMessage('No rising tokens found at the moment. The market might be chilling! ❄️');
         } else {
           const message = `
             Top tokens to trade today (based on score):<br>
@@ -357,10 +385,51 @@ async function initializeChatbot() {
           await addMessage(message);
         }
       } catch (error) {
-        await addMessage('Failed to fetch top tokens. Please try again.');
+        await addMessage('Failed to fetch top tokens. The market’s frozen! Try again later. ❄️');
+      }
+    } else if (query.includes('recent logs') || query.includes('system logs') || query.includes('system status')) {
+      try {
+        const logs = await fetchLogs();
+        if (logs.length === 0) {
+          await addMessage('No recent logs found. The system’s running smoothly! 🧊');
+        } else {
+          const message = `
+            Recent system logs (last 10):<br>
+            ${logs.slice(0, 10).map(log => `
+              - [${new Date(log.timestamp).toLocaleString()}] ${log.level.toUpperCase()}: ${log.message}
+            `).join('<br>')}
+          `;
+          await addMessage(message);
+        }
+      } catch (error) {
+        await addMessage('Failed to fetch logs. The system’s logs are iced over! Try again. ❄️');
+      }
+    } else if (query.includes('token trends') || query.includes('market trends')) {
+      try {
+        const tokens = await fetchTopTokens();
+        const logs = await fetchLogs();
+        if (tokens.length === 0 && logs.length === 0) {
+          await addMessage('No token or log data available. The market’s too cold! ❄️');
+        } else {
+          const tokenMessage = tokens.length > 0 ? `
+            Top market trends:<br>
+            ${tokens.slice(0, 3).map((token, i) => `
+              ${i + 1}. ${token.name} (${token.symbol}): ${formatPercentage(token.price_change_percentage_24h)} (Score: ${token.score.toFixed(1)})
+            `).join('<br>')}
+          ` : 'No token trends available.';
+          const logMessage = logs.length > 0 ? `
+            Recent system status:<br>
+            ${logs.slice(0, 3).map(log => `
+              - [${new Date(log.timestamp).toLocaleString()}] ${log.level.toUpperCase()}: ${log.message}
+            `).join('<br>')}
+          ` : 'No recent logs.';
+          await addMessage(`${tokenMessage}<br>${logMessage}`);
+        }
+      } catch (error) {
+        await addMessage('Failed to fetch trends or logs. The market’s frozen solid! Try again. ❄️');
       }
     } else {
-      await addMessage('I can recommend top tokens! Ask: "What are the top rising tokens to trade today?" or "Best tokens for day trading."');
+      await addMessage('I can help with:<br>- "Top rising tokens" or "Best tokens to trade today"<br>- "Recent system logs" or "System status"<br>- "Token trends" or "Market trends"');
     }
     loaderChat.style.display = 'none';
   }
@@ -374,7 +443,7 @@ async function initializeChatbot() {
   });
 
   loaderChat.style.display = 'none';
-  await addMessage('Ask me: "What are the top rising tokens to trade today?" or "Best tokens for day trading."');
+  await addMessage('Ask me about:<br>- Top rising tokens<br>- Recent system logs<br>- Token trends');
 }
 
 function showPriceChart(token, timeframe, context = 'header') {
