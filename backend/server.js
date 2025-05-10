@@ -11,7 +11,7 @@ class BetterStackTransport extends TransportStream {
     super(options);
     this.name = 'betterStack';
     this.level = options.level || 'info';
-    this.token = options.token || process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza'; // Hardcoded Logs API token
+    this.token = options.token || process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza';
     this.url = 'https://in.logs.betterstack.com';
   }
 
@@ -79,7 +79,7 @@ app.use(cors({
 app.use(express.json());
 
 const cmcApiKey = 'bef090eb-323d-4ae8-86dd-266236262f19';
-const cmcApiUrl = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
+const cmcApiUrl = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/category';
 
 async function fetchCryptoData() {
   try {
@@ -89,12 +89,11 @@ async function fetchCryptoData() {
         'Accept': 'application/json'
       },
       params: {
-        start: 1,
-        limit: 100,
+        id: '605e2ce9d41eae1066535f7c', // A16Z Portfolio category ID
         convert: 'USD'
       }
     });
-    return response.data.data;
+    return response.data.data; // Return the "data" object containing coins
   } catch (error) {
     console.error('Error fetching CoinMarketCap data:', error.message);
     throw error;
