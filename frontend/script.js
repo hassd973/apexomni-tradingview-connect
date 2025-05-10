@@ -1,5 +1,7 @@
 const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
-const BACKEND_IPS = ['44.226.145.213', '54.187.200.255', '34.213.214.55', '35.164.95.156', '44.230.95.183', '44.229.200.200'];
+const COINGECKO_URL = 'https://api.coingecko.com/api/v3/coins/markets';
+const BETTERSTACK_LOGS_URL = 'https://logs.betterstack.com/api/v1/query';
+const BETTERSTACK_TOKEN = 'abc123xyz789'; // Replace with your token or use environment variable
 const TOKEN_REFRESH_INTERVAL = 60000;
 const LOG_REFRESH_INTERVAL = 30000;
 const MAX_RETRIES = 5;
@@ -8,7 +10,7 @@ const RETRY_DELAY = 2000;
 // Mock Data
 const mockTokens = [
   { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', total_volume: 25000000, current_price: 60000, price_change_percentage_24h: 3.5, market_cap: 1200000000000, circulating_supply: 19000000, source: 'Mock', score: 85.2, liquidity_ratio: 0.021, sentiment_score: 0.75, sentiment_mentions: 5000 },
-  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', total_volume: 15000000, current_price: 3000, price_change_percentage_24h: -1.2, market_cap: 360000000000, circulating_supply: 120000000, source: 'Mock', score: 78.9, liquidity_ratio: 0.042, responsabilité_score: 0.65, sentiment_mentions: 3000 },
+  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', total_volume: 15000000, current_price: 3000, price_change_percentage_24h: -1.2, market_cap: 360000000000, circulating_supply: 120000000, source: 'Mock', score: 78.9, liquidity_ratio: 0.042, sentiment_score: 0.65, sentiment_mentions: 3000 },
   { id: 'binancecoin', name: 'BNB', symbol: 'BNB', total_volume: 8000000, current_price: 500, price_change_percentage_24h: 2.8, market_cap: 75000000000, circulating_supply: 150000000, source: 'Mock', score: 72.4, liquidity_ratio: 0.107, sentiment_score: 0.60, sentiment_mentions: 2000 },
   { id: 'floki-inu', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6, liquidity_ratio: 0.003, sentiment_score: 0.55, sentiment_mentions: 1000 },
   { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9, liquidity_ratio: 0.0004, sentiment_score: 0.50, sentiment_mentions: 800 },
@@ -46,12 +48,15 @@ let selectedTokenLi = null;
 let useMockData = false; // Default to real data
 
 // Utility Functions
-async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
-  // Try primary backend URL first
+async function fetchWithRetry(url, options = {}, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`[DEBUG] Fetching ${url} (Attempt ${i + 1}/${retries})`);
-      const response = await fetch(url, { mode: 'cors', headers: { 'Accept': 'application/json' } });
+      const response = await fetch(url, {
+        ...options,
+        mode: 'cors',
+        headers: { 'Accept': 'application/json', ...(options.headers || {}) }
+      });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
@@ -62,35 +67,10 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}: ${error.message}`);
       if (i === retries - 1) {
-        console.warn(`[WARN] Primary URL failed, trying IPs...`);
-        break;
+        console.error(`[ERROR] All retries failed for ${url}`);
+        return null;
       }
       await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-
-  // Try each backend IP
-  for (const ip of BACKEND_IPS) {
-    const ipUrl = url.replace(BACKEND_URL, `http://${ip}`);
-    for (let i = 0; i < retries; i++) {
-      try {
-        console.log(`[DEBUG] Fetching ${ipUrl} via IP ${ip} (Attempt ${i + 1}/${retries})`);
-        const response = await fetch(ipUrl, { mode: 'cors', headers: { 'Accept': 'application/json' } });
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        const data = await response.json();
-        console.log(`[DEBUG] Fetch successful for ${ipUrl} via IP ${ip}`);
-        return data;
-      } catch (error) {
-        console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${ipUrl}: ${error.message}`);
-        if (i === retries - 1 && ip === BACKEND_IPS[BACKEND_IPS.length - 1]) {
-          console.error(`[ERROR] All retries and IPs failed for ${url}`);
-          return null;
-        }
-        await new Promise(resolve => setTimeout(resolve, delay));
-      }
     }
   }
   return null;
@@ -101,21 +81,37 @@ function sanitizeTokenData(data) {
     console.error('[ERROR] Invalid token data format, expected array:', data);
     return [];
   }
-  const sanitized = data.map(token => ({
-    id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
-    name: String(token.name || 'Unknown').substring(0, 50),
-    symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
-    total_volume: Number(token.total_volume) || 0,
-    current_price: Number(token.current_price) || 0,
-    price_change_percentage_24h: Number(token.price_change_percentage_24h) || 0,
-    market_cap: Number(token.market_cap) || 0,
-    circulating_supply: Number(token.circulating_supply) || 0,
-    liquidity_ratio: Number(token.liquidity_ratio) || 0,
-    sentiment_score: Number(token.sentiment_score) || 0.5,
-    sentiment_mentions: Number(token.sentiment_mentions) || 0,
-    score: Number(token.score) || 0,
-    source: String(token.source || (useMockData ? 'Mock' : 'Moralis'))
-  })).filter(token => token.symbol && token.current_price > 0);
+  const sanitized = data.map(token => {
+    const price = Number(token.current_price) || 0;
+    const totalVolume = Number(token.total_volume) || 0;
+    const marketCap = Number(token.market_cap) || 0;
+    const sentimentScore = token.sentiment_score || Math.random() * 0.5 + 0.5;
+    const sentimentMentions = token.sentiment_mentions || Math.floor(Math.random() * 1000);
+    const liquidityRatio = totalVolume / marketCap || 0;
+    const priceChange24h = Number(token.price_change_percentage_24h) || 0;
+    const score = (
+      (priceChange24h || 0) * 0.4 +
+      (sentimentScore * 100) * 0.3 +
+      (liquidityRatio * 100) * 0.2 +
+      (totalVolume / 1000000) * 0.1
+    ).toFixed(2);
+
+    return {
+      id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
+      name: String(token.name || 'Unknown').substring(0, 50),
+      symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
+      total_volume: totalVolume,
+      current_price: price,
+      price_change_percentage_24h: priceChange24h,
+      market_cap: marketCap,
+      circulating_supply: Number(token.circulating_supply) || 0,
+      liquidity_ratio: liquidityRatio,
+      sentiment_score: sentimentScore,
+      sentiment_mentions: sentimentMentions,
+      score: parseFloat(score),
+      source: String(token.source || (useMockData ? 'Mock' : 'CoinGecko'))
+    };
+  }).filter(token => token.symbol && token.current_price > 0);
   console.log('[DEBUG] Sanitized token data:', sanitized);
   return sanitized;
 }
@@ -166,31 +162,41 @@ async function fetchTokenData() {
     return sanitizeTokenData(mockTokens);
   }
 
-  console.log('[DEBUG] Fetching enhanced token data from backend');
-  const symbols = 'BTC,ETH,BNB,FLOKI,SHIB,PEOPLE';
-  const url = `${BACKEND_URL}/tokens/enhanced?symbols=${symbols}`;
+  console.log('[DEBUG] Fetching token data from CoinGecko');
+  const url = `${COINGECKO_URL}?vs_currency=usd&ids=bitcoin,ethereum,binancecoin,floki-inu,shiba-inu,constitutiondao&order=market_cap_desc&per_page=250&page=1&sparkline=false`;
   const data = await fetchWithRetry(url);
   if (data && Array.isArray(data)) {
     console.log('[DEBUG] Received token data:', data);
-    return sanitizeTokenData(data);
+    return sanitizeTokenData(data.map(token => ({ ...token, source: 'CoinGecko' })));
   }
-  console.warn('[WARN] No valid backend token data, falling back to mock data');
-  alert('Using mock token data due to backend failure. Check console for errors.');
+  console.warn('[WARN] No valid CoinGecko token data, falling back to mock data');
+  alert('Using mock token data due to API failure. Check console for errors.');
   useMockData = true;
   document.getElementById('toggle-data-mode').textContent = '[Mock Data]';
   return sanitizeTokenData(mockTokens);
 }
 
 async function fetchLogs() {
-  console.log('[DEBUG] Fetching logs from backend');
-  const url = `${BACKEND_URL}/logs?query=level:info&batch=50`;
-  const data = await fetchWithRetry(url);
-  if (data && data.logs && Array.isArray(data.logs)) {
-    console.log('[DEBUG] Received log data:', data.logs);
-    return sanitizeLogData(data.logs);
+  console.log('[DEBUG] Fetching logs from BetterStack');
+  const url = BETTERSTACK_LOGS_URL;
+  const options = {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${BETTERSTACK_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      query: 'level:info',
+      limit: 50
+    })
+  };
+  const data = await fetchWithRetry(url, options);
+  if (data && data.data && Array.isArray(data.data)) {
+    console.log('[DEBUG] Received log data:', data.data);
+    return sanitizeLogData(data.data);
   }
   console.warn('[WARN] No valid log data, returning empty array');
-  alert('No logs available due to backend failure. Check console for errors.');
+  alert('No logs available due to BetterStack failure. Check console for errors.');
   return [];
 }
 
@@ -200,11 +206,11 @@ async function fetchTopTokens() {
     console.log('[DEBUG] Using mock top tokens');
     return mockTokens.sort((a, b) => b.score - a.score).slice(0, 5);
   }
-  const url = `${BACKEND_URL}/tokens/enhanced`;
+  const url = `${COINGECKO_URL}?vs_currency=usd&order=market_cap_desc&per_page=5&page=1&sparkline=false`;
   const data = await fetchWithRetry(url);
   if (data && Array.isArray(data)) {
     console.log('[DEBUG] Received top tokens:', data);
-    return data.sort((a, b) => b.score - a.score).slice(0, 5);
+    return sanitizeTokenData(data.map(token => ({ ...token, source: 'CoinGecko' })));
   }
   console.warn('[WARN] No valid top tokens data, returning mock data');
   return mockTokens.sort((a, b) => b.score - a.score).slice(0, 5);
