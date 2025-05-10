@@ -42,27 +42,42 @@ initializeLogs().then(() => {
   logger.info(`Server started on port ${port}`);
 });
 
-const CMC_API = 'https://pro-api.coinmarketcap.com';
-const CMC_API_KEY = process.env.CMC_API_KEY || 'bef090eb-323d-4ae8-86dd-266236262f19';
+const MORALIS_API = 'https://deep-index.moralis.io/api/v2';
+const MORALIS_API_KEY = process.env.MORALIS_API_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjQ5YWIwMzg4LWYyYzEtNDJmYy1hZjlhLTE4ZTRjYmNhYTkzNSIsIm9yZ0lkIjoiNDQ2MzgwIiwidXNlcklkIjoiNDU5MjYzIiwidHlwZUlkIjoiYmVjNGZiYjctNzdjZi00N2MwLTg2NmUtYWYzMzZmMTAxNmFiIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3NDY5MDYxODksImV4cCI6NDkwMjY2NjE4OX0.f4Wb6eaKesaWXJFLM7-pyYusGbAbOpc9MZEQdjWIL_4';
 
-async function fetchCMCData(symbols) {
+async function fetchMoralisData(symbols) {
   try {
-    const response = await axios.get(`${CMC_API}/v1/cryptocurrency/quotes/latest`, {
+    const chain = 'eth'; // Default to Ethereum; adjust if needed (e.g., 'bsc' for Binance Smart Chain)
+    const addresses = await getTokenAddresses(symbols);
+    const response = await axios.get(`${MORALIS_API}/erc20/price`, {
       params: {
-        symbol: symbols.join(','),
-        convert: 'USD'
+        chain,
+        token_addresses: addresses.join(',')
       },
       headers: {
-        'X-CMC_PRO_API_KEY': CMC_API_KEY,
+        'X-API-Key': MORALIS_API_KEY,
         'Accept': 'application/json'
       }
     });
-    logger.info(`Fetched CMC data for ${symbols.join(',')}`);
-    return response.data.data;
+    logger.info(`Fetched Moralis data for ${symbols.join(',')}`);
+    return response.data;
   } catch (error) {
-    logger.error(`CMC fetch failed: ${error.response?.data?.status?.error_message || error.message}`);
-    return {};
+    logger.error(`Moralis fetch failed: ${error.response?.data?.message || error.message}`);
+    return [];
   }
+}
+
+// Map symbols to Moralis-compatible token addresses (example mappings)
+async function getTokenAddresses(symbols) {
+  const tokenAddressMap = {
+    'BTC': '0x2260fac5e5542a773aa44fbcfedf7c193bc2c599', // WBTC on Ethereum
+    'ETH': '0x0000000000000000000000000000000000000000', // Native ETH (not a token, but placeholder)
+    'BNB': '0xb8c77482e45f1f44de1745f52c74426c631bdd52', // BNB on Ethereum
+    'FLOKI': '0xcf0c122c6b73ff809c693db761e7baebe62b6a2e', // FLOKI on Ethereum
+    'SHIB': '0x95ad61b0a150d79219dcf64e1e6cc01f0b64c4ce', // SHIB on Ethereum
+    'PEOPLE': '0x2c6d39f1b3c5d6f7d3e71b7b2f5f5f8a6b3b5f9', // Placeholder (update if available)
+  };
+  return symbols.map(symbol => tokenAddressMap[symbol.toUpperCase()] || '').filter(address => address);
 }
 
 async function fetchLogs(query = 'level:info', batch = 50) {
@@ -99,38 +114,42 @@ app.get('/tokens/enhanced', async (req, res) => {
     const symbols = req.query.symbols ? req.query.symbols.split(',') : [
       'BTC', 'ETH', 'BNB', 'FLOKI', 'SHIB', 'PEOPLE'
     ];
-    const cmcData = await fetchCMCData(symbols);
-    if (!Object.keys(cmcData).length) {
-      logger.warn('No CMC data returned');
+    const moralisData = await fetchMoralisData(symbols);
+    if (!moralisData.length) {
+      logger.warn('No Moralis data returned');
       return res.status(500).json({ error: 'No token data available' });
     }
 
-    const enhancedData = Object.values(cmcData).map(coin => {
-      const quote = coin.quote.USD;
+    const enhancedData = moralisData.map(token => {
+      const price = parseFloat(token.usdPrice) || 0;
+      // Mock volume and market cap (Moralis price endpoint doesn't provide these)
+      const totalVolume = Math.random() * 10000000; // Placeholder; replace with Moralis market data if available
+      const marketCap = price * (Math.random() * 1000000000); // Placeholder
       const sentimentScore = Math.random() * 0.5 + 0.5;
       const sentimentMentions = Math.floor(Math.random() * 1000);
-      const liquidityRatio = (quote.volume_24h / quote.market_cap) || 0;
+      const liquidityRatio = (totalVolume / marketCap) || 0;
+      const priceChange24h = parseFloat(token.priceChange24h) || (Math.random() * 10 - 5); // Use Moralis if available, else mock
       const score = (
-        (quote.percent_change_24h || 0) * 0.4 +
+        (priceChange24h || 0) * 0.4 +
         (sentimentScore * 100) * 0.3 +
         (liquidityRatio * 100) * 0.2 +
-        (quote.volume_24h / 1000000) * 0.1
+        (totalVolume / 1000000) * 0.1
       ).toFixed(2);
 
       return {
-        id: coin.slug,
-        name: coin.name,
-        symbol: coin.symbol.toUpperCase(),
-        total_volume: quote.volume_24h || 0,
-        current_price: quote.price || 0,
-        price_change_percentage_24h: quote.percent_change_24h || 0,
-        market_cap: quote.market_cap || 0,
-        circulating_supply: coin.circulating_supply || 0,
+        id: token.tokenAddress.toLowerCase(),
+        name: token.tokenName || 'Unknown',
+        symbol: token.tokenSymbol.toUpperCase(),
+        total_volume: totalVolume,
+        current_price: price,
+        price_change_percentage_24h: priceChange24h,
+        market_cap: marketCap,
+        circulating_supply: Math.random() * 1000000000, // Placeholder
         liquidity_ratio: liquidityRatio,
         sentiment_score: sentimentScore,
         sentiment_mentions: sentimentMentions,
         score: parseFloat(score),
-        source: 'CoinMarketCap'
+        source: 'Moralis'
       };
     });
 
