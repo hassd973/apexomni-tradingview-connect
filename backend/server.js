@@ -73,10 +73,10 @@ app.get('/token-stats', async (req, res) => {
 app.get('/logs', async (req, res) => {
   try {
     await apiThrottle.wait();
-    const query = req.query.query || 'level=info';
+    const query = req.query.query || 'level:info';
     const batch = parseInt(req.query.batch) || 50;
     const sourceIds = '1303816'; // ice_king source ID
-    const url = `https://telemetry.betterstack.com/api/v2/query/live-tail?source_ids=${sourceIds}&query=${encodeURIComponent(query)}&batch=${batch}`;
+    const url = `https://logs.betterstack.com/api/v1/query?source_ids=${sourceIds}&query=${encodeURIComponent(query)}&batch=${batch}`;
     const response = await axios.get(url, {
       headers: { Authorization: `Bearer ${process.env.BETTER_STACK_TOKEN}` }
     });
