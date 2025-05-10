@@ -1,6 +1,6 @@
 // === Ice King Dashboard Script ===
 // Author: Grok 3 @ xAI
-// Purpose: Display token data and chart with mock data toggle
+// Purpose: Display token data with TradingView chart
 // Features: Terminal-style UI, sticky chart toggle, mock/live data toggle
 
 // --- Constants and Configuration ---
@@ -9,17 +9,10 @@ const TOKEN_REFRESH_INTERVAL = 60000;
 
 // --- Mock Data ---
 const mockTokens = [
-  { id: 'floki', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
+  { id: 'floki-inu', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
   { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 },
   { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', score: 70.6 }
 ];
-
-const mockChartData = {
-  prices: Array.from({ length: 7 }, (_, i) => [
-    Date.now() - (6 - i) * 24 * 60 * 60 * 1000,
-    0.00015 + (Math.random() - 0.5) * 0.00002
-  ])
-};
 
 // --- Ice King Puns for Marquee ---
 const iceKingPuns = [
@@ -43,9 +36,8 @@ const iceKingPuns = [
 
 // --- Global State ---
 let usedPuns = [];
-let priceChart = null;
 let currentToken = null;
-let currentTimeframe = 1; // Default to 1 day
+let currentTimeframe = '1D'; // Default to 1 day
 let allTokens = [];
 let sortedTokens = [];
 let isChartLocked = false;
@@ -59,9 +51,10 @@ async function fetchWithRetry(url, retries = 3, delay = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
       const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
       return await response.json();
     } catch (error) {
+      console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
       if (i === retries - 1) return null;
       await new Promise(resolve => setTimeout(resolve, delay));
     }
@@ -78,10 +71,16 @@ async function updateTokens() {
     document.getElementById('compare-token-header'),
     document.getElementById('compare-token-modal')
   ];
-  let tokens = [];
 
+  if (!tokenList || !loader || !topPairs) {
+    console.error('[ERROR] DOM elements missing: tokenList=', tokenList, 'loader=', loader, 'topPairs=', topPairs);
+    return;
+  }
+
+  let tokens = [];
   if (useMockData) {
     tokens = mockTokens;
+    console.log('[INFO] Using mock data:', tokens);
   } else {
     const data = await fetchWithRetry(COINGECKO_API);
     if (data) {
@@ -97,6 +96,7 @@ async function updateTokens() {
         source: 'CoinGecko',
         score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
       }));
+      console.log('[INFO] Fetched real data:', tokens);
     }
     if (tokens.length === 0) {
       console.warn('[WARN] No real data fetched, falling back to mock data');
@@ -178,55 +178,77 @@ async function updateTokens() {
   console.log('[INFO] Tokens updated');
 }
 
-// Show price chart
-function showPriceChart(token, days, context = 'header') {
-  console.log(`[INFO] Showing price chart for ${token.symbol} (${days} days) in ${context} context`);
-  const chartCanvas = context === 'header' ? document.getElementById('chart-canvas-header') : document.getElementById('chart-canvas-modal');
+// Show price chart using TradingView
+function showPriceChart(token, timeframe, context = 'header') {
+  console.log(`[INFO] Showing price chart for ${token.symbol} (Timeframe: ${timeframe}) in ${context} context`);
+  const chartContainer = context === 'header' ? document.getElementById('chart-container-header') : document.getElementById('chart-container-modal');
   const chartTitle = context === 'header' ? document.getElementById('chart-title-header') : document.getElementById('chart-title-modal');
   const livePriceElement = context === 'header' ? document.getElementById('live-price-header') : document.getElementById('live-price-modal');
 
-  if (!chartCanvas || !chartTitle || !livePriceElement) {
+  if (!chartContainer || !chartTitle || !livePriceElement) {
     console.error(`[ERROR] Missing DOM element for ${context} chart`);
     return;
   }
 
-  if (priceChart) {
-    priceChart.destroy();
-    console.log('[INFO] Destroyed previous chart instance');
-  }
+  // Clear previous chart
+  chartContainer.innerHTML = '';
 
-  // Use mock data for chart
-  const baseData = mockChartData.prices.map(([timestamp, price]) => [timestamp, price * (days + 1)]);
-  const labels = baseData.map(item => new Date(item[0]).toLocaleString());
-  const prices = baseData.map(item => item[1]);
+  // Map token symbol to TradingView-compatible symbol
+  const symbolMap = {
+    'FLOKI': 'BINANCE:FLOKIUSDT',
+    'SHIB': 'BINANCE:SHIBUSDT',
+    'PEOPLE': 'BINANCE:PEOPLEUSDT'
+  };
+  const tvSymbol = symbolMap[token.symbol] || 'BINANCE:BTCUSDT'; // Fallback to BTC if not found
 
-  priceChart = new Chart(chartCanvas, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: `${token.symbol} Price`,
-        data: prices,
-        borderColor: '#00ff00',
-        backgroundColor: 'rgba(0, 255, 0, 0.2)',
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: { display: true, title: { display: true, text: 'Time', color: '#00ff00' }, ticks: { color: '#00ff00' } },
-        y: { display: true, title: { display: true, text: 'Price (USD)', color: '#00ff00' }, ticks: { color: '#00ff00' } }
-      },
-      plugins: { legend: { labels: { color: '#00ff00' } } }
+  // Map timeframe to TradingView intervals
+  const timeframeMap = {
+    '1min': '1',
+    '5min': '5',
+    '15min': '15',
+    '1hr': '60',
+    '4hr': '240',
+    '1D': 'D'
+  };
+  const interval = timeframeMap[timeframe] || 'D';
+
+  // Create a unique container ID
+  const containerId = `tradingview_${context}_${Date.now()}`;
+  chartContainer.innerHTML = `<div id="${containerId}" style="height: 100%; width: 100%;"></div>`;
+
+  // Initialize TradingView widget
+  new TradingView.widget({
+    "container_id": containerId,
+    "width": "100%",
+    "height": "100%",
+    "symbol": tvSymbol,
+    "interval": interval,
+    "timezone": "Etc/UTC",
+    "theme": "dark",
+    "style": "1", // Candlestick chart
+    "locale": "en",
+    "toolbar_bg": "#0a0f14",
+    "enable_publishing": false,
+    "allow_symbol_change": false,
+    "hide_top_toolbar": true,
+    "hide_side_toolbar": true,
+    "backgroundColor": "#0a0f14",
+    "gridLineColor": "rgba(0, 255, 0, 0.1)",
+    "overrides": {
+      "paneProperties.background": "#0a0f14",
+      "paneProperties.gridProperties.color": "rgba(0, 255, 0, 0.1)",
+      "mainSeriesProperties.candleStyle.upColor": "#00ff00",
+      "mainSeriesProperties.candleStyle.downColor": "#ff0000",
+      "mainSeriesProperties.candleStyle.borderUpColor": "#00ff00",
+      "mainSeriesProperties.candleStyle.borderDownColor": "#ff0000",
+      "mainSeriesProperties.candleStyle.wickUpColor": "#00ff00",
+      "mainSeriesProperties.candleStyle.wickDownColor": "#ff0000"
     }
   });
 
   chartTitle.textContent = `> ${token.symbol} Price Chart`;
   livePriceElement.textContent = `> Live Price: $${token.current_price.toLocaleString()}`;
-  console.log('[INFO] Price chart rendered');
+  console.log('[INFO] TradingView chart rendered');
 }
 
 // Update marquee
@@ -272,8 +294,7 @@ function initializeDashboard() {
   setInterval(updateMarquee, 20000);
 
   // Setup timeframe buttons
-  const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
-  const timeframeValues = { '1min': 1/1440, '5min': 5/1440, '15min': 15/1440, '1hr': 1/24, '4hr': 4/24, '1d': 1 };
+  const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1D'];
   ['header', 'modal'].forEach(context => {
     timeframes.forEach(tf => {
       const btn = document.getElementById(`${context}-timeframe-${tf}`);
@@ -281,9 +302,9 @@ function initializeDashboard() {
         btn.addEventListener('click', () => {
           timeframes.forEach(t => document.getElementById(`${context}-timeframe-${t}`).classList.remove('active'));
           btn.classList.add('active');
-          currentTimeframe = timeframeValues[tf];
+          currentTimeframe = tf;
           if (currentToken) showPriceChart(currentToken, currentTimeframe, context);
-          console.log(`[INFO] Timeframe changed to ${tf} (${currentTimeframe} days) in ${context}`);
+          console.log(`[INFO] Timeframe changed to ${tf} in ${context}`);
         });
       }
     });
