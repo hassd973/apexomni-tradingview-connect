@@ -1,23 +1,17 @@
-// === Ice King Dashboard Script ===
-// Author: ZEL
-// Purpose: Display token data and logs with TradingView chart
-// Features: Terminal-style UI, sticky chart toggle, backend integration
-
-// --- Constants and Configuration ---
-const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com'; // Replace with your actual Render backend URL
+const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
 const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
 const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
-// --- Mock Data (Fallback) ---
+// Mock Data (Fallback)
 const mockTokens = [
   { id: 'floki-inu', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
   { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 },
   { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', score: 70.6 }
 ];
 
-// --- Ice King Puns for Marquee ---
+// Ice King Puns for Marquee
 const iceKingPuns = [
   "I’m chilling like the Ice King! ❄️👑",
   "Penguins are my royal guards! 🐧🧊",
@@ -37,18 +31,16 @@ const iceKingPuns = [
   "Cool trades, warm wins! ❄️🔥"
 ];
 
-// --- Global State ---
+// Global State
 let usedPuns = [];
 let currentToken = null;
-let currentTimeframe = '1D'; // Default to 1 day
+let currentTimeframe = '1D';
 let allTokens = [];
 let sortedTokens = [];
 let isChartLocked = false;
 let selectedTokenLi = null;
 
-// --- Utility Functions ---
-
-// Fetch with retry
+// Utility Functions
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -72,7 +64,6 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   }
 }
 
-// Validate and sanitize token data
 function sanitizeTokenData(data) {
   if (!Array.isArray(data)) {
     console.error('[ERROR] Invalid token data format, expected array:', data);
@@ -94,7 +85,6 @@ function sanitizeTokenData(data) {
   return sanitized;
 }
 
-// Validate and sanitize log data
 function sanitizeLogData(logs) {
   if (!Array.isArray(logs)) {
     console.error('[ERROR] Invalid log data format, expected array:', logs);
@@ -109,14 +99,12 @@ function sanitizeLogData(logs) {
   return sanitized;
 }
 
-// Cache data
 function cacheData(data, type = 'tokens') {
   localStorage.setItem(`${type}Data`, JSON.stringify(data));
   localStorage.setItem(`${type}LastUpdate`, Date.now());
   console.log(`[DEBUG] Cached ${type} data`);
 }
 
-// Load cached data
 function loadCachedData(type = 'tokens') {
   const cached = localStorage.getItem(`${type}Data`);
   const lastUpdate = localStorage.getItem(`${type}LastUpdate`);
@@ -128,12 +116,18 @@ function loadCachedData(type = 'tokens') {
   return null;
 }
 
-// Fetch token data from backend
+function formatPrice(value) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value);
+}
+
+function formatPercentage(value) {
+  return `${value.toFixed(2)}%`;
+}
+
 async function fetchTokenData() {
   console.log('[DEBUG] Fetching token data from backend');
   const symbols = 'BTC,ETH,BNB,FLOKI,SHIB,PEOPLE';
   const url = `${BACKEND_URL}/token-stats?symbols=${symbols}`;
-  console.log('[DEBUG] Token fetch URL:', url);
   const data = await fetchWithRetry(url);
   if (data && Array.isArray(data)) {
     console.log('[DEBUG] Received token data:', data);
@@ -144,11 +138,9 @@ async function fetchTokenData() {
   return mockTokens;
 }
 
-// Fetch logs from backend
 async function fetchLogs() {
   console.log('[DEBUG] Fetching logs from backend');
-  const url = `${BACKEND_URL}/logs?query=level=info&batch=50`;
-  console.log('[DEBUG] Log fetch URL:', url);
+  const url = `${BACKEND_URL}/logs?query=level:info&batch=50`;
   const data = await fetchWithRetry(url);
   if (data && data.logs && Array.isArray(data.logs)) {
     console.log('[DEBUG] Received log data:', data.logs);
@@ -159,7 +151,18 @@ async function fetchLogs() {
   return [];
 }
 
-// Update tokens
+async function fetchTopTokens() {
+  console.log('[DEBUG] Fetching top tokens from backend');
+  const url = `${BACKEND_URL}/top-tokens`;
+  const data = await fetchWithRetry(url);
+  if (data && Array.isArray(data)) {
+    console.log('[DEBUG] Received top tokens:', data);
+    return data;
+  }
+  console.warn('[WARN] No valid top tokens data, returning empty array');
+  return [];
+}
+
 async function updateTokens() {
   console.log('[DEBUG] Entering updateTokens');
   const tokenList = document.getElementById('token-list');
@@ -172,8 +175,6 @@ async function updateTokens() {
   }
 
   loader.style.display = 'flex';
-  console.log('[DEBUG] DOM elements found, starting token fetch');
-
   let tokens = loadCachedData('tokens');
   if (!tokens) {
     tokens = await fetchTokenData();
@@ -183,66 +184,64 @@ async function updateTokens() {
   allTokens = tokens;
   sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 
-  // Render token list
-  tokenList.innerHTML = '';
-  sortedTokens.forEach((token, index) => {
-    console.log('[DEBUG] Rendering token:', token.symbol);
+  tokenList.innerHTML = sortedTokens.map((token, index) => {
     const opacity = 30 + (index / sortedTokens.length) * 40;
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
-    const li = document.createElement('li');
-    li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} ${hoverClass} z-20`;
-    li.setAttribute('data-tooltip', '[Click to toggle chart]');
     const priceChange = token.price_change_percentage_24h;
     const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
     const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
-    li.innerHTML = `
-      <div class="flex flex-col space-y-1">
-        <div class="flex items-center justify-between">
-          <span class="font-medium truncate">[🍀 ${token.name} (${token.symbol}) Score:${token.score.toFixed(1)}]</span>
-          <span class="text-xs">[Vol: $${token.total_volume.toLocaleString()}]</span>
+    return `
+      <li class="gradient-bg p-2 rounded cursor-pointer hover-glow ${bgColor} ${glowClass} ${hoverClass} ${token.symbol === (currentToken?.symbol || '') ? 'selected-token' : ''}" data-token="${token.symbol}" data-tooltip="Click to view chart">
+        <div class="flex flex-col space-y-1">
+          <div class="flex justify-between">
+            <span class="font-medium truncate">[🍀 ${token.name} (${token.symbol}) Score:${token.score.toFixed(1)}]</span>
+            <span class="text-xs">[Vol: ${formatPrice(token.total_volume)}]</span>
+          </div>
+          <div class="text-xs sm:text-sm text-gray-500">
+            <p>Price: ${formatPrice(token.current_price)}</p>
+            <p class="${priceChangeColor}">24h: ${formatPercentage(priceChange)} ${priceChangeEmoji}</p>
+            <p>Market Cap: ${formatPrice(token.market_cap)}</p>
+            <p>Supply: ${token.circulating_supply.toLocaleString()} ${token.symbol}</p>
+            <p>Source: ${token.source}</p>
+          </div>
         </div>
-        <div class="text-xs">
-          <p>[Price: $${token.current_price.toLocaleString()}]</p>
-          <p class="${priceChangeColor}">[24h: ${priceChange.toFixed(2)}% ${priceChangeEmoji}]</p>
-          <p>[Market Cap: $${token.market_cap.toLocaleString()}]</p>
-          <p>[Circulating Supply: ${token.circulating_supply.toLocaleString()} ${token.symbol}]</p>
-          <p>[Source: ${token.source}]</p>
-        </div>
-      </div>`;
-    li.addEventListener('click', () => {
-      if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
-      li.classList.add('selected-token');
-      selectedTokenLi = li;
-      currentToken = token;
-      showPriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
-      console.log(`[DEBUG] Selected token: ${token.symbol}`);
-    });
-    tokenList.appendChild(li);
-  });
+      </li>`;
+  }).join('');
 
-  // Render top pairs
   topPairs.innerHTML = sortedTokens.slice(0, 5).map((token, index) => {
     const opacity = 20 + (index / 4) * 30;
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
-    return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition ${glowClass} ${hoverClass}">[${token.symbol}/USDT]</li>`;
+    return `<li class="px-2 py-1 rounded ${bgColor} hover-glow ${glowClass} ${hoverClass}">[${token.symbol}/USDT]</li>`;
   }).join('');
 
-  // Default token and chart
   if (!currentToken && allTokens.length > 0) {
     currentToken = allTokens[0];
     showPriceChart(currentToken, currentTimeframe, 'header');
-    console.log(`[DEBUG] Defaulted to token: ${currentToken.symbol}`);
+    selectedTokenLi = tokenList.querySelector(`[data-token="${currentToken.symbol}"]`);
+    if (selectedTokenLi) selectedTokenLi.classList.add('selected-token');
   }
 
+  document.querySelectorAll('#token-list li').forEach(item => {
+    item.addEventListener('click', () => {
+      if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
+      item.classList.add('selected-token');
+      selectedTokenLi = item;
+      const token = allTokens.find(t => t.symbol === item.dataset.token);
+      if (token) {
+        currentToken = token;
+        showPriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
+      }
+    });
+  });
+
   loader.style.display = 'none';
-  console.log('[DEBUG] Tokens updated');
+  updateMarquee();
 }
 
-// Update logs
 async function updateLogs() {
   console.log('[DEBUG] Entering updateLogs');
   const logList = document.getElementById('log-list');
@@ -254,39 +253,97 @@ async function updateLogs() {
   }
 
   loader.style.display = 'flex';
-  console.log('[DEBUG] DOM elements found, starting log fetch');
-
   let logs = loadCachedData('logs');
   if (!logs) {
     logs = await fetchLogs();
     cacheData(logs, 'logs');
   }
 
-  // Render log list
-  logList.innerHTML = '';
-  logs.forEach(log => {
-    console.log('[DEBUG] Rendering log:', log.message);
-    const li = document.createElement('li');
+  logList.innerHTML = logs.map(log => {
     const levelColor = log.level === 'error' ? 'text-red-400 glow-red' : log.level === 'warn' ? 'text-yellow-400' : 'text-green-400 glow-green';
-    li.className = `p-2 rounded-md bg-gray-800/50 text-xs fade-in ${levelColor}`;
-    li.innerHTML = `
-      <div class="flex flex-col">
-        <span>[${new Date(log.timestamp).toLocaleString()}]</span>
-        <span>[${log.level.toUpperCase()}] ${log.message}</span>
-      </div>`;
-    logList.appendChild(li);
-  });
+    return `
+      <li class="gradient-bg p-2 rounded ${levelColor}">
+        <div class="text-xs sm:text-sm text-gray-500">[${new Date(log.timestamp).toLocaleString()}] ${log.level.toUpperCase()}</div>
+        <div class="text-sm sm:text-base">${log.message}</div>
+      </li>`;
+  }).join('');
 
   loader.style.display = 'none';
-  console.log('[DEBUG] Logs updated');
 }
 
-// Show price chart using TradingView
+async function initializeChatbot() {
+  const chatList = document.getElementById('chat-list');
+  const chatInput = document.getElementById('chat-input');
+  const chatSend = document.getElementById('chat-send');
+  const loaderChat = document.getElementById('loader-chat');
+
+  if (!chatList || !chatInput || !chatSend || !loaderChat) {
+    console.error('[ERROR] Chatbot DOM elements missing:', chatList, chatInput, chatSend, loaderChat);
+    return;
+  }
+
+  async function addMessage(message, isUser = false) {
+    const li = document.createElement('li');
+    li.className = 'gradient-bg p-2 rounded';
+    li.innerHTML = `
+      <div class="text-xs sm:text-sm text-gray-500">[${new Date().toLocaleString()}] ${isUser ? 'User' : 'Grok'}</div>
+      <div class="text-sm sm:text-base">${message}</div>
+    `;
+    chatList.appendChild(li);
+    chatList.scrollTop = chatList.scrollHeight;
+  }
+
+  async function handleChat() {
+    const query = chatInput.value.trim();
+    if (!query) return;
+    loaderChat.style.display = 'flex';
+    await addMessage(query, true);
+    chatInput.value = '';
+
+    if (query.toLowerCase().includes('top rising tokens') || query.toLowerCase().includes('trade today')) {
+      try {
+        const data = await fetchTopTokens();
+        if (data.length === 0) {
+          await addMessage('No rising tokens found at the moment.');
+        } else {
+          const message = `
+            Top rising tokens to trade today (based on 24h price change):<br>
+            ${data.map((token, i) => `
+              ${i + 1}. ${token.name} (${token.symbol})<br>
+                - 24h Change: ${formatPercentage(token.price_change_percentage_24h)}<br>
+                - Volume (24h): ${formatPrice(token.volume_24h)}<br>
+                - Liquidity Ratio: ${(token.liquidity_ratio * 100).toFixed(2)}% (Volume/Market Cap)<br>
+                - Source: ${token.source}
+            `).join('<br>')}
+          `;
+          await addMessage(message);
+        }
+      } catch (error) {
+        await addMessage('Failed to fetch top tokens. Please try again.');
+      }
+    } else {
+      await addMessage('I can help with top rising tokens! Ask: "What are the top rising tokens to trade today?"');
+    }
+    loaderChat.style.display = 'none';
+  }
+
+  chatSend.addEventListener('click', handleChat);
+  chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleChat();
+    }
+  });
+
+  loaderChat.style.display = 'none';
+  await addMessage('Ask me: "What are the top rising tokens to trade today?"');
+}
+
 function showPriceChart(token, timeframe, context = 'header') {
   console.log(`[DEBUG] Showing price chart for ${token.symbol} (Timeframe: ${timeframe}) in ${context} context`);
-  const chartContainer = context === 'header' ? document.getElementById('chart-container-header') : document.getElementById('chart-container-modal');
-  const chartTitle = context === 'header' ? document.getElementById('chart-title-header') : document.getElementById('chart-title-modal');
-  const livePriceElement = context === 'header' ? document.getElementById('live-price-header') : document.getElementById('live-price-modal');
+  const chartContainer = document.getElementById(`chart-container-${context}`);
+  const chartTitle = document.getElementById(`chart-title-${context}`);
+  const livePriceElement = document.getElementById(`live-price-${context}`);
 
   if (!chartContainer || !chartTitle || !livePriceElement) {
     console.error(`[ERROR] Missing DOM element for ${context} chart: container=${chartContainer}, title=${chartTitle}, price=${livePriceElement}`);
@@ -294,7 +351,6 @@ function showPriceChart(token, timeframe, context = 'header') {
   }
 
   chartContainer.innerHTML = '';
-
   const symbolMap = {
     'FLOKI': 'BINANCE:FLOKIUSDT',
     'SHIB': 'BINANCE:SHIBUSDT',
@@ -304,7 +360,6 @@ function showPriceChart(token, timeframe, context = 'header') {
     'BNB': 'BINANCE:BNBUSDT'
   };
   const tvSymbol = symbolMap[token.symbol] || `BINANCE:${token.symbol}USDT`;
-
   const timeframeMap = {
     '1min': '1',
     '5min': '5',
@@ -314,9 +369,8 @@ function showPriceChart(token, timeframe, context = 'header') {
     '1D': 'D'
   };
   const interval = timeframeMap[timeframe] || 'D';
-
   const containerId = `tradingview_${context}_${Date.now()}`;
-  chartContainer.innerHTML = `<div id="${containerId}" style="height: 100%; width: 100%;"></div>`;
+  chartContainer.innerHTML = `<div id="${containerId}" class="tradingview-widget-container" style="height: 100%; width: 100%;"></div>`;
 
   try {
     new TradingView.widget({
@@ -352,12 +406,10 @@ function showPriceChart(token, timeframe, context = 'header') {
     console.error('[ERROR] Failed to initialize TradingView chart:', error);
   }
 
-  chartTitle.textContent = `> ${token.symbol} Price Chart`;
-  livePriceElement.textContent = `> Live Price: $${token.current_price.toLocaleString()}`;
-  console.log('[DEBUG] Price chart rendered');
+  chartTitle.textContent = `> ${token.symbol}/USDT [${timeframe.toUpperCase()}]`;
+  livePriceElement.textContent = `> Live Price: ${formatPrice(token.current_price)} (${formatPercentage(token.price_change_percentage_24h)})`;
 }
 
-// Update marquee
 function updateMarquee() {
   console.log('[DEBUG] Entering updateMarquee');
   const marqueeElements = [
@@ -382,26 +434,23 @@ function updateMarquee() {
   const losers = sortedTokens.filter(t => t.price_change_percentage_24h < 0).slice(-3);
   const currentPun = getUniquePun();
   const marqueeItems = [
-    ...winners.map(t => `<span class="glow-green text-green-400">[🏆 ${t.symbol}: +${t.price_change_percentage_24h.toFixed(2)}%]</span>`),
-    `<span class="glow-purple text-green-400">[${currentPun}]</span>`,
-    ...losers.map(t => `<span class="glow-red text-red-400">[📉 ${t.symbol}: ${t.price_change_percentage_24h.toFixed(2)}%]</span>`)
+    ...winners.map(t => `<span class="glow-green">[🏆 ${t.symbol}: +${formatPercentage(t.price_change_percentage_24h)}]</span>`),
+    `<span class="glow-purple">[${currentPun}]</span>`,
+    ...losers.map(t => `<span class="glow-red">[📉 ${t.symbol}: ${formatPercentage(t.price_change_percentage_24h)}]</span>`)
   ];
   const doubledItems = [...marqueeItems, ...marqueeItems];
   marqueeElements.forEach(element => {
     element.innerHTML = doubledItems.join('');
   });
-  console.log('[DEBUG] Marquee updated');
 }
 
-// Initialize dashboard
 function initializeDashboard() {
   console.log('[DEBUG] Initializing Ice King Dashboard...');
   updateTokens();
   setInterval(updateTokens, TOKEN_REFRESH_INTERVAL);
   updateLogs();
   setInterval(updateLogs, LOG_REFRESH_INTERVAL);
-  updateMarquee();
-  setInterval(updateMarquee, 20000);
+  initializeChatbot();
 
   const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1D'];
   ['header', 'modal'].forEach(context => {
@@ -409,7 +458,10 @@ function initializeDashboard() {
       const btn = document.getElementById(`${context}-timeframe-${tf}`);
       if (btn) {
         btn.addEventListener('click', () => {
-          timeframes.forEach(t => document.getElementById(`${context}-timeframe-${t}`).classList.remove('active'));
+          timeframes.forEach(t => {
+            const b = document.getElementById(`${context}-timeframe-${t}`);
+            if (b) b.classList.remove('active');
+          });
           btn.classList.add('active');
           currentTimeframe = tf;
           if (currentToken) showPriceChart(currentToken, currentTimeframe, context);
@@ -433,14 +485,6 @@ function initializeDashboard() {
     chartModal.classList.toggle('active', isChartLocked);
     toggleStickyBtnHeader.textContent = isChartLocked ? '[Unlock Chart]' : '[Lock Chart]';
     toggleStickyBtnModal.textContent = isChartLocked ? '[Unlock Chart]' : '[Lock Chart]';
-    toggleStickyBtnHeader.classList.toggle('bg-green-500', isChartLocked);
-    toggleStickyBtnHeader.classList.toggle('bg-blue-500', !isChartLocked);
-    toggleStickyBtnModal.classList.toggle('bg-green-500', isChartLocked);
-    toggleStickyBtnModal.classList.toggle('bg-blue-500', !isChartLocked);
-    toggleStickyBtnHeader.classList.toggle('hover:bg-green-600', isChartLocked);
-    toggleStickyBtnHeader.classList.toggle('hover:bg-blue-600', !isChartLocked);
-    toggleStickyBtnModal.classList.toggle('hover:bg-green-600', isChartLocked);
-    toggleStickyBtnModal.classList.toggle('hover:bg-blue-600', !isChartLocked);
     if (isChartLocked && currentToken) showPriceChart(currentToken, currentTimeframe, 'modal');
     console.log(`[DEBUG] Chart lock toggled: ${isChartLocked ? 'Locked' : 'Unlocked'}`);
   };
@@ -450,11 +494,8 @@ function initializeDashboard() {
   chartModal.addEventListener('click', (e) => {
     if (e.target === chartModal) toggleChartLock();
   });
-
-  console.log('[DEBUG] Dashboard initialization complete');
 }
 
-// Start the dashboard
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] DOMContentLoaded event fired');
   initializeDashboard();
