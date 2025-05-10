@@ -4,7 +4,7 @@
 // Features: Terminal-style UI, sticky chart toggle, backend integration
 
 // --- Constants and Configuration ---
-const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com'; // REPLACE WITH YOUR ACTUAL RENDER BACKEND URL
+const BACKEND_URL = 'https://apexomni-backend.onrender.com'; // Replace with your actual Render backend URL
 const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
 const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRIES = 3;
@@ -19,7 +19,7 @@ const mockTokens = [
 
 // --- Ice King Puns for Marquee ---
 const iceKingPuns = [
-  "Everything is going to be ok! ❄️👑",
+  "I’m chilling like the Ice King! ❄️👑",
   "Penguins are my royal guards! 🐧🧊",
   "Time to freeze the market! ❄️😂",
   "Ice to meet you, traders! 🧊🐧",
@@ -52,13 +52,19 @@ let selectedTokenLi = null;
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
+      console.log(`[DEBUG] Fetching ${url} (Attempt ${i + 1}/${retries})`);
       const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-      return await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      const data = await response.json();
+      console.log(`[DEBUG] Fetch successful for ${url}`);
+      return data;
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
       if (i === retries - 1) {
-        alert(`Failed to fetch data from ${url}. Using mock data. Error: ${error.message}`);
+        console.error(`[ERROR] All retries failed for ${url}`);
         return null;
       }
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -69,11 +75,10 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
 // Validate and sanitize token data
 function sanitizeTokenData(data) {
   if (!Array.isArray(data)) {
-    console.error('[ERROR] Invalid token data format:', data);
-    alert('Invalid token data received from server. Using mock data.');
+    console.error('[ERROR] Invalid token data format, expected array:', data);
     return [];
   }
-  return data.map(token => ({
+  const sanitized = data.map(token => ({
     id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
     name: String(token.name || 'Unknown').substring(0, 50),
     symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
@@ -82,52 +87,60 @@ function sanitizeTokenData(data) {
     price_change_percentage_24h: Number(token.price_change_percentage_24h) || 0,
     market_cap: Number(token.market_cap) || 0,
     circulating_supply: Number(token.circulating_supply) || 0,
-    source: String(token.source || 'CoinGecko'),
+    source: String(token.source || 'CoinMarketCap'),
     score: Math.min(100, Math.max(0, (Number(token.price_change_percentage_24h) + 100) / 2)) || 0
   })).filter(token => token.symbol && token.current_price > 0);
+  console.log('[DEBUG] Sanitized token data:', sanitized);
+  return sanitized;
 }
 
 // Validate and sanitize log data
 function sanitizeLogData(logs) {
   if (!Array.isArray(logs)) {
-    console.error('[ERROR] Invalid log data format:', logs);
-    alert('Invalid log data received from server. No logs available.');
+    console.error('[ERROR] Invalid log data format, expected array:', logs);
     return [];
   }
-  return logs.map(log => ({
+  const sanitized = logs.map(log => ({
     timestamp: log.dt || new Date().toISOString(),
-    message: String(log.message || 'No message').substring(0, 200),
+    message: String(log.message || log.body || 'No message').substring(0, 200),
     level: String(log.level || 'info').toLowerCase()
   }));
+  console.log('[DEBUG] Sanitized log data:', sanitized);
+  return sanitized;
 }
 
 // Cache data
 function cacheData(data, type = 'tokens') {
   localStorage.setItem(`${type}Data`, JSON.stringify(data));
   localStorage.setItem(`${type}LastUpdate`, Date.now());
+  console.log(`[DEBUG] Cached ${type} data`);
 }
 
 // Load cached data
 function loadCachedData(type = 'tokens') {
   const cached = localStorage.getItem(`${type}Data`);
   const lastUpdate = localStorage.getItem(`${type}LastUpdate`);
-  if (cached && lastUpdate && (Date.now() - lastUpdate < 5 * 60 * 1000)) { // 5-minute cache
+  if (cached && lastUpdate && (Date.now() - lastUpdate < 5 * 60 * 1000)) {
     console.log(`[DEBUG] Using cached ${type} data`);
     return JSON.parse(cached);
   }
+  console.log(`[DEBUG] No valid cached ${type} data`);
   return null;
 }
 
 // Fetch token data from backend
 async function fetchTokenData() {
   console.log('[DEBUG] Fetching token data from backend');
-  const symbols = 'bitcoin,ethereum,binancecoin,floki-inu,shiba-inu,constitutiondao';
+  const symbols = 'BTC,ETH,BNB,FLOKI,SHIB,PEOPLE';
   const url = `${BACKEND_URL}/token-stats?symbols=${symbols}`;
+  console.log('[DEBUG] Token fetch URL:', url);
   const data = await fetchWithRetry(url);
   if (data && Array.isArray(data)) {
+    console.log('[DEBUG] Received token data:', data);
     return sanitizeTokenData(data);
   }
-  console.warn('[WARN] No backend token data, using mock data');
+  console.warn('[WARN] No valid backend token data, using mock data');
+  alert('Using mock token data due to backend failure. Check console for errors.');
   return mockTokens;
 }
 
@@ -135,11 +148,14 @@ async function fetchTokenData() {
 async function fetchLogs() {
   console.log('[DEBUG] Fetching logs from backend');
   const url = `${BACKEND_URL}/logs?query=level=info&batch=50`;
+  console.log('[DEBUG] Log fetch URL:', url);
   const data = await fetchWithRetry(url);
   if (data && data.logs && Array.isArray(data.logs)) {
+    console.log('[DEBUG] Received log data:', data.logs);
     return sanitizeLogData(data.logs);
   }
-  console.warn('[WARN] No log data, returning empty array');
+  console.warn('[WARN] No valid log data, returning empty array');
+  alert('No logs available due to backend failure. Check console for errors.');
   return [];
 }
 
@@ -197,7 +213,7 @@ async function updateTokens() {
       </div>`;
     li.addEventListener('click', () => {
       if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
-      li.className += ' selected-token';
+      li.classList.add('selected-token');
       selectedTokenLi = li;
       currentToken = token;
       showPriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
