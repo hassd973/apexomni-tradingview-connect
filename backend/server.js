@@ -11,7 +11,7 @@ class BetterStackTransport extends TransportStream {
     super(options);
     this.name = 'betterStack';
     this.level = options.level || 'info';
-    this.token = options.token || process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza';
+    this.token = 'WGdCT5KhHtg4kiGWAbdXRaSL'; // Hardcoded token for log ingestion
     this.url = 'https://in.logs.betterstack.com';
   }
 
@@ -51,22 +51,19 @@ const logger = winston.createLogger({
   transports: [
     new winston.transports.Console(),
     new BetterStackTransport({
-      level: 'info',
-      token: process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza'
+      level: 'info'
     })
   ],
   exceptionHandlers: [
     new winston.transports.Console(),
     new BetterStackTransport({
-      level: 'error',
-      token: process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza'
+      level: 'error'
     })
   ],
   rejectionHandlers: [
     new winston.transports.Console(),
     new BetterStackTransport({
-      level: 'error',
-      token: process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza'
+      level: 'error'
     })
   ]
 });
@@ -93,7 +90,7 @@ async function fetchCryptoData() {
         convert: 'USD'
       }
     });
-    return response.data.data; // Return the "data" object containing coins
+    return response.data.data;
   } catch (error) {
     console.error('Error fetching CoinMarketCap data:', error.message);
     throw error;
@@ -102,7 +99,7 @@ async function fetchCryptoData() {
 
 async function fetchLiveLogs() {
   const sourceId = '1303816';
-  const telemetryToken = 'XEBetwKsdutXhsDodis2P75H';
+  const telemetryToken = 'WGdCT5KhHtg4kiGWAbdXRaSL';
   try {
     const response = await axios.get('https://telemetry.betterstack.com/api/v2/query/live-tail', {
       headers: {
