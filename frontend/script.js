@@ -4,7 +4,7 @@
 // Features: Terminal-style UI, sticky chart toggle, backend integration
 
 // --- Constants and Configuration ---
-const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com'; // Replace with your actual Render backend URL
+const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com'; // Backend URL
 const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
 const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRIES = 3;
@@ -12,9 +12,9 @@ const RETRY_DELAY = 1000;
 
 // --- Mock Data (Fallback) ---
 const mockTokens = [
-  { id: 'floki-inu', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
-  { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 },
-  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', score: 70.6 }
+  { id: 1, name: 'Bitcoin', symbol: 'BTC', quote: { USD: { price: 60000, volume_24h: 4500000, percent_change_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000 } }, source: 'Mock' },
+  { id: 1027, name: 'Ethereum', symbol: 'ETH', quote: { USD: { price: 4000, volume_24h: 3000000, percent_change_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000 } }, source: 'Mock' },
+  { id: 9999, name: 'ConstitutionDAO', symbol: 'PEOPLE', quote: { USD: { price: 0.01962, volume_24h: 135674.745, percent_change_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500 } }, source: 'Mock' }
 ];
 
 // --- Ice King Puns for Marquee ---
@@ -74,33 +74,33 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
 
 // Validate and sanitize token data
 function sanitizeTokenData(data) {
-  if (!Array.isArray(data)) {
-    console.error('[ERROR] Invalid token data format, expected array:', data);
+  if (!data || !Array.isArray(data.coins)) {
+    console.error('[ERROR] Invalid token data format, expected coins array:', data);
     return [];
   }
-  const sanitized = data.map(token => ({
+  const sanitized = data.coins.map(token => ({
     id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
     name: String(token.name || 'Unknown').substring(0, 50),
     symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
-    total_volume: Number(token.total_volume) || 0,
-    current_price: Number(token.current_price) || 0,
-    price_change_percentage_24h: Number(token.price_change_percentage_24h) || 0,
-    market_cap: Number(token.market_cap) || 0,
+    total_volume: Number(token.quote?.USD?.volume_24h) || 0,
+    current_price: Number(token.quote?.USD?.price) || 0,
+    price_change_percentage_24h: Number(token.quote?.USD?.percent_change_24h) || 0,
+    market_cap: Number(token.quote?.USD?.market_cap) || 0,
     circulating_supply: Number(token.circulating_supply) || 0,
     source: String(token.source || 'CoinMarketCap'),
-    score: Math.min(100, Math.max(0, (Number(token.price_change_percentage_24h) + 100) / 2)) || 0
+    score: Math.min(100, Math.max(0, (Number(token.quote?.USD?.percent_change_24h) + 100) / 2)) || 0
   })).filter(token => token.symbol && token.current_price > 0);
   console.log('[DEBUG] Sanitized token data:', sanitized);
   return sanitized;
 }
 
 // Validate and sanitize log data
-function sanitizeLogData(logs) {
-  if (!Array.isArray(logs)) {
-    console.error('[ERROR] Invalid log data format, expected array:', logs);
+function sanitizeLogData(data) {
+  if (!data || !Array.isArray(data)) {
+    console.error('[ERROR] Invalid log data format, expected array:', data);
     return [];
   }
-  const sanitized = logs.map(log => ({
+  const sanitized = data.map(log => ({
     timestamp: log.dt || new Date().toISOString(),
     message: String(log.message || log.body || 'No message').substring(0, 200),
     level: String(log.level || 'info').toLowerCase()
@@ -131,28 +131,27 @@ function loadCachedData(type = 'tokens') {
 // Fetch token data from backend
 async function fetchTokenData() {
   console.log('[DEBUG] Fetching token data from backend');
-  const symbols = 'BTC,ETH,BNB,FLOKI,SHIB,PEOPLE';
-  const url = `${BACKEND_URL}/token-stats?symbols=${symbols}`;
+  const url = `${BACKEND_URL}/api/crypto`;
   console.log('[DEBUG] Token fetch URL:', url);
   const data = await fetchWithRetry(url);
-  if (data && Array.isArray(data)) {
+  if (data) {
     console.log('[DEBUG] Received token data:', data);
     return sanitizeTokenData(data);
   }
   console.warn('[WARN] No valid backend token data, using mock data');
   alert('Using mock token data due to backend failure. Check console for errors.');
-  return mockTokens;
+  return sanitizeTokenData({ coins: mockTokens });
 }
 
 // Fetch logs from backend
 async function fetchLogs() {
   console.log('[DEBUG] Fetching logs from backend');
-  const url = `${BACKEND_URL}/logs?query=level=info&batch=50`;
+  const url = `${BACKEND_URL}/api/logs`;
   console.log('[DEBUG] Log fetch URL:', url);
   const data = await fetchWithRetry(url);
-  if (data && data.logs && Array.isArray(data.logs)) {
-    console.log('[DEBUG] Received log data:', data.logs);
-    return sanitizeLogData(data.logs);
+  if (data && Array.isArray(data)) {
+    console.log('[DEBUG] Received log data:', data);
+    return sanitizeLogData(data);
   }
   console.warn('[WARN] No valid log data, returning empty array');
   alert('No logs available due to backend failure. Check console for errors.');
