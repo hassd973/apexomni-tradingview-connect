@@ -4,7 +4,7 @@
 // Features: Terminal-style UI, sticky chart toggle, backend integration
 
 // --- Constants and Configuration ---
-const BACKEND_URL = 'https://apexomni-backend.onrender.com'; // Replace with your actual Render backend URL
+const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com'; // Replace with your actual Render backend URL
 const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
 const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRIES = 3;
