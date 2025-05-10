@@ -5,34 +5,6 @@ const axios = require('axios');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Custom Winston Transport for BetterStack
-const BetterStackTransport = winston.transports.Http.extend({
-  constructor: function(options) {
-    this.name = 'betterStack';
-    this.level = options.level || 'info';
-    this.token = options.token || process.env.BETTERSTACK_TOKEN;
-    this.url = 'https://in.logs.betterstack.com';
-  },
-  log: function({ level, message, timestamp }, callback) {
-    const logEntry = {
-      dt: timestamp || new Date().toISOString(),
-      message,
-      level
-    };
-    axios.post(this.url, logEntry, {
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(() => callback(null, true))
-      .catch(err => {
-        console.error(`[ERROR] Failed to send log to BetterStack: ${err.message}`);
-        callback(err);
-      });
-  }
-});
-
 // Configure Winston logger
 const logger = winston.createLogger({
   level: 'info',
@@ -41,8 +13,37 @@ const logger = winston.createLogger({
     winston.format.json()
   ),
   transports: [
-    new BetterStackTransport({ token: process.env.BETTERSTACK_TOKEN }),
-    new winston.transports.Console() // For local debugging
+    new winston.transports.Console(), // For local debugging
+    {
+      name: 'betterStack',
+      level: 'info',
+      handleExceptions: true,
+      handleRejections: true,
+      format: winston.format.printf(info => JSON.stringify({
+        dt: info.timestamp,
+        message: info.message,
+        level: info.level
+      })),
+      silent: process.env.NODE_ENV === 'test', // Disable in test env if needed
+      async log(info, callback) {
+        try {
+          await axios.post('https://in.logs.betterstack.com', {
+            dt: info.timestamp,
+            message: info.message,
+            level: info.level
+          }, {
+            headers: {
+              'Authorization': `Bearer ${process.env.BETTERSTACK_TOKEN}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          callback(null, true);
+        } catch (error) {
+          console.error(`[ERROR] Failed to send log to BetterStack: ${error.message}`);
+          callback(error);
+        }
+      }
+    }
   ]
 });
 
