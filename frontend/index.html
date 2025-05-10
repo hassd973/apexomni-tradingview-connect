@@ -101,7 +101,7 @@
     .chart-container { position: relative; width: 100%; height: 300px; sm:h-500px; margin: 0 auto; }
     .chart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 50; justify-content: center; align-items: center; }
     .chart-modal.active { display: flex; }
-    .chart-modal-content { background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7)); padding: 20px; border: 2px solid rgba(0, 255, 0, 0.5); border-radius: 5px; width: 90%; max-width: 1200px; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
+    .chart-modal-content { background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7)); padding: 1rem; border: 2px solid rgba(0, 255, 0, 0.5); border-radius: 5px; width: 95%; sm:w-4/5; max-w-5xl; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
     .chart-wrapper { position: relative; z-index: 0; }
     #chart-container-header, #chart-container-modal { width: 100% !important; height: 100% !important; }
     #token-list, #log-list { z-index: 10; }
@@ -113,10 +113,10 @@
     .marquee { display: inline-block; animation: marquee 20s linear infinite; animation-play-state: running; will-change: transform; }
     @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     @-webkit-keyframes marquee { 0% { -webkit-transform: translateX(100%); } 100% { -webkit-transform: translateX(-100%); } }
-    .marquee span { margin-right: 20px; font-size: 12px; color: #00ff00; }
-    @media (min-width: 640px) { .marquee span { font-size: 14px; } }
+    .marquee span { margin-right: 20px; font-size: 0.75rem sm:font-size: 0.875rem; color: #00ff00; }
+    @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: running; }
-    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; }
+    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; font-size: 0.75rem sm:font-size: 0.875rem; }
     #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .timeframe-btn.active { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .loader { display: flex; justify-content: center; align-items: center; padding: 1rem; }
@@ -143,23 +143,25 @@
       text-align: center;
       line-height: 1.2;
       margin-bottom: 0.5rem;
-      font-size: 0.9rem;
+      font-size: 0.875rem;
       width: 100%;
+      overflow-x: auto;
     }
     @media (min-width: 640px) {
       pre.ascii-art {
-        font-size: 1.2rem;
+        font-size: 1.125rem;
       }
     }
     .tradingview-widget-container {
       border: 1px solid rgba(0, 255, 0, 0.5);
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+      width: 100%;
     }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col">
-  <div class="grid-bg"></div>
-  <div class="particles" id="particles"></div>
+  <div class="grid-bg w-full h-full"></div>
+  <div class="particles w-full h-full" id="particles"></div>
   <header class="w-full gradient-bg backdrop-blur-lg p-3 flex justify-center items-center">
     <div class="text-center w-full max-w-4xl mx-auto px-2">
       <pre class="ascii-art glow-blue mx-auto text-xl sm:text-2xl">
@@ -169,18 +171,18 @@
       </pre>
       <p class="text-sm sm:text-base mt-1 text-gray-300 typewriter">Live Price Chart</p>
       <p class="text-sm sm:text-base mt-1 text-green-500">Powered by xAI | Made for Coders</p>
-      <div class="chart-wrapper">
+      <div class="chart-wrapper w-full">
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div class="flex space-x-2 flex-wrap gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[1M]</button>
-            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[5M]</button>
-            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[15M]</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[1H]</button>
-            <button id="header-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[4H]</button>
-            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm active">[1D]</button>
+            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[1M]</button>
+            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[5M]</button>
+            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[15M]</button>
+            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[1H]</button>
+            <button id="header-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[4H]</button>
+            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active">[1D]</button>
           </div>
           <div class="flex space-x-2">
-            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded text-xs sm:text-sm">[Lock Chart]</button>
+            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded">[Lock Chart]</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
@@ -196,17 +198,17 @@
   </header>
   <div class="chart-modal" id="chart-modal">
     <div class="chart-modal-content w-11/12 sm:w-4/5 max-w-5xl">
-      <div class="chart-wrapper">
+      <div class="chart-wrapper w-full">
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div class="flex space-x-2 flex-wrap gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[1M]</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[5M]</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[15M]</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[1H]</button>
-            <button id="modal-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[4H]</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm active">[1D]</button>
+            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[1M]</button>
+            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[5M]</button>
+            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[15M]</button>
+            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[1H]</button>
+            <button id="modal-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[4H]</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active">[1D]</button>
           </div>
-          <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded text-xs sm:text-sm">[Unlock Chart]</button>
+          <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded">[Unlock Chart]</button>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div id="live-price-modal" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
@@ -221,18 +223,18 @@
   </div>
   <main class="flex-1 p-3 max-w-7xl mx-auto w-full flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
-      <h2 class="text-xl sm:text-2xl font-bold mb-2 glow-purple typewriter">> Low-Volume Tokens 🍀</h2>
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Low-Volume Tokens 🍀</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="token-list" class="space-y-2 max-h-[400px] sm:max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
+      <ul id="token-list" class="space-y-2 max-h-[300px] sm:max-h-[400px] md:max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
       <div class="mt-4">
-        <h3 class="text-lg sm:text-xl font-bold mb-2 glow-purple typewriter">> Top USDT Pairs</h3>
+        <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top USDT Pairs</h3>
         <ul id="top-pairs" class="text-xs sm:text-sm text-gray-500 flex flex-wrap gap-2"></ul>
       </div>
     </section>
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
-      <h2 class="text-xl sm:text-2xl font-bold mb-2 glow-purple typewriter">> Live Logs 📜</h2>
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Live Logs 📜</h2>
       <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="log-list" class="space-y-2 max-h-[400px] sm:max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
+      <ul id="log-list" class="space-y-2 max-h-[300px] sm:max-h-[400px] md:max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
     </section>
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
