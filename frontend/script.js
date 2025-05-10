@@ -4,7 +4,7 @@
 // Features: Terminal-style UI, sticky chart toggle, backend integration
 
 // --- Constants and Configuration ---
-const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com'; // Replace with your Render URL
+const BACKEND_URL = 'https://apexomni-backend.onrender.com'; // Replace with actual Render URL
 const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
 const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRIES = 3;
@@ -19,13 +19,13 @@ const mockTokens = [
 
 // --- Ice King Puns for Marquee ---
 const iceKingPuns = [
-  "Everything is gonna be alright! ❄️👑",
+  "I’m chilling like the Ice King! ❄️👑",
   "Penguins are my royal guards! 🐧🧊",
   "Time to freeze the market! ❄️😂",
   "Ice to meet you, traders! 🧊🐧",
   "I’m the coolest king around! 👑❄️",
   "Penguin power activate! 🐧🧊😂",
-  "Snow way I’m missing this trade! �4️📈",
+  "Snow way I’m missing this trade! ❄️📈",
   "Freeze your doubts, let’s trade! 🧊💸",
   "I’m skating through the market! ⛸️❄️",
   "Cold cash, hot trades! 🥶💰",
@@ -54,8 +54,7 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-      const data = await response.json();
-      return data;
+      return await response.json();
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
       if (i === retries - 1) return null;
@@ -66,7 +65,10 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
 
 // Validate and sanitize token data
 function sanitizeTokenData(data) {
-  if (!Array.isArray(data)) return [];
+  if (!Array.isArray(data)) {
+    console.error('[ERROR] Invalid token data format:', data);
+    return [];
+  }
   return data.map(token => ({
     id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
     name: String(token.name || 'Unknown').substring(0, 50),
@@ -83,7 +85,10 @@ function sanitizeTokenData(data) {
 
 // Validate and sanitize log data
 function sanitizeLogData(logs) {
-  if (!Array.isArray(logs)) return [];
+  if (!Array.isArray(logs)) {
+    console.error('[ERROR] Invalid log data format:', logs);
+    return [];
+  }
   return logs.map(log => ({
     timestamp: log.dt || new Date().toISOString(),
     message: String(log.message || 'No message').substring(0, 200),
@@ -111,10 +116,10 @@ function loadCachedData(type = 'tokens') {
 // Fetch token data from backend
 async function fetchTokenData() {
   console.log('[DEBUG] Fetching token data from backend');
-  const symbols = 'bitcoin,ethereum,binancecoin,floki-inu,shiba-inu,constitutiondao'; // Customize as needed
+  const symbols = 'bitcoin,ethereum,binancecoin,floki-inu,shiba-inu,constitutiondao';
   const url = `${BACKEND_URL}/token-stats?symbols=${symbols}`;
   const data = await fetchWithRetry(url);
-  if (data) {
+  if (data && Array.isArray(data)) {
     return sanitizeTokenData(data);
   }
   console.warn('[WARN] No backend token data, using mock data');
@@ -126,7 +131,7 @@ async function fetchLogs() {
   console.log('[DEBUG] Fetching logs from backend');
   const url = `${BACKEND_URL}/logs?query=level=info&batch=50`;
   const data = await fetchWithRetry(url);
-  if (data && data.logs) {
+  if (data && data.logs && Array.isArray(data.logs)) {
     return sanitizeLogData(data.logs);
   }
   console.warn('[WARN] No log data, returning empty array');
