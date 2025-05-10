@@ -543,6 +543,13 @@ function initializeDashboard() {
   chartModal.addEventListener('click', (e) => {
     if (e.target === chartModal) toggleChartLock();
   });
+
+  // Handle window resize to reinitialize chart
+  window.addEventListener('resize', () => {
+    if (currentToken) {
+      showPriceChart(currentToken, currentTimeframe, isChartLocked ? 'modal' : 'header');
+    }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
