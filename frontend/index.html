@@ -141,8 +141,15 @@
       font-family: 'Fira Code', monospace;
       color: #00ff00;
       text-align: center;
-      line-height: 1;
+      line-height: 1.2;
       margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      width: 100%;
+    }
+    @media (min-width: 640px) {
+      pre.ascii-art {
+        font-size: 1.1rem;
+      }
     }
     .tradingview-widget-container {
       border: 1px solid rgba(0, 255, 0, 0.5);
@@ -155,11 +162,10 @@
   <div class="particles" id="particles"></div>
   <header class="w-full gradient-bg backdrop-blur-lg p-3 flex justify-center items-center">
     <div class="text-center w-full px-2">
-      <pre class="ascii-art glow-blue">
-┌───────────────────────────────────────────┐
-│       🧊 ICE KING DASHBOARD 👑           │
-│  >_  Powered by xAI, Built for Coders    │
-└───────────────────────────────────────────┘
+      <pre class="ascii-art glow-blue mx-auto">
+┌───────────────────────────────────────────────────┐
+│          🧊 ICE KING DASHBOARD 👑                │
+└───────────────────────────────────────────────────┘
       </pre>
       <p class="text-sm sm:text-base mt-1 text-gray-300 typewriter">Live Price Chart</p>
       <div class="chart-wrapper">
