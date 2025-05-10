@@ -5,11 +5,14 @@ const LOG_REFRESH_INTERVAL = 30000;
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 2000;
 
-// Mock Data (Fallback)
+// Mock Data
 const mockTokens = [
-  { id: 'floki-inu', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6, liquidity_ratio: 0.003, sentiment_score: 0.5, sentiment_mentions: 100 },
-  { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9, liquidity_ratio: 0.0004, sentiment_score: 0.5, sentiment_mentions: 100 },
-  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', score: 70.6, liquidity_ratio: 0.0014, sentiment_score: 0.5, sentiment_mentions: 100 }
+  { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', total_volume: 25000000, current_price: 60000, price_change_percentage_24h: 3.5, market_cap: 1200000000000, circulating_supply: 19000000, source: 'Mock', score: 85.2, liquidity_ratio: 0.021, sentiment_score: 0.75, sentiment_mentions: 5000 },
+  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', total_volume: 15000000, current_price: 3000, price_change_percentage_24h: -1.2, market_cap: 360000000000, circulating_supply: 120000000, source: 'Mock', score: 78.9, liquidity_ratio: 0.042, responsabilité_score: 0.65, sentiment_mentions: 3000 },
+  { id: 'binancecoin', name: 'BNB', symbol: 'BNB', total_volume: 8000000, current_price: 500, price_change_percentage_24h: 2.8, market_cap: 75000000000, circulating_supply: 150000000, source: 'Mock', score: 72.4, liquidity_ratio: 0.107, sentiment_score: 0.60, sentiment_mentions: 2000 },
+  { id: 'floki-inu', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6, liquidity_ratio: 0.003, sentiment_score: 0.55, sentiment_mentions: 1000 },
+  { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9, liquidity_ratio: 0.0004, sentiment_score: 0.50, sentiment_mentions: 800 },
+  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', score: 70.6, liquidity_ratio: 0.0014, sentiment_score: 0.70, sentiment_mentions: 1200 }
 ];
 
 // Ice King Puns for Marquee
@@ -40,6 +43,7 @@ let allTokens = [];
 let sortedTokens = [];
 let isChartLocked = false;
 let selectedTokenLi = null;
+let useMockData = false; // Default to real data
 
 // Utility Functions
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
@@ -105,12 +109,12 @@ function sanitizeTokenData(data) {
     current_price: Number(token.current_price) || 0,
     price_change_percentage_24h: Number(token.price_change_percentage_24h) || 0,
     market_cap: Number(token.market_cap) || 0,
-    circulating_supp ly: Number(token.circulating_supply) || 0,
+    circulating_supply: Number(token.circulating_supply) || 0,
     liquidity_ratio: Number(token.liquidity_ratio) || 0,
     sentiment_score: Number(token.sentiment_score) || 0.5,
     sentiment_mentions: Number(token.sentiment_mentions) || 0,
     score: Number(token.score) || 0,
-    source: String(token.source || 'Moralis')
+    source: String(token.source || (useMockData ? 'Mock' : 'Moralis'))
   })).filter(token => token.symbol && token.current_price > 0);
   console.log('[DEBUG] Sanitized token data:', sanitized);
   return sanitized;
@@ -156,6 +160,12 @@ function formatPercentage(value) {
 }
 
 async function fetchTokenData() {
+  console.log(`[DEBUG] Fetching token data (Mode: ${useMockData ? 'Mock' : 'Real'})`);
+  if (useMockData) {
+    console.log('[DEBUG] Using mock token data');
+    return sanitizeTokenData(mockTokens);
+  }
+
   console.log('[DEBUG] Fetching enhanced token data from backend');
   const symbols = 'BTC,ETH,BNB,FLOKI,SHIB,PEOPLE';
   const url = `${BACKEND_URL}/tokens/enhanced?symbols=${symbols}`;
@@ -164,9 +174,11 @@ async function fetchTokenData() {
     console.log('[DEBUG] Received token data:', data);
     return sanitizeTokenData(data);
   }
-  console.warn('[WARN] No valid backend token data, using mock data');
+  console.warn('[WARN] No valid backend token data, falling back to mock data');
   alert('Using mock token data due to backend failure. Check console for errors.');
-  return mockTokens;
+  useMockData = true;
+  document.getElementById('toggle-data-mode').textContent = '[Mock Data]';
+  return sanitizeTokenData(mockTokens);
 }
 
 async function fetchLogs() {
@@ -183,15 +195,19 @@ async function fetchLogs() {
 }
 
 async function fetchTopTokens() {
-  console.log('[DEBUG] Fetching top tokens from backend');
+  console.log(`[DEBUG] Fetching top tokens (Mode: ${useMockData ? 'Mock' : 'Real'})`);
+  if (useMockData) {
+    console.log('[DEBUG] Using mock top tokens');
+    return mockTokens.sort((a, b) => b.score - a.score).slice(0, 5);
+  }
   const url = `${BACKEND_URL}/tokens/enhanced`;
   const data = await fetchWithRetry(url);
   if (data && Array.isArray(data)) {
     console.log('[DEBUG] Received top tokens:', data);
     return data.sort((a, b) => b.score - a.score).slice(0, 5);
   }
-  console.warn('[WARN] No valid top tokens data, returning empty array');
-  return [];
+  console.warn('[WARN] No valid top tokens data, returning mock data');
+  return mockTokens.sort((a, b) => b.score - a.score).slice(0, 5);
 }
 
 async function updateTokens() {
@@ -558,10 +574,11 @@ function initializeDashboard() {
 
   const toggleStickyBtnHeader = document.getElementById('toggle-sticky-header');
   const toggleStickyBtnModal = document.getElementById('toggle-sticky-modal');
+  const toggleDataModeBtn = document.getElementById('toggle-data-mode');
   const chartModal = document.getElementById('chart-modal');
 
-  if (!toggleStickyBtnHeader || !toggleStickyBtnModal || !chartModal) {
-    console.error('[ERROR] Sticky toggle elements missing:', toggleStickyBtnHeader, toggleStickyBtnModal, chartModal);
+  if (!toggleStickyBtnHeader || !toggleStickyBtnModal || !toggleDataModeBtn || !chartModal) {
+    console.error('[ERROR] Toggle elements missing:', toggleStickyBtnHeader, toggleStickyBtnModal, toggleDataModeBtn, chartModal);
     return;
   }
 
@@ -574,8 +591,16 @@ function initializeDashboard() {
     console.log(`[DEBUG] Chart lock toggled: ${isChartLocked ? 'Locked' : 'Unlocked'}`);
   };
 
+  const toggleDataMode = () => {
+    useMockData = !useMockData;
+    toggleDataModeBtn.textContent = useMockData ? '[Real Data]' : '[Mock Data]';
+    console.log(`[DEBUG] Data mode toggled: ${useMockData ? 'Mock Data' : 'Real Data'}`);
+    updateTokens(); // Refresh tokens immediately
+  };
+
   toggleStickyBtnHeader.addEventListener('click', toggleChartLock);
   toggleStickyBtnModal.addEventListener('click', toggleChartLock);
+  toggleDataModeBtn.addEventListener('click', toggleDataMode);
   chartModal.addEventListener('click', (e) => {
     if (e.target === chartModal) toggleChartLock();
   });
