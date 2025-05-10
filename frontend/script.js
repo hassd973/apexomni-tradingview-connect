@@ -1,11 +1,7 @@
 // === Ice King Dashboard Script ===
 // Author: Grok 3 @ xAI
-// Purpose: Display token data with TradingView chart
-// Features: Terminal-style UI, sticky chart toggle, mock/live data toggle
-
-// --- Constants and Configuration ---
-const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
-const TOKEN_REFRESH_INTERVAL = 60000;
+// Purpose: Display mock token data with TradingView chart
+// Features: Terminal-style UI, sticky chart toggle
 
 // --- Mock Data ---
 const mockTokens = [
@@ -41,68 +37,25 @@ let currentTimeframe = '1D'; // Default to 1 day
 let allTokens = [];
 let sortedTokens = [];
 let isChartLocked = false;
-let useMockData = true; // Default to mock data
 let selectedTokenLi = null;
 
 // --- Utility Functions ---
 
-// Fetch with retry
-async function fetchWithRetry(url, retries = 3, delay = 1000) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-      return await response.json();
-    } catch (error) {
-      console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
-      if (i === retries - 1) return null;
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-
 // Update tokens
-async function updateTokens() {
-  console.log('[INFO] Updating tokens (Mock Data:', useMockData, ')');
+function updateTokens() {
+  console.log('[DEBUG] Entering updateTokens');
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
-  const compareDropdowns = [
-    document.getElementById('compare-token-header'),
-    document.getElementById('compare-token-modal')
-  ];
 
   if (!tokenList || !loader || !topPairs) {
     console.error('[ERROR] DOM elements missing: tokenList=', tokenList, 'loader=', loader, 'topPairs=', topPairs);
     return;
   }
 
-  let tokens = [];
-  if (useMockData) {
-    tokens = mockTokens;
-    console.log('[INFO] Using mock data:', tokens);
-  } else {
-    const data = await fetchWithRetry(COINGECKO_API);
-    if (data) {
-      tokens = data.filter(token => token.total_volume < 5_000_000).map(token => ({
-        id: token.id,
-        name: token.name,
-        symbol: token.symbol.toUpperCase(),
-        total_volume: token.total_volume,
-        current_price: token.current_price,
-        price_change_percentage_24h: token.price_change_percentage_24h,
-        market_cap: token.market_cap,
-        circulating_supply: token.circulating_supply,
-        source: 'CoinGecko',
-        score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
-      }));
-      console.log('[INFO] Fetched real data:', tokens);
-    }
-    if (tokens.length === 0) {
-      console.warn('[WARN] No real data fetched, falling back to mock data');
-      tokens = mockTokens;
-    }
-  }
+  console.log('[DEBUG] DOM elements found, rendering tokens');
+  const tokens = mockTokens;
+  console.log('[DEBUG] Tokens to render:', tokens);
 
   allTokens = tokens;
   sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
@@ -110,6 +63,7 @@ async function updateTokens() {
   // Render token list
   tokenList.innerHTML = '';
   sortedTokens.forEach((token, index) => {
+    console.log('[DEBUG] Rendering token:', token.symbol);
     const opacity = 30 + (index / sortedTokens.length) * 40;
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
@@ -140,7 +94,7 @@ async function updateTokens() {
       selectedTokenLi = li;
       currentToken = token;
       showPriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
-      console.log(`[INFO] Selected token: ${token.symbol}`);
+      console.log(`[DEBUG] Selected token: ${token.symbol}`);
     });
     tokenList.appendChild(li);
   });
@@ -154,39 +108,26 @@ async function updateTokens() {
     return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition ${glowClass} ${hoverClass}">[${token.symbol}/USDT]</li>`;
   }).join('');
 
-  // Update comparison dropdowns
-  compareDropdowns.forEach(dropdown => {
-    if (dropdown) {
-      dropdown.innerHTML = '<option value="">[Compare with...]</option>';
-      allTokens.forEach(token => {
-        const option = document.createElement('option');
-        option.value = token.id;
-        option.textContent = `[${token.symbol}]`;
-        dropdown.appendChild(option);
-      });
-    }
-  });
-
   // Default token and chart
   if (!currentToken && allTokens.length > 0) {
     currentToken = allTokens[0];
     showPriceChart(currentToken, currentTimeframe, 'header');
-    console.log(`[INFO] Defaulted to token: ${currentToken.symbol}`);
+    console.log(`[DEBUG] Defaulted to token: ${currentToken.symbol}`);
   }
 
   loader.style.display = 'none';
-  console.log('[INFO] Tokens updated');
+  console.log('[DEBUG] Tokens updated');
 }
 
 // Show price chart using TradingView
 function showPriceChart(token, timeframe, context = 'header') {
-  console.log(`[INFO] Showing price chart for ${token.symbol} (Timeframe: ${timeframe}) in ${context} context`);
+  console.log(`[DEBUG] Showing price chart for ${token.symbol} (Timeframe: ${timeframe}) in ${context} context`);
   const chartContainer = context === 'header' ? document.getElementById('chart-container-header') : document.getElementById('chart-container-modal');
   const chartTitle = context === 'header' ? document.getElementById('chart-title-header') : document.getElementById('chart-title-modal');
   const livePriceElement = context === 'header' ? document.getElementById('live-price-header') : document.getElementById('live-price-modal');
 
   if (!chartContainer || !chartTitle || !livePriceElement) {
-    console.error(`[ERROR] Missing DOM element for ${context} chart`);
+    console.error(`[ERROR] Missing DOM element for ${context} chart: container=${chartContainer}, title=${chartTitle}, price=${livePriceElement}`);
     return;
   }
 
@@ -199,7 +140,7 @@ function showPriceChart(token, timeframe, context = 'header') {
     'SHIB': 'BINANCE:SHIBUSDT',
     'PEOPLE': 'BINANCE:PEOPLEUSDT'
   };
-  const tvSymbol = symbolMap[token.symbol] || 'BINANCE:BTCUSDT'; // Fallback to BTC if not found
+  const tvSymbol = symbolMap[token.symbol] || 'BINANCE:BTCUSDT';
 
   // Map timeframe to TradingView intervals
   const timeframeMap = {
@@ -217,46 +158,57 @@ function showPriceChart(token, timeframe, context = 'header') {
   chartContainer.innerHTML = `<div id="${containerId}" style="height: 100%; width: 100%;"></div>`;
 
   // Initialize TradingView widget
-  new TradingView.widget({
-    "container_id": containerId,
-    "width": "100%",
-    "height": "100%",
-    "symbol": tvSymbol,
-    "interval": interval,
-    "timezone": "Etc/UTC",
-    "theme": "dark",
-    "style": "1", // Candlestick chart
-    "locale": "en",
-    "toolbar_bg": "#0a0f14",
-    "enable_publishing": false,
-    "allow_symbol_change": false,
-    "hide_top_toolbar": true,
-    "hide_side_toolbar": true,
-    "backgroundColor": "#0a0f14",
-    "gridLineColor": "rgba(0, 255, 0, 0.1)",
-    "overrides": {
-      "paneProperties.background": "#0a0f14",
-      "paneProperties.gridProperties.color": "rgba(0, 255, 0, 0.1)",
-      "mainSeriesProperties.candleStyle.upColor": "#00ff00",
-      "mainSeriesProperties.candleStyle.downColor": "#ff0000",
-      "mainSeriesProperties.candleStyle.borderUpColor": "#00ff00",
-      "mainSeriesProperties.candleStyle.borderDownColor": "#ff0000",
-      "mainSeriesProperties.candleStyle.wickUpColor": "#00ff00",
-      "mainSeriesProperties.candleStyle.wickDownColor": "#ff0000"
-    }
-  });
+  try {
+    new TradingView.widget({
+      "container_id": containerId,
+      "width": "100%",
+      "height": "100%",
+      "symbol": tvSymbol,
+      "interval": interval,
+      "timezone": "Etc/UTC",
+      "theme": "dark",
+      "style": "1", // Candlestick chart
+      "locale": "en",
+      "toolbar_bg": "#0a0f14",
+      "enable_publishing": false,
+      "allow_symbol_change": false,
+      "hide_top_toolbar": true,
+      "hide_side_toolbar": true,
+      "backgroundColor": "#0a0f14",
+      "gridLineColor": "rgba(0, 255, 0, 0.1)",
+      "overrides": {
+        "paneProperties.background": "#0a0f14",
+        "paneProperties.gridProperties.color": "rgba(0, 255, 0, 0.1)",
+        "mainSeriesProperties.candleStyle.upColor": "#00ff00",
+        "mainSeriesProperties.candleStyle.downColor": "#ff0000",
+        "mainSeriesProperties.candleStyle.borderUpColor": "#00ff00",
+        "mainSeriesProperties.candleStyle.borderDownColor": "#ff0000",
+        "mainSeriesProperties.candleStyle.wickUpColor": "#00ff00",
+        "mainSeriesProperties.candleStyle.wickDownColor": "#ff0000"
+      }
+    });
+    console.log('[DEBUG] TradingView chart initialized');
+  } catch (error) {
+    console.error('[ERROR] Failed to initialize TradingView chart:', error);
+  }
 
   chartTitle.textContent = `> ${token.symbol} Price Chart`;
   livePriceElement.textContent = `> Live Price: $${token.current_price.toLocaleString()}`;
-  console.log('[INFO] TradingView chart rendered');
+  console.log('[DEBUG] Price chart rendered');
 }
 
 // Update marquee
 function updateMarquee() {
+  console.log('[DEBUG] Entering updateMarquee');
   const marqueeElements = [
     document.getElementById('ticker-marquee-header'),
     document.getElementById('ticker-marquee-modal')
   ];
+
+  if (!marqueeElements[0] || !marqueeElements[1]) {
+    console.error('[ERROR] Marquee elements missing:', marqueeElements);
+    return;
+  }
 
   function getUniquePun() {
     if (usedPuns.length === iceKingPuns.length) usedPuns = [];
@@ -276,18 +228,17 @@ function updateMarquee() {
   ];
   const doubledItems = [...marqueeItems, ...marqueeItems];
   marqueeElements.forEach(element => {
-    if (element) element.innerHTML = doubledItems.join('');
+    element.innerHTML = doubledItems.join('');
   });
-  console.log('[INFO] Marquee updated');
+  console.log('[DEBUG] Marquee updated');
 }
 
 // Initialize dashboard
 function initializeDashboard() {
-  console.log('[INFO] Initializing Ice King Dashboard...');
+  console.log('[DEBUG] Initializing Ice King Dashboard...');
 
   // Initial token setup
   updateTokens();
-  setInterval(updateTokens, TOKEN_REFRESH_INTERVAL);
 
   // Start marquee
   updateMarquee();
@@ -304,29 +255,23 @@ function initializeDashboard() {
           btn.classList.add('active');
           currentTimeframe = tf;
           if (currentToken) showPriceChart(currentToken, currentTimeframe, context);
-          console.log(`[INFO] Timeframe changed to ${tf} in ${context}`);
+          console.log(`[DEBUG] Timeframe changed to ${tf} in ${context}`);
         });
+      } else {
+        console.warn(`[WARN] Timeframe button not found: ${context}-timeframe-${tf}`);
       }
     });
-  });
-
-  // Setup comparison dropdowns (basic for now)
-  const compareDropdowns = [
-    document.getElementById('compare-token-header'),
-    document.getElementById('compare-token-modal')
-  ];
-  compareDropdowns.forEach(dropdown => {
-    if (dropdown) {
-      dropdown.addEventListener('change', () => {
-        console.log('[INFO] Comparison feature not implemented yet');
-      });
-    }
   });
 
   // Setup sticky lock chart toggle
   const toggleStickyBtnHeader = document.getElementById('toggle-sticky-header');
   const toggleStickyBtnModal = document.getElementById('toggle-sticky-modal');
   const chartModal = document.getElementById('chart-modal');
+
+  if (!toggleStickyBtnHeader || !toggleStickyBtnModal || !chartModal) {
+    console.error('[ERROR] Sticky toggle elements missing:', toggleStickyBtnHeader, toggleStickyBtnModal, chartModal);
+    return;
+  }
 
   const toggleChartLock = () => {
     isChartLocked = !isChartLocked;
@@ -342,7 +287,7 @@ function initializeDashboard() {
     toggleStickyBtnModal.classList.toggle('hover:bg-green-600', isChartLocked);
     toggleStickyBtnModal.classList.toggle('hover:bg-blue-600', !isChartLocked);
     if (isChartLocked && currentToken) showPriceChart(currentToken, currentTimeframe, 'modal');
-    console.log(`[INFO] Chart lock toggled: ${isChartLocked ? 'Locked' : 'Unlocked'}`);
+    console.log(`[DEBUG] Chart lock toggled: ${isChartLocked ? 'Locked' : 'Unlocked'}`);
   };
 
   toggleStickyBtnHeader.addEventListener('click', toggleChartLock);
@@ -351,21 +296,11 @@ function initializeDashboard() {
     if (e.target === chartModal) toggleChartLock();
   });
 
-  // Setup mock data toggle
-  const toggleDataBtn = document.getElementById('toggle-data');
-  toggleDataBtn.addEventListener('click', () => {
-    useMockData = !useMockData;
-    toggleDataBtn.textContent = `[Toggle Mock Data: ${useMockData ? 'ON' : 'OFF'}]`;
-    toggleDataBtn.classList.toggle('bg-green-500', useMockData);
-    toggleDataBtn.classList.toggle('bg-blue-500', !useMockData);
-    toggleDataBtn.classList.toggle('hover:bg-green-600', useMockData);
-    toggleDataBtn.classList.toggle('hover:bg-blue-600', !useMockData);
-    updateTokens(); // Refresh data
-    console.log(`[INFO] Mock data toggled: ${useMockData ? 'Enabled' : 'Disabled'}`);
-  });
-
-  console.log('[INFO] Dashboard initialization complete');
+  console.log('[DEBUG] Dashboard initialization complete');
 }
 
 // Start the dashboard
-document.addEventListener('DOMContentLoaded', initializeDashboard);
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[DEBUG] DOMContentLoaded event fired');
+  initializeDashboard();
+});
