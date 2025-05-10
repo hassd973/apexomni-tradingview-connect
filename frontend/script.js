@@ -1,14 +1,14 @@
 const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
-const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
-const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
+const TOKEN_REFRESH_INTERVAL = 60000;
+const LOG_REFRESH_INTERVAL = 30000;
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
 // Mock Data (Fallback)
 const mockTokens = [
-  { id: 'floki-inu', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
-  { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 },
-  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', score: 70.6 }
+  { id: 'floki-inu', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6, liquidity_ratio: 0.003, sentiment_score: 0.5, sentiment_mentions: 100 },
+  { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9, liquidity_ratio: 0.0004, sentiment_score: 0.5, sentiment_mentions: 100 },
+  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', score: 70.6, liquidity_ratio: 0.0014, sentiment_score: 0.5, sentiment_mentions: 100 }
 ];
 
 // Ice King Puns for Marquee
@@ -39,6 +39,37 @@ let allTokens = [];
 let sortedTokens = [];
 let isChartLocked = false;
 let selectedTokenLi = null;
+const livePrices = {};
+
+// WebSocket for Live Prices
+const ws = new WebSocket('wss://stream.binance.com:9443/ws');
+ws.onopen = () => {
+  console.log('[DEBUG] Binance WebSocket connected');
+  const symbols = ['btcusdt', 'ethusdt', 'bnbusdt', 'flokiusdt', 'shibusdt', 'peopleusdt'];
+  symbols.forEach(symbol => {
+    ws.send(JSON.stringify({
+      method: 'SUBSCRIBE',
+      params: [`${symbol}@ticker`],
+      id: 1
+    }));
+  });
+};
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  if (msg.e === '24hrTicker') {
+    livePrices[msg.s] = {
+      price: parseFloat(msg.c),
+      priceChangePercent: parseFloat(msg.P),
+      volume: parseFloat(msg.v)
+    };
+    if (currentToken && msg.s === `${currentToken.symbol}USDT`.toUpperCase()) {
+      updateLivePrice(currentToken, currentTimeframe, isChartLocked ? 'modal' : 'header');
+    }
+  }
+};
+ws.onerror = (error) => {
+  console.error('[ERROR] WebSocket:', error.message);
+};
 
 // Utility Functions
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
@@ -78,8 +109,11 @@ function sanitizeTokenData(data) {
     price_change_percentage_24h: Number(token.price_change_percentage_24h) || 0,
     market_cap: Number(token.market_cap) || 0,
     circulating_supply: Number(token.circulating_supply) || 0,
-    source: String(token.source || 'CoinMarketCap'),
-    score: Math.min(100, Math.max(0, (Number(token.price_change_percentage_24h) + 100) / 2)) || 0
+    liquidity_ratio: Number(token.liquidity_ratio) || 0,
+    sentiment_score: Number(token.sentiment_score) || 0.5,
+    sentiment_mentions: Number(token.sentiment_mentions) || 0,
+    score: Number(token.score) || 0,
+    source: String(token.source || 'CoinGecko+Binance')
   })).filter(token => token.symbol && token.current_price > 0);
   console.log('[DEBUG] Sanitized token data:', sanitized);
   return sanitized;
@@ -125,9 +159,9 @@ function formatPercentage(value) {
 }
 
 async function fetchTokenData() {
-  console.log('[DEBUG] Fetching token data from backend');
-  const symbols = 'BTC,ETH,BNB,FLOKI,SHIB,PEOPLE';
-  const url = `${BACKEND_URL}/token-stats?symbols=${symbols}`;
+  console.log('[DEBUG] Fetching enhanced token data from backend');
+  const symbols = 'bitcoin,ethereum,binancecoin,floki-inu,shiba-inu,constitutiondao';
+  const url = `${BACKEND_URL}/tokens/enhanced?symbols=${symbols}`;
   const data = await fetchWithRetry(url);
   if (data && Array.isArray(data)) {
     console.log('[DEBUG] Received token data:', data);
@@ -153,11 +187,11 @@ async function fetchLogs() {
 
 async function fetchTopTokens() {
   console.log('[DEBUG] Fetching top tokens from backend');
-  const url = `${BACKEND_URL}/top-tokens`;
+  const url = `${BACKEND_URL}/tokens/enhanced`;
   const data = await fetchWithRetry(url);
   if (data && Array.isArray(data)) {
     console.log('[DEBUG] Received top tokens:', data);
-    return data;
+    return data.sort((a, b) => b.score - a.score).slice(0, 5);
   }
   console.warn('[WARN] No valid top tokens data, returning empty array');
   return [];
@@ -182,7 +216,7 @@ async function updateTokens() {
   }
 
   allTokens = tokens;
-  sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+  sortedTokens = [...tokens].sort((a, b) => b.score - a.score);
 
   tokenList.innerHTML = sortedTokens.map((token, index) => {
     const opacity = 30 + (index / sortedTokens.length) * 40;
@@ -203,7 +237,8 @@ async function updateTokens() {
             <p>Price: ${formatPrice(token.current_price)}</p>
             <p class="${priceChangeColor}">24h: ${formatPercentage(priceChange)} ${priceChangeEmoji}</p>
             <p>Market Cap: ${formatPrice(token.market_cap)}</p>
-            <p>Supply: ${token.circulating_supply.toLocaleString()} ${token.symbol}</p>
+            <p>Liquidity: ${(token.liquidity_ratio * 100).toFixed(2)}%</p>
+            <p>Sentiment: ${(token.sentiment_score * 100).toFixed(0)}% (${token.sentiment_mentions} mentions)</p>
             <p>Source: ${token.source}</p>
           </div>
         </div>
@@ -294,25 +329,28 @@ async function initializeChatbot() {
   }
 
   async function handleChat() {
-    const query = chatInput.value.trim();
+    const query = chatInput.value.trim().toLowerCase();
     if (!query) return;
     loaderChat.style.display = 'flex';
     await addMessage(query, true);
     chatInput.value = '';
 
-    if (query.toLowerCase().includes('top rising tokens') || query.toLowerCase().includes('trade today')) {
+    if (query.includes('top rising tokens') || query.includes('trade today') || query.includes('best tokens')) {
       try {
         const data = await fetchTopTokens();
         if (data.length === 0) {
           await addMessage('No rising tokens found at the moment.');
         } else {
           const message = `
-            Top rising tokens to trade today (based on 24h price change):<br>
+            Top tokens to trade today (based on score):<br>
             ${data.map((token, i) => `
               ${i + 1}. ${token.name} (${token.symbol})<br>
+                - Score: ${token.score.toFixed(1)}/100<br>
+                - Price: ${formatPrice(token.current_price)}<br>
                 - 24h Change: ${formatPercentage(token.price_change_percentage_24h)}<br>
-                - Volume (24h): ${formatPrice(token.volume_24h)}<br>
-                - Liquidity Ratio: ${(token.liquidity_ratio * 100).toFixed(2)}% (Volume/Market Cap)<br>
+                - Volume (24h): ${formatPrice(token.total_volume)}<br>
+                - Liquidity: ${(token.liquidity_ratio * 100).toFixed(2)}%<br>
+                - Sentiment: ${(token.sentiment_score * 100).toFixed(0)}% (${token.sentiment_mentions} mentions)<br>
                 - Source: ${token.source}
             `).join('<br>')}
           `;
@@ -322,7 +360,7 @@ async function initializeChatbot() {
         await addMessage('Failed to fetch top tokens. Please try again.');
       }
     } else {
-      await addMessage('I can help with top rising tokens! Ask: "What are the top rising tokens to trade today?"');
+      await addMessage('I can recommend top tokens! Ask: "What are the top rising tokens to trade today?" or "Best tokens for day trading."');
     }
     loaderChat.style.display = 'none';
   }
@@ -336,7 +374,7 @@ async function initializeChatbot() {
   });
 
   loaderChat.style.display = 'none';
-  await addMessage('Ask me: "What are the top rising tokens to trade today?"');
+  await addMessage('Ask me: "What are the top rising tokens to trade today?" or "Best tokens for day trading."');
 }
 
 function showPriceChart(token, timeframe, context = 'header') {
@@ -406,8 +444,19 @@ function showPriceChart(token, timeframe, context = 'header') {
     console.error('[ERROR] Failed to initialize TradingView chart:', error);
   }
 
+  updateLivePrice(token, timeframe, context);
+}
+
+function updateLivePrice(token, timeframe, context) {
+  const chartTitle = document.getElementById(`chart-title-${context}`);
+  const livePriceElement = document.getElementById(`live-price-${context}`);
+  const binanceSymbol = `${token.symbol}USDT`.toUpperCase();
+  const liveData = livePrices[binanceSymbol] || {};
+  const price = liveData.price || token.current_price;
+  const priceChange = liveData.priceChangePercent || token.price_change_percentage_24h;
+
   chartTitle.textContent = `> ${token.symbol}/USDT [${timeframe.toUpperCase()}]`;
-  livePriceElement.textContent = `> Live Price: ${formatPrice(token.current_price)} (${formatPercentage(token.price_change_percentage_24h)})`;
+  livePriceElement.textContent = `> Live Price: ${formatPrice(price)} (${formatPercentage(priceChange)})`;
 }
 
 function updateMarquee() {
