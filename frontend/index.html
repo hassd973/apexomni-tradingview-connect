@@ -117,8 +117,8 @@
     .marquee span { margin-right: 20px; font-size: 12px; color: #00ff00; }
     @media (min-width: 640px) { .marquee span { font-size: 14px; } }
     .marquee-container:hover .marquee { animation-play-state: running; }
-    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; }
-    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
+    #toggle-sticky-header, #toggle-sticky-modal, #toggle-data, .timeframe-btn { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; }
+    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, #toggle-data:hover, .timeframe-btn:hover { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .timeframe-btn.active { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .compare-dropdown { background: #00ff00; color: #000; border: 1px solid #00ff00; }
     .compare-dropdown:hover { background: #00cc00; }
@@ -173,7 +173,10 @@
             <button id="header-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm">[4H]</button>
             <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded text-xs sm:text-sm active">[1D]</button>
           </div>
-          <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded text-xs sm:text-sm">[Lock Chart]</button>
+          <div class="flex space-x-2">
+            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded text-xs sm:text-sm">[Lock Chart]</button>
+            <button id="toggle-data" class="text-black px-2 py-1 rounded text-xs sm:text-sm">[Toggle Mock Data: ON]</button>
+          </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div id="live-price-header" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
