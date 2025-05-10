@@ -11,7 +11,7 @@ class BetterStackTransport extends TransportStream {
     super(options);
     this.name = 'betterStack';
     this.level = options.level || 'info';
-    this.token = options.token || process.env.BETTERSTACK_TOKEN || 'XEBetwKsdutXhsDodis2P75H';
+    this.token = options.token || process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza'; // Hardcoded Logs API token
     this.url = 'https://in.logs.betterstack.com';
   }
 
@@ -52,21 +52,21 @@ const logger = winston.createLogger({
     new winston.transports.Console(),
     new BetterStackTransport({
       level: 'info',
-      token: process.env.BETTERSTACK_TOKEN || 'XEBetwKsdutXhsDodis2P75H'
+      token: process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza'
     })
   ],
   exceptionHandlers: [
     new winston.transports.Console(),
     new BetterStackTransport({
       level: 'error',
-      token: process.env.BETTERSTACK_TOKEN || 'XEBetwKsdutXhsDodis2P75H'
+      token: process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza'
     })
   ],
   rejectionHandlers: [
     new winston.transports.Console(),
     new BetterStackTransport({
       level: 'error',
-      token: process.env.BETTERSTACK_TOKEN || 'XEBetwKsdutXhsDodis2P75H'
+      token: process.env.BETTERSTACK_TOKEN || 'x5nvK7DNDURcpAHEBuCbHrza'
     })
   ]
 });
