@@ -6,7 +6,8 @@
   <title>🧊 ICE KING DASHBOARD 👑</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <!-- Include TradingView widget script -->
+  <script src="https://s3.tradingview.com/tv.js"></script>
   <style>
     body {
       font-family: 'Fira Code', monospace;
@@ -103,8 +104,7 @@
     .chart-modal.active { display: flex; }
     .chart-modal-content { background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7)); padding: 20px; border: 2px solid rgba(0, 255, 0, 0.5); border-radius: 5px; width: 90%; max-width: 1200px; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
     .chart-wrapper { position: relative; z-index: 0; }
-    #chart-canvas { width: 100% !important; height: 100% !important; }
-    #chart-canvas-header, #chart-canvas-modal { width: 100% !important; height: 100% !important; }
+    #chart-container-header, #chart-container-modal { width: 100% !important; height: 100% !important; }
     #token-list { z-index: 10; }
     #token-list li { z-index: 10; position: relative; }
     @media (min-width: 640px) { .chart-container { height: 700px; } .chart-modal-content { width: 80%; } }
@@ -125,7 +125,6 @@
     .loader { display: flex; justify-content: center; align-items: center; padding: 1rem; }
     .loader::after { content: ''; width: 24px; height: 24px; border: 4px solid #00ff00; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    /* Typewriter Effect */
     .typewriter {
       display: inline-block;
       overflow: hidden;
@@ -141,13 +140,17 @@
       from, to { border-color: transparent; }
       50% { border-color: #00ff00; }
     }
-    /* Terminal Aesthetic */
     pre.ascii-art {
       font-family: 'Fira Code', monospace;
       color: #00ff00;
       text-align: center;
       line-height: 1;
       margin-bottom: 0.5rem;
+    }
+    /* TradingView Widget Styling */
+    .tradingview-widget-container {
+      border: 1px solid rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
   </style>
 </head>
@@ -184,9 +187,7 @@
             <option value="">[Compare with...]</option>
           </select>
         </div>
-        <div id="chart-container-header" class="chart-container mt-2">
-          <canvas id="chart-canvas-header"></canvas>
-        </div>
+        <div id="chart-container-header" class="chart-container mt-2"></div>
         <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header"></div>
@@ -214,9 +215,7 @@
             <option value="">[Compare with...]</option>
           </select>
         </div>
-        <div id="chart-container-modal" class="chart-container mt-2">
-          <canvas id="chart-canvas-modal"></canvas>
-        </div>
+        <div id="chart-container-modal" class="chart-container mt-2"></div>
         <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal"></div>
@@ -240,7 +239,7 @@
     </section>
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
-    <p class="typewriter">> Powered by CoinGecko, CoinMarketCap, CryptoCompare</p>
+    <p class="typewriter">> Powered by TradingView</p>
   </footer>
   <script>
     const particleContainer = document.getElementById('particles');
