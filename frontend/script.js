@@ -2,8 +2,8 @@ const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
 const BACKEND_IPS = ['44.226.145.213', '54.187.200.255', '34.213.214.55', '35.164.95.156', '44.230.95.183', '44.229.200.200'];
 const TOKEN_REFRESH_INTERVAL = 60000;
 const LOG_REFRESH_INTERVAL = 30000;
-const MAX_RETRIES = 5; // Increased retries
-const RETRY_DELAY = 2000; // Increased delay for stability
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 2000;
 
 // Mock Data (Fallback)
 const mockTokens = [
@@ -40,37 +40,6 @@ let allTokens = [];
 let sortedTokens = [];
 let isChartLocked = false;
 let selectedTokenLi = null;
-const livePrices = {};
-
-// WebSocket for Live Prices
-const ws = new WebSocket('wss://stream.binance.com:9443/ws');
-ws.onopen = () => {
-  console.log('[DEBUG] Binance WebSocket connected');
-  const symbols = ['btcusdt', 'ethusdt', 'bnbusdt', 'flokiusdt', 'shibusdt', 'peopleusdt'];
-  symbols.forEach(symbol => {
-    ws.send(JSON.stringify({
-      method: 'SUBSCRIBE',
-      params: [`${symbol}@ticker`],
-      id: 1
-    }));
-  });
-};
-ws.onmessage = (event) => {
-  const msg = JSON.parse(event.data);
-  if (msg.e === '24hrTicker') {
-    livePrices[msg.s] = {
-      price: parseFloat(msg.c),
-      priceChangePercent: parseFloat(msg.P),
-      volume: parseFloat(msg.v)
-    };
-    if (currentToken && msg.s === `${currentToken.symbol}USDT`.toUpperCase()) {
-      updateLivePrice(currentToken, currentTimeframe, isChartLocked ? 'modal' : 'header');
-    }
-  }
-};
-ws.onerror = (error) => {
-  console.error('[ERROR] WebSocket:', error.message);
-};
 
 // Utility Functions
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
@@ -141,7 +110,7 @@ function sanitizeTokenData(data) {
     sentiment_score: Number(token.sentiment_score) || 0.5,
     sentiment_mentions: Number(token.sentiment_mentions) || 0,
     score: Number(token.score) || 0,
-    source: String(token.source || 'CoinGecko+Binance')
+    source: String(token.source || 'CoinMarketCap')
   })).filter(token => token.symbol && token.current_price > 0);
   console.log('[DEBUG] Sanitized token data:', sanitized);
   return sanitized;
@@ -188,7 +157,7 @@ function formatPercentage(value) {
 
 async function fetchTokenData() {
   console.log('[DEBUG] Fetching enhanced token data from backend');
-  const symbols = 'bitcoin,ethereum,binancecoin,floki-inu,shiba-inu,constitutiondao';
+  const symbols = 'BTC,ETH,BNB,FLOKI,SHIB,PEOPLE';
   const url = `${BACKEND_URL}/tokens/enhanced?symbols=${symbols}`;
   const data = await fetchWithRetry(url);
   if (data && Array.isArray(data)) {
@@ -283,7 +252,7 @@ async function updateTokens() {
 
   if (!currentToken && allTokens.length > 0) {
     currentToken = allTokens[0];
-    showPriceChart(currentToken, currentTimeframe, 'header');
+    showPriceChart(currentToken, currentTimeframe, isChartLocked ? 'modal' : 'header');
     selectedTokenLi = tokenList.querySelector(`[data-token="${currentToken.symbol}"]`);
     if (selectedTokenLi) selectedTokenLi.classList.add('selected-token');
   }
@@ -296,7 +265,7 @@ async function updateTokens() {
       const token = allTokens.find(t => t.symbol === item.dataset.token);
       if (token) {
         currentToken = token;
-        showPriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
+        showPricePriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
       }
     });
   });
@@ -519,10 +488,8 @@ function showPriceChart(token, timeframe, context = 'header') {
 function updateLivePrice(token, timeframe, context) {
   const chartTitle = document.getElementById(`chart-title-${context}`);
   const livePriceElement = document.getElementById(`live-price-${context}`);
-  const binanceSymbol = `${token.symbol}USDT`.toUpperCase();
-  const liveData = livePrices[binanceSymbol] || {};
-  const price = liveData.price || token.current_price;
-  const priceChange = liveData.priceChangePercent || token.price_change_percentage_24h;
+  const price = token.current_price;
+  const priceChange = token.price_change_percentage_24h;
 
   chartTitle.textContent = `> ${token.symbol}/USDT [${timeframe.toUpperCase()}]`;
   livePriceElement.textContent = `> Live Price: ${formatPrice(price)} (${formatPercentage(priceChange)})`;
