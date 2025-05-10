@@ -1,18 +1,18 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const winston = require('winston');
 const axios = require('axios');
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-// ⚠️ HARDCODED CONFIG (REMOVE BEFORE DEPLOYING!)
+// Configuration (for local testing only - use .env in production)
 const CONFIG = {
-  BETTERSTACK_TOKEN: "WGdCT5KhHtg4kiGWAbdXRaSL", // Telemetry token (exposed, rotate ASAP)
-  UPTIME_TOKEN: "kbwEU9ZqoTy2JHtpHda8dpKm",      // Uptime token (exposed, rotate ASAP)
-  SOURCE_ID: "1303816",                           // Your BetterStack source ID
+  BETTERSTACK_TOKEN: process.env.BETTERSTACK_TOKEN || "WGdCT5KhHtg4kiGWAbdXRaSL",
+  SOURCE_ID: process.env.SOURCE_ID || "1303816",
   ALLOWED_ORIGINS: [
-    "https://ice-king-dashboard-tm48.onrender.com",
-    "http://localhost:3000"
+    process.env.FRONTEND_URL || "http://localhost:3000",
+    "https://ice-king-dashboard-tm48.onrender.com"
   ]
 };
 
@@ -27,10 +27,13 @@ const logger = winston.createLogger({
 });
 
 // Middleware
-app.use(cors({ origin: CONFIG.ALLOWED_ORIGINS }));
+app.use(cors({
+  origin: CONFIG.ALLOWED_ORIGINS,
+  methods: ['GET', 'POST']
+}));
 app.use(express.json());
 
-// Fetch logs from BetterStack
+// Log retrieval endpoint
 app.get('/logs', async (req, res) => {
   try {
     const response = await axios.get(
@@ -52,24 +55,6 @@ app.get('/logs', async (req, res) => {
   }
 });
 
-// List all sources (for debugging)
-app.get('/sources', async (req, res) => {
-  try {
-    const response = await axios.get(
-      'https://telemetry.betterstack.com/api/v1/sources',
-      {
-        headers: {
-          Authorization: `Bearer ${CONFIG.BETTERSTACK_TOKEN}`
-        }
-      }
-    );
-    res.json(response.data);
-  } catch (error) {
-    logger.error("Failed to fetch sources:", error.message);
-    res.status(500).json({ error: "Failed to list sources" });
-  }
-});
-
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: "OK", time: new Date().toISOString() });
@@ -77,6 +62,6 @@ app.get('/health', (req, res) => {
 
 // Start server
 app.listen(port, () => {
-  logger.warn(`🚨 Server running with HARDCODED TOKENS (UNSAFE!)`);
-  logger.info(`Server started on http://localhost:${port}`);
+  logger.info(`Server running on http://localhost:${port}`);
+  logger.warn('WARNING: Running with local test configuration');
 });
