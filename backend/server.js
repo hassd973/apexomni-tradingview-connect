@@ -1,10 +1,35 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const { createClient } = require('betterstack');
+const winston = require('winston');
+const fs = require('fs').promises;
+const path = require('path');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Configure Winston logger
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp({ format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' }),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.File({ filename: path.join(__dirname, 'logs.json') })
+  ]
+});
+
+// Initialize logs.json if it doesn't exist
+async function initializeLogs() {
+  try {
+    await fs.access(path.join(__dirname, 'logs.json'));
+  } catch (error) {
+    await fs.writeFile(path.join(__dirname, 'logs.json'), JSON.stringify([]));
+    logger.info('Initialized logs.json');
+  }
+}
+
+// Middleware
 app.use(cors({
   origin: ['https://apexomni-frontend.onrender.com', 'http://localhost:3000'],
   methods: ['GET', 'POST'],
@@ -12,10 +37,13 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Log server start
+initializeLogs().then(() => {
+  logger.info(`Server started on port ${port}`);
+});
+
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const BINANCE_API = 'https://api.binance.com/api/v3';
-const BETTERSTACK_TOKEN = process.env.BETTERSTACK_TOKEN || 'your_betterstack_token_here';
-const betterstack = createClient(BETTERSTACK_TOKEN);
 
 async function fetchCoinGeckoData(symbols) {
   try {
@@ -31,9 +59,10 @@ async function fetchCoinGeckoData(symbols) {
       },
       headers: { 'Accept': 'application/json' }
     });
+    logger.info(`Fetched CoinGecko data for ${ids}`);
     return response.data;
   } catch (error) {
-    console.error(`[ERROR] CoinGecko fetch failed: ${error.message}`);
+    logger.error(`CoinGecko fetch failed: ${error.message}`);
     return [];
   }
 }
@@ -44,28 +73,40 @@ async function fetchBinanceData(symbol) {
       params: { symbol: `${symbol}USDT` },
       headers: { 'Accept': 'application/json' }
     });
+    logger.info(`Fetched Binance data for ${symbol}USDT`);
     return response.data;
   } catch (error) {
-    console.error(`[ERROR] Binance fetch failed for ${symbol}: ${error.message}`);
+    logger.error(`Binance fetch failed for ${symbol}: ${error.message}`);
     return null;
   }
 }
 
-async function fetchBetterStackLogs(query, batch = 50) {
+async function fetchLogs(query = 'level:info', batch = 50) {
   try {
-    const response = await betterstack.logs.search({
-      query,
-      batch,
-      order: 'desc'
-    });
-    return response.logs || [];
+    const data = await fs.readFile(path.join(__dirname, 'logs.json'), 'utf8');
+    let logs = JSON.parse(data);
+    if (query) {
+      const level = query.split(':')[1]?.toLowerCase();
+      if (level) {
+        logs = logs.filter(log => log.level.toLowerCase() === level);
+      }
+    }
+    logs = logs.slice(0, batch).map(log => ({
+      dt: log.timestamp,
+      message: log.message,
+      level: log.level
+    }));
+    logger.info(`Fetched ${logs.length} logs with query "${query}"`);
+    return logs;
   } catch (error) {
-    console.error(`[ERROR] BetterStack logs fetch failed: ${error.message}`);
+    logger.error(`Logs fetch failed: ${error.message}`);
     return [];
   }
 }
 
+// Routes
 app.get('/health', (req, res) => {
+  logger.info('Health check requested');
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
@@ -76,7 +117,7 @@ app.get('/tokens/enhanced', async (req, res) => {
     ];
     const coingeckoData = await fetchCoinGeckoData(symbols);
     if (!coingeckoData.length) {
-      console.warn('[WARN] No CoinGecko data returned');
+      logger.warn('No CoinGecko data returned');
       return res.status(500).json({ error: 'No token data available' });
     }
 
@@ -109,10 +150,10 @@ app.get('/tokens/enhanced', async (req, res) => {
       };
     }));
 
-    console.log('[DEBUG] Enhanced token data:', enhancedData);
+    logger.info(`Returning ${enhancedData.length} enhanced tokens`);
     res.json(enhancedData);
   } catch (error) {
-    console.error('[ERROR] /tokens/enhanced:', error.message);
+    logger.error(`/tokens/enhanced failed: ${error.message}`);
     res.status(500).json({ error: 'Failed to fetch token data' });
   }
 });
@@ -121,15 +162,15 @@ app.get('/logs', async (req, res) => {
   try {
     const query = req.query.query || 'level:info';
     const batch = parseInt(req.query.batch) || 50;
-    const logs = await fetchBetterStackLogs(query, batch);
-    console.log('[DEBUG] Logs fetched:', logs);
+    const logs = await fetchLogs(query, batch);
+    logger.info(`Returning ${logs.length} logs`);
     res.json({ logs });
   } catch (error) {
-    console.error('[ERROR] /logs:', error.message);
+    logger.error(`/logs failed: ${error.message}`);
     res.status(500).json({ error: 'Failed to fetch logs' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`[INFO] Server running on port ${port}`);
+  logger.info(`Server listening on port ${port}`);
 });
