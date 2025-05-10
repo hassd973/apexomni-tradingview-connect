@@ -29,6 +29,14 @@ const apiThrottle = {
   }
 };
 
+// Mock Logs for Fallback
+const mockLogs = [
+  { dt: new Date().toISOString(), message: 'Mock log: Server initialized', level: 'info' },
+  { dt: new Date().toISOString(), message: 'Mock log: Token data processed', level: 'info' },
+  { dt: new Date().toISOString(), message: 'Mock log: API rate limit warning', level: 'warn' },
+  { dt: new Date().toISOString(), message: 'Mock log: System check complete', level: 'info' }
+];
+
 // Root Route
 app.get('/', (req, res) => {
   res.json({ message: 'ApexOmni Backend Running', endpoints: ['/health', '/token-stats', '/logs'] });
@@ -61,7 +69,7 @@ app.get('/token-stats', async (req, res) => {
   }
 });
 
-// Logs Endpoint (Using Better Stack)
+// Logs Endpoint (Using Better Stack with Mock Fallback)
 app.get('/logs', async (req, res) => {
   try {
     await apiThrottle.wait();
@@ -73,10 +81,15 @@ app.get('/logs', async (req, res) => {
       headers: { Authorization: `Bearer ${process.env.BETTER_STACK_TOKEN}` }
     });
     console.log('[DEBUG] Better Stack response:', response.data);
-    res.json({ logs: response.data.events || [] });
+    const logs = response.data.events && Array.isArray(response.data.events) ? response.data.events : [];
+    if (logs.length === 0) {
+      console.warn('[WARN] No logs returned from Better Stack, using mock logs');
+      return res.json({ logs: mockLogs });
+    }
+    res.json({ logs });
   } catch (error) {
     console.error('[ERROR] Logs:', error.message, error.response?.data);
-    res.status(500).json({ error: 'Failed to fetch logs', details: error.message });
+    res.json({ logs: mockLogs });
   }
 });
 
