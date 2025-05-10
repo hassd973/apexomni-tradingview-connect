@@ -1,7 +1,7 @@
 // === Ice King Dashboard Script ===
 // Author: Grok 3 @ xAI
-// Purpose: Display static mock token data and chart with optional real data fallback
-// Features: Terminal-style UI, sticky chart toggle, mock data-first approach
+// Purpose: Display token data and chart with mock data toggle
+// Features: Terminal-style UI, sticky chart toggle, mock/live data toggle
 
 // --- Constants and Configuration ---
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
@@ -49,10 +49,12 @@ let currentTimeframe = 1; // Default to 1 day
 let allTokens = [];
 let sortedTokens = [];
 let isChartLocked = false;
+let useMockData = true; // Default to mock data
+let selectedTokenLi = null;
 
 // --- Utility Functions ---
 
-// Fetch with retry (for fallback)
+// Fetch with retry
 async function fetchWithRetry(url, retries = 3, delay = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -66,12 +68,9 @@ async function fetchWithRetry(url, retries = 3, delay = 1000) {
   }
 }
 
-// Update tokens with optional real data
-function updateTokens() {
-  console.log('[INFO] Updating tokens with mock data (attempting real data fallback)');
-  allTokens = [...mockTokens];
-  sortedTokens = [...mockTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-
+// Update tokens
+async function updateTokens() {
+  console.log('[INFO] Updating tokens (Mock Data:', useMockData, ')');
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
@@ -79,6 +78,34 @@ function updateTokens() {
     document.getElementById('compare-token-header'),
     document.getElementById('compare-token-modal')
   ];
+  let tokens = [];
+
+  if (useMockData) {
+    tokens = mockTokens;
+  } else {
+    const data = await fetchWithRetry(COINGECKO_API);
+    if (data) {
+      tokens = data.filter(token => token.total_volume < 5_000_000).map(token => ({
+        id: token.id,
+        name: token.name,
+        symbol: token.symbol.toUpperCase(),
+        total_volume: token.total_volume,
+        current_price: token.current_price,
+        price_change_percentage_24h: token.price_change_percentage_24h,
+        market_cap: token.market_cap,
+        circulating_supply: token.circulating_supply,
+        source: 'CoinGecko',
+        score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
+      }));
+    }
+    if (tokens.length === 0) {
+      console.warn('[WARN] No real data fetched, falling back to mock data');
+      tokens = mockTokens;
+    }
+  }
+
+  allTokens = tokens;
+  sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 
   // Render token list
   tokenList.innerHTML = '';
@@ -140,33 +167,15 @@ function updateTokens() {
     }
   });
 
-  // Hide loader
-  loader.style.display = 'none';
-  console.log('[INFO] Tokens updated with mock data');
+  // Default token and chart
+  if (!currentToken && allTokens.length > 0) {
+    currentToken = allTokens[0];
+    showPriceChart(currentToken, currentTimeframe, 'header');
+    console.log(`[INFO] Defaulted to token: ${currentToken.symbol}`);
+  }
 
-  // Attempt real data fetch (optional fallback)
-  fetchWithRetry(COINGECKO_API).then(data => {
-    if (data) {
-      const realTokens = data.filter(token => token.total_volume < 5_000_000).map(token => ({
-        id: token.id,
-        name: token.name,
-        symbol: token.symbol.toUpperCase(),
-        total_volume: token.total_volume,
-        current_price: token.current_price,
-        price_change_percentage_24h: token.price_change_percentage_24h,
-        market_cap: token.market_cap,
-        circulating_supply: token.circulating_supply,
-        source: 'CoinGecko',
-        score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
-      }));
-      if (realTokens.length > 0) {
-        allTokens = realTokens;
-        sortedTokens = [...realTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-        updateTokens(); // Re-render with real data
-        console.log('[INFO] Successfully updated with real data from CoinGecko');
-      }
-    }
-  }).catch(error => console.error('[ERROR] Real data fetch failed:', error));
+  loader.style.display = 'none';
+  console.log('[INFO] Tokens updated');
 }
 
 // Show price chart
@@ -186,7 +195,7 @@ function showPriceChart(token, days, context = 'header') {
     console.log('[INFO] Destroyed previous chart instance');
   }
 
-  // Simulate data based on timeframe
+  // Use mock data for chart
   const baseData = mockChartData.prices.map(([timestamp, price]) => [timestamp, price * (days + 1)]);
   const labels = baseData.map(item => new Date(item[0]).toLocaleString());
   const prices = baseData.map(item => item[1]);
@@ -217,7 +226,7 @@ function showPriceChart(token, days, context = 'header') {
 
   chartTitle.textContent = `> ${token.symbol} Price Chart`;
   livePriceElement.textContent = `> Live Price: $${token.current_price.toLocaleString()}`;
-  console.log('[INFO] Price chart rendered with mock data');
+  console.log('[INFO] Price chart rendered');
 }
 
 // Update marquee
@@ -247,7 +256,7 @@ function updateMarquee() {
   marqueeElements.forEach(element => {
     if (element) element.innerHTML = doubledItems.join('');
   });
-  console.log('[INFO] Marquee updated with winners, losers, and pun');
+  console.log('[INFO] Marquee updated');
 }
 
 // Initialize dashboard
@@ -321,12 +330,18 @@ function initializeDashboard() {
     if (e.target === chartModal) toggleChartLock();
   });
 
-  // Default token and chart
-  if (allTokens.length > 0) {
-    currentToken = allTokens[0];
-    showPriceChart(currentToken, currentTimeframe, 'header');
-    console.log(`[INFO] Defaulted to token: ${currentToken.symbol}`);
-  }
+  // Setup mock data toggle
+  const toggleDataBtn = document.getElementById('toggle-data');
+  toggleDataBtn.addEventListener('click', () => {
+    useMockData = !useMockData;
+    toggleDataBtn.textContent = `[Toggle Mock Data: ${useMockData ? 'ON' : 'OFF'}]`;
+    toggleDataBtn.classList.toggle('bg-green-500', useMockData);
+    toggleDataBtn.classList.toggle('bg-blue-500', !useMockData);
+    toggleDataBtn.classList.toggle('hover:bg-green-600', useMockData);
+    toggleDataBtn.classList.toggle('hover:bg-blue-600', !useMockData);
+    updateTokens(); // Refresh data
+    console.log(`[INFO] Mock data toggled: ${useMockData ? 'Enabled' : 'Disabled'}`);
+  });
 
   console.log('[INFO] Dashboard initialization complete');
 }
