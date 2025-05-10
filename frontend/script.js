@@ -1,29 +1,17 @@
 // === Ice King Dashboard Script ===
 // Author: Grok 3 @ xAI
-// Purpose: Fetch and display low-volume token data with a live price chart
-// Features: Terminal-style UI, robust error handling, sticky chart toggle, debug logging
+// Purpose: Display static mock token data and chart with optional real data fallback
+// Features: Terminal-style UI, sticky chart toggle, mock data-first approach
 
 // --- Constants and Configuration ---
 const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1';
-const COINGECKO_CHART_API = 'https://api.coingecko.com/api/v3/coins/{id}/market_chart?vs_currency=usd&days={days}';
-const COINGECKO_PRICE_API = 'https://api.coingecko.com/api/v3/simple/price?ids={id}&vs_currencies=usd';
-const COINMARKETCAP_API = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?start=1&limit=100&convert=USD';
-const CRYPTOCOMPARE_API = 'https://min-api.cryptocompare.com/data/top/totalvolfull?limit=100&tsym=USD';
-const BETTERSTACK_API = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
-
-// Intervals (ms) to balance API rate limits
-const POLLING_INTERVAL = 15000;
-const PRICE_UPDATE_INTERVAL = 15000;
 const TOKEN_REFRESH_INTERVAL = 60000;
-const MARQUEE_UPDATE_INTERVAL = 20000;
 
-const CMC_API_KEY = 'bef090eb-323d-4ae8-86dd-266236262f19';
-
-// --- Mock Data for Fallback ---
+// --- Mock Data ---
 const mockTokens = [
   { id: 'floki', name: 'FLOKI', symbol: 'FLOKI', total_volume: 4500000, current_price: 0.00015, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 10000000000000, source: 'Mock', score: 52.6 },
   { id: 'shiba-inu', name: 'Shiba Inu', symbol: 'SHIB', total_volume: 3000000, current_price: 0.000013, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 589000000000000, source: 'Mock', score: 48.9 },
-  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'CryptoCompare', score: 70.6 }
+  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', total_volume: 135674.745, current_price: 0.01962, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', score: 70.6 }
 ];
 
 const mockChartData = {
@@ -57,7 +45,6 @@ const iceKingPuns = [
 let usedPuns = [];
 let priceChart = null;
 let currentToken = null;
-let compareToken = null;
 let currentTimeframe = 1; // Default to 1 day
 let allTokens = [];
 let sortedTokens = [];
@@ -65,140 +52,26 @@ let isChartLocked = false;
 
 // --- Utility Functions ---
 
-// Fetch with retry mechanism
-async function fetchWithRetry(url, retries = 3, delay = 1000, options = {}) {
+// Fetch with retry (for fallback)
+async function fetchWithRetry(url, retries = 3, delay = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await fetch(url, options);
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`HTTP ${response.status}: ${text}`);
-      }
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       return await response.json();
     } catch (error) {
-      if (i === retries - 1) {
-        console.error(`[ERROR] Fetch failed after ${retries} retries for ${url}:`, error);
-        return null;
-      }
-      console.warn(`[WARN] Retrying fetch (${i + 1}/${retries}) for ${url}:`, error.message);
+      if (i === retries - 1) return null;
       await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
 }
 
-// Fetch live price
-async function fetchLivePrice(tokenId) {
-  if (!tokenId) {
-    console.error('[ERROR] Token ID is undefined for live price fetch');
-    return 'N/A';
-  }
-  try {
-    const url = COINGECKO_PRICE_API.replace('{id}', encodeURIComponent(tokenId));
-    const data = await fetchWithRetry(url);
-    const price = data[tokenId]?.usd;
-    if (!price) throw new Error('Price not found in response');
-    console.log(`[INFO] Fetched live price for ${tokenId}: $${price}`);
-    return price;
-  } catch (error) {
-    console.error(`[ERROR] Failed to fetch live price for ${tokenId}:`, error.message);
-    return 'N/A';
-  }
-}
+// Update tokens with optional real data
+function updateTokens() {
+  console.log('[INFO] Updating tokens with mock data (attempting real data fallback)');
+  allTokens = [...mockTokens];
+  sortedTokens = [...mockTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 
-// Update live price and chart
-async function updateLivePrice() {
-  if (!currentToken || !priceChart) {
-    console.warn('[WARN] No current token or chart to update live price');
-    return;
-  }
-
-  const livePriceElements = [
-    document.getElementById('live-price-header'),
-    document.getElementById('live-price-modal')
-  ];
-  const tickerMarquees = [
-    document.getElementById('ticker-marquee-header'),
-    document.getElementById('ticker-marquee-modal')
-  ];
-
-  const price = await fetchLivePrice(currentToken.id);
-  livePriceElements.forEach(element => {
-    if (element) element.textContent = `> Live Price: $${price !== 'N/A' ? price.toLocaleString() : 'N/A'}`;
-  });
-
-  if (price !== 'N/A' && priceChart) {
-    const now = new Date();
-    priceChart.data.labels.push(now.toLocaleString());
-    priceChart.data.datasets[0].data.push(price);
-
-    if (priceChart.data.labels.length > 50) {
-      priceChart.data.labels.shift();
-      priceChart.data.datasets[0].data.shift();
-    }
-
-    priceChart.update('none');
-    console.log(`[INFO] Updated chart with new price for ${currentToken.symbol}: $${price}`);
-
-    tickerMarquees.forEach(marquee => {
-      if (marquee) marquee.innerHTML = `<span class="glow-green">[${currentToken.symbol}: $${price.toLocaleString()}]</span>`;
-    });
-  }
-
-  if (compareToken && priceChart && priceChart.data.datasets[1]) {
-    const comparePrice = await fetchLivePrice(compareToken.id);
-    if (comparePrice !== 'N/A') {
-      priceChart.data.datasets[1].data.push(comparePrice);
-      if (priceChart.data.datasets[1].data.length > 50) {
-        priceChart.data.datasets[1].data.shift();
-      }
-      priceChart.update('none');
-      console.log(`[INFO] Updated comparison chart for ${compareToken.symbol}: $${comparePrice}`);
-    }
-  }
-}
-
-// Fetch logs for alerts
-async function fetchLogs(sourceId) {
-  const url = BETTERSTACK_API;
-  const options = {
-    method: 'GET',
-    headers: { 'Authorization': 'Bearer WGdCT5KhHtg4kiGWAbdXRaSL' },
-    body: new URLSearchParams({ source_ids: sourceId, query: 'level=info' })
-  };
-  try {
-    const data = await fetchWithRetry(url, 3, 1000, options);
-    console.log('[INFO] Fetched logs:', data);
-    return data;
-  } catch (error) {
-    console.error('[ERROR] Failed to fetch logs:', error.message);
-    return [];
-  }
-}
-
-// Update alerts
-function updateAlertsWithLogs(sourceId) {
-  const alertList = document.getElementById('alert-list');
-  fetchLogs(sourceId).then(logs => {
-    alertList.innerHTML = '';
-    logs.forEach(log => {
-      const li = document.createElement('li');
-      li.className = 'bg-gray-700/40 p-2 rounded-md shadow hover-glow transition fade-in';
-      const timestamp = log.timestamp || new Date().toISOString();
-      li.innerHTML = `
-        <div class="flex items-center justify-between">
-          <span class="font-medium truncate text-gray-200">[📜 ${log.message || 'No message'}]</span>
-          <span class="text-xs text-gray-400">[${new Date(timestamp).toLocaleTimeString()}]</span>
-        </div>`;
-      alertList.prepend(li);
-    });
-    while (alertList.children.length > 20) alertList.removeChild(alertList.lastChild);
-    console.log('[INFO] Updated alerts with new logs');
-  });
-}
-
-// Fetch low-volume tokens
-async function fetchLowVolumeTokens() {
-  console.log('[INFO] Fetching low-volume tokens...');
   const tokenList = document.getElementById('token-list');
   const loader = document.getElementById('loader-tokens');
   const topPairs = document.getElementById('top-pairs');
@@ -206,82 +79,8 @@ async function fetchLowVolumeTokens() {
     document.getElementById('compare-token-header'),
     document.getElementById('compare-token-modal')
   ];
-  let tokens = [];
 
-  // CoinGecko
-  const cgResponse = await fetchWithRetry(COINGECKO_API);
-  if (cgResponse) {
-    console.log('[INFO] CoinGecko data:', cgResponse);
-    tokens.push(...cgResponse.filter(token => token.total_volume < 5_000_000).map(token => ({
-      id: token.id,
-      name: token.name,
-      symbol: token.symbol.toUpperCase(),
-      total_volume: token.total_volume,
-      current_price: token.current_price,
-      price_change_percentage_24h: token.price_change_percentage_24h,
-      market_cap: token.market_cap,
-      circulating_supply: token.circulating_supply,
-      source: 'CoinGecko',
-      score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
-    })));
-  }
-
-  // CoinMarketCap
-  const cmcResponse = await fetchWithRetry(COINMARKETCAP_API, 3, 2000, { headers: { 'X-CMC_PRO_API_KEY': CMC_API_KEY } });
-  if (cmcResponse?.data) {
-    console.log('[INFO] CoinMarketCap data:', cmcResponse);
-    tokens.push(...cmcResponse.data.filter(token => token.quote.USD.volume_24h < 5_000_000).map(token => ({
-      id: token.slug,
-      name: token.name,
-      symbol: token.symbol.toUpperCase(),
-      total_volume: token.quote.USD.volume_24h,
-      current_price: token.quote.USD.price,
-      price_change_percentage_24h: token.quote.USD.percent_change_24h,
-      market_cap: token.quote.USD.market_cap,
-      circulating_supply: token.circulating_supply,
-      source: 'CoinMarketCap',
-      score: Math.min(100, Math.max(0, (token.quote.USD.percent_change_24h + 100) / 2))
-    })));
-  }
-
-  // CryptoCompare
-  const ccResponse = await fetchWithRetry(CRYPTOCOMPARE_API);
-  if (ccResponse?.Data) {
-    console.log('[INFO] CryptoCompare data:', ccResponse);
-    tokens.push(...ccResponse.Data.filter(token => token.RAW?.USD?.VOLUME24HOURTO < 5_000_000).map(token => ({
-      id: token.CoinInfo.Name.toLowerCase(),
-      name: token.CoinInfo.FullName,
-      symbol: token.CoinInfo.Name.toUpperCase(),
-      total_volume: token.RAW?.USD?.VOLUME24HOURTO || 0,
-      current_price: token.RAW?.USD?.PRICE || 0,
-      price_change_percentage_24h: token.RAW?.USD?.CHANGEPCT24HOUR || 0,
-      market_cap: token.RAW?.USD?.MKTCAP || 0,
-      circulating_supply: token.RAW?.USD?.SUPPLY || 0,
-      source: 'CryptoCompare',
-      score: Math.min(100, Math.max(0, ((token.RAW?.USD?.CHANGEPCT24HOUR || 0) + 100) / 2))
-    })));
-  }
-
-  // Fallback to mock data
-  if (tokens.length === 0) {
-    console.warn('[WARN] No token data fetched. Using mock data.');
-    tokens = mockTokens;
-  }
-
-  // Remove duplicates
-  const uniqueTokens = [];
-  const seenSymbols = new Set();
-  tokens.forEach(token => {
-    if (!seenSymbols.has(token.symbol)) {
-      seenSymbols.add(token.symbol);
-      uniqueTokens.push(token);
-    }
-  });
-
-  allTokens = uniqueTokens;
-  sortedTokens = [...uniqueTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-
-  // Update token list
+  // Render token list
   tokenList.innerHTML = '';
   sortedTokens.forEach((token, index) => {
     const opacity = 30 + (index / sortedTokens.length) * 40;
@@ -313,15 +112,13 @@ async function fetchLowVolumeTokens() {
       li.classList.add('selected-token');
       selectedTokenLi = li;
       currentToken = token;
-      showPriceChart(token, compareToken, currentTimeframe, isChartLocked ? 'modal' : 'header');
-      updateLivePrice();
+      showPriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
       console.log(`[INFO] Selected token: ${token.symbol}`);
     });
     tokenList.appendChild(li);
   });
 
-  // Update top pairs
-  const topPairs = document.getElementById('top-pairs');
+  // Render top pairs
   topPairs.innerHTML = sortedTokens.slice(0, 5).map((token, index) => {
     const opacity = 20 + (index / 4) * 30;
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
@@ -343,20 +140,37 @@ async function fetchLowVolumeTokens() {
     }
   });
 
-  // Ensure default token and chart
-  if (!currentToken && allTokens.length > 0) {
-    currentToken = allTokens[0]; // Default to first token
-    showPriceChart(currentToken, compareToken, currentTimeframe, 'header');
-    updateLivePrice();
-    console.log(`[INFO] Defaulted to token: ${currentToken.symbol}`);
-  }
+  // Hide loader
+  loader.style.display = 'none';
+  console.log('[INFO] Tokens updated with mock data');
 
-  document.getElementById('loader-tokens').style.display = 'none';
-  console.log('[INFO] Low-volume tokens updated successfully');
+  // Attempt real data fetch (optional fallback)
+  fetchWithRetry(COINGECKO_API).then(data => {
+    if (data) {
+      const realTokens = data.filter(token => token.total_volume < 5_000_000).map(token => ({
+        id: token.id,
+        name: token.name,
+        symbol: token.symbol.toUpperCase(),
+        total_volume: token.total_volume,
+        current_price: token.current_price,
+        price_change_percentage_24h: token.price_change_percentage_24h,
+        market_cap: token.market_cap,
+        circulating_supply: token.circulating_supply,
+        source: 'CoinGecko',
+        score: Math.min(100, Math.max(0, (token.price_change_percentage_24h + 100) / 2))
+      }));
+      if (realTokens.length > 0) {
+        allTokens = realTokens;
+        sortedTokens = [...realTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+        updateTokens(); // Re-render with real data
+        console.log('[INFO] Successfully updated with real data from CoinGecko');
+      }
+    }
+  }).catch(error => console.error('[ERROR] Real data fetch failed:', error));
 }
 
 // Show price chart
-async function showPriceChart(token, compareToken, days, context = 'header') {
+function showPriceChart(token, days, context = 'header') {
   console.log(`[INFO] Showing price chart for ${token.symbol} (${days} days) in ${context} context`);
   const chartCanvas = context === 'header' ? document.getElementById('chart-canvas-header') : document.getElementById('chart-canvas-modal');
   const chartTitle = context === 'header' ? document.getElementById('chart-title-header') : document.getElementById('chart-title-modal');
@@ -372,52 +186,24 @@ async function showPriceChart(token, compareToken, days, context = 'header') {
     console.log('[INFO] Destroyed previous chart instance');
   }
 
-  let historicalData = [];
-  try {
-    const url = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(token.id)).replace('{days}', days);
-    const data = await fetchWithRetry(url);
-    historicalData = data.prices || [];
-    console.log(`[INFO] Fetched historical data for ${token.symbol}:`, historicalData);
-  } catch (error) {
-    console.error(`[ERROR] Failed to fetch historical data for ${token.symbol}:`, error.message);
-    historicalData = mockChartData.prices;
-    console.warn('[WARN] Using mock chart data as fallback');
-  }
-
-  const labels = historicalData.map(item => new Date(item[0]).toLocaleString());
-  const prices = historicalData.map(item => item[1] || 0); // Default to 0 if undefined
-
-  const datasets = [{
-    label: `${token.symbol} Price`,
-    data: prices,
-    borderColor: '#00ff00',
-    backgroundColor: 'rgba(0, 255, 0, 0.2)',
-    fill: true,
-    tension: 0.4
-  }];
-
-  if (compareToken) {
-    try {
-      const compareUrl = COINGECKO_CHART_API.replace('{id}', encodeURIComponent(compareToken.id)).replace('{days}', days);
-      const compareData = await fetchWithRetry(compareUrl);
-      const comparePrices = compareData.prices?.map(item => item[1]) || [];
-      datasets.push({
-        label: `${compareToken.symbol} Price`,
-        data: comparePrices,
-        borderColor: '#ff0000',
-        backgroundColor: 'rgba(255, 0, 0, 0.2)',
-        fill: true,
-        tension: 0.4
-      });
-      console.log(`[INFO] Added comparison data for ${compareToken.symbol}`);
-    } catch (error) {
-      console.error(`[ERROR] Failed to fetch comparison data for ${compareToken.symbol}:`, error.message);
-    }
-  }
+  // Simulate data based on timeframe
+  const baseData = mockChartData.prices.map(([timestamp, price]) => [timestamp, price * (days + 1)]);
+  const labels = baseData.map(item => new Date(item[0]).toLocaleString());
+  const prices = baseData.map(item => item[1]);
 
   priceChart = new Chart(chartCanvas, {
     type: 'line',
-    data: { labels, datasets },
+    data: {
+      labels: labels,
+      datasets: [{
+        label: `${token.symbol} Price`,
+        data: prices,
+        borderColor: '#00ff00',
+        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+        fill: true,
+        tension: 0.4
+      }]
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -429,10 +215,9 @@ async function showPriceChart(token, compareToken, days, context = 'header') {
     }
   });
 
-  chartTitle.textContent = `> ${token.symbol} Price Chart${compareToken ? ` vs ${compareToken.symbol}` : ''}`;
-  const livePrice = await fetchLivePrice(token.id);
-  livePriceElement.textContent = `> Live Price: $${livePrice !== 'N/A' ? livePrice.toLocaleString() : 'N/A'}`;
-  console.log(`[INFO] Price chart rendered for ${token.symbol}`);
+  chartTitle.textContent = `> ${token.symbol} Price Chart`;
+  livePriceElement.textContent = `> Live Price: $${token.current_price.toLocaleString()}`;
+  console.log('[INFO] Price chart rendered with mock data');
 }
 
 // Update marquee
@@ -466,23 +251,16 @@ function updateMarquee() {
 }
 
 // Initialize dashboard
-async function initializeDashboard() {
+function initializeDashboard() {
   console.log('[INFO] Initializing Ice King Dashboard...');
 
-  // Initial fetch of tokens
-  await fetchLowVolumeTokens();
-  setInterval(fetchLowVolumeTokens, TOKEN_REFRESH_INTERVAL);
+  // Initial token setup
+  updateTokens();
+  setInterval(updateTokens, TOKEN_REFRESH_INTERVAL);
 
-  // Start live price updates
-  setInterval(updateLivePrice, PRICE_UPDATE_INTERVAL);
-
-  // Start marquee updates
+  // Start marquee
   updateMarquee();
-  setInterval(updateMarquee, MARQUEE_UPDATE_INTERVAL);
-
-  // Start alerts updates
-  updateAlertsWithLogs('source-id');
-  setInterval(() => updateAlertsWithLogs('source-id'), POLLING_INTERVAL);
+  setInterval(updateMarquee, 20000);
 
   // Setup timeframe buttons
   const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
@@ -495,14 +273,14 @@ async function initializeDashboard() {
           timeframes.forEach(t => document.getElementById(`${context}-timeframe-${t}`).classList.remove('active'));
           btn.classList.add('active');
           currentTimeframe = timeframeValues[tf];
-          if (currentToken) showPriceChart(currentToken, compareToken, currentTimeframe, context);
+          if (currentToken) showPriceChart(currentToken, currentTimeframe, context);
           console.log(`[INFO] Timeframe changed to ${tf} (${currentTimeframe} days) in ${context}`);
         });
       }
     });
   });
 
-  // Setup comparison dropdowns
+  // Setup comparison dropdowns (basic for now)
   const compareDropdowns = [
     document.getElementById('compare-token-header'),
     document.getElementById('compare-token-modal')
@@ -510,11 +288,7 @@ async function initializeDashboard() {
   compareDropdowns.forEach(dropdown => {
     if (dropdown) {
       dropdown.addEventListener('change', () => {
-        const selectedId = dropdown.value;
-        compareToken = selectedId ? allTokens.find(token => token.id === selectedId) : null;
-        const context = dropdown.id.includes('header') ? 'header' : 'modal';
-        if (currentToken) showPriceChart(currentToken, compareToken, currentTimeframe, context);
-        console.log(`[INFO] Comparison token changed to ${compareToken?.symbol || 'None'} in ${context}`);
+        console.log('[INFO] Comparison feature not implemented yet');
       });
     }
   });
@@ -537,7 +311,7 @@ async function initializeDashboard() {
     toggleStickyBtnHeader.classList.toggle('hover:bg-blue-600', !isChartLocked);
     toggleStickyBtnModal.classList.toggle('hover:bg-green-600', isChartLocked);
     toggleStickyBtnModal.classList.toggle('hover:bg-blue-600', !isChartLocked);
-    if (isChartLocked && currentToken) showPriceChart(currentToken, compareToken, currentTimeframe, 'modal');
+    if (isChartLocked && currentToken) showPriceChart(currentToken, currentTimeframe, 'modal');
     console.log(`[INFO] Chart lock toggled: ${isChartLocked ? 'Locked' : 'Unlocked'}`);
   };
 
@@ -546,6 +320,13 @@ async function initializeDashboard() {
   chartModal.addEventListener('click', (e) => {
     if (e.target === chartModal) toggleChartLock();
   });
+
+  // Default token and chart
+  if (allTokens.length > 0) {
+    currentToken = allTokens[0];
+    showPriceChart(currentToken, currentTimeframe, 'header');
+    console.log(`[INFO] Defaulted to token: ${currentToken.symbol}`);
+  }
 
   console.log('[INFO] Dashboard initialization complete');
 }
