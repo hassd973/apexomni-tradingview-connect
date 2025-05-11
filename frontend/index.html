@@ -13,6 +13,7 @@
       background: #0a0f14;
       color: #00ff00;
       overflow-x: hidden;
+      margin: 0;
     }
     .grid-bg {
       position: fixed;
@@ -65,9 +66,9 @@
       100% { transform: translate(100px, -100px); opacity: 0; }
     }
     @keyframes glow-blue {
-      0% { text-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
-      50% { text-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
-      100% { text-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+      0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
+      50% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.8), 0 0 25px rgba(0, 255, 255, 0.5); }
+      100% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
     }
     @keyframes glow-green {
       0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
@@ -79,15 +80,9 @@
       50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); }
       100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
     }
-    @keyframes glow-purple {
-      0% { text-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
-      50% { text-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
-      100% { text-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
-    }
     .glow-blue { animation: glow-blue 2s infinite; }
     .glow-green { animation: glow-green 2s infinite; }
     .glow-red { animation: glow-red 2s infinite; }
-    .glow-purple { animation: glow-purple 2s infinite; }
     .fade-in { animation: fadeIn 0.5s ease-in; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
@@ -95,30 +90,33 @@
     }
     .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
     .hover-performance-green:hover { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); transition: all 0.3s ease; }
-    .hover-performance-red:hover { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); transition: all 0.3s ease; }
+    .hover-performance-red:hover { box-shadow: 0 0 15px rgba(255 école, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); transition: all 0.3s ease; }
     .selected-token { border: 2px solid rgba(0, 255, 0, 0.8); box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); background: rgba(0, 15, 0, 0.9) !important; }
     .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.6), rgba(0, 30, 0, 0.4)); border: 1px solid rgba(0, 255, 0, 0.2); }
-    .chart-container { position: relative; width: 100%; height: 60vh; min-height: 300px; }
+    .chart-container { position: relative; width: 100%; height: 60vh; min-height: 300px; max-height: 800px; }
     .chart-container:empty::after { content: '> Chart failed to load. Please refresh or check your connection.'; display: block; color: #ff0000; text-align: center; padding: 1rem; font-size: 0.875rem; }
     .chart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 50; justify-content: center; align-items: center; }
     .chart-modal.active { display: flex; }
-    .chart-modal-content { background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7)); padding: 1rem; border: 2px solid rgba(0, 255, 0, 0.5); border-radius: 5px; width: 95%; max-w-5xl; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
-    #chart-container-modal { width: 100% !important; height: 80vh !important; min-height: 400px; }
+    .chart-modal-content { background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7)); padding: 1rem; border: 2px solid rgba(0, 255, 0, 0.5); border-radius: 5px; width: 95%; max-width: 1200px; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
+    #chart-container-modal { height: 80vh !important; min-height: 400px; max-height: 900px; }
     #token-list, #log-list, #chat-list { z-index: 10; }
     #token-list li, #log-list li, #chat-list li { z-index: 10; position: relative; }
     @media (min-width: 640px) { 
-      .chart-modal-content { width: 80%; } 
+      .chart-modal-content { width: 85%; } 
+      .chart-container { height: 70vh; }
+    }
+    @media (min-width: 1024px) { 
+      .chart-container { height: 80vh; }
     }
     [data-tooltip] { position: relative; }
     [data-tooltip]:hover::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: rgba(0, 255, 0, 0.9); color: #000; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 60; }
     .marquee-container { background: #000; border: 1px solid rgba(0, 255, 0, 0.3); overflow: hidden; white-space: nowrap; padding: 4px 0; margin-top: 8px; width: 100%; }
     .marquee { display: inline-block; animation: marquee 60s linear infinite; animation-play-state: running; will-change: transform; }
     @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-    @-webkit-keyframes marquee { 0% { -webkit-transform: translateX(100%); } 100% { -webkit-transform: translateX(-100%); } }
     .marquee span { margin-right: 20px; font-size: 0.75rem; color: #00ff00; }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
-    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; font-size: 0.75rem; }
+    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; font-size: 0.75rem; border-radius: 4px; padding: 0.5rem 1rem; }
     #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-mode:hover, #toggle-debug:hover { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .timeframe-btn.active { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .loader { display: flex; justify-content: center; align-items: center; padding: 1rem; }
@@ -167,6 +165,11 @@
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
       width: 100%;
       height: 100%;
+      position: relative;
+    }
+    .tradingview-widget-container iframe {
+      width: 100% !important;
+      height: 100% !important;
     }
     #chat-input {
       background: #000;
@@ -174,6 +177,8 @@
       color: #00ff00;
       resize: none;
       width: 100%;
+      padding: 0.5rem;
+      border-radius: 4px;
     }
     #chat-input:focus {
       outline: none;
@@ -186,32 +191,32 @@
   <div class="grid-bg w-full h-full"></div>
   <div class="particles w-full h-full" id="particles"></div>
   <header class="w-full gradient-bg backdrop-blur-lg p-3 flex justify-center items-center overflow-x-hidden">
-    <div class="text-center w-full max-w-[85vw] sm:max-w-2xl mx-auto px-2">
+    <div class="text-center w-full max-w-[95vw] sm:max-w-4xl lg:max-w-6xl mx-auto px-2">
       <div class="title-box glow-green">
         <h1 class="text-sm sm:text-lg md:text-xl">🧊 ICE KING DASHBOARD 👑</h1>
       </div>
-      <p class="text-sm sm:text-base mt-1 text-gray-300 typewriter">Live Price Chart</p>
-      <p class="text-sm sm:text-base mt-1 text-green-500">Powered by xAI | Made for Coders</p>
+      <p class="text-sm sm:text-base mt-1 text-gray-300 typewriter">Live Crypto Market Analytics</p>
+      <p class="text-xs sm:text-sm mt-1 text-green-500">Powered by CoinMarketCap & xAI</p>
       <div class="chart-wrapper w-full">
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div class="flex space-x-2 flex-wrap gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[1M]</button>
-            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[5M]</button>
-            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[15M]</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[1H]</button>
-            <button id="header-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[4H]</button>
-            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active">[1D]</button>
+            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1">1M</button>
+            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5">5M</button>
+            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15">15M</button>
+            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60">1H</button>
+            <button id="header-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240">4H</button>
+            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="1D">1D</button>
           </div>
           <div class="flex space-x-2">
-            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded">[Dock Chart 🔍]</button>
-            <button id="toggle-data-mode" class="text-black px-2 py-1 rounded">[Mock Data]</button>
-            <button id="toggle-debug" class="text-black px-2 py-1 rounded">[Debug Chart]</button>
+            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded">Dock Chart 🔍</button>
+            <button id="toggle-data-mode" class="text-black px-2 py-1 rounded">Mock Data</button>
+            <button id="toggle-debug" class="text-black px-2 py-1 rounded">Debug Chart</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div id="live-price-header" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
         </div>
-        <div id="chart-container-header" class="chart-container mt-2"></div>
+        <div id="chart-container-header" class="chart-container mt-2 tradingview-widget-container"></div>
         <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header"></div>
@@ -220,23 +225,23 @@
     </div>
   </header>
   <div class="chart-modal" id="chart-modal">
-    <div class="chart-modal-content w-95% sm:w-4/5 max-w-5xl">
+    <div class="chart-modal-content">
       <div class="chart-wrapper w-full">
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div class="flex space-x-2 flex-wrap gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[1M]</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[5M]</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[15M]</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[1H]</button>
-            <button id="modal-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[4H]</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active">[1D]</button>
+            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1">1M</button>
+            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5">5M</button>
+            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15">15M</button>
+            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60">1H</button>
+            <button id="modal-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240">4H</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="1D">1D</button>
           </div>
-          <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded">[Undock Chart 🔍]</button>
+          <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded">Undock Chart 🔍</button>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div id="live-price-modal" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
         </div>
-        <div id="chart-container-modal" class="chart-container mt-2"></div>
+        <div id="chart-container-modal" class="chart-container mt-2 tradingview-widget-container"></div>
         <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal"></div>
@@ -244,7 +249,7 @@
       </div>
     </div>
   </div>
-  <main class="flex-1 p-3 max-w-7xl mx-auto w-full flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
+  <main class="flex-1 p-3 max-w-7xl mx-auto w-full flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0">
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Low-Volume Tokens 🍀</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
@@ -270,9 +275,10 @@
     </section>
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
-    <p class="typewriter">> Powered by TradingView</p>
+    <p class="typewriter">> Powered by CoinMarketCap & TradingView</p>
   </footer>
   <script>
+    // Particle effect
     const particleContainer = document.getElementById('particles');
     for (let i = 0; i < 100; i++) {
       const star = document.createElement('div');
@@ -282,6 +288,96 @@
       star.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(star);
     }
+
+    // TradingView chart initialization
+    function initializeChart(containerId, symbol = 'BINANCE:BTCUSDT', interval = '1D') {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      // Clear previous chart
+      container.innerHTML = '';
+
+      new TradingView.widget({
+        width: '100%',
+        height: '100%',
+        symbol: symbol,
+        interval: interval,
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        toolbar_bg: '#0a0f14',
+        enable_publishing: false,
+        allow_symbol_change: true,
+        container_id: containerId,
+        autosize: true,
+        studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies'],
+        gridColor: 'rgba(0, 255, 0, 0.1)',
+        overrides: {
+          'mainSeriesProperties.candleStyle.upColor': '#00ff00',
+          'mainSeriesProperties.candleStyle.downColor': '#ff0000',
+          'mainSeriesProperties.candleStyle.borderUpColor': '#00ff00',
+          'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
+        },
+      });
+
+      // Handle resize
+      const resizeObserver = new ResizeObserver(() => {
+        const widgetIframe = container.querySelector('iframe');
+        if (widgetIframe) {
+          widgetIframe.style.width = '100%';
+          widgetIframe.style.height = '100%';
+        }
+      });
+      resizeObserver.observe(container);
+    }
+
+    // Initialize charts on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeChart('chart-container-header', 'BINANCE:BTCUSDT', '1D');
+      initializeChart('chart-container-modal', 'BINANCE:BTCUSDT', '1D');
+
+      // Timeframe button handlers
+      const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
+      timeframes.forEach(tf => {
+        const headerBtn = document.getElementById(`header-timeframe-${tf}`);
+        const modalBtn = document.getElementById(`modal-timeframe-${tf}`);
+        const interval = headerBtn?.dataset.interval;
+
+        if (headerBtn) {
+          headerBtn.addEventListener('click', () => {
+            document.querySelectorAll('#header-timeframe-' + timeframes.map(t => `#header-timeframe-${t}`).join(',')).forEach(btn => btn.classList.remove('active'));
+            headerBtn.classList.add('active');
+            initializeChart('chart-container-header', undefined, interval);
+          });
+        }
+        if (modalBtn) {
+          modalBtn.addEventListener('click', () => {
+            document.querySelectorAll('#modal-timeframe-' + timeframes.map(t => `#modal-timeframe-${t}`).join(',')).forEach(btn => btn.classList.remove('active'));
+            modalBtn.classList.add('active');
+            initializeChart('chart-container-modal', undefined, interval);
+          });
+        }
+      });
+
+      // Modal toggle
+      const toggleStickyHeader = document.getElementById('toggle-sticky-header');
+      const toggleStickyModal = document.getElementById('toggle-sticky-modal');
+      const chartModal = document.getElementById('chart-modal');
+
+      if (toggleStickyHeader) {
+        toggleStickyHeader.addEventListener('click', () => {
+          chartModal.classList.add('active');
+          initializeChart('chart-container-modal', undefined, document.querySelector('#header-timeframe-1d').dataset.interval);
+        });
+      }
+      if (toggleStickyModal) {
+        toggleStickyModal.addEventListener('click', () => {
+          chartModal.classList.remove('active');
+          initializeChart('chart-container-header', undefined, document.querySelector('#modal-timeframe-1d').dataset.interval);
+        });
+      }
+    });
   </script>
   <script src="script.js"></script>
 </body>
