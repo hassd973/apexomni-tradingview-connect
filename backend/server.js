@@ -8,6 +8,10 @@ const port = process.env.PORT || 3000;
 // Enable CORS for all origins (or specify your frontend domain)
 app.use(cors());
 
+// CoinMarketCap API configuration
+const CMC_API_KEY = process.env.CMC_API_KEY || 'bef090eb-323d-4ae8-86dd-266236262f19'; // Store in Render Environment Variables
+const CMC_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
+
 // Mock data as fallback
 const mockCryptoData = [
   { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000 },
@@ -15,39 +19,41 @@ const mockCryptoData = [
   { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018 }
 ];
 
-// Function to fetch crypto data from CoinGecko
+// Function to fetch crypto data from CoinMarketCap
 async function fetchCryptoData() {
   try {
-    console.log('Fetching crypto data from CoinGecko');
-    const response = await axios.get('https://api.coingecko.com/api/v3/coins/markets', {
-      params: {
-        vs_currency: 'usd',
-        order: 'market_cap_desc',
-        per_page: 50,
-        page: 1,
-        sparkline: false,
-        price_change_percentage: '24h'
+    console.log('Fetching crypto data from CoinMarketCap');
+    const response = await axios.get(CMC_API_URL, {
+      headers: {
+        'X-CMC_PRO_API_KEY': CMC_API_KEY,
       },
-      timeout: 10000
+      params: {
+        start: 1,
+        limit: 50, // Fetch top 50 tokens by market cap
+        convert: 'USD',
+      },
+      timeout: 10000,
     });
-    const data = response.data.map(coin => ({
-      id: coin.id,
+
+    const data = response.data.data.map(coin => ({
+      id: coin.slug, // CMC uses slug instead of id
       name: coin.name,
       symbol: coin.symbol.toUpperCase(),
-      current_price: parseFloat(coin.current_price),
-      total_volume: parseFloat(coin.total_volume),
-      price_change_percentage_24h: parseFloat(coin.price_change_percentage_24h),
-      market_cap: parseFloat(coin.market_cap),
+      current_price: parseFloat(coin.quote.USD.price),
+      total_volume: parseFloat(coin.quote.USD.volume_24h),
+      price_change_percentage_24h: parseFloat(coin.quote.USD.percent_change_24h),
+      market_cap: parseFloat(coin.quote.USD.market_cap),
       circulating_supply: parseFloat(coin.circulating_supply),
-      source: 'CoinGecko',
-      high_24h: parseFloat(coin.high_24h),
-      low_24h: parseFloat(coin.low_24h),
-      market_cap_rank: coin.market_cap_rank
+      source: 'CoinMarketCap',
+      high_24h: null, // CMC doesn't provide high_24h in this endpoint
+      low_24h: null, // CMC doesn't provide low_24h in this endpoint
+      market_cap_rank: coin.cmc_rank,
     }));
+
     console.log(`Successfully fetched crypto data, count: ${data.length}`);
     return data;
   } catch (error) {
-    console.error('Failed to fetch crypto data from CoinGecko:', error.message);
+    console.error('Failed to fetch crypto data from CoinMarketCap:', error.message);
     console.warn('Falling back to mock data');
     return mockCryptoData;
   }
@@ -82,13 +88,13 @@ app.get('/api/logs', (req, res) => {
 });
 
 // API endpoint to add a log (for testing)
-app.post('/api/logs', (req, res) => {
+app.post('/api/logs', express.json(), (req, res) => {
   try {
     const { message, level } = req.body;
     const logEntry = {
       timestamp: new Date().toISOString(),
       message: message || 'No message provided',
-      level: level || 'info'
+      level: level || 'info',
     };
     console.log(`[${logEntry.level}] ${logEntry.message}`, logEntry);
     res.status(201).json(logEntry);
