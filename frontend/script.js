@@ -3,28 +3,6 @@
 // Purpose: Display token data and logs with TradingView chart
 // Features: Terminal-style UI, sticky chart toggle, backend integration
 
-// --- Papertrail HTTP Logging ---
-const PAPERTRAIL_URL = 'https://logsX.papertrailapp.com:XXXXX/systems/apexomni-frontend/events'; // Replace with your Papertrail HTTP endpoint
-
-async function logToPapertrail(level, message, metadata = {}) {
-  try {
-    const logEntry = {
-      timestamp: new Date().toISOString(),
-      level: level.toLowerCase(),
-      message,
-      ...metadata
-    };
-    await fetch(PAPERTRAIL_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(logEntry)
-    });
-    console.log(`[${level.toUpperCase()}] ${message}`, metadata);
-  } catch (error) {
-    console.error(`[ERROR] Failed to log to Papertrail: ${error.message}`);
-  }
-}
-
 // --- Constants and Configuration ---
 const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
 const TOKEN_REFRESH_INTERVAL = 30000;
@@ -75,7 +53,7 @@ let logs = mockLogs;
 
 // --- Utility Functions ---
 
-// Fetch with retry
+// Fetch with retry (using Render logs instead of Papertrail)
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -87,11 +65,9 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       }
       const data = await response.json();
       console.log(`[DEBUG] Fetch successful for ${url}, response:`, data);
-      await logToPapertrail('info', `Fetch successful for ${url}`, { response: JSON.stringify(data) });
       return data;
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
-      await logToPapertrail('error', `Fetch failed for ${url}`, { attempt: i + 1, retries, error: error.message });
       if (i === retries - 1) {
         console.error(`[ERROR] All retries failed for ${url}, using fallback`);
         return null;
@@ -105,11 +81,162 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
 function sanitizeTokenData(data) {
   if (!data || !Array.isArray(data)) {
     console.error('[ERROR] Invalid token data format, expected array:', data);
-    logToPapertrail('error', 'Invalid token data format', { data });
     return mockTokens;
   }
-  const sanitized = data.map(token => ({
+  return data.map(token => ({
     id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
     name: String(token.name || 'Unknown').substring(0, 50),
     symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
-    total_volume: Number(token
+    current_price: Number(token.current_price || 0),
+    total_volume: Number(token.total_volume || 0),
+    price_change_percentage_24h: Number(token.price_change_percentage_24h || 0),
+    market_cap: Number(token.market_cap || 0),
+    circulating_supply: Number(token.circulating_supply || 0),
+    source: String(token.source || 'Unknown'),
+    high_24h: Number(token.high_24h || 0),
+    low_24h: Number(token.low_24h || 0),
+    market_cap_rank: Number(token.market_cap_rank || 0)
+  })).filter(token => token.current_price > 0); // Filter out invalid tokens
+}
+
+// Get random Ice King pun
+function getRandomPun() {
+  if (usedPuns.length === iceKingPuns.length) usedPuns = [];
+  let pun;
+  do {
+    pun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)];
+  } while (usedPuns.includes(pun));
+  usedPuns.push(pun);
+  return pun;
+}
+
+// --- DOM Manipulation Functions ---
+
+// Update token list
+function updateTokenList(tokens) {
+  const tokenList = document.getElementById('token-list');
+  const loaderTokens = document.getElementById('loader-tokens');
+  tokenList.innerHTML = '';
+  loaderTokens.style.display = 'none';
+  tokens.slice(0, 10).forEach(token => {
+    const li = document.createElement('li');
+    li.className = 'gradient-bg p-2 rounded hover-glow hover-performance-green selected-token';
+    li.innerHTML = `
+      > ${token.name} (${token.symbol})
+      <br>
+      > Price: $${token.current_price.toLocaleString()}
+      <br>
+      > 24h Change: ${token.price_change_percentage_24h.toFixed(2)}%
+      <br>
+      > Market Cap: $${token.market_cap.toLocaleString()}
+    `;
+    li.addEventListener('click', () => selectToken(token));
+    tokenList.appendChild(li);
+  });
+}
+
+// Update live price and ticker
+function updateLiveData(tokens) {
+  const livePriceHeader = document.getElementById('live-price-header');
+  const tickerMarqueeHeader = document.getElementById('ticker-marquee-header');
+  if (tokens.length > 0) {
+    const firstToken = tokens[0];
+    livePriceHeader.textContent = `> Live Price: $${firstToken.current_price.toLocaleString()} (${firstToken.symbol})`;
+    tickerMarqueeHeader.innerHTML = tokens
+      .map(token => `<span>[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`)
+      .join('');
+  }
+}
+
+// Select token for chart
+function selectToken(token) {
+  currentToken = token;
+  document.getElementById('chart-title-header').textContent = `> Chart: ${token.name} (${token.symbol})`;
+  document.getElementById('chart-title-modal').textContent = `> Chart: ${token.name} (${token.symbol})`;
+  updateChart(token.symbol + 'USD');
+  if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
+  selectedTokenLi = event.target.closest('li');
+  selectedTokenLi.classList.add('selected-token');
+}
+
+// Update chart
+function updateChart(symbol) {
+  const containerId = isChartDocked ? 'chart-container-header' : 'chart-container-modal';
+  new TradingView.widget({
+    container_id: containerId,
+    width: '100%',
+    height: isChartDocked ? '100%' : '80vh',
+    symbol: symbol || 'BTCUSD',
+    interval: currentTimeframe,
+    timezone: 'Etc/UTC',
+    theme: 'dark',
+    style: '1',
+    locale: 'en',
+    toolbar_bg: '#0a0f14',
+    enable_publishing: false,
+    allow_symbol_change: true,
+    details: true,
+    studies: ['Volume@tv-basicstudies'],
+  });
+}
+
+// --- Event Listeners ---
+document.addEventListener('DOMContentLoaded', () => {
+  const tokenList = document.getElementById('token-list');
+  const loaderTokens = document.getElementById('loader-tokens');
+  const livePriceHeader = document.getElementById('live-price-header');
+  const tickerMarqueeHeader = document.getElementById('ticker-marquee-header');
+  const chartModal = document.getElementById('chart-modal');
+  const toggleStickyHeader = document.getElementById('toggle-sticky-header');
+  const toggleStickyModal = document.getElementById('toggle-sticky-modal');
+
+  // Initial fetch and render
+  async function initializeData() {
+    const data = await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    if (data) {
+      allTokens = sanitizeTokenData(data);
+      sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+      updateTokenList(allTokens);
+      updateLiveData(allTokens);
+      updateChart(currentToken.symbol + 'USD');
+    } else {
+      updateTokenList(mockTokens);
+      updateLiveData(mockTokens);
+    }
+  }
+  initializeData();
+
+  // Refresh tokens
+  setInterval(async () => {
+    const data = await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    if (data) {
+      allTokens = sanitizeTokenData(data);
+      sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+      updateTokenList(allTokens);
+      updateLiveData(allTokens);
+    }
+  }, TOKEN_REFRESH_INTERVAL);
+
+  // Timeframe buttons
+  document.querySelectorAll('.timeframe-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      currentTimeframe = button.id.split('-').pop();
+      updateChart(currentToken.symbol + 'USD');
+      document.querySelectorAll('.timeframe-btn').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+    });
+  });
+
+  // Toggle sticky chart
+  toggleStickyHeader.addEventListener('click', () => {
+    isChartDocked = false;
+    chartModal.classList.add('active');
+    updateChart(currentToken.symbol + 'USD');
+  });
+
+  toggleStickyModal.addEventListener('click', () => {
+    isChartDocked = true;
+    chartModal.classList.remove('active');
+    updateChart(currentToken.symbol + 'USD');
+  });
+});
