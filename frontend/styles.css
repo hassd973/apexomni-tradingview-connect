@@ -1,21 +1,30 @@
 /* Custom styles for transparency, typography, and charts */
 body {
   background: linear-gradient(180deg, rgba(17, 24, 39, 0.9), rgba(17, 24, 39, 1));
+  color: #d1d5db; /* Light gray text for terminal feel */
+  font-family: 'Courier New', Courier, monospace; /* Terminal-style font */
 }
 
 header, footer {
   background: rgba(31, 41, 55, 0.5);
   backdrop-filter: blur(10px);
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 255, 0, 0.1); /* Ice King green accent */
 }
 
 section {
   background: rgba(31, 41, 55, 0.5);
   backdrop-filter: blur(10px);
+  padding: 1rem;
+  border: 1px solid rgba(0, 255, 0, 0.1);
+  border-radius: 8px;
 }
 
 ul {
   scrollbar-width: thin;
   scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  list-style: none;
+  padding: 0;
 }
 
 ul::-webkit-scrollbar {
@@ -31,11 +40,76 @@ ul::-webkit-scrollbar-thumb {
   border-radius: 4px;
 }
 
-#chart-container {
-  max-height: 400px;
+/* Specific styling for token list */
+#token-list {
+  max-height: 500px; /* Adjustable based on layout */
+  overflow-y: auto;
+  padding-right: 8px; /* Prevent scrollbar overlap */
+}
+
+/* TradingView chart container */
+#chart-container-header,
+#chart-container-modal {
+  max-height: none; /* Remove fixed height to allow dynamic sizing */
+  height: 100%; /* Match script.js dynamic height */
+  width: 100%;
 }
 
 canvas {
-  max-height: 300px !important;
+  max-height: none !important; /* Remove canvas restriction for TradingView */
   width: 100% !important;
+}
+
+/* Visual enhancements for Ice King theme */
+.gradient-bg {
+  background: linear-gradient(45deg, rgba(0, 255, 0, 0.1), rgba(0, 0, 0, 0.5));
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); /* Green glow on hover */
+}
+
+.glow-green {
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.glow-red {
+  box-shadow: 0 0 10px rgba(255, 0, 0, 0.3);
+}
+
+.glow-blue {
+  box-shadow: 0 0 10px rgba(0, 120, 255, 0.3);
+}
+
+.glow-purple {
+  box-shadow: 0 0 10px rgba(128, 0, 128, 0.3);
+}
+
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Additional styling for consistency */
+button {
+  background: rgba(0, 255, 0, 0.2);
+  color: #00ff00;
+  border: 1px solid rgba(0, 255, 0, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+button:hover {
+  background: rgba(0, 255, 0, 0.4);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.loader {
+  padding: 1rem;
 }
