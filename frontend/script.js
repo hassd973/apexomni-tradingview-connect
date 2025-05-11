@@ -102,7 +102,7 @@ function sanitizeTokenData(data) {
 
 // --- DOM Manipulation Functions ---
 
-// Update token list with enhanced visuals
+// Update token list with enhanced visuals (display all tokens)
 function updateTokenList(tokens) {
   const tokenList = document.getElementById('token-list');
   const loaderTokens = document.getElementById('loader-tokens');
@@ -112,8 +112,8 @@ function updateTokenList(tokens) {
   }
   tokenList.innerHTML = '';
   loaderTokens.style.display = 'none';
-  tokens.slice(0, 10).forEach((token, index) => {
-    const opacity = 30 + (index / 10) * 40;
+  tokens.forEach((token, index) => {
+    const opacity = 30 + (index / tokens.length) * 40; // Dynamic opacity based on position in list
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const li = document.createElement('li');
