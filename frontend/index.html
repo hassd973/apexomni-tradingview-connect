@@ -501,22 +501,31 @@
     }
 
     // TradingView chart initialization
-    function initializeChart(containerId, symbol = 'BINANCE:BTCUSDT', interval = '1D') {
+    function initializeChart(containerId, symbol, interval = '1D') {
       const container = document.getElementById(containerId);
       const chartTitle = document.getElementById(containerId === 'chart-container-header' ? 'chart-title-header' : 'chart-title-modal');
       if (!container) return;
 
-      // Clear previous chart and show loading
-      container.innerHTML = `
-        <div class="chart-loading">
-          <div class="loader"></div>
-          <div class="ml-2">Loading ${symbol.replace('BINANCE:', '')} chart...</div>
-        </div>
-      `;
-      chartTitle.textContent = symbol.replace('BINANCE:', '');
-      chartTitle.setAttribute('data-symbol', symbol.replace('BINANCE:', ''));
+      // Clear the container completely to force reinitialization
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
 
-      // Create widget after short delay
+      // Show loading state
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'chart-loading';
+      loadingDiv.innerHTML = `
+        <div class="loader"></div>
+        <div class="ml-2">Loading ${symbol.replace('BINANCE:', '')} chart...</div>
+      `;
+      container.appendChild(loadingDiv);
+
+      // Update chart title and data-symbol
+      const cleanSymbol = symbol.replace('BINANCE:', '');
+      chartTitle.textContent = cleanSymbol;
+      chartTitle.setAttribute('data-symbol', cleanSymbol);
+
+      // Initialize TradingView widget
       setTimeout(() => {
         new TradingView.widget({
           autosize: true,
@@ -602,8 +611,6 @@
           }
           const interval = document.querySelector(`#${id.replace('-title', '')}-timeframe-1d`).getAttribute('data-interval');
           initializeChart(id.replace('-title', '-container-'), `BINANCE:${newSymbol}`, interval);
-          title.setAttribute('data-symbol', newSymbol);
-          title.textContent = newSymbol;
         });
       });
 
@@ -618,8 +625,6 @@
           const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
           const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-modal', `BINANCE:${symbol}`, interval);
-          document.getElementById('chart-title-modal').setAttribute('data-symbol', symbol);
-          document.getElementById('chart-title-modal').textContent = symbol;
         });
       }
       if (toggleStickyModal) {
@@ -628,8 +633,6 @@
           const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
           const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-header', `BINANCE:${symbol}`, interval);
-          document.getElementById('chart-title-header').setAttribute('data-symbol', symbol);
-          document.getElementById('chart-title-header').textContent = symbol;
         });
       }
     });
