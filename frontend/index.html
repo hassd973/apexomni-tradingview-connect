@@ -88,9 +88,9 @@
     .chart-container {
       position: relative;
       width: 100%;
-      height: calc(100vh - 200px);
-      min-height: 400px;
-      max-height: 1000px;
+      height: calc(100vh - 250px); /* Adjusted for header content */
+      min-height: 350px; /* Reduced for smaller screens */
+      max-height: 800px; /* Reduced to prevent overflow */
     }
     .tradingview-widget-container {
       position: absolute !important;
@@ -114,9 +114,17 @@
       font-size: 1rem;
     }
     #chart-container-modal {
-      height: calc(90vh - 100px) !important;
-      min-height: 500px !important;
-      max-height: 1100px !important;
+      height: calc(90vh - 150px) !important; /* Adjusted for modal header */
+      min-height: 400px !important; /* Adjusted for smaller screens */
+      max-height: 900px !important; /* Reduced to prevent overflow */
+    }
+    @media (max-height: 600px) {
+      .chart-container {
+        height: 300px; /* Fixed height for very small screens */
+      }
+      #chart-container-modal {
+        height: 350px !important;
+      }
     }
 
     /* Modal */
@@ -500,13 +508,19 @@
       particleContainer.appendChild(star);
     }
 
+    // Store chart instances to manage reinitialization
+    const chartInstances = {
+      'chart-container-header': null,
+      'chart-container-modal': null
+    };
+
     // TradingView chart initialization
     function initializeChart(containerId, symbol, interval = '1D') {
       const container = document.getElementById(containerId);
       const chartTitle = document.getElementById(containerId === 'chart-container-header' ? 'chart-title-header' : 'chart-title-modal');
-      if (!container) return;
+      if (!container || !chartTitle) return;
 
-      // Clear the container completely to force reinitialization
+      // Clear the container
       while (container.firstChild) {
         container.removeChild(container.firstChild);
       }
@@ -525,9 +539,22 @@
       chartTitle.textContent = cleanSymbol;
       chartTitle.setAttribute('data-symbol', cleanSymbol);
 
-      // Initialize TradingView widget
+      // Debug log
+      console.log(`Initializing chart for ${containerId} with symbol ${symbol} and interval ${interval}`);
+
+      // Remove existing chart instance if it exists
+      if (chartInstances[containerId]) {
+        try {
+          chartInstances[containerId].remove();
+          chartInstances[containerId] = null;
+        } catch (error) {
+          console.warn(`Failed to remove previous chart instance for ${containerId}:`, error);
+        }
+      }
+
+      // Initialize new TradingView widget
       setTimeout(() => {
-        new TradingView.widget({
+        const widget = new TradingView.widget({
           autosize: true,
           symbol: symbol,
           interval: interval,
@@ -550,8 +577,12 @@
             'mainSeriesProperties.candleStyle.borderUpColor': '#00ff00',
             'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
           },
+          onChartReady: () => {
+            console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
+          }
         });
-      }, 100);
+        chartInstances[containerId] = widget;
+      }, 200); // Increased delay for stability
     }
 
     // Initialize charts on load
@@ -611,6 +642,7 @@
           }
           const interval = document.querySelector(`#${id.replace('-title', '')}-timeframe-1d`).getAttribute('data-interval');
           initializeChart(id.replace('-title', '-container-'), `BINANCE:${newSymbol}`, interval);
+          console.log(`Switched ${id} to symbol: ${newSymbol}`);
         });
       });
 
