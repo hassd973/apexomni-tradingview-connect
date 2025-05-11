@@ -1,5 +1,3 @@
-import { Logtail } from "@logtail/browser";
-
 // === Ice King Dashboard Script ===
 // Author: ZEL
 // Purpose: Display token data and logs with TradingView chart
@@ -11,11 +9,6 @@ const TOKEN_REFRESH_INTERVAL = 30000; // 30 seconds
 const LOG_REFRESH_INTERVAL = 10000; // 10 seconds
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 2000;
-
-// Initialize Logtail for browser logging
-const logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza", {
-  endpoint: 'https://s1303816.eu-nbg-2.betterstackdata.com',
-});
 
 // --- Mock Data (Immediate Fallback) ---
 const mockTokens = [
@@ -75,11 +68,6 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       return data;
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
-      if (error.message.includes('429')) {
-        console.warn('Rate limit hit, increasing delay for next attempt');
-        delay = 5000;
-      }
-      await logtail.error(`Fetch failed: ${error.message}`, { url, attempt: i + 1, retries, errorDetails: error.stack });
       if (i === retries - 1) {
         console.error(`[ERROR] All retries failed for ${url}, using fallback`);
         return null;
@@ -93,7 +81,6 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
 function sanitizeTokenData(data) {
   if (!data || !Array.isArray(data)) {
     console.error('[ERROR] Invalid token data format, expected array:', data);
-    logtail.error('Invalid token data format', { data });
     return mockTokens;
   }
   const sanitized = data.map(token => ({
@@ -115,7 +102,6 @@ function sanitizeTokenData(data) {
 function sanitizeLogData(data) {
   if (!data || !Array.isArray(data)) {
     console.error('[ERROR] Invalid log data format, expected array:', data);
-    logtail.error('Invalid log data format', { data });
     return mockLogs;
   }
   const sanitized = data.map(log => ({
@@ -157,7 +143,6 @@ async function fetchTokenData() {
     return sanitizeTokenData(data);
   }
   console.warn('[WARN] No valid backend token data, using mock data');
-  await logtail.warn('Fallback to mock token data');
   return mockTokens;
 }
 
@@ -172,7 +157,6 @@ async function fetchLogs() {
     return sanitizeLogData(data);
   }
   console.warn('[WARN] No valid log data, using mock data');
-  await logtail.warn('Fallback to mock log data');
   return mockLogs;
 }
 
@@ -185,14 +169,13 @@ async function updateTokens() {
 
   if (!tokenList || !loader || !topPairs) {
     console.error('[ERROR] DOM elements missing: tokenList=', tokenList, 'loader=', loader, 'topPairs=', topPairs);
-    await logtail.error('Missing DOM elements in updateTokens', { tokenList, loader, topPairs });
     return;
   }
 
   loader.style.display = 'flex';
-  console.log('[DEBUG] DOM elements found, starting token fetch');
+  console.log('[DEBUG] DOM elements found, rendering initial mock data');
 
-  let tokens = loadCachedData('tokens') || allTokens;
+  let tokens = allTokens; // Use mock data initially
   const fetchedTokens = await fetchTokenData();
   if (fetchedTokens) {
     tokens = fetchedTokens;
@@ -219,7 +202,6 @@ function renderTokenList() {
   const tokenList = document.getElementById('token-list');
   if (!tokenList) {
     console.error('[ERROR] Token list element not found');
-    logtail.error('Token list element not found');
     return;
   }
 
@@ -263,7 +245,6 @@ function renderTokenList() {
     });
   } else {
     console.warn('[WARN] No tokens to render, using mock data');
-    await logtail.warn('No tokens available, using mock data');
     mockTokens.forEach((token, index) => {
       const opacity = 30 + (index / mockTokens.length) * 40;
       const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
@@ -306,7 +287,6 @@ function renderTopPairs() {
   const topPairs = document.getElementById('top-pairs');
   if (!topPairs) {
     console.error('[ERROR] Top pairs element not found');
-    logtail.error('Top pairs element not found');
     return;
   }
 
@@ -336,12 +316,11 @@ async function updateLogs() {
 
   if (!logList || !loader) {
     console.error('[ERROR] DOM elements missing: logList=', logList, 'loader=', loader);
-    await logtail.error('Missing DOM elements in updateLogs', { logList, loader });
     return;
   }
 
   loader.style.display = 'flex';
-  console.log('[DEBUG] DOM elements found, starting log fetch');
+  console.log('[DEBUG] DOM elements found, rendering initial mock data');
 
   let fetchedLogs = await fetchLogs();
   if (fetchedLogs) {
@@ -358,7 +337,6 @@ function renderLogList() {
   const logList = document.getElementById('log-list');
   if (!logList) {
     console.error('[ERROR] Log list element not found');
-    logtail.error('Log list element not found');
     return;
   }
 
@@ -380,7 +358,6 @@ function renderLogList() {
     });
   } else {
     console.warn('[WARN] No logs to render, using mock data');
-    await logtail.warn('No logs available, using mock data');
     mockLogs.forEach(log => {
       const li = document.createElement('li');
       const levelColor = log.level === 'error' ? 'text-red-400 glow-red' : log.level === 'warn' ? 'text-yellow-400' : 'text-green-400 glow-green';
@@ -406,7 +383,6 @@ function showPriceChart(token, timeframe, context = 'header') {
 
   if (!chartContainer || !chartTitle || !livePriceElement) {
     console.error(`[ERROR] Missing DOM element for ${context} chart: container=${chartContainer}, title=${chartTitle}, price=${livePriceElement}`);
-    logtail.error(`Missing DOM element for ${context} chart`, { context, chartContainer, chartTitle, livePriceElement });
     return;
   }
 
@@ -415,19 +391,16 @@ function showPriceChart(token, timeframe, context = 'header') {
   const symbolMap = {
     'BTC': 'BINANCE:BTCUSDT',
     'ETH': 'BINANCE:ETHUSDT',
-    'USDT': 'BINANCE:USDTUSD', // Added mapping
+    'USDT': 'BINANCE:USDTUSD',
     'XRP': 'BINANCE:XRPUSDT',
     'BNB': 'BINANCE:BNBUSDT',
     'SOL': 'BINANCE:SOLUSDT',
-    'USDC': 'BINANCE:USDCUSD', // Added mapping
+    'USDC': 'BINANCE:USDCUSD',
     'DOGE': 'BINANCE:DOGEUSDT',
     'ADA': 'BINANCE:ADAUSDT',
-    'STETH': 'BINANCE:STETHUSDT', // Added mapping
-    'FLOKI': 'BINANCE:FLOKIUSDT',
-    'SHIB': 'BINANCE:SHIBUSDT',
-    'PEOPLE': 'BINANCE:PEOPLEUSDT'
+    'STETH': 'BINANCE:STETHUSDT'
   };
-  const tvSymbol = symbolMap[token.symbol] || `BINANCE:${token.symbol}USDT` || 'BINANCE:BTCUSDT';
+  const tvSymbol = symbolMap[token.symbol] || 'BINANCE:BTCUSDT';
   const timeframeMap = {
     '1min': '1',
     '5min': '5',
@@ -475,9 +448,7 @@ function showPriceChart(token, timeframe, context = 'header') {
   } catch (error) {
     console.error('[ERROR] Failed to initialize TradingView chart:', error);
     chartContainer.innerHTML = `<div class="text-red-400 text-center p-4">Chart failed to load for ${token.symbol}. Error: ${error.message}</div>`;
-    logtail.error(`Failed to initialize TradingView chart: ${error.message}`, { token: token.symbol, timeframe, context });
-    // Retry with guaranteed symbol
-    setTimeout(() => showPriceChart({ symbol: 'BTC', current_price: token.current_price }, timeframe, context), 2000);
+    setTimeout(() => showPriceChart({ symbol: 'BTC', current_price: 60000 }, timeframe, context), 2000);
   }
 
   chartTitle.textContent = `> ${token.symbol} Price Chart`;
@@ -495,7 +466,6 @@ function updateMarquee() {
 
   if (!marqueeElements[0] || !marqueeElements[1]) {
     console.error('[ERROR] Marquee elements missing:', marqueeElements);
-    logtail.error('Marquee elements missing', { marqueeElements });
     return;
   }
 
@@ -518,7 +488,7 @@ function updateMarquee() {
   ];
   const tripledItems = [...marqueeItems, ...marqueeItems, ...marqueeItems, ...fillerItems];
   marqueeElements.forEach(element => {
-    element.innerHTML = tripledItems.join('');
+    if (element) element.innerHTML = tripledItems.join('');
   });
   console.log('[DEBUG] Marquee updated');
 }
@@ -526,81 +496,72 @@ function updateMarquee() {
 // Initialize dashboard
 function initializeDashboard() {
   console.log('[DEBUG] Initializing Ice King Dashboard...');
-  updateTokens(); // Initial render with mock data, then fetch real data
-  setInterval(updateTokens, TOKEN_REFRESH_INTERVAL);
-  updateLogs();
-  setInterval(updateLogs, LOG_REFRESH_INTERVAL);
-  updateMarquee();
-  setInterval(updateMarquee, 15000);
+  try {
+    updateTokens(); // Render mock data immediately
+    setInterval(updateTokens, TOKEN_REFRESH_INTERVAL);
+    updateLogs(); // Render mock data immediately
+    setInterval(updateLogs, LOG_REFRESH_INTERVAL);
+    updateMarquee();
+    setInterval(updateMarquee, 15000);
 
-  const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
-  ['header', 'modal'].forEach(context => {
-    timeframes.forEach(tf => {
-      const btn = document.getElementById(`${context}-timeframe-${tf}`);
-      if (btn) {
-        btn.addEventListener('click', () => {
-          timeframes.forEach(t => {
-            const tBtn = document.getElementById(`${context}-timeframe-${t}`);
-            if (tBtn) tBtn.classList.remove('active');
+    const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
+    ['header', 'modal'].forEach(context => {
+      timeframes.forEach(tf => {
+        const btn = document.getElementById(`${context}-timeframe-${tf}`);
+        if (btn) {
+          btn.addEventListener('click', () => {
+            timeframes.forEach(t => {
+              const tBtn = document.getElementById(`${context}-timeframe-${t}`);
+              if (tBtn) tBtn.classList.remove('active');
+            });
+            btn.classList.add('active');
+            currentTimeframe = tf;
+            if (currentToken) showPriceChart(currentToken, currentTimeframe, context);
+            console.log(`[DEBUG] Timeframe changed to ${tf} in ${context}`);
           });
-          btn.classList.add('active');
-          currentTimeframe = tf;
-          if (currentToken) showPriceChart(currentToken, currentTimeframe, context);
-          console.log(`[DEBUG] Timeframe changed to ${tf} in ${context}`);
-        });
-      } else {
-        console.warn(`[WARN] Timeframe button ${context}-timeframe-${tf} not found`);
-        logtail.warn(`Missing timeframe button ${context}-timeframe-${tf}`);
-      }
+        } else {
+          console.warn(`[WARN] Timeframe button ${context}-timeframe-${tf} not found`);
+        }
+      });
     });
-  });
 
-  const toggleDockBtnHeader = document.getElementById('toggle-sticky-header');
-  const toggleDockBtnModal = document.getElementById('toggle-sticky-modal');
-  const chartModal = document.getElementById('chart-modal');
+    const toggleDockBtnHeader = document.getElementById('toggle-sticky-header');
+    const toggleDockBtnModal = document.getElementById('toggle-sticky-modal');
+    const chartModal = document.getElementById('chart-modal');
 
-  if (!toggleDockBtnHeader || !toggleDockBtnModal || !chartModal) {
-    console.error('[ERROR] Dock toggle elements missing:', toggleDockBtnHeader, toggleDockBtnModal, chartModal);
-    logtail.error('Dock toggle elements missing', { toggleDockBtnHeader, toggleDockBtnModal, chartModal });
-    return;
+    if (!toggleDockBtnHeader || !toggleDockBtnModal || !chartModal) {
+      console.error('[ERROR] Dock toggle elements missing:', { toggleDockBtnHeader, toggleDockBtnModal, chartModal });
+      return;
+    }
+
+    const toggleChartDock = () => {
+      isChartDocked = !isChartDocked;
+      chartModal.classList.toggle('active', isChartDocked);
+      toggleDockBtnHeader.textContent = isChartDocked ? '[Undock Chart 🔍]' : '[Dock Chart 🔍]';
+      toggleDockBtnModal.textContent = isChartDocked ? '[Undock Chart 🔍]' : '[Dock Chart 🔍]';
+      toggleDockBtnHeader.classList.toggle('bg-green-500', isChartDocked);
+      toggleDockBtnHeader.classList.toggle('bg-blue-500', !isChartDocked);
+      toggleDockBtnModal.classList.toggle('bg-green-500', isChartDocked);
+      toggleDockBtnModal.classList.toggle('bg-blue-500', !isChartDocked);
+      if (isChartDocked && currentToken) showPriceChart(currentToken, currentTimeframe, 'modal');
+      console.log(`[DEBUG] Chart dock toggled: ${isChartDocked ? 'Docked' : 'Undocked'}`);
+    };
+
+    toggleDockBtnHeader.addEventListener('click', toggleChartDock);
+    toggleDockBtnModal.addEventListener('click', toggleChartDock);
+    chartModal.addEventListener('click', (e) => {
+      if (e.target === chartModal) toggleChartDock();
+    });
+
+    showPriceChart(currentToken, currentTimeframe, 'header');
+    console.log('[DEBUG] Dashboard initialization complete');
+  } catch (error) {
+    console.error('[ERROR] Dashboard initialization failed:', error);
   }
-
-  const toggleChartDock = () => {
-    isChartDocked = !isChartDocked;
-    chartModal.classList.toggle('active', isChartDocked);
-    toggleDockBtnHeader.textContent = isChartDocked ? '[Undock Chart 🔍]' : '[Dock Chart 🔍]';
-    toggleDockBtnModal.textContent = isChartDocked ? '[Undock Chart 🔍]' : '[Dock Chart 🔍]';
-    toggleDockBtnHeader.classList.toggle('bg-green-500', isChartDocked);
-    toggleDockBtnHeader.classList.toggle('bg-blue-500', !isChartDocked);
-    toggleDockBtnModal.classList.toggle('bg-green-500', isChartDocked);
-    toggleDockBtnModal.classList.toggle('bg-blue-500', !isChartDocked);
-    toggleDockBtnHeader.classList.toggle('hover:bg-green-600', isChartDocked);
-    toggleDockBtnHeader.classList.toggle('hover:bg-blue-600', !isChartDocked);
-    toggleDockBtnModal.classList.toggle('hover:bg-green-600', isChartDocked);
-    toggleDockBtnModal.classList.toggle('hover:bg-blue-600', !isChartDocked);
-    if (isChartDocked && currentToken) showPriceChart(currentToken, currentTimeframe, 'modal');
-    console.log(`[DEBUG] Chart dock toggled: ${isChartDocked ? 'Docked' : 'Undocked'}`);
-  };
-
-  toggleDockBtnHeader.addEventListener('click', toggleChartDock);
-  toggleDockBtnModal.addEventListener('click', toggleChartDock);
-  chartModal.addEventListener('click', (e) => {
-    if (e.target === chartModal) toggleChartDock();
-  });
-
-  // Initial chart load with guaranteed symbol
-  showPriceChart({ symbol: 'BTC', current_price: 103520.74934128417 }, '1d', 'header');
-
-  console.log('[DEBUG] Dashboard initialization complete');
 }
 
 // Start the dashboard
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] DOMContentLoaded event fired');
   initializeDashboard();
-});
-
-// Ensure logs are sent to BetterStack before the page unloads
-window.addEventListener('beforeunload', () => {
-  logtail.flush();
 });
