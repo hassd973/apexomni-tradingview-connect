@@ -86,7 +86,7 @@ async function fetchCryptoData() {
     });
     return response.data.data;
   } catch (error) {
-    console.error('Error fetching CoinMarketCap data:', error.message);
+    logger.error(`Error fetching CoinMarketCap data: ${error.message}`);
     throw error;
   }
 }
@@ -94,20 +94,78 @@ async function fetchCryptoData() {
 async function fetchLiveLogs() {
   const sourceId = '1303816';
   const telemetryToken = 'WGdCT5KhHtg4kiGWAbdXRaSL';
+  const url = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
   try {
-    const response = await axios.get('https://telemetry.betterstack.com/api/v2/query/live-tail', {
+    const response = await axios.get(url, {
       headers: {
         'Authorization': `Bearer ${telemetryToken}`
       },
       params: {
         source_ids: sourceId,
-        query: 'level=info'
-      }
+        query: 'level=info',
+        batch: 100,
+        order: 'newest_first'
+      },
+      maxRedirects: 5
     });
-    return response.data;
+
+    if (response.data && Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      logger.warn('No logs returned from Telemetry API, attempting direct query');
+      return await fetchLogsDirectly();
+    }
   } catch (error) {
-    console.error('Error fetching BetterStack logs:', error.message);
-    throw error;
+    logger.error(`Error fetching BetterStack logs via Telemetry API: ${error.message}`);
+    logger.info('Falling back to direct query method');
+    return await fetchLogsDirectly();
+  }
+}
+
+async function fetchLogsDirectly() {
+  const username = 'utUpktCnjfkSuJ1my8BEQ9DpczfTifyHn';
+  const password = 'jRbcPkBws9m1J1d4BE52fqVFoVbhALthUgEh1uMGfCKjGxH7lWr2kmgh9q6f7eT0';
+  const url = 'https://eu-nbg-2-connect.betterstackdata.com?output_format_pretty_row_numbers=0';
+  const query = "WITH database || '_' || table AS named_collection, collections AS (SELECT database, table FROM system.tables WHERE database IN ('t371838') AND engine = 'View' AND match(table, '(_logs|_metrics|_s3)\$') UNION DISTINCT SELECT (arrayJoin([('t371838','ice_king_logs'), ('t371838','ice_king_metrics'), ('t371838','ice_king_s3'), ('t371838','ice_king_2_logs'), ('t371838','ice_king_2_metrics'), ('t371838','ice_king_2_s3'), ('t371838','onboarding_real_time_flights_logs'), ('t371838','onboarding_real_time_flights_metrics'), ('t371838','onboarding_real_time_flights_s3')]) AS database_tables).1 AS database, database_tables.2 AS table ORDER BY database, table) SELECT named_collection, 'SELECT * FROM ' || if(endsWith(named_collection, '_s3'), 's3Cluster(primary,' || named_collection || ')', 'remote(' || named_collection || ')') || ' LIMIT 10' AS query_with FROM collections FORMAT Pretty";
+
+  try {
+    const auth = Buffer.from(`${username}:${password}`).toString('base64');
+    const response = await axios.post(url, query, {
+      headers: {
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'plain/text'
+      },
+      maxRedirects: 5
+    });
+
+    if (response.data) {
+      const logs = parseDirectQueryResponse(response.data);
+      return logs;
+    } else {
+      logger.error('No logs returned from direct query');
+      return [];
+    }
+  } catch (error) {
+    logger.error(`Error fetching logs via direct query: ${error.message}`);
+    return [];
+  }
+}
+
+function parseDirectQueryResponse(data) {
+  try {
+    const lines = data.split('\n').filter(line => line.trim());
+    const logs = lines.map(line => {
+      const [named_collection, query] = line.split(/\s+/).filter(Boolean);
+      return {
+        dt: new Date().toISOString(),
+        message: `Query for ${named_collection}: ${query}`,
+        level: 'info'
+      };
+    });
+    return logs;
+  } catch (error) {
+    logger.error(`Error parsing direct query response: ${error.message}`);
+    return [];
   }
 }
 
