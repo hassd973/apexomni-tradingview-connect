@@ -118,8 +118,8 @@
     .marquee span { margin-right: 20px; font-size: 0.75rem; color: #00ff00; }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
-    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; font-size: 0.75rem; }
-    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-mode:hover { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
+    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; font-size: 0.75rem; }
+    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-mode:hover, #toggle-debug:hover { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .timeframe-btn.active { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .loader { display: flex; justify-content: center; align-items: center; padding: 1rem; }
     .loader::after { content: ''; width: 24px; height: 24px; border: 4px solid #00ff00; border-top: 4px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -157,7 +157,7 @@
     }
     @media (min-width: 640px) {
       .title-box { font-size: 0.875rem; }
-      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode { font-size: 0.875rem; }
+      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug { font-size: 0.875rem; }
     }
     @media (min-width: 768px) {
       .title-box { font-size: 1rem; }
@@ -205,6 +205,7 @@
           <div class="flex space-x-2">
             <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded">[Dock Chart 🔍]</button>
             <button id="toggle-data-mode" class="text-black px-2 py-1 rounded">[Mock Data]</button>
+            <button id="toggle-debug" class="text-black px-2 py-1 rounded">[Debug Chart]</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
