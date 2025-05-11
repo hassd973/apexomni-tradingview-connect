@@ -1,3 +1,5 @@
+import { Logtail } from "@logtail/browser";
+
 // === Ice King Dashboard Script ===
 // Author: ZEL
 // Purpose: Display token data and logs with TradingView chart
@@ -9,8 +11,11 @@ const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
 const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
-const BETTERSTACK_URL = 'https://s1303816.eu-nbg-2.betterstackdata.com';
-const BETTERSTACK_TOKEN = 'x5nvK7DNDURcpAHEBuCbHrza';
+
+// Initialize Logtail for browser logging
+const logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza", {
+  endpoint: 'https://s1303816.eu-nbg-2.betterstackdata.com',
+});
 
 // --- Mock Data (Fallback) ---
 const mockTokens = [
@@ -65,7 +70,7 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       return data;
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
-      sendToBetterStack({ message: `Fetch failed: ${error.message}`, level: 'error', dt: new Date().toISOString() });
+      await logtail.error(`Fetch failed: ${error.message}`, { url, attempt: i + 1, retries });
       if (i === retries - 1) {
         console.error(`[ERROR] All retries failed for ${url}`);
         return null;
@@ -75,30 +80,11 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   }
 }
 
-// Send logs to BetterStack
-async function sendToBetterStack(logEntry) {
-  try {
-    const response = await fetch(BETTERSTACK_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${BETTERSTACK_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(logEntry)
-    });
-    if (!response.ok) {
-      console.error(`[ERROR] Failed to send log to BetterStack: ${await response.text()}`);
-    }
-  } catch (error) {
-    console.error('[ERROR] Error sending log to BetterStack:', error.message);
-  }
-}
-
 // Validate and sanitize token data
 function sanitizeTokenData(data) {
   if (!data || !Array.isArray(data.coins)) {
     console.error('[ERROR] Invalid token data format, expected coins array:', data);
-    sendToBetterStack({ message: 'Invalid token data format', level: 'error', dt: new Date().toISOString() });
+    logtail.error('Invalid token data format', { data });
     return [];
   }
   const sanitized = data.coins.map(token => ({
@@ -121,7 +107,7 @@ function sanitizeTokenData(data) {
 function sanitizeLogData(data) {
   if (!data || !Array.isArray(data)) {
     console.error('[ERROR] Invalid log data format, expected array:', data);
-    sendToBetterStack({ message: 'Invalid log data format', level: 'error', dt: new Date().toISOString() });
+    logtail.error('Invalid log data format', { data });
     return [];
   }
   const sanitized = data.map(log => ({
@@ -163,7 +149,7 @@ async function fetchTokenData() {
     return sanitizeTokenData(data);
   }
   console.warn('[WARN] No valid backend token data, using mock data');
-  sendToBetterStack({ message: 'Fallback to mock token data', level: 'warn', dt: new Date().toISOString() });
+  await logtail.warn('Fallback to mock token data');
   alert('Using mock token data due to backend failure. Check console for errors.');
   return sanitizeTokenData({ coins: mockTokens });
 }
@@ -179,7 +165,7 @@ async function fetchLogs() {
     return sanitizeLogData(data);
   }
   console.warn('[WARN] No valid log data, returning empty array');
-  sendToBetterStack({ message: 'No valid log data from backend', level: 'warn', dt: new Date().toISOString() });
+  await logtail.warn('No valid log data from backend');
   alert('No logs available due to backend failure. Check console for errors.');
   return [];
 }
@@ -193,7 +179,7 @@ async function updateTokens() {
 
   if (!tokenList || !loader || !topPairs) {
     console.error('[ERROR] DOM elements missing: tokenList=', tokenList, 'loader=', loader, 'topPairs=', topPairs);
-    sendToBetterStack({ message: 'Missing DOM elements in updateTokens', level: 'error', dt: new Date().toISOString() });
+    await logtail.error('Missing DOM elements in updateTokens', { tokenList, loader, topPairs });
     return;
   }
 
@@ -276,7 +262,7 @@ async function updateLogs() {
 
   if (!logList || !loader) {
     console.error('[ERROR] DOM elements missing: logList=', logList, 'loader=', loader);
-    sendToBetterStack({ message: 'Missing DOM elements in updateLogs', level: 'error', dt: new Date().toISOString() });
+    await logtail.error('Missing DOM elements in updateLogs', { logList, loader });
     return;
   }
 
@@ -317,7 +303,7 @@ function showPriceChart(token, timeframe, context = 'header') {
 
   if (!chartContainer || !chartTitle || !livePriceElement) {
     console.error(`[ERROR] Missing DOM element for ${context} chart: container=${chartContainer}, title=${chartTitle}, price=${livePriceElement}`);
-    sendToBetterStack({ message: `Missing DOM element for ${context} chart`, level: 'error', dt: new Date().toISOString() });
+    logtail.error(`Missing DOM element for ${context} chart`, { context, chartContainer, chartTitle, livePriceElement });
     return;
   }
 
@@ -378,7 +364,7 @@ function showPriceChart(token, timeframe, context = 'header') {
     console.log('[DEBUG] TradingView chart initialized');
   } catch (error) {
     console.error('[ERROR] Failed to initialize TradingView chart:', error);
-    sendToBetterStack({ message: `Failed to initialize TradingView chart: ${error.message}`, level: 'error', dt: new Date().toISOString() });
+    logtail.error(`Failed to initialize TradingView chart: ${error.message}`, { token: token.symbol, timeframe, context });
   }
 
   chartTitle.textContent = `> ${token.symbol} Price Chart`;
@@ -396,7 +382,7 @@ function updateMarquee() {
 
   if (!marqueeElements[0] || !marqueeElements[1]) {
     console.error('[ERROR] Marquee elements missing:', marqueeElements);
-    sendToBetterStack({ message: 'Marquee elements missing', level: 'error', dt: new Date().toISOString() });
+    logtail.error('Marquee elements missing', { marqueeElements });
     return;
   }
 
@@ -455,7 +441,7 @@ function initializeDashboard() {
 
   if (!toggleStickyBtnHeader || !toggleStickyBtnModal || !chartModal) {
     console.error('[ERROR] Sticky toggle elements missing:', toggleStickyBtnHeader, toggleStickyBtnModal, chartModal);
-    sendToBetterStack({ message: 'Sticky toggle elements missing', level: 'error', dt: new Date().toISOString() });
+    logtail.error('Sticky toggle elements missing', { toggleStickyBtnHeader, toggleStickyBtnModal, chartModal });
     return;
   }
 
@@ -489,4 +475,9 @@ function initializeDashboard() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] DOMContentLoaded event fired');
   initializeDashboard();
+});
+
+// Ensure logs are sent to BetterStack before the page unloads
+window.addEventListener('beforeunload', () => {
+  logtail.flush();
 });
