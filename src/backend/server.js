@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const Logtail = require('@logtail/node'); // Correct import for @logtail/node
+const Logtail = require('@logtail/node');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -26,12 +26,12 @@ async function fetchCryptoData() {
       params: {
         vs_currency: 'usd',
         order: 'market_cap_desc',
-        per_page: 50, // Fetch top 50 tokens
+        per_page: 50,
         page: 1,
         sparkline: false,
         price_change_percentage: '24h'
       },
-      timeout: 10000 // 10-second timeout
+      timeout: 10000
     });
     const data = response.data.map(coin => ({
       id: coin.id,
