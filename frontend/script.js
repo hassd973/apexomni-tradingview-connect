@@ -16,10 +16,6 @@ const mockTokens = [
   { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2 },
   { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
 ];
-const mockLogs = [
-  { timestamp: new Date().toISOString(), message: 'Dashboard initialized', level: 'info' },
-  { timestamp: new Date().toISOString(), message: 'Using mock data', level: 'warn' }
-];
 
 // --- Global State ---
 let usedPuns = [];
@@ -29,16 +25,19 @@ let allTokens = mockTokens;
 let sortedTokens = [...mockTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 let isChartDocked = false;
 let selectedTokenLi = null;
-let logs = mockLogs;
+let isMockData = false;
 
 // --- Utility Functions ---
 
-// Fetch with retry
+// Fetch with retry and detailed logging
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`[DEBUG] Fetching ${url} (Attempt ${i + 1}/${retries})`);
-      const response = await fetch(url, { timeout: 5000 });
+      const response = await fetch(url, { 
+        timeout: 5000,
+        headers: { 'Accept': 'application/json' } // Ensure JSON response
+      });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
@@ -49,7 +48,8 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
       if (i === retries - 1) {
-        console.error(`[ERROR] All retries failed for ${url}, using fallback`);
+        console.error(`[ERROR] All retries failed for ${url}. Falling back to ${isMockData ? 'mock' : 'previous'} data.`);
+        document.getElementById('live-price-header').textContent = `> Live Price: Error - Connection unstable (${error.message})`;
         return null;
       }
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -125,7 +125,7 @@ function selectToken(token) {
   currentToken = token;
   document.getElementById('chart-title-header').textContent = `> Chart: ${token.name} (${token.symbol})`;
   document.getElementById('chart-title-modal').textContent = `> Chart: ${token.name} (${token.symbol})`;
-  updateChart(`${token.symbol}USD`);
+  updateChart(`BINANCE:${token.symbol}USDT`); // Changed to Binance exchange
   if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
   selectedTokenLi = event.target.closest('li');
   selectedTokenLi.classList.add('selected-token');
@@ -151,7 +151,6 @@ function loadTradingViewScript(callback) {
     };
     document.head.appendChild(script);
   } else {
-    // Poll until TradingView is available
     const interval = setInterval(() => {
       if (typeof TradingView !== 'undefined') {
         clearInterval(interval);
@@ -162,7 +161,7 @@ function loadTradingViewScript(callback) {
   }
 }
 
-// Update chart
+// Update chart with loading indicator
 function updateChart(symbol) {
   const containerId = isChartDocked ? 'chart-container-header' : 'chart-container-modal';
   const container = document.getElementById(containerId);
@@ -170,14 +169,14 @@ function updateChart(symbol) {
     console.error(`[ERROR] Chart container ${containerId} not found`);
     return;
   }
-  container.innerHTML = ''; // Clear previous chart
+  container.innerHTML = '<div class="loader text-center text-gray-500 text-sm">> Loading Chart...</div>'; // Loading indicator
   loadTradingViewScript(() => {
     try {
       new TradingView.widget({
         container_id: containerId,
         width: '100%',
         height: isChartDocked ? '100%' : '80vh',
-        symbol: symbol || 'BTCUSD',
+        symbol: symbol || 'BINANCE:BTCUSDT',
         interval: currentTimeframe,
         timezone: 'Etc/UTC',
         theme: 'dark',
@@ -193,8 +192,16 @@ function updateChart(symbol) {
       console.log(`[DEBUG] TradingView widget initialized for ${symbol} on interval ${currentTimeframe}`);
     } catch (error) {
       console.error('[ERROR] Failed to initialize TradingView widget:', error);
+      container.innerHTML = `<div class="text-red-500 text-sm">> Chart failed: ${error.message}</div>`;
     }
   });
+}
+
+// Toggle mock data mode
+function toggleMockData() {
+  isMockData = !isMockData;
+  document.getElementById('toggle-data-mode').textContent = `[${isMockData ? 'Real' : 'Mock'} Data]`;
+  initializeData();
 }
 
 // --- Event Listeners ---
@@ -206,26 +213,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const chartModal = document.getElementById('chart-modal');
   const toggleStickyHeader = document.getElementById('toggle-sticky-header');
   const toggleStickyModal = document.getElementById('toggle-sticky-modal');
+  const toggleDataMode = document.getElementById('toggle-data-mode');
 
   // Initial fetch and render
   async function initializeData() {
-    const data = await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    const data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
     if (data) {
       allTokens = sanitizeTokenData(data);
       sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
       updateTokenList(allTokens);
       updateLiveData(allTokens);
-      updateChart(currentToken.symbol + 'USD');
+      updateChart(`BINANCE:${currentToken.symbol}USDT`);
     } else {
-      updateTokenList(mockTokens);
-      updateLiveData(mockTokens);
+      allTokens = mockTokens;
+      updateTokenList(allTokens);
+      updateLiveData(allTokens);
     }
   }
   initializeData();
 
   // Refresh tokens
   setInterval(async () => {
-    const data = await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    const data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
     if (data) {
       allTokens = sanitizeTokenData(data);
       sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
@@ -247,7 +256,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       const timeframeKey = button.id.split('-').pop();
       currentTimeframe = timeframeMap[timeframeKey] || 'D';
-      updateChart(currentToken.symbol + 'USD');
+      updateChart(`BINANCE:${currentToken.symbol}USDT`);
       document.querySelectorAll('.timeframe-btn').forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
     });
@@ -257,12 +266,15 @@ document.addEventListener('DOMContentLoaded', () => {
   toggleStickyHeader.addEventListener('click', () => {
     isChartDocked = false;
     chartModal.classList.add('active');
-    updateChart(currentToken.symbol + 'USD');
+    updateChart(`BINANCE:${currentToken.symbol}USDT`);
   });
 
   toggleStickyModal.addEventListener('click', () => {
     isChartDocked = true;
     chartModal.classList.remove('active');
-    updateChart(currentToken.symbol + 'USD');
+    updateChart(`BINANCE:${currentToken.symbol}USDT`);
   });
+
+  // Toggle mock data
+  toggleDataMode.addEventListener('click', toggleMockData);
 });
