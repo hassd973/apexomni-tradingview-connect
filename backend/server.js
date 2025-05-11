@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const { Node: Logtail } = require("@logtail/node");
+const Logtail = require('@logtail/node');
 
 const app = express();
 const port = process.env.PORT || 3000;
