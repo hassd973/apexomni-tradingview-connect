@@ -9,8 +9,8 @@ import { Logtail } from "@logtail/browser";
 const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
 const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
 const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
-const MAX_RETRIES = 3;
-const RETRY_DELAY = 1000;
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 2000;
 
 // Initialize Logtail for browser logging
 const logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza", {
@@ -19,9 +19,9 @@ const logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza", {
 
 // --- Mock Data (Fallback) ---
 const mockTokens = [
-  { id: 1, name: 'Bitcoin', symbol: 'BTC', quote: { USD: { price: 60000, volume_24h: 4500000, percent_change_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000 } }, source: 'Mock' },
-  { id: 1027, name: 'Ethereum', symbol: 'ETH', quote: { USD: { price: 4000, volume_24h: 3000000, percent_change_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000 } }, source: 'Mock' },
-  { id: 9999, name: 'ConstitutionDAO', symbol: 'PEOPLE', quote: { USD: { price: 0.01962, volume_24h: 135674.745, percent_change_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500 } }, source: 'Mock' }
+  { id: 1, name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock' },
+  { id: 1027, name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock' },
+  { id: 9999, name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock' }
 ];
 
 // --- Ice King Puns for Marquee ---
@@ -60,7 +60,7 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
       console.log(`[DEBUG] Fetching ${url} (Attempt ${i + 1}/${retries})`);
-      const response = await fetch(url);
+      const response = await fetch(url, { timeout: 10000 });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
@@ -82,22 +82,21 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
 
 // Validate and sanitize token data
 function sanitizeTokenData(data) {
-  if (!data || !Array.isArray(data.coins)) {
-    console.error('[ERROR] Invalid token data format, expected coins array:', data);
+  if (!data || !Array.isArray(data)) {
+    console.error('[ERROR] Invalid token data format, expected array:', data);
     logtail.error('Invalid token data format', { data });
     return [];
   }
-  const sanitized = data.coins.map(token => ({
+  const sanitized = data.map(token => ({
     id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
     name: String(token.name || 'Unknown').substring(0, 50),
     symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
-    total_volume: Number(token.quote?.USD?.volume_24h) || 0,
-    current_price: Number(token.quote?.USD?.price) || 0,
-    price_change_percentage_24h: Number(token.quote?.USD?.percent_change_24h) || 0,
-    market_cap: Number(token.quote?.USD?.market_cap) || 0,
-    circulating_supply: Number(token.circulating_supply) || 0,
-    source: String(token.source || 'CoinMarketCap'),
-    score: Math.min(100, Math.max(0, (Number(token.quote?.USD?.percent_change_24h) + 100) / 2)) || 0
+    total_volume: Number(token.total_volume || token.volume_24h || 0),
+    current_price: Number(token.current_price || token.price || 0),
+    price_change_percentage_24h: Number(token.price_change_percentage_24h || token.price_change_24h || 0),
+    market_cap: Number(token.market_cap || 0),
+    circulating_supply: Number(token.circulating_supply || 0),
+    source: String(token.source || 'CoinGecko')
   })).filter(token => token.symbol && token.current_price > 0);
   console.log('[DEBUG] Sanitized token data:', sanitized);
   return sanitized;
@@ -151,7 +150,7 @@ async function fetchTokenData() {
   console.warn('[WARN] No valid backend token data, using mock data');
   await logtail.warn('Fallback to mock token data');
   alert('Using mock token data due to backend failure. Check console for errors.');
-  return sanitizeTokenData({ coins: mockTokens });
+  return sanitizeTokenData(mockTokens);
 }
 
 // Fetch logs from backend
@@ -212,7 +211,7 @@ async function updateTokens() {
     li.innerHTML = `
       <div class="flex flex-col space-y-1">
         <div class="flex items-center justify-between">
-          <span class="font-medium truncate">[🍀 ${token.name} (${token.symbol}) Score:${token.score.toFixed(1)}]</span>
+          <span class="font-medium truncate">[🍀 ${token.name} (${token.symbol})]</span>
           <span class="text-xs">[Vol: $${token.total_volume.toLocaleString()}]</span>
         </div>
         <div class="text-xs">
@@ -281,10 +280,9 @@ async function updateLogs() {
     console.log('[DEBUG] Rendering log:', log.message);
     const li = document.createElement('li');
     const levelColor = log.level === 'error' ? 'text-red-400 glow-red' : log.level === 'warn' ? 'text-yellow-400' : 'text-green-400 glow-green';
-    li.className = `p-2 rounded-md bg-gray-800/50 text-xs fade-in ${levelColor}`;
-    // Adjust timestamp to GMT+1
     const date = new Date(log.timestamp);
     date.setHours(date.getHours() + 1); // GMT+1 offset
+    li.className = `p-2 rounded-md bg-gray-800/50 text-xs fade-in ${levelColor}`;
     li.innerHTML = `
       <div class="flex flex-col">
         <span>[${date.toLocaleString()}]</span>
