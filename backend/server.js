@@ -1,13 +1,13 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const Logtail = require('@logtail/node');
+const { Node } = require('@logtail/node'); // Updated import
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Initialize Logtail
-const logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza", {
+const logtail = new Node("x5nvK7DNDURcpAHEBuCbHrza", {
   endpoint: 'https://s1303816.eu-nbg-2.betterstackdata.com',
 });
 
