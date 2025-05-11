@@ -1,58 +1,48 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const { Node } = require('@logtail/node'); // Updated import
+const Logtail = require('@logtail/node'); // Updated for @logtail/node
 
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Initialize Logtail
-const logtail = new Node("x5nvK7DNDURcpAHEBuCbHrza", {
+const logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza", {
   endpoint: 'https://s1303816.eu-nbg-2.betterstackdata.com',
 });
 
-// Mock data as fallback
-const mockCryptoData = [
-  { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000 },
-  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900 },
-  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018 }
-];
+// Middleware
+app.use(cors());
+app.use(express.json());
 
-// Function to fetch crypto data from CoinGecko
+// In-memory log storage (for /api/logs)
+let logs = [];
+
+// Function to fetch crypto data from Coinpaprika
 async function fetchCryptoData() {
   try {
-    logtail.info('Fetching crypto data from CoinGecko');
-    const response = await axios.get('https://api.coingecko.com/api/v3/coins/markets', {
+    logtail.info('Fetching crypto data from Coinpaprika');
+    const response = await axios.get('https://api.coinpaprika.com/v1/tickers', {
       params: {
-        vs_currency: 'usd',
-        order: 'market_cap_desc',
-        per_page: 50,
-        page: 1,
-        sparkline: false,
-        price_change_percentage: '24h'
-      },
-      timeout: 10000
+        limit: 10 // Fetch top 10 coins
+      }
     });
     const data = response.data.map(coin => ({
       id: coin.id,
       name: coin.name,
-      symbol: coin.symbol.toUpperCase(),
-      current_price: parseFloat(coin.current_price),
-      total_volume: parseFloat(coin.total_volume),
-      price_change_percentage_24h: parseFloat(coin.price_change_percentage_24h),
-      market_cap: parseFloat(coin.market_cap),
+      symbol: coin.symbol,
+      current_price: parseFloat(coin.quotes.USD.price),
+      total_volume: parseFloat(coin.quotes.USD.volume_24h),
+      price_change_percentage_24h: parseFloat(coin.quotes.USD.percent_change_24h),
+      market_cap: parseFloat(coin.quotes.USD.market_cap),
       circulating_supply: parseFloat(coin.circulating_supply),
-      source: 'CoinGecko',
-      high_24h: parseFloat(coin.high_24h),
-      low_24h: parseFloat(coin.low_24h),
-      market_cap_rank: coin.market_cap_rank
+      source: 'Coinpaprika'
     }));
     logtail.info('Successfully fetched crypto data', { count: data.length });
     return data;
   } catch (error) {
-    logtail.error('Failed to fetch crypto data from CoinGecko', { error: error.message });
-    logtail.warn('Falling back to mock data');
-    return mockCryptoData;
+    logtail.error('Failed to fetch crypto data from Coinpaprika', { error: error.message });
+    return [];
   }
 }
 
@@ -77,7 +67,7 @@ app.get('/api/crypto', async (req, res) => {
 app.get('/api/logs', (req, res) => {
   try {
     logtail.info('Received request for /api/logs');
-    res.json([]);
+    res.json(logs);
   } catch (error) {
     logtail.error('Error in /api/logs endpoint', { error: error.message });
     res.status(500).json({ error: 'Internal server error' });
@@ -93,6 +83,7 @@ app.post('/api/logs', (req, res) => {
       message: message || 'No message provided',
       level: level || 'info'
     };
+    logs.push(logEntry);
     logtail.log(logEntry.level, 'Added log entry', logEntry);
     res.status(201).json(logEntry);
   } catch (error) {
