@@ -88,7 +88,7 @@
     .chart-container {
       position: relative;
       width: 100%;
-      height: calc(100vh - 260px); /* Adjusted for header height */
+      height: calc(100vh - 260px);
       min-height: 300px;
       max-height: 750px;
     }
@@ -397,10 +397,10 @@
         <div id="chart-container-header" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading BTC/USDT chart...</div>
+            <div class="ml-2">Loading XRP/USDT chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="BTCUSDT">BTC/USDT</h3>
+        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="XRPUSDT">XRP/USDT</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -433,10 +433,10 @@
         <div id="chart-container-modal" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading chart...</div>
+            <div class="ml-2">Loading XRP/USDT chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="BTCUSDT"></h3>
+        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="XRPUSDT"></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -508,8 +508,8 @@
       particleContainer.appendChild(star);
     }
 
-    // Define valid symbols
-    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT'];
+    // Define tokens under 1M trading volume (simulated)
+    const lowVolumeTokens = ['XRPUSDT', 'ADAUSDT', 'SOLUSDT', 'DOTUSDT', 'MATICUSDT'];
 
     // Store chart instances
     const chartInstances = new Map();
@@ -599,13 +599,18 @@
         }
       };
 
-      setTimeout(initWidget, 300); // Increased delay for stability
+      setTimeout(initWidget, 300);
     }
 
-    // Initialize charts on load
+    // Initialize charts on load with top low-volume token
     document.addEventListener('DOMContentLoaded', () => {
-      initializeChart('chart-container-header', 'BINANCE:BTCUSDT', '1D');
-      initializeChart('chart-container-modal', 'BINANCE:BTCUSDT', '1D');
+      const initialSymbol = lowVolumeTokens[0]; // Start with XRPUSDT as the first low-volume token
+      initializeChart('chart-container-header', `BINANCE:${initialSymbol}`, '1D');
+      initializeChart('chart-container-modal', `BINANCE:${initialSymbol}`, '1D');
+      document.getElementById('chart-title-header').setAttribute('data-symbol', initialSymbol);
+      document.getElementById('chart-title-header').textContent = initialSymbol;
+      document.getElementById('chart-title-modal').setAttribute('data-symbol', initialSymbol);
+      document.getElementById('chart-title-modal').textContent = initialSymbol;
 
       // Timeframe button handlers
       const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
@@ -632,14 +637,14 @@
         }
       });
 
-      // Chart title click to change symbol
+      // Chart title click to change symbol among low-volume tokens
       ['chart-title-header', 'chart-title-modal'].forEach(id => {
         const title = document.getElementById(id);
         title.addEventListener('click', () => {
           const currentSymbol = title.getAttribute('data-symbol');
-          const currentIndex = symbols.indexOf(currentSymbol);
-          const newIndex = (currentIndex + 1) % symbols.length;
-          const newSymbol = symbols[newIndex];
+          const currentIndex = lowVolumeTokens.indexOf(currentSymbol);
+          const newIndex = (currentIndex + 1) % lowVolumeTokens.length;
+          const newSymbol = lowVolumeTokens[newIndex];
           const interval = document.querySelector(`#${id.replace('-title', '')}-timeframe-1d`).getAttribute('data-interval');
           initializeChart(id.replace('-title', '-container-'), `BINANCE:${newSymbol}`, interval);
           console.log(`Switched ${id} to symbol: ${newSymbol}`);
