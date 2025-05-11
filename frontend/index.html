@@ -397,10 +397,10 @@
         <div id="chart-container-header" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading top ranked coin chart...</div>
+            <div class="ml-2">Loading SOL/USDT chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="">Top Ranked Coin</h3>
+        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="SOLUSDT">SOL/USDT</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -433,10 +433,10 @@
         <div id="chart-container-modal" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading top ranked coin chart...</div>
+            <div class="ml-2">Loading SOL/USDT chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="">Top Ranked Coin</h3>
+        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="SOLUSDT"></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -454,11 +454,11 @@
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
       <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full">
-        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="XRPUSDT">XRP/USDT</li>
-        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="ADAUSDT">ADA/USDT</li>
         <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="SOLUSDT">SOL/USDT</li>
+        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="ADAUSDT">ADA/USDT</li>
         <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="DOTUSDT">DOT/USDT</li>
         <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="MATICUSDT">MATIC/USDT</li>
+        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="XRPUSDT">XRP/USDT</li>
       </ul>
       <div class="mt-4">
         <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top/Bottom Performers</h3>
@@ -514,21 +514,18 @@
       particleContainer.appendChild(star);
     }
 
-    // Define tokens under 1M trading volume (simulated)
-    let lowVolumeTokens = ['XRPUSDT', 'ADAUSDT', 'SOLUSDT', 'DOTUSDT', 'MATICUSDT'];
-    let topRankedToken = null;
+    // Define tokens under 1M trading volume with performance (simulated)
+    const lowVolumeTokens = [
+      { symbol: 'SOLUSDT', performance: 5.67 },
+      { symbol: 'ADAUSDT', performance: 3.21 },
+      { symbol: 'DOTUSDT', performance: 0 },
+      { symbol: 'MATICUSDT', performance: 0 },
+      { symbol: 'XRPUSDT', performance: -0.45 }
+    ];
 
-    // Simulate fetching and ranking the top coin (replace with real API call)
-    function fetchTopRankedCoin() {
-      // Placeholder: Use the first token as the top-ranked (to be replaced with API logic)
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          // Simulate API delay
-          const rankedToken = lowVolumeTokens[0]; // Default to first token; replace with sorted result
-          resolve(rankedToken);
-        }, 1000); // Simulate 1-second API call
-      });
-    }
+    // Sort tokens by performance (highest to lowest)
+    lowVolumeTokens.sort((a, b) => b.performance - a.performance);
+    const rankedSymbols = lowVolumeTokens.map(token => token.symbol);
 
     // Store chart instances
     const chartInstances = new Map();
@@ -549,14 +546,14 @@
       loadingDiv.className = 'chart-loading';
       loadingDiv.innerHTML = `
         <div class="loader"></div>
-        <div class="ml-2">Loading ${symbol ? symbol.replace('BINANCE:', '') : 'top ranked coin'} chart...</div>
+        <div class="ml-2">Loading ${symbol.replace('BINANCE:', '')} chart...</div>
       `;
       container.appendChild(loadingDiv);
 
       // Update chart title and data-symbol
-      const cleanSymbol = symbol ? symbol.replace('BINANCE:', '') : 'Top Ranked Coin';
+      const cleanSymbol = symbol.replace('BINANCE:', '');
       chartTitle.textContent = cleanSymbol;
-      chartTitle.setAttribute('data-symbol', symbol ? cleanSymbol : '');
+      chartTitle.setAttribute('data-symbol', cleanSymbol);
 
       // Remove existing chart instance if it exists
       if (chartInstances.has(containerId)) {
@@ -573,7 +570,7 @@
         try {
           const widget = new TradingView.widget({
             autosize: true,
-            symbol: symbol || `BINANCE:${lowVolumeTokens[0]}`, // Fallback to first token if no symbol
+            symbol: `BINANCE:${cleanSymbol}`,
             interval: interval,
             timezone: 'Etc/UTC',
             theme: 'dark',
@@ -595,10 +592,10 @@
               'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
             },
             onChartReady: () => {
-              console.log(`Chart loaded successfully for ${containerId} with symbol ${symbol || 'default'}`);
+              console.log(`Chart loaded successfully for ${containerId} with symbol ${symbol}`);
             },
             onError: (error) => {
-              console.error(`Chart initialization error for ${containerId} with symbol ${symbol || 'default'}:`, error);
+              console.error(`Chart initialization error for ${containerId} with symbol ${symbol}:`, error);
               if (retries > 0) {
                 console.log(`Retrying (${retries} attempts left)...`);
                 setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
@@ -621,29 +618,15 @@
       setTimeout(initWidget, 300);
     }
 
-    // Initialize charts on load with dynamically determined top-ranked coin
+    // Initialize charts on load with top-ranked low-volume token
     document.addEventListener('DOMContentLoaded', () => {
-      // Fetch and set the top-ranked coin
-      fetchTopRankedCoin().then((token) => {
-        topRankedToken = token;
-        const symbol = `BINANCE:${topRankedToken}`;
-        initializeChart('chart-container-header', symbol, '1D');
-        initializeChart('chart-container-modal', symbol, '1D');
-        document.getElementById('chart-title-header').setAttribute('data-symbol', topRankedToken);
-        document.getElementById('chart-title-header').textContent = topRankedToken;
-        document.getElementById('chart-title-modal').setAttribute('data-symbol', topRankedToken);
-        document.getElementById('chart-title-modal').textContent = topRankedToken;
-      }).catch((error) => {
-        console.error('Failed to fetch top-ranked coin:', error);
-        // Fallback to first token if fetch fails
-        const fallbackSymbol = `BINANCE:${lowVolumeTokens[0]}`;
-        initializeChart('chart-container-header', fallbackSymbol, '1D');
-        initializeChart('chart-container-modal', fallbackSymbol, '1D');
-        document.getElementById('chart-title-header').setAttribute('data-symbol', lowVolumeTokens[0]);
-        document.getElementById('chart-title-header').textContent = lowVolumeTokens[0];
-        document.getElementById('chart-title-modal').setAttribute('data-symbol', lowVolumeTokens[0]);
-        document.getElementById('chart-title-modal').textContent = lowVolumeTokens[0];
-      });
+      const topToken = rankedSymbols[0]; // SOLUSDT as the top-ranked
+      initializeChart('chart-container-header', `BINANCE:${topToken}`, '1D');
+      initializeChart('chart-container-modal', `BINANCE:${topToken}`, '1D');
+      document.getElementById('chart-title-header').setAttribute('data-symbol', topToken);
+      document.getElementById('chart-title-header').textContent = topToken;
+      document.getElementById('chart-title-modal').setAttribute('data-symbol', topToken);
+      document.getElementById('chart-title-modal').textContent = topToken;
 
       // Timeframe button handlers
       const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
@@ -675,9 +658,9 @@
         const title = document.getElementById(id);
         title.addEventListener('click', () => {
           const currentSymbol = title.getAttribute('data-symbol');
-          const currentIndex = lowVolumeTokens.indexOf(currentSymbol);
-          const newIndex = (currentIndex + 1) % lowVolumeTokens.length;
-          const newSymbol = lowVolumeTokens[newIndex];
+          const currentIndex = rankedSymbols.indexOf(currentSymbol);
+          const newIndex = (currentIndex + 1) % rankedSymbols.length;
+          const newSymbol = rankedSymbols[newIndex];
           const interval = document.querySelector(`#${id.replace('-title', '')}-timeframe-1d`).getAttribute('data-interval');
           initializeChart(id.replace('-title', '-container-'), `BINANCE:${newSymbol}`, interval);
           console.log(`Toggled ${id} to symbol: ${newSymbol}`);
