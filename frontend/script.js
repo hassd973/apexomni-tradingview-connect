@@ -44,7 +44,7 @@ const iceKingPuns = [
 // --- Global State ---
 let usedPuns = [];
 let currentToken = mockTokens[0];
-let currentTimeframe = '1d';
+let currentTimeframe = 'D'; // Changed to 'D' to match TradingView intervals
 let allTokens = mockTokens;
 let sortedTokens = [...mockTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 let isChartDocked = false;
@@ -53,7 +53,7 @@ let logs = mockLogs;
 
 // --- Utility Functions ---
 
-// Fetch with retry (using Render logs instead of Papertrail)
+// Fetch with retry (using Render logs)
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -96,7 +96,7 @@ function sanitizeTokenData(data) {
     high_24h: Number(token.high_24h || 0),
     low_24h: Number(token.low_24h || 0),
     market_cap_rank: Number(token.market_cap_rank || 0)
-  })).filter(token => token.current_price > 0); // Filter out invalid tokens
+  })).filter(token => token.current_price > 0);
 }
 
 // Get random Ice King pun
@@ -142,9 +142,14 @@ function updateLiveData(tokens) {
   if (tokens.length > 0) {
     const firstToken = tokens[0];
     livePriceHeader.textContent = `> Live Price: $${firstToken.current_price.toLocaleString()} (${firstToken.symbol})`;
-    tickerMarqueeHeader.innerHTML = tokens
+    const marqueeContent = tokens
       .map(token => `<span>[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`)
       .join('');
+    tickerMarqueeHeader.innerHTML = marqueeContent;
+    // Dynamically adjust marquee speed based on content length
+    const contentLength = tokens.length;
+    const duration = Math.max(60, contentLength * 2); // Minimum 60s, scales with number of tokens
+    tickerMarqueeHeader.style.animationDuration = `${duration}s`;
   }
 }
 
@@ -159,24 +164,58 @@ function selectToken(token) {
   selectedTokenLi.classList.add('selected-token');
 }
 
+// Ensure TradingView script is loaded before initializing widget
+function loadTradingViewScript(callback) {
+  if (typeof TradingView !== 'undefined') {
+    callback();
+    return;
+  }
+  const script = document.createElement('script');
+  script.src = 'https://s3.tradingview.com/tv.js';
+  script.async = true;
+  script.onload = () => {
+    console.log('[DEBUG] TradingView script loaded');
+    callback();
+  };
+  script.onerror = () => {
+    console.error('[ERROR] Failed to load TradingView script');
+  };
+  document.head.appendChild(script);
+}
+
 // Update chart
 function updateChart(symbol) {
   const containerId = isChartDocked ? 'chart-container-header' : 'chart-container-modal';
-  new TradingView.widget({
-    container_id: containerId,
-    width: '100%',
-    height: isChartDocked ? '100%' : '80vh',
-    symbol: symbol || 'BTCUSD',
-    interval: currentTimeframe,
-    timezone: 'Etc/UTC',
-    theme: 'dark',
-    style: '1',
-    locale: 'en',
-    toolbar_bg: '#0a0f14',
-    enable_publishing: false,
-    allow_symbol_change: true,
-    details: true,
-    studies: ['Volume@tv-basicstudies'],
+  const container = document.getElementById(containerId);
+  if (!container) {
+    console.error(`[ERROR] Chart container ${containerId} not found`);
+    return;
+  }
+  // Clear previous chart
+  container.innerHTML = '';
+  loadTradingViewScript(() => {
+    try {
+      new TradingView.widget({
+        container_id: containerId,
+        width: '100%',
+        height: isChartDocked ? '100%' : '80vh',
+        symbol: symbol || 'BTCUSD',
+        interval: currentTimeframe,
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        backgroundColor: '#0a0f14', // Match your body background
+        gridColor: 'rgba(0, 255, 0, 0.1)', // Match your green theme
+        enable_publishing: false,
+        allow_symbol_change: true,
+        details: true,
+        studies: ['Volume@tv-basicstudies'],
+      });
+      console.log(`[DEBUG] TradingView widget initialized for ${symbol} on interval ${currentTimeframe}`);
+    } catch (error) {
+      console.error('[ERROR] Failed to initialize TradingView widget:', error);
+    }
   });
 }
 
@@ -220,7 +259,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // Timeframe buttons
   document.querySelectorAll('.timeframe-btn').forEach(button => {
     button.addEventListener('click', () => {
-      currentTimeframe = button.id.split('-').pop();
+      const timeframeMap = {
+        '1min': '1',
+        '5min': '5',
+        '15min': '15',
+        '1hr': '60',
+        '4hr': '240',
+        '1d': 'D'
+      };
+      const timeframeKey = button.id.split('-').pop();
+      currentTimeframe = timeframeMap[timeframeKey] || 'D';
       updateChart(currentToken.symbol + 'USD');
       document.querySelectorAll('.timeframe-btn').forEach(btn => btn.classList.remove('active'));
       button.classList.add('active');
