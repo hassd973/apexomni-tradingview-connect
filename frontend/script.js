@@ -282,9 +282,12 @@ async function updateLogs() {
     const li = document.createElement('li');
     const levelColor = log.level === 'error' ? 'text-red-400 glow-red' : log.level === 'warn' ? 'text-yellow-400' : 'text-green-400 glow-green';
     li.className = `p-2 rounded-md bg-gray-800/50 text-xs fade-in ${levelColor}`;
+    // Adjust timestamp to GMT+1
+    const date = new Date(log.timestamp);
+    date.setHours(date.getHours() + 1); // GMT+1 offset
     li.innerHTML = `
       <div class="flex flex-col">
-        <span>[${new Date(log.timestamp).toLocaleString()}]</span>
+        <span>[${date.toLocaleString()}]</span>
         <span>[${log.level.toUpperCase()}] ${log.message}</span>
       </div>`;
     logList.appendChild(li);
