@@ -96,9 +96,9 @@
     .chart-container {
       position: relative;
       width: 100%;
-      height: 60vh;
+      height: calc(100vh - 200px);
       min-height: 300px;
-      max-height: 800px;
+      max-height: 900px;
     }
     .chart-container:empty::after {
       content: '> Chart failed to load. Please refresh or check your connection.';
@@ -133,18 +133,17 @@
       box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
     }
     #chart-container-modal {
-      height: 80vh !important;
+      height: calc(100vh - 100px) !important;
       min-height: 400px;
-      max-height: 900px;
+      max-height: 1000px;
     }
     #token-list, #log-list, #chat-list, #profit-pairs { z-index: 10; }
     #token-list li, #log-list li, #chat-list li, #profit-pairs li { z-index: 10; position: relative; }
     @media (min-width: 640px) {
       .chart-modal-content { width: 85%; }
-      .chart-container { height: 70vh; }
     }
     @media (min-width: 1024px) {
-      .chart-container { height: 80vh; }
+      .chart-container { height: calc(100vh - 150px); }
     }
     [data-tooltip] { position: relative; }
     [data-tooltip]:hover::after {
@@ -280,19 +279,19 @@
       border-color: #00ff00;
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
     }
-    #token-list {
+    #token-list, #profit-pairs {
       max-height: 600px;
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: #00ff00 #000;
     }
-    #token-list::-webkit-scrollbar {
+    #token-list::-webkit-scrollbar, #profit-pairs::-webkit-scrollbar {
       width: 8px;
     }
-    #token-list::-webkit-scrollbar-track {
+    #token-list::-webkit-scrollbar-track, #profit-pairs::-webkit-scrollbar-track {
       background: #000;
     }
-    #token-list::-webkit-scrollbar-thumb {
+    #token-list::-webkit-scrollbar-thumb, #profit-pairs::-webkit-scrollbar-thumb {
       background: #00ff00;
       border-radius: 4px;
     }
@@ -318,7 +317,7 @@
             <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
             <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
             <button id="header-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240" aria-label="4 hour timeframe">4H</button>
-            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="1D" aria-label="1 day timeframe">1D</button>
+            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
           <div class="flex space-x-2">
             <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded" aria-label="Dock chart">Dock Chart 🔍</button>
@@ -347,7 +346,7 @@
             <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
             <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
             <button id="modal-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240" aria-label="4 hour timeframe">4H</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="1D" aria-label="1 day timeframe">1D</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
           <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded" aria-label="Undock chart">Undock Chart 🔍</button>
         </div>
@@ -407,15 +406,14 @@
     }
 
     // TradingView chart initialization with retry
-    function initializeChart(containerId, symbol = 'BINANCE:BTCUSDT', interval = '1D', retries = 3, delay = 1000) {
+    function initializeChart(containerId, symbol = 'BINANCE:BTCUSDT', interval = 'D', retries = 3, delay = 1000) {
       const container = document.getElementById(containerId);
       if (!container) {
         console.error(`Chart container ${containerId} not found`);
         return;
       }
 
-      // Clear previous chart
-      container.innerHTML = '';
+      container.innerHTML = '<div class="loader text-center text-gray-500 text-sm">> Loading Chart...</div>';
 
       function attemptInit(attempt = 1) {
         if (typeof TradingView === 'undefined' || !TradingView.widget) {
@@ -443,7 +441,7 @@
             allow_symbol_change: true,
             container_id: containerId,
             autosize: true,
-            studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies'],
+            studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'Volume@tv-basicstudies'],
             gridColor: 'rgba(0, 255, 0, 0.1)',
             overrides: {
               'mainSeriesProperties.candleStyle.upColor': '#00ff00',
@@ -453,7 +451,6 @@
             },
           });
 
-          // Handle resize
           const resizeObserver = new ResizeObserver(() => {
             const widgetIframe = container.querySelector('iframe');
             if (widgetIframe) {
@@ -464,77 +461,16 @@
           resizeObserver.observe(container);
         } catch (error) {
           console.error(`Chart initialization failed: ${error.message}`);
-          container.innerHTML = '<div class="text-red-500 text-center p-4">> Chart initialization error. Please refresh.</div>';
+          if (attempt <= retries) {
+            setTimeout(() => attemptInit(attempt + 1), delay);
+          } else {
+            container.innerHTML = '<div class="text-red-500 text-center p-4">> Chart initialization error. Please refresh.</div>';
+          }
         }
       }
 
       attemptInit();
     }
-
-    // Initialize charts on load
-    document.addEventListener('DOMContentLoaded', () => {
-      initializeChart('chart-container-header', 'BINANCE:BTCUSDT', '1D');
-      initializeChart('chart-container-modal', 'BINANCE:BTCUSDT', '1D');
-
-      // Timeframe button handlers
-      const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
-      timeframes.forEach(tf => {
-        const headerBtn = document.getElementById(`header-timeframe-${tf}`);
-        const modalBtn = document.getElementById(`modal-timeframe-${tf}`);
-        const interval = headerBtn?.dataset.interval;
-
-        if (headerBtn) {
-          headerBtn.addEventListener('click', () => {
-            document.querySelectorAll(`#header-timeframe-${timeframes.join(', #header-timeframe-')}`).forEach(btn => btn.classList.remove('active'));
-            headerBtn.classList.add('active');
-            initializeChart('chart-container-header', undefined, interval);
-          });
-        }
-        if (modalBtn) {
-          modalBtn.addEventListener('click', () => {
-            document.querySelectorAll(`#modal-timeframe-${timeframes.join(', #modal-timeframe-')}`).forEach(btn => btn.classList.remove('active'));
-            modalBtn.classList.add('active');
-            initializeChart('chart-container-modal', undefined, interval);
-          });
-        }
-      });
-
-      // Modal toggle
-      const toggleStickyHeader = document.getElementById('toggle-sticky-header');
-      const toggleStickyModal = document.getElementById('toggle-sticky-modal');
-      const chartModal = document.getElementById('chart-modal');
-
-      if (toggleStickyHeader) {
-        toggleStickyHeader.addEventListener('click', () => {
-          chartModal.classList.add('active');
-          initializeChart('chart-container-modal', undefined, document.querySelector('#header-timeframe-1d').dataset.interval);
-        });
-      }
-      if (toggleStickyModal) {
-        toggleStickyModal.addEventListener('click', () => {
-          chartModal.classList.remove('active');
-          initializeChart('chart-container-header', undefined, document.querySelector('#modal-timeframe-1d').dataset.interval);
-        });
-      }
-
-      // Debug chart
-      document.getElementById('toggle-debug').addEventListener('click', () => {
-        console.log('Chart Debug:', {
-          headerChart: document.getElementById('chart-container-header').innerHTML,
-          modalChart: document.getElementById('chart-container-modal').innerHTML,
-        });
-      });
-
-      // Chat send (placeholder)
-      document.getElementById('chat-send').addEventListener('click', () => {
-        const input = document.getElementById('chat-input');
-        const chatList = document.getElementById('chat-list');
-        const li = document.createElement('li');
-        li.textContent = `> You: ${input.value}`;
-        chatList.appendChild(li);
-        input.value = '';
-      });
-    });
   </script>
   <script src="script.js"></script>
 </body>
