@@ -1,47 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 const winston = require('winston');
-const TransportStream = require('winston-transport');
+const { Logtail } = require('@logtail/node');
+const { LogtailTransport } = require('@logtail/winston');
 const axios = require('axios');
 const app = express();
 const port = process.env.PORT || 3000;
 
-class BetterStackTransport extends TransportStream {
-  constructor(options = {}) {
-    super(options);
-    this.name = 'betterStack';
-    this.level = options.level || 'info';
-    this.token = 'x5nvK7DNDURcpAHEBuCbHrza';
-    this.url = 'https://s1303816.eu-nbg-2.betterstackdata.com';
-  }
+// Create a Logtail client
+const logtail = new Logtail('x5nvK7DNDURcpAHEBuCbHrza', {
+  endpoint: 'https://s1303816.eu-nbg-2.betterstackdata.com',
+});
 
-  log(info, callback) {
-    setImmediate(() => {
-      this.emit('logged', info);
-    });
-
-    const logEntry = {
-      message: info.message,
-      level: info.level,
-      dt: info.timestamp || new Date().toISOString()
-    };
-
-    axios.post(this.url, logEntry, {
-      headers: {
-        'Authorization': `Bearer ${this.token}`,
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(() => {
-        callback();
-      })
-      .catch(error => {
-        console.error(`[ERROR] Failed to send log to BetterStack: ${error.message}`);
-        callback(error);
-      });
-  }
-}
-
+// Create a Winston logger with Logtail transport
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -50,15 +21,15 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
-    new BetterStackTransport()
+    new LogtailTransport(logtail)
   ],
   exceptionHandlers: [
     new winston.transports.Console(),
-    new BetterStackTransport()
+    new LogtailTransport(logtail)
   ],
   rejectionHandlers: [
     new winston.transports.Console(),
-    new BetterStackTransport()
+    new LogtailTransport(logtail)
   ]
 });
 
@@ -98,7 +69,8 @@ async function fetchLiveLogs() {
   try {
     const response = await axios.get(url, {
       headers: {
-        'Authorization': `Bearer ${telemetryToken}`
+        'Authorization': `Bearer ${telemetryToken}`,
+        'Accept': 'application/json'
       },
       params: {
         source_ids: sourceId,
@@ -109,64 +81,30 @@ async function fetchLiveLogs() {
       maxRedirects: 5
     });
 
+    logger.info(`Telemetry API response status: ${response.status}`);
     if (response.data && Array.isArray(response.data)) {
+      logger.info(`Retrieved ${response.data.length} logs from Telemetry API`);
       return response.data;
     } else {
-      logger.warn('No logs returned from Telemetry API, attempting direct query');
-      return await fetchLogsDirectly();
+      logger.warn('No logs returned from Telemetry API, returning mock logs');
+      return getMockLogs();
     }
   } catch (error) {
     logger.error(`Error fetching BetterStack logs via Telemetry API: ${error.message}`);
-    logger.info('Falling back to direct query method');
-    return await fetchLogsDirectly();
-  }
-}
-
-async function fetchLogsDirectly() {
-  const username = 'utUpktCnjfkSuJ1my8BEQ9DpczfTifyHn';
-  const password = 'jRbcPkBws9m1J1d4BE52fqVFoVbhALthUgEh1uMGfCKjGxH7lWr2kmgh9q6f7eT0';
-  const url = 'https://eu-nbg-2-connect.betterstackdata.com?output_format_pretty_row_numbers=0';
-  const query = "WITH database || '_' || table AS named_collection, collections AS (SELECT database, table FROM system.tables WHERE database IN ('t371838') AND engine = 'View' AND match(table, '(_logs|_metrics|_s3)\$') UNION DISTINCT SELECT (arrayJoin([('t371838','ice_king_logs'), ('t371838','ice_king_metrics'), ('t371838','ice_king_s3'), ('t371838','ice_king_2_logs'), ('t371838','ice_king_2_metrics'), ('t371838','ice_king_2_s3'), ('t371838','onboarding_real_time_flights_logs'), ('t371838','onboarding_real_time_flights_metrics'), ('t371838','onboarding_real_time_flights_s3')]) AS database_tables).1 AS database, database_tables.2 AS table ORDER BY database, table) SELECT named_collection, 'SELECT * FROM ' || if(endsWith(named_collection, '_s3'), 's3Cluster(primary,' || named_collection || ')', 'remote(' || named_collection || ')') || ' LIMIT 10' AS query_with FROM collections FORMAT Pretty";
-
-  try {
-    const auth = Buffer.from(`${username}:${password}`).toString('base64');
-    const response = await axios.post(url, query, {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'plain/text'
-      },
-      maxRedirects: 5
-    });
-
-    if (response.data) {
-      const logs = parseDirectQueryResponse(response.data);
-      return logs;
-    } else {
-      logger.error('No logs returned from direct query');
-      return [];
+    if (error.response) {
+      logger.error(`Telemetry API error details: ${JSON.stringify(error.response.data)}`);
     }
-  } catch (error) {
-    logger.error(`Error fetching logs via direct query: ${error.message}`);
-    return [];
+    logger.info('Returning mock logs as a fallback');
+    return getMockLogs();
   }
 }
 
-function parseDirectQueryResponse(data) {
-  try {
-    const lines = data.split('\n').filter(line => line.trim());
-    const logs = lines.map(line => {
-      const [named_collection, query] = line.split(/\s+/).filter(Boolean);
-      return {
-        dt: new Date().toISOString(),
-        message: `Query for ${named_collection}: ${query}`,
-        level: 'info'
-      };
-    });
-    return logs;
-  } catch (error) {
-    logger.error(`Error parsing direct query response: ${error.message}`);
-    return [];
-  }
+function getMockLogs() {
+  logger.warn('Returning mock logs as a fallback');
+  return [
+    { dt: new Date().toISOString(), message: 'Mock log: Server is running', level: 'info' },
+    { dt: new Date().toISOString(), message: 'Mock log: Health check passed', level: 'info' }
+  ];
 }
 
 app.get('/health', (req, res) => {
@@ -199,4 +137,10 @@ app.listen(port, () => {
 }).on('error', (error) => {
   logger.error(`Server startup failed: ${error.message}`);
   process.exit(1);
+});
+
+// Ensure logs are sent to BetterStack before shutdown
+process.on('SIGTERM', async () => {
+  await logtail.flush();
+  process.exit(0);
 });
