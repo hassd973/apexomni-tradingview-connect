@@ -1,6 +1,6 @@
 // === Ice King Dashboard Script ===
 // Author: ZEL
-// Purpose: Display token data and logs with TradingView chart
+// Purpose: Display token data, logs, and top/bottom performers with TradingView chart
 // Features: Terminal-style UI, sticky chart toggle, backend integration
 
 // --- Constants and Configuration ---
@@ -171,6 +171,36 @@ function updateLiveData(tokens) {
   }
 }
 
+// New function to update top/bottom performers
+function updateProfitPairs(tokens) {
+  const profitPairs = document.getElementById('profit-pairs');
+  if (!profitPairs) {
+    console.error('[ERROR] Profit pairs element not found');
+    return;
+  }
+  profitPairs.innerHTML = '';
+  
+  // Get top 3 and bottom 3 performers
+  const topPerformers = tokens.slice(0, 3); // Already sorted by price_change_percentage_24h
+  const bottomPerformers = tokens.slice(-3);
+
+  // Display top performers
+  topPerformers.forEach(token => {
+    const li = document.createElement('li');
+    li.className = 'gradient-bg p-1 rounded-md text-sm top-pair';
+    li.innerHTML = `> 🤑 ${token.name} (${token.symbol}): ${token.price_change_percentage_24h.toFixed(2)}%`;
+    profitPairs.appendChild(li);
+  });
+
+  // Display bottom performers
+  bottomPerformers.forEach(token => {
+    const li = document.createElement('li');
+    li.className = 'gradient-bg p-1 rounded-md text-sm bottom-pair';
+    li.innerHTML = `> 🤮 ${token.name} (${token.symbol}): ${token.price_change_percentage_24h.toFixed(2)}%`;
+    profitPairs.appendChild(li);
+  });
+}
+
 // Select token for chart
 function selectToken(token) {
   currentToken = token;
@@ -184,37 +214,7 @@ function selectToken(token) {
   if (selectedTokenLi) selectedTokenLi.classList.add('selected-token');
 }
 
-// Ensure TradingView script is loaded before initializing widget
-function loadTradingViewScript(callback) {
-  if (typeof TradingView !== 'undefined') {
-    callback();
-    return;
-  }
-  const existingScript = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
-  if (!existingScript) {
-    const script = document.createElement('script');
-    script.src = 'https://s3.tradingview.com/tv.js';
-    script.async = true;
-    script.onload = () => {
-      console.log('[DEBUG] TradingView script loaded');
-      callback();
-    };
-    script.onerror = () => {
-      console.error('[ERROR] Failed to load TradingView script');
-    };
-    document.head.appendChild(script);
-  } else {
-    const interval = setInterval(() => {
-      if (typeof TradingView !== 'undefined') {
-        clearInterval(interval);
-        console.log('[DEBUG] TradingView script already loaded, proceeding');
-        callback();
-      }
-    }, 100);
-  }
-}
-
-// Update chart with loading indicator and debug support
+// Simplified TradingView initialization (script is now in HTML)
 function updateChart(symbol) {
   const containerId = isChartDocked ? 'chart-container-header' : 'chart-container-modal';
   const container = document.getElementById(containerId);
@@ -223,39 +223,40 @@ function updateChart(symbol) {
     return;
   }
   container.innerHTML = '<div class="loader text-center text-green-400 text-sm">> Loading Chart... ❄️</div>'; // Ice King-themed loader
-  loadTradingViewScript(() => {
-    try {
-      new TradingView.widget({
-        container_id: containerId,
-        width: '100%',
-        height: isChartDocked ? '100%' : '80vh',
-        symbol: symbol || 'BINANCE:BTCUSDT',
-        interval: currentTimeframe,
-        timezone: 'Etc/UTC',
-        theme: 'dark',
-        style: '1',
-        locale: 'en',
-        backgroundColor: '#0a0f14',
-        gridColor: 'rgba(0, 255, 0, 0.1)',
-        enable_publishing: false,
-        allow_symbol_change: true,
-        details: true,
-        studies: ['Volume@tv-basicstudies'],
-        overrides: {
-          "paneProperties.background": "#0a0f14",
-          "mainSeriesProperties.candleStyle.upColor": "#00ff00",
-          "mainSeriesProperties.candleStyle.downColor": "#ff0000"
-        }
-      });
-      console.log(`[DEBUG] TradingView widget initialized for ${symbol} on interval ${currentTimeframe}`);
-      if (isDebugMode) alert(`Chart initialized for ${symbol} on ${currentTimeframe}`);
-    } catch (error) {
-      console.error('[ERROR] Failed to initialize TradingView widget:', error);
-      container.innerHTML = `<div class="text-red-500 text-sm">> Chart failed: ${error.message} 🧊</div>`;
-      if (isDebugMode) alert(`Chart failed: ${error.message}`);
-      setTimeout(() => updateChart('BINANCE:BTCUSDT'), 2000); // Retry with BTC as fallback
+  try {
+    if (typeof TradingView === 'undefined') {
+      throw new Error('TradingView script not loaded');
     }
-  });
+    new TradingView.widget({
+      container_id: containerId,
+      width: '100%',
+      height: '100%',
+      symbol: symbol || 'BINANCE:BTCUSDT',
+      interval: currentTimeframe,
+      timezone: 'Etc/UTC',
+      theme: 'dark',
+      style: '1',
+      locale: 'en',
+      backgroundColor: '#0a0f14',
+      gridColor: 'rgba(0, 255, 0, 0.1)',
+      enable_publishing: false,
+      allow_symbol_change: true,
+      details: true,
+      studies: ['Volume@tv-basicstudies'],
+      overrides: {
+        "paneProperties.background": "#0a0f14",
+        "mainSeriesProperties.candleStyle.upColor": "#00ff00",
+        "mainSeriesProperties.candleStyle.downColor": "#ff0000"
+      }
+    });
+    console.log(`[DEBUG] TradingView widget initialized for ${symbol} on interval ${currentTimeframe}`);
+    if (isDebugMode) alert(`Chart initialized for ${symbol} on ${currentTimeframe}`);
+  } catch (error) {
+    console.error('[ERROR] Failed to initialize TradingView widget:', error);
+    container.innerHTML = `<div class="text-red-500 text-sm">> Chart failed: ${error.message} 🧊</div>`;
+    if (isDebugMode) alert(`Chart failed: ${error.message}`);
+    setTimeout(() => updateChart('BINANCE:BTCUSDT'), 2000); // Retry with BTC as fallback
+  }
 }
 
 // Toggle mock data mode
@@ -280,14 +281,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const livePriceHeader = document.getElementById('live-price-header');
   const tickerMarqueeHeader = document.getElementById('ticker-marquee-header');
   const topPairs = document.getElementById('top-pairs');
+  const profitPairs = document.getElementById('profit-pairs');
   const chartModal = document.getElementById('chart-modal');
   const toggleStickyHeader = document.getElementById('toggle-sticky-header');
   const toggleStickyModal = document.getElementById('toggle-sticky-modal');
   const toggleDataMode = document.getElementById('toggle-data-mode');
   const toggleDebug = document.getElementById('toggle-debug');
 
-  if (!tokenList || !loaderTokens || !livePriceHeader || !tickerMarqueeHeader || !topPairs || !chartModal || !toggleStickyHeader || !toggleStickyModal || !toggleDataMode || !toggleDebug) {
-    console.error('[ERROR] One or more DOM elements not found:', { tokenList, loaderTokens, livePriceHeader, tickerMarqueeHeader, topPairs, chartModal, toggleStickyHeader, toggleStickyModal, toggleDataMode, toggleDebug });
+  if (!tokenList || !loaderTokens || !livePriceHeader || !tickerMarqueeHeader || !topPairs || !profitPairs || !chartModal || !toggleStickyHeader || !toggleStickyModal || !toggleDataMode || !toggleDebug) {
+    console.error('[ERROR] One or more DOM elements not found:', { tokenList, loaderTokens, livePriceHeader, tickerMarqueeHeader, topPairs, profitPairs, chartModal, toggleStickyHeader, toggleStickyModal, toggleDataMode, toggleDebug });
     return;
   }
 
@@ -299,11 +301,13 @@ document.addEventListener('DOMContentLoaded', () => {
       sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
       updateTokenList(allTokens);
       updateLiveData(allTokens);
+      updateProfitPairs(sortedTokens); // Add top/bottom performers
       updateChart(`BINANCE:${currentToken.symbol}USDT`);
     } else {
       allTokens = mockTokens;
       updateTokenList(allTokens);
       updateLiveData(allTokens);
+      updateProfitPairs(sortedTokens);
       updateChart(`BINANCE:${currentToken.symbol}USDT`);
     }
   }
@@ -317,6 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
       updateTokenList(allTokens);
       updateLiveData(allTokens);
+      updateProfitPairs(sortedTokens);
     }
   }, TOKEN_REFRESH_INTERVAL);
 
