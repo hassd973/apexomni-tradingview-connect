@@ -3,6 +3,16 @@
 // Purpose: Display token data and logs with TradingView chart
 // Features: Terminal-style UI, sticky chart toggle, backend integration
 
+// --- Logtail Setup (via CDN) ---
+let logtail;
+if (typeof Logtail !== 'undefined') {
+  logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza", {
+    endpoint: 'https://s1303816.eu-nbg-2.betterstackdata.com',
+  });
+} else {
+  console.warn('[WARN] Logtail not loaded, logging to console only');
+}
+
 // --- Constants and Configuration ---
 const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
 const TOKEN_REFRESH_INTERVAL = 30000; // 30 seconds
@@ -65,9 +75,11 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       }
       const data = await response.json();
       console.log(`[DEBUG] Fetch successful for ${url}, response:`, data);
+      if (logtail) logtail.info(`Fetch successful for ${url}`, { response: JSON.stringify(data) });
       return data;
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
+      if (logtail) logtail.error(`Fetch failed for ${url}`, { attempt: i + 1, retries, error: error.message });
       if (i === retries - 1) {
         console.error(`[ERROR] All retries failed for ${url}, using fallback`);
         return null;
@@ -81,6 +93,7 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
 function sanitizeTokenData(data) {
   if (!data || !Array.isArray(data)) {
     console.error('[ERROR] Invalid token data format, expected array:', data);
+    if (logtail) logtail.error('Invalid token data format', { data });
     return mockTokens;
   }
   const sanitized = data.map(token => ({
@@ -102,10 +115,11 @@ function sanitizeTokenData(data) {
 function sanitizeLogData(data) {
   if (!data || !Array.isArray(data)) {
     console.error('[ERROR] Invalid log data format, expected array:', data);
+    if (logtail) logtail.error('Invalid log data format', { data });
     return mockLogs;
   }
   const sanitized = data.map(log => ({
-    timestamp: log.dt || new Date().toISOString(),
+    timestamp: log.dt || log.timestamp || new Date().toISOString(),
     message: String(log.message || log.body || 'No message').substring(0, 200),
     level: String(log.level || 'info').toLowerCase()
   }));
@@ -143,6 +157,7 @@ async function fetchTokenData() {
     return sanitizeTokenData(data);
   }
   console.warn('[WARN] No valid backend token data, using mock data');
+  if (logtail) logtail.warn('Fallback to mock token data');
   return mockTokens;
 }
 
@@ -157,6 +172,7 @@ async function fetchLogs() {
     return sanitizeLogData(data);
   }
   console.warn('[WARN] No valid log data, using mock data');
+  if (logtail) logtail.warn('Fallback to mock log data');
   return mockLogs;
 }
 
@@ -169,13 +185,14 @@ async function updateTokens() {
 
   if (!tokenList || !loader || !topPairs) {
     console.error('[ERROR] DOM elements missing: tokenList=', tokenList, 'loader=', loader, 'topPairs=', topPairs);
+    if (logtail) logtail.error('Missing DOM elements in updateTokens', { tokenList, loader, topPairs });
     return;
   }
 
   loader.style.display = 'flex';
   console.log('[DEBUG] DOM elements found, rendering initial mock data');
 
-  let tokens = allTokens; // Use mock data initially
+  let tokens = loadCachedData('tokens') || allTokens;
   const fetchedTokens = await fetchTokenData();
   if (fetchedTokens) {
     tokens = fetchedTokens;
@@ -202,6 +219,7 @@ function renderTokenList() {
   const tokenList = document.getElementById('token-list');
   if (!tokenList) {
     console.error('[ERROR] Token list element not found');
+    if (logtail) logtail.error('Token list element not found');
     return;
   }
 
@@ -245,6 +263,7 @@ function renderTokenList() {
     });
   } else {
     console.warn('[WARN] No tokens to render, using mock data');
+    if (logtail) logtail.warn('No tokens available, using mock data');
     mockTokens.forEach((token, index) => {
       const opacity = 30 + (index / mockTokens.length) * 40;
       const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
@@ -287,6 +306,7 @@ function renderTopPairs() {
   const topPairs = document.getElementById('top-pairs');
   if (!topPairs) {
     console.error('[ERROR] Top pairs element not found');
+    if (logtail) logtail.error('Top pairs element not found');
     return;
   }
 
@@ -316,19 +336,28 @@ async function updateLogs() {
 
   if (!logList || !loader) {
     console.error('[ERROR] DOM elements missing: logList=', logList, 'loader=', loader);
+    if (logtail) logtail.error('Missing DOM elements in updateLogs', { logList, loader });
     return;
   }
 
   loader.style.display = 'flex';
-  console.log('[DEBUG] DOM elements found, rendering initial mock data');
+  console.log('[DEBUG] DOM elements found, rendering initial mock logs');
 
+  // Render mock logs immediately
+  logs = mockLogs;
+  renderLogList();
+
+  // Fetch real logs
   let fetchedLogs = await fetchLogs();
   if (fetchedLogs) {
     logs = fetchedLogs;
     cacheData(logs, 'logs');
+    renderLogList();
+  } else {
+    console.warn('[WARN] Failed to fetch logs, sticking with mock logs');
+    if (logtail) logtail.warn('Failed to fetch logs, using mock logs');
   }
 
-  renderLogList();
   loader.style.display = 'none';
   console.log('[DEBUG] Logs updated');
 }
@@ -337,6 +366,7 @@ function renderLogList() {
   const logList = document.getElementById('log-list');
   if (!logList) {
     console.error('[ERROR] Log list element not found');
+    if (logtail) logtail.error('Log list element not found');
     return;
   }
 
@@ -358,6 +388,7 @@ function renderLogList() {
     });
   } else {
     console.warn('[WARN] No logs to render, using mock data');
+    if (logtail) logtail.warn('No logs available, using mock data');
     mockLogs.forEach(log => {
       const li = document.createElement('li');
       const levelColor = log.level === 'error' ? 'text-red-400 glow-red' : log.level === 'warn' ? 'text-yellow-400' : 'text-green-400 glow-green';
@@ -383,6 +414,7 @@ function showPriceChart(token, timeframe, context = 'header') {
 
   if (!chartContainer || !chartTitle || !livePriceElement) {
     console.error(`[ERROR] Missing DOM element for ${context} chart: container=${chartContainer}, title=${chartTitle}, price=${livePriceElement}`);
+    if (logtail) logtail.error(`Missing DOM element for ${context} chart`, { context, chartContainer, chartTitle, livePriceElement });
     return;
   }
 
@@ -447,6 +479,7 @@ function showPriceChart(token, timeframe, context = 'header') {
     console.log('[DEBUG] TradingView chart initialized');
   } catch (error) {
     console.error('[ERROR] Failed to initialize TradingView chart:', error);
+    if (logtail) logtail.error(`Failed to initialize TradingView chart`, { token: token.symbol, timeframe, context, error: error.message });
     chartContainer.innerHTML = `<div class="text-red-400 text-center p-4">Chart failed to load for ${token.symbol}. Error: ${error.message}</div>`;
     setTimeout(() => showPriceChart({ symbol: 'BTC', current_price: 60000 }, timeframe, context), 2000);
   }
@@ -466,6 +499,7 @@ function updateMarquee() {
 
   if (!marqueeElements[0] || !marqueeElements[1]) {
     console.error('[ERROR] Marquee elements missing:', marqueeElements);
+    if (logtail) logtail.error('Marquee elements missing', { marqueeElements });
     return;
   }
 
@@ -497,9 +531,9 @@ function updateMarquee() {
 function initializeDashboard() {
   console.log('[DEBUG] Initializing Ice King Dashboard...');
   try {
-    updateTokens(); // Render mock data immediately
+    updateTokens();
     setInterval(updateTokens, TOKEN_REFRESH_INTERVAL);
-    updateLogs(); // Render mock data immediately
+    updateLogs();
     setInterval(updateLogs, LOG_REFRESH_INTERVAL);
     updateMarquee();
     setInterval(updateMarquee, 15000);
@@ -521,6 +555,7 @@ function initializeDashboard() {
           });
         } else {
           console.warn(`[WARN] Timeframe button ${context}-timeframe-${tf} not found`);
+          if (logtail) logtail.warn(`Missing timeframe button ${context}-timeframe-${tf}`);
         }
       });
     });
@@ -531,6 +566,7 @@ function initializeDashboard() {
 
     if (!toggleDockBtnHeader || !toggleDockBtnModal || !chartModal) {
       console.error('[ERROR] Dock toggle elements missing:', { toggleDockBtnHeader, toggleDockBtnModal, chartModal });
+      if (logtail) logtail.error('Dock toggle elements missing', { toggleDockBtnHeader, toggleDockBtnModal, chartModal });
       return;
     }
 
@@ -555,8 +591,10 @@ function initializeDashboard() {
 
     showPriceChart(currentToken, currentTimeframe, 'header');
     console.log('[DEBUG] Dashboard initialization complete');
+    if (logtail) logtail.info('Dashboard initialized successfully');
   } catch (error) {
     console.error('[ERROR] Dashboard initialization failed:', error);
+    if (logtail) logtail.error('Dashboard initialization failed', { error: error.message });
   }
 }
 
@@ -564,4 +602,9 @@ function initializeDashboard() {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('[DEBUG] DOMContentLoaded event fired');
   initializeDashboard();
+});
+
+// Flush logs on page unload
+window.addEventListener('beforeunload', () => {
+  if (logtail) logtail.flush();
 });
