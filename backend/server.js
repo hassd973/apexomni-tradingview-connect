@@ -45,7 +45,7 @@ let tokenCache = null;
 let lastCacheTime = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-const binanceApiUrl = 'https://api.binance.com/api/v3/ticker/price';
+const coincapApiUrl = 'https://api.coincap.io/v2/assets?limit=10';
 
 async function fetchCryptoData(retries = 3, delay = 5000) {
   // Check cache first
@@ -56,34 +56,31 @@ async function fetchCryptoData(retries = 3, delay = 5000) {
 
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await axios.get(binanceApiUrl, {
+      const response = await axios.get(coincapApiUrl, {
         timeout: 10000
       });
-      const data = response.data;
+      const data = response.data.data;
 
-      // Map Binance data to our format
-      const mappedData = data
-        .filter(token => token.symbol.endsWith('USDT')) // Only USDT pairs
-        .slice(0, 10) // Limit to top 10
-        .map(token => ({
-          id: token.symbol,
-          name: token.symbol.replace('USDT', ''),
-          symbol: token.symbol.replace('USDT', ''),
-          current_price: parseFloat(token.price),
-          total_volume: 0, // Binance ticker/price doesn't provide volume, set to 0
-          price_change_percentage_24h: 0, // Not available in this endpoint
-          market_cap: 0, // Not available in this endpoint
-          circulating_supply: 0, // Not available in this endpoint
-          source: 'Binance'
-        }));
+      // Map CoinCap data to our format
+      const mappedData = data.map(token => ({
+        id: token.id,
+        name: token.name,
+        symbol: token.symbol,
+        current_price: parseFloat(token.priceUsd),
+        total_volume: parseFloat(token.volumeUsd24Hr) || 0,
+        price_change_percentage_24h: parseFloat(token.changePercent24Hr) || 0,
+        market_cap: parseFloat(token.marketCapUsd) || 0,
+        circulating_supply: parseFloat(token.supply) || 0,
+        source: 'CoinCap'
+      }));
 
       // Update cache
       tokenCache = mappedData;
       lastCacheTime = Date.now();
-      logger.info('Fetched and cached Binance data');
+      logger.info('Fetched and cached CoinCap data');
       return mappedData;
     } catch (error) {
-      logger.error(`Error fetching Binance data (attempt ${i + 1}/${retries}): ${error.message}`);
+      logger.error(`Error fetching CoinCap data (attempt ${i + 1}/${retries}): ${error.message}`);
       if (error.response && error.response.status === 429) {
         logger.warn('Rate limit hit, increasing delay for next attempt');
         delay = 10000; // Back off to 10 seconds on 429
