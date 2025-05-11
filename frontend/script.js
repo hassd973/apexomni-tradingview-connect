@@ -21,30 +21,10 @@ const mockLogs = [
   { timestamp: new Date().toISOString(), message: 'Using mock data', level: 'warn' }
 ];
 
-// --- Ice King Puns for Marquee ---
-const iceKingPuns = [
-  "Everything is Going to be okay! ❄️👑",
-  "Penguins are my royal guards! 🐧🧊",
-  "Time to freeze the market! ❄️😂",
-  "Ice to meet you, traders! 🧊🐧",
-  "I’m the coolest king around! 👑❄️",
-  "Penguin power activate! 🐧🧊😂",
-  "Snow way I’m missing this trade! ❄️📈",
-  "Freeze your doubts, let’s trade! 🧊💸",
-  "I’m skating through the market! ⛸️❄️",
-  "Cold cash, hot trades! 🥶💰",
-  "My portfolio’s cooler than ice! ❄️📊",
-  "Chill out, I’ve got this! 🧊😎",
-  "Ice King’s here to rule the charts! 👑📉",
-  "Let’s make it snow profits! ❄️💵",
-  "I’m frosting the competition! 🧊🏆",
-  "Cool trades, warm wins! ❄️🔥"
-];
-
 // --- Global State ---
 let usedPuns = [];
 let currentToken = mockTokens[0];
-let currentTimeframe = 'D'; // Changed to 'D' to match TradingView intervals
+let currentTimeframe = 'D'; // TradingView uses 'D' for 1-day
 let allTokens = mockTokens;
 let sortedTokens = [...mockTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 let isChartDocked = false;
@@ -53,7 +33,7 @@ let logs = mockLogs;
 
 // --- Utility Functions ---
 
-// Fetch with retry (using Render logs)
+// Fetch with retry
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -99,17 +79,6 @@ function sanitizeTokenData(data) {
   })).filter(token => token.current_price > 0);
 }
 
-// Get random Ice King pun
-function getRandomPun() {
-  if (usedPuns.length === iceKingPuns.length) usedPuns = [];
-  let pun;
-  do {
-    pun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)];
-  } while (usedPuns.includes(pun));
-  usedPuns.push(pun);
-  return pun;
-}
-
 // --- DOM Manipulation Functions ---
 
 // Update token list
@@ -146,9 +115,7 @@ function updateLiveData(tokens) {
       .map(token => `<span>[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`)
       .join('');
     tickerMarqueeHeader.innerHTML = marqueeContent;
-    // Dynamically adjust marquee speed based on content length
-    const contentLength = tokens.length;
-    const duration = Math.max(60, contentLength * 2); // Minimum 60s, scales with number of tokens
+    const duration = Math.max(60, tokens.length * 2); // Dynamic duration based on number of tokens
     tickerMarqueeHeader.style.animationDuration = `${duration}s`;
   }
 }
@@ -158,7 +125,7 @@ function selectToken(token) {
   currentToken = token;
   document.getElementById('chart-title-header').textContent = `> Chart: ${token.name} (${token.symbol})`;
   document.getElementById('chart-title-modal').textContent = `> Chart: ${token.name} (${token.symbol})`;
-  updateChart(token.symbol + 'USD');
+  updateChart(`${token.symbol}USD`);
   if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
   selectedTokenLi = event.target.closest('li');
   selectedTokenLi.classList.add('selected-token');
@@ -170,17 +137,29 @@ function loadTradingViewScript(callback) {
     callback();
     return;
   }
-  const script = document.createElement('script');
-  script.src = 'https://s3.tradingview.com/tv.js';
-  script.async = true;
-  script.onload = () => {
-    console.log('[DEBUG] TradingView script loaded');
-    callback();
-  };
-  script.onerror = () => {
-    console.error('[ERROR] Failed to load TradingView script');
-  };
-  document.head.appendChild(script);
+  const existingScript = document.querySelector('script[src="https://s3.tradingview.com/tv.js"]');
+  if (!existingScript) {
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.async = true;
+    script.onload = () => {
+      console.log('[DEBUG] TradingView script loaded');
+      callback();
+    };
+    script.onerror = () => {
+      console.error('[ERROR] Failed to load TradingView script');
+    };
+    document.head.appendChild(script);
+  } else {
+    // Poll until TradingView is available
+    const interval = setInterval(() => {
+      if (typeof TradingView !== 'undefined') {
+        clearInterval(interval);
+        console.log('[DEBUG] TradingView script already loaded, proceeding');
+        callback();
+      }
+    }, 100);
+  }
 }
 
 // Update chart
@@ -191,8 +170,7 @@ function updateChart(symbol) {
     console.error(`[ERROR] Chart container ${containerId} not found`);
     return;
   }
-  // Clear previous chart
-  container.innerHTML = '';
+  container.innerHTML = ''; // Clear previous chart
   loadTradingViewScript(() => {
     try {
       new TradingView.widget({
@@ -205,8 +183,8 @@ function updateChart(symbol) {
         theme: 'dark',
         style: '1',
         locale: 'en',
-        backgroundColor: '#0a0f14', // Match your body background
-        gridColor: 'rgba(0, 255, 0, 0.1)', // Match your green theme
+        backgroundColor: '#0a0f14',
+        gridColor: 'rgba(0, 255, 0, 0.1)',
         enable_publishing: false,
         allow_symbol_change: true,
         details: true,
