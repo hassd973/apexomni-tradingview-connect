@@ -1,209 +1,111 @@
 const express = require('express');
-const cors = require('cors');
-const winston = require('winston');
-const { Logtail } = require('@logtail/node');
-const { LogtailTransport } = require('@logtail/winston');
 const axios = require('axios');
+const cors = require('cors');
+const { Node: Logtail } = require("@logtail/node");
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Create a Logtail client
-const logtail = new Logtail('x5nvK7DNDURcpAHEBuCbHrza', {
+// Initialize Logtail
+const logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza", {
   endpoint: 'https://s1303816.eu-nbg-2.betterstackdata.com',
 });
 
-// Create a Winston logger with Logtail transport
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' }),
-    winston.format.json()
-  ),
-  transports: [
-    new winston.transports.Console(),
-    new LogtailTransport(logtail)
-  ],
-  exceptionHandlers: [
-    new winston.transports.Console(),
-    new LogtailTransport(logtail)
-  ],
-  rejectionHandlers: [
-    new winston.transports.Console(),
-    new LogtailTransport(logtail)
-  ]
-});
-
-app.use(cors({
-  origin: ['https://ice-king-dashboard-tm4b.onrender.com', 'http://localhost:3000'],
-  methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Accept']
-}));
+// Middleware
+app.use(cors());
 app.use(express.json());
 
-// Cache for token data
-let tokenCache = null;
-let lastCacheTime = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// In-memory log storage (for /api/logs)
+let logs = [];
 
-const coinpaprikaApiUrl = 'https://api.coinpaprika.com/v1/tickers?limit=10';
-
-async function fetchCryptoData(retries = 3, delay = 5000) {
-  // Check cache first
-  if (tokenCache && (Date.now() - lastCacheTime) < CACHE_DURATION) {
-    logger.info('Returning cached token data');
-    return tokenCache;
-  }
-
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await axios.get(coinpaprikaApiUrl, {
-        timeout: 10000
-      });
-      const data = response.data;
-
-      // Map Coinpaprika data to our format
-      const mappedData = data.map(token => ({
-        id: token.id,
-        name: token.name,
-        symbol: token.symbol,
-        current_price: parseFloat(token.quotes.USD.price),
-        total_volume: parseFloat(token.quotes.USD.volume_24h) || 0,
-        price_change_percentage_24h: parseFloat(token.quotes.USD.percent_change_24h) || 0,
-        market_cap: parseFloat(token.quotes.USD.market_cap) || 0,
-        circulating_supply: parseFloat(token.circulating_supply) || 0,
-        source: 'Coinpaprika'
-      }));
-
-      // Update cache
-      tokenCache = mappedData;
-      lastCacheTime = Date.now();
-      logger.info('Fetched and cached Coinpaprika data');
-      return mappedData;
-    } catch (error) {
-      logger.error(`Error fetching Coinpaprika data (attempt ${i + 1}/${retries}): ${error.message}`);
-      if (error.response && error.response.status === 429) {
-        logger.warn('Rate limit hit, increasing delay for next attempt');
-        delay = 10000; // Back off to 10 seconds on 429
-      }
-      if (i === retries - 1) {
-        throw error;
-      }
-      await new Promise(resolve => setTimeout(resolve, delay));
-    }
-  }
-}
-
-async function fetchLiveLogs() {
-  const username = 'utUpktCnjfkSuJ1my8BEQ9DpczfTifyHn';
-  const password = 'jRbcPkBws9m1J1d4BE52fqVFoVbhALthUgEh1uMGfCKjGxH7lWr2kmgh9q6f7eT0';
-  const url = 'https://eu-nbg-2-connect.betterstackdata.com?output_format_pretty_row_numbers=0';
-  const query = "SELECT * FROM remote('t371838_ice_king_logs') WHERE level = 'info' ORDER BY dt DESC LIMIT 10 FORMAT JSONEachRow";
-
+// Function to fetch crypto data from Coinpaprika
+async function fetchCryptoData() {
   try {
-    const auth = Buffer.from(`${username}:${password}`).toString('base64');
-    const response = await axios.post(url, query, {
-      headers: {
-        'Authorization': `Basic ${auth}`,
-        'Content-Type': 'plain/text',
-        'Accept': 'application/json'
-      },
-      maxRedirects: 5
+    logtail.info('Fetching crypto data from Coinpaprika');
+    const response = await axios.get('https://api.coinpaprika.com/v1/tickers', {
+      params: {
+        limit: 10 // Fetch top 10 coins
+      }
     });
-
-    logger.info(`Direct query response: ${JSON.stringify(response.data)}`);
-    if (response.data) {
-      const logs = parseDirectQueryResponse(response.data);
-      logger.info(`Parsed ${logs.length} logs from direct query`);
-      return logs;
-    } else {
-      logger.error('No logs returned from direct query');
-      return getMockLogs();
-    }
+    const data = response.data.map(coin => ({
+      id: coin.id,
+      name: coin.name,
+      symbol: coin.symbol,
+      current_price: parseFloat(coin.quotes.USD.price),
+      total_volume: parseFloat(coin.quotes.USD.volume_24h),
+      price_change_percentage_24h: parseFloat(coin.quotes.USD.percent_change_24h),
+      market_cap: parseFloat(coin.quotes.USD.market_cap),
+      circulating_supply: parseFloat(coin.circulating_supply),
+      source: 'Coinpaprika'
+    }));
+    logtail.info('Successfully fetched crypto data', { count: data.length });
+    return data;
   } catch (error) {
-    logger.error(`Error fetching logs via direct query: ${error.message}`);
-    if (error.response) {
-      logger.error(`Direct query error details: ${JSON.stringify(error.response.data)}`);
-    }
-    return getMockLogs();
+    logtail.error('Failed to fetch crypto data from Coinpaprika', { error: error.message });
+    return [];
   }
 }
 
-function parseDirectQueryResponse(data) {
-  try {
-    if (typeof data === 'string') {
-      const lines = data.split('\n').filter(line => line.trim());
-      const logs = lines.map(line => {
-        try {
-          const parsed = JSON.parse(line);
-          return {
-            dt: parsed.dt || new Date().toISOString(),
-            message: parsed.message || 'No message',
-            level: parsed.level || 'info'
-          };
-        } catch (e) {
-          logger.error(`Error parsing log line: ${line}, error: ${e.message}`);
-          return null;
-        }
-      }).filter(log => log !== null);
-      return logs;
-    } else if (Array.isArray(data)) {
-      return data.map(log => ({
-        dt: log.dt || new Date().toISOString(),
-        message: log.message || 'No message',
-        level: log.level || 'info'
-      }));
-    } else {
-      logger.error('Unexpected direct query response format');
-      return [];
-    }
-  } catch (error) {
-    logger.error(`Error parsing direct query response: ${error.message}`);
-    return getMockLogs();
-  }
-}
-
-function getMockLogs() {
-  logger.warn('Returning mock logs as a fallback');
-  return [
-    { dt: new Date().toISOString(), message: 'Mock log: Server is running', level: 'info' },
-    { dt: new Date().toISOString(), message: 'Mock log: Health check passed', level: 'info' }
-  ];
-}
-
-app.get('/health', (req, res) => {
-  logger.info('Health check requested');
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
+// API endpoint to get crypto data
 app.get('/api/crypto', async (req, res) => {
   try {
-    const cryptoData = await fetchCryptoData();
-    res.json(cryptoData);
+    logtail.info('Received request for /api/crypto');
+    const data = await fetchCryptoData();
+    if (data.length === 0) {
+      logtail.warn('No crypto data available');
+      res.status(500).json({ error: 'Failed to fetch crypto data' });
+      return;
+    }
+    res.json(data);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch crypto data' });
+    logtail.error('Error in /api/crypto endpoint', { error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.get('/api/logs', async (req, res) => {
+// API endpoint to get logs
+app.get('/api/logs', (req, res) => {
   try {
-    const logData = await fetchLiveLogs();
-    res.json(logData);
+    logtail.info('Received request for /api/logs');
+    res.json(logs);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch live logs' });
+    logtail.error('Error in /api/logs endpoint', { error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-logger.info(`Server started on port ${port}`);
-
-app.listen(port, () => {
-  logger.info(`Server listening on port ${port}`);
-}).on('error', (error) => {
-  logger.error(`Server startup failed: ${error.message}`);
-  process.exit(1);
+// API endpoint to add a log (for testing)
+app.post('/api/logs', (req, res) => {
+  try {
+    const { message, level } = req.body;
+    const logEntry = {
+      timestamp: new Date().toISOString(),
+      message: message || 'No message provided',
+      level: level || 'info'
+    };
+    logs.push(logEntry);
+    logtail.log(logEntry.level, 'Added log entry', logEntry);
+    res.status(201).json(logEntry);
+  } catch (error) {
+    logtail.error('Error in /api/logs POST endpoint', { error: error.message });
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
-// Ensure logs are sent to BetterStack before shutdown
-process.on('SIGTERM', async () => {
-  await logtail.flush();
-  process.exit(0);
+// Health check endpoint
+app.get('/health', (req, res) => {
+  logtail.info('Health check requested');
+  res.status(200).json({ status: 'OK' });
+});
+
+// Start the server
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+  logtail.info('Server started', { port });
+});
+
+// Flush logs on process exit
+process.on('SIGINT', () => {
+  logtail.flush();
+  process.exit();
 });
