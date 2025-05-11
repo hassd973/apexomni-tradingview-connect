@@ -7,10 +7,10 @@ import { Logtail } from "@logtail/browser";
 
 // --- Constants and Configuration ---
 const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
-const TOKEN_REFRESH_INTERVAL = 60000; // 1 minute
+const TOKEN_REFRESH_INTERVAL = 300000; // 5 minutes
 const LOG_REFRESH_INTERVAL = 30000; // 30 seconds
 const MAX_RETRIES = 5;
-const RETRY_DELAY = 2000;
+const RETRY_DELAY = 5000;
 
 // Initialize Logtail for browser logging
 const logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza", {
@@ -70,6 +70,10 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       return data;
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
+      if (error.message.includes('429')) {
+        console.warn('Rate limit hit, increasing delay for next attempt');
+        delay = 10000; // Back off to 10 seconds on 429
+      }
       await logtail.error(`Fetch failed: ${error.message}`, { url, attempt: i + 1, retries, errorDetails: error.stack });
       if (i === retries - 1) {
         console.error(`[ERROR] All retries failed for ${url}`);
