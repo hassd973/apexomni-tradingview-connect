@@ -40,26 +40,24 @@ app.use(cors({
 }));
 app.use(express.json());
 
-const cmcApiKey = 'bef090eb-323d-4ae8-86dd-266236262f19';
-const cmcApiUrl = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/category';
+const coingeckoApiUrl = 'https://api.coingecko.com/api/v3/coins/markets';
 
 async function fetchCryptoData(retries = 3, delay = 1000) {
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await axios.get(cmcApiUrl, {
-        headers: {
-          'X-CMC_PRO_API_KEY': cmcApiKey,
-          'Accept': 'application/json'
-        },
+      const response = await axios.get(coingeckoApiUrl, {
         params: {
-          id: '605e2ce9d41eae1066535f7c',
-          convert: 'USD'
+          vs_currency: 'usd',
+          order: 'market_cap_desc',
+          per_page: 10,
+          page: 1,
+          sparkline: false
         },
         timeout: 10000
       });
-      return response.data.data;
+      return response.data;
     } catch (error) {
-      logger.error(`Error fetching CoinMarketCap data (attempt ${i + 1}/${retries}): ${error.message}`);
+      logger.error(`Error fetching CoinGecko data (attempt ${i + 1}/${retries}): ${error.message}`);
       if (i === retries - 1) {
         throw error;
       }
