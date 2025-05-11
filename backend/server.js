@@ -1,13 +1,9 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const Logtail = require('@logtail/node');
 
 const app = express();
 const port = process.env.PORT || 3000;
-
-// Initialize Logtail with just the source token
-const logtail = new Logtail("x5nvK7DNDURcpAHEBuCbHrza");
 
 // Mock data as fallback
 const mockCryptoData = [
@@ -19,7 +15,7 @@ const mockCryptoData = [
 // Function to fetch crypto data from CoinGecko
 async function fetchCryptoData() {
   try {
-    logtail.info('Fetching crypto data from CoinGecko');
+    console.log('Fetching crypto data from CoinGecko');
     const response = await axios.get('https://api.coingecko.com/api/v3/coins/markets', {
       params: {
         vs_currency: 'usd',
@@ -45,11 +41,11 @@ async function fetchCryptoData() {
       low_24h: parseFloat(coin.low_24h),
       market_cap_rank: coin.market_cap_rank
     }));
-    logtail.info('Successfully fetched crypto data', { count: data.length });
+    console.log(`Successfully fetched crypto data, count: ${data.length}`);
     return data;
   } catch (error) {
-    logtail.error('Failed to fetch crypto data from CoinGecko', { error: error.message });
-    logtail.warn('Falling back to mock data');
+    console.error('Failed to fetch crypto data from CoinGecko:', error.message);
+    console.warn('Falling back to mock data');
     return mockCryptoData;
   }
 }
@@ -57,27 +53,27 @@ async function fetchCryptoData() {
 // API endpoint to get crypto data
 app.get('/api/crypto', async (req, res) => {
   try {
-    logtail.info('Received request for /api/crypto');
+    console.log('Received request for /api/crypto');
     const data = await fetchCryptoData();
     if (data.length === 0) {
-      logtail.warn('No crypto data available');
+      console.warn('No crypto data available');
       res.status(500).json({ error: 'Failed to fetch crypto data' });
       return;
     }
     res.json(data);
   } catch (error) {
-    logtail.error('Error in /api/crypto endpoint', { error: error.message });
+    console.error('Error in /api/crypto endpoint:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-// API endpoint to get logs
+// API endpoint to get logs (placeholder)
 app.get('/api/logs', (req, res) => {
   try {
-    logtail.info('Received request for /api/logs');
-    res.json([]);
+    console.log('Received request for /api/logs');
+    res.json([]); // Placeholder; Render logs can't be retrieved via API
   } catch (error) {
-    logtail.error('Error in /api/logs endpoint', { error: error.message });
+    console.error('Error in /api/logs endpoint:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -91,28 +87,21 @@ app.post('/api/logs', (req, res) => {
       message: message || 'No message provided',
       level: level || 'info'
     };
-    logtail.log(logEntry.level, 'Added log entry', logEntry);
+    console.log(`[${logEntry.level}] ${logEntry.message}`, logEntry);
     res.status(201).json(logEntry);
   } catch (error) {
-    logtail.error('Error in /api/logs POST endpoint', { error: error.message });
+    console.error('Error in /api/logs POST endpoint:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  logtail.info('Health check requested');
+  console.log('Health check requested');
   res.status(200).json({ status: 'OK' });
 });
 
 // Start the server
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
-  logtail.info('Server started', { port });
-});
-
-// Flush logs on process exit
-process.on('SIGINT', () => {
-  logtail.flush();
-  process.exit();
 });
