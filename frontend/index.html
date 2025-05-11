@@ -453,7 +453,13 @@
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
+      <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full">
+        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="XRPUSDT">XRP/USDT</li>
+        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="ADAUSDT">ADA/USDT</li>
+        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="SOLUSDT">SOL/USDT</li>
+        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="DOTUSDT">DOT/USDT</li>
+        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="MATICUSDT">MATIC/USDT</li>
+      </ul>
       <div class="mt-4">
         <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top/Bottom Performers</h3>
         <ul id="profit-pairs" class="space-y-2 text-xs sm:text-sm w-full">
@@ -602,15 +608,15 @@
       setTimeout(initWidget, 300);
     }
 
-    // Initialize charts on load with top low-volume token
+    // Initialize charts on load with top-ranked low-volume token
     document.addEventListener('DOMContentLoaded', () => {
-      const initialSymbol = lowVolumeTokens[0]; // Start with XRPUSDT as the first low-volume token
-      initializeChart('chart-container-header', `BINANCE:${initialSymbol}`, '1D');
-      initializeChart('chart-container-modal', `BINANCE:${initialSymbol}`, '1D');
-      document.getElementById('chart-title-header').setAttribute('data-symbol', initialSymbol);
-      document.getElementById('chart-title-header').textContent = initialSymbol;
-      document.getElementById('chart-title-modal').setAttribute('data-symbol', initialSymbol);
-      document.getElementById('chart-title-modal').textContent = initialSymbol;
+      const topToken = lowVolumeTokens[0]; // XRPUSDT as the top-ranked (adjust with real ranking logic)
+      initializeChart('chart-container-header', `BINANCE:${topToken}`, '1D');
+      initializeChart('chart-container-modal', `BINANCE:${topToken}`, '1D');
+      document.getElementById('chart-title-header').setAttribute('data-symbol', topToken);
+      document.getElementById('chart-title-header').textContent = topToken;
+      document.getElementById('chart-title-modal').setAttribute('data-symbol', topToken);
+      document.getElementById('chart-title-modal').textContent = topToken;
 
       // Timeframe button handlers
       const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
@@ -637,7 +643,7 @@
         }
       });
 
-      // Chart title click to change symbol among low-volume tokens
+      // Chart title click to toggle among low-volume tokens
       ['chart-title-header', 'chart-title-modal'].forEach(id => {
         const title = document.getElementById(id);
         title.addEventListener('click', () => {
@@ -647,9 +653,28 @@
           const newSymbol = lowVolumeTokens[newIndex];
           const interval = document.querySelector(`#${id.replace('-title', '')}-timeframe-1d`).getAttribute('data-interval');
           initializeChart(id.replace('-title', '-container-'), `BINANCE:${newSymbol}`, interval);
-          console.log(`Switched ${id} to symbol: ${newSymbol}`);
+          console.log(`Toggled ${id} to symbol: ${newSymbol}`);
         });
       });
+
+      // Token list click to toggle chart
+      const tokenList = document.getElementById('token-list');
+      if (tokenList) {
+        tokenList.addEventListener('click', (e) => {
+          const li = e.target.closest('li');
+          if (li && li.dataset.symbol) {
+            const symbol = li.dataset.symbol;
+            const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
+            initializeChart('chart-container-header', `BINANCE:${symbol}`, interval);
+            initializeChart('chart-container-modal', `BINANCE:${symbol}`, interval);
+            document.getElementById('chart-title-header').setAttribute('data-symbol', symbol);
+            document.getElementById('chart-title-header').textContent = symbol;
+            document.getElementById('chart-title-modal').setAttribute('data-symbol', symbol);
+            document.getElementById('chart-title-modal').textContent = symbol;
+            console.log(`Switched to token from list: ${symbol}`);
+          }
+        });
+      }
 
       // Modal toggle
       const toggleStickyHeader = document.getElementById('toggle-sticky-header');
