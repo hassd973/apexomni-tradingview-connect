@@ -6,7 +6,7 @@
   <title>🧊 ICE KING DASHBOARD 👑</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  <script async src="https://s3.tradingview.com/tv.js"></script>
+  <script src="https://s3.tradingview.com/tv.js"></script>
   <style>
     body {
       font-family: 'Fira Code', monospace;
@@ -97,11 +97,8 @@
       position: relative;
       width: 100%;
       height: 60vh;
-      min-height: 400px;
+      min-height: 300px;
       max-height: 800px;
-      aspect-ratio: 16 / 9;
-      display: flex;
-      flex-direction: column;
     }
     .chart-container:empty::after {
       content: '> Chart failed to load. Please refresh or check your connection.';
@@ -137,285 +134,8 @@
     }
     #chart-container-modal {
       height: 80vh !important;
-      min-height: 500px;
-      max-height: 900px;
-      aspect-ratio: 16 / 9;
-    }
-    #token-list, #log-list, #chat-list { z-index: 10; }
-    #token-list li, #log-list li, #chat-list li, #profit-pairs li { z-index: 10; position: relative; }
-    @media (min-width: 640px) {
-      .chart-modal-content { width: 85%; }
-      .chart-container { height: 70vh; }
-    }
-    @media (min-width: 1024px) {
-      .chart-container { height: 80vh; }
-    }
-    [data-tooltip] { position: relative; }
-    [data-tooltip]:hover::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 255, 0, 0.9);
-      color: #000;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      white-space: nowrap;
-      z-index: 60;
-    }
-    .marquee-container {
-      background: Нью-Йорк #000;
-      border: 1px solid rgba(0, 255, 0, 0.3);
-      overflow: hidden;
-      white-space: nowrap;
-      padding: 4px 0;
-      margin-top: 8px;
-      width: 100%;
-    }
-    .marquee {
-      display: inline-block;
-      animation: marquee 60s linear infinite;
-      animation-play-state: running;
-      will-change: transform;
-    }
-    @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-    .marquee span {
-      margin-right: 20px;
-      font-size: 0.75rem;
-      color: #00ff00;
-    }
-    @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
-    .marquee-container:hover .marquee { animation-play-state: paused; }
-    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug {
-      animation: glow-green 2s infinite;
-      background-color: #00ff00;
-      color: #000;
-      border: 1px solid #00ff00;
-      font-size: 0.75rem;
-      border-radius: 4px;
-      padding: 0.5rem 1rem;
-    }
-    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-mode:hover, #toggle-debug:hover {
-      background-color: #00cc00;
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
-    }
-    .timeframe-btn.active {
-      background-color: #00cc00;
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
-    }
-    .loader {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 1rem;
-    }
-    .loader::after {
-      content: '';
-      width: 24px;
-      height: 24px;
-      border: 4px solid #00ff00;
-      border-top: 4px solid transparent;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .typewriter {
-      display: inline-block;
-      overflow: hidden;
-      white-space: nowrap;
-      border-right: 2px solid #00ff00;
-      animation: typing 3s steps(30, end), blink-caret 0.75s step-end infinite;
-    }
-    @keyframes typing {
-      from { width: 0; }
-      to { width: 100%; }
-    }
-    @keyframes blink-caret {
-      from, to { border-color: transparent; }
-      50% { border-color: #00ff00; }
-    }
-    .title-box {
-      font-family: 'Fira Code', monospace;
-      color: #00ff00;
-      text-align: center;
-      line-height: 1.4;
-      margin-bottom: 0.5rem;
-      font-size: 0.75rem;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      background: #000;
-      border: 1px solid #00ff00;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-      padding: 0.5rem;
-      animation: glow-green 2s infinite;
-    }
-    @media (min-width: 640px) {
-      .title-box { font-size: 0.875rem; }
-      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug { font-size: 0.875rem; }
-    }
-    @media (min-width: 768px) {
-      .title-box { font-size: 1rem; }
-    }
-    .tradingview-widget-container {
-      border: 1px solid rgba(0, 255, 0, 0.5);
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-      width: 100%;
-      height: 100%;
-      position: relative;
-      display: flex;
-    }
-    .tradingview-widget-container iframeakech
-
-System: I'm sorry, but it seems the artifact content was cut off. I'll complete the updated HTML with the remaining content, ensuring all requirements are met: fixing the TradingView chart to fill the page, adding a scrollable token list for ~50 pairs, including top/bottom profitable pairs with glowing colors, and ensuring robustness. I'll also include the full `script.js` logic inline for clarity, as you haven't shared your `script.js`.
-
-Below is the complete updated `index.html`, incorporating all changes and addressing the issues you mentioned.
-
-<xaiArtifact artifact_id="a451fbfa-4bcc-40db-aaf0-bbbe8e167a45" artifact_version_id="142d6aba-2d8e-40cb-80c0-8bd3043e2bd8" title="index.html" contentType="text/html">
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧊 ICE KING DASHBOARD 👑</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  <script async src="https://s3.tradingview.com/tv.js"></script>
-  <style>
-    body {
-      font-family: 'Fira Code', monospace;
-      background: #0a0f14;
-      color: #00ff00;
-      overflow-x: hidden;
-      margin: 0;
-    }
-    .grid-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 255, 0, 0.05),
-        rgba(0, 255, 0, 0.05) 1px,
-        transparent 1px,
-        transparent 20px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        rgba(0, 255, 0, 0.05),
-        rgba(0, 255, 0, 0.05) 1px,
-        transparent 1px,
-        transparent 20px
-      );
-      animation: glitch 4s infinite;
-      z-index: -1;
-    }
-    @keyframes glitch {
-      0%, 100% { transform: translate(0, 0); opacity: 0.7; }
-      5% { transform: translate(2px, -2px); opacity: 0.5; }
-      10% { transform: translate(-2px, 2px); opacity: 0.9; }
-    }
-    .particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -1;
-    }
-    .star {
-      position: absolute;
-      width: 2px;
-      height: 2px;
-      background: rgba(0, 255, 0, 0.7);
-      border-radius: 50%;
-      animation: float 10s infinite linear;
-    }
-    @keyframes float {
-      0% { transform: translate(0, 0); opacity: 0; }
-      50% { opacity: 0.8; }
-      100% { transform: translate(100px, -100px); opacity: 0; }
-    }
-    @keyframes glow-blue {
-      0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
-      50% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.8), 0 0 25px rgba(0, 255, 255, 0.5); }
-      100% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
-    }
-    @keyframes glow-green {
-      0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
-      50% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
-      100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
-    }
-    @keyframes glow-red {
-      0% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
-      50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); }
-      100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
-    }
-    .glow-blue { animation: glow-blue 2s infinite; }
-    .glow-green { animation: glow-green 2s infinite; }
-    .glow-red { animation: glow-red 2s infinite; }
-    .fade-in { animation: fadeIn 0.5s ease-in; }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
-    .hover-performance-green:hover { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); transition: all 0.3s ease; }
-    .hover-performance-red:hover { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); transition: all 0.3s ease; }
-    .selected-token { border: 2px solid rgba(0, 255, 0, 0.8); box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); background: rgba(0, 15, 0, 0.9) !important; }
-    .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.6), rgba(0, 30, 0, 0.4)); border: 1px solid rgba(0, 255, 0, 0.2); }
-    .chart-container {
-      position: relative;
-      width: 100%;
-      height: 60vh;
       min-height: 400px;
-      max-height: 800px;
-      aspect-ratio: 16 / 9;
-      display: flex;
-      flex-direction: column;
-    }
-    .chart-container:empty::after {
-      content: '> Chart failed to load. Please refresh or check your connection.';
-      display: block;
-      color: #ff0000;
-      text-align: center;
-      padding: 1rem;
-      font-size: 0.875rem;
-    }
-    .chart-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 50;
-      justify-content: center;
-      align-items: center;
-    }
-    .chart-modal.active { display: flex; }
-    .chart-modal-content {
-      background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7));
-      padding: 1rem;
-      border: 2px solid rgba(0, 255, 0, 0.5);
-      border-radius: 5px;
-      width: 95%;
-      max-width: 1200px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-    }
-    #chart-container-modal {
-      height: 80vh !important;
-      min-height: 500px;
       max-height: 900px;
-      aspect-ratio: 16 / 9;
     }
     #token-list, #log-list, #chat-list, #profit-pairs { z-index: 10; }
     #token-list li, #log-list li, #chat-list li, #profit-pairs li { z-index: 10; position: relative; }
@@ -541,7 +261,6 @@ Below is the complete updated `index.html`, incorporating all changes and addres
       width: 100%;
       height: 100%;
       position: relative;
-      display: flex;
     }
     .tradingview-widget-container iframe {
       width: 100% !important;
@@ -594,17 +313,17 @@ Below is the complete updated `index.html`, incorporating all changes and addres
       <div class="chart-wrapper w-full">
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div class="flex space-x-2 flex-wrap gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1">1M</button>
-            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5">5M</button>
-            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15">15M</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60">1H</button>
-            <button id="header-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240">4H</button>
-            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="1D">1D</button>
+            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
+            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
+            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
+            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
+            <button id="header-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240" aria-label="4 hour timeframe">4H</button>
+            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="1D" aria-label="1 day timeframe">1D</button>
           </div>
           <div class="flex space-x-2">
-            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded">Dock Chart 🔍</button>
-            <button id="toggle-data-mode" class="text-black px-2 py-1 rounded">Mock Data</button>
-            <button id="toggle-debug" class="text-black px-2 py-1 rounded">Debug Chart</button>
+            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded" aria-label="Dock chart">Dock Chart 🔍</button>
+            <button id="toggle-data-mode" class="text-black px-2 py-1 rounded" aria-label="Toggle mock data">Mock Data</button>
+            <button id="toggle-debug" class="text-black px-2 py-1 rounded" aria-label="Debug chart">Debug Chart</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
@@ -623,14 +342,14 @@ Below is the complete updated `index.html`, incorporating all changes and addres
       <div class="chart-wrapper w-full">
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div class="flex space-x-2 flex-wrap gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1">1M</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5">5M</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15">15M</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60">1H</button>
-            <button id="modal-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240">4H</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="1D">1D</button>
+            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
+            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
+            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
+            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
+            <button id="modal-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240" aria-label="4 hour timeframe">4H</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="1D" aria-label="1 day timeframe">1D</button>
           </div>
-          <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded">Undock Chart 🔍</button>
+          <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded" aria-label="Undock chart">Undock Chart 🔍</button>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div id="live-price-modal" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
@@ -667,13 +386,12 @@ Below is the complete updated `index.html`, incorporating all changes and addres
       <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
       <ul id="chat-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
       <div class="mt-4 flex flex-col sm:flex-row gap-2">
-        <textarea id="chat-input" rows="2" placeholder="Ask Grok: What are the top rising tokens to trade today?" class="p-2 rounded"></textarea>
-        <button id="chat-send" class="px-4 py-2 rounded">Send</button>
+        <textarea id="chat-input" rows="2" placeholder="Ask Grok: What are the top rising tokens to trade today?" class="p-2 rounded" aria-label="Chat input"></textarea>
+        <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message">Send</button>
       </div>
     </section>
   </main>
-  <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:te
-xt-sm">
+  <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
     <p class="typewriter">> Powered by CoinMarketCap & TradingView</p>
   </footer>
   <script>
@@ -688,224 +406,75 @@ xt-sm">
       particleContainer.appendChild(star);
     }
 
-    // TradingView chart initialization
-    function initializeChart(containerId, symbol = 'BINANCE:BTCUSDT', interval = '1D') {
+    // TradingView chart initialization with retry
+    function initializeChart(containerId, symbol = 'BINANCE:BTCUSDT', interval = '1D', retries = 3, delay = 1000) {
       const container = document.getElementById(containerId);
-      if (!container) return;
+      if (!container) {
+        console.error(`Chart container ${containerId} not found`);
+        return;
+      }
 
       // Clear previous chart
       container.innerHTML = '';
 
-      new TradingView.widget({
-        width: '100%',
-        height: '100%',
-        symbol: symbol,
-        interval: interval,
-        timezone: 'Etc/UTC',
-        theme: 'dark',
-        style: '1',
-        locale: 'en',
-        toolbar_bg: '#0a0f14',
-        enable_publishing: false,
-        allow_symbol_change: true,
-        container_id: containerId,
-        autosize: true,
-        studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies'],
-        gridColor: 'rgba(0, 255, 0, 0.1)',
-        overrides: {
-          'mainSeriesProperties.candleStyle.upColor': '#00ff00',
-          'mainSeriesProperties.candleStyle.downColor': '#ff0000',
-          'mainSeriesProperties.candleStyle.borderUpColor': '#00ff00',
-          'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
-        },
-      });
-
-      // Force resize on load
-      setTimeout(() => {
-        const widgetIframe = container.querySelector('iframe');
-        if (widgetIframe) {
-          widgetIframe.style.width = '100%';
-          widgetIframe.style.height = '100%';
+      function attemptInit(attempt = 1) {
+        if (typeof TradingView === 'undefined' || !TradingView.widget) {
+          if (attempt <= retries) {
+            console.warn(`TradingView not loaded, retrying (${attempt}/${retries})...`);
+            setTimeout(() => attemptInit(attempt + 1), delay);
+          } else {
+            container.innerHTML = '<div class="text-red-500 text-center p-4">> Failed to load TradingView chart. Please refresh.</div>';
+          }
+          return;
         }
-      }, 500);
 
-      // Handle resize
-      const resizeObserver = new ResizeObserver(() => {
-        const widgetIframe = container.querySelector('iframe');
-        if (widgetIframe) {
-          widgetIframe.style.width = '100%';
-          widgetIframe.style.height = '100%';
+        try {
+          new TradingView.widget({
+            width: '100%',
+            height: '100%',
+            symbol: symbol,
+            interval: interval,
+            timezone: 'Etc/UTC',
+            theme: 'dark',
+            style: '1',
+            locale: 'en',
+            toolbar_bg: '#0a0f14',
+            enable_publishing: false,
+            allow_symbol_change: true,
+            container_id: containerId,
+            autosize: true,
+            studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies'],
+            gridColor: 'rgba(0, 255, 0, 0.1)',
+            overrides: {
+              'mainSeriesProperties.candleStyle.upColor': '#00ff00',
+              'mainSeriesProperties.candleStyle.downColor': '#ff0000',
+              'mainSeriesProperties.candleStyle.borderUpColor': '#00ff00',
+              'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
+            },
+          });
+
+          // Handle resize
+          const resizeObserver = new ResizeObserver(() => {
+            const widgetIframe = container.querySelector('iframe');
+            if (widgetIframe) {
+              widgetIframe.style.width = '100%';
+              widgetIframe.style.height = '100%';
+            }
+          });
+          resizeObserver.observe(container);
+        } catch (error) {
+          console.error(`Chart initialization failed: ${error.message}`);
+          container.innerHTML = '<div class="text-red-500 text-center p-4">> Chart initialization error. Please refresh.</div>';
         }
-      });
-      resizeObserver.observe(container);
+      }
+
+      attemptInit();
     }
 
-    // Frontend logic
-    (function () {
-      const API_URL = '/api/crypto';
-      const symbolMap = {
-        bitcoin: 'BINANCE:BTCUSDT',
-        ethereum: 'BINANCE:ETHUSDT',
-        // Add more mappings as needed
-      };
-
-      // Cache for API data
-      let cache = { data: [], timestamp: 0 };
-      const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
-
-      // Format numbers
-      function formatNumber(num) {
-        return num >= 1 ? num.toFixed(2) : num.toFixed(6);
-      }
-
-      // Fetch crypto data with retry
-      async function fetchCryptoData(retries = 3, delay = 1000) {
-        const loaderTokens = document.getElementById('loader-tokens');
-        loaderTokens.style.display = 'flex';
-
-        // Check cache
-        if (Date.now() - cache.timestamp < CACHE_DURATION && cache.data.length) {
-          return cache.data;
-        }
-
-        for (let i = 0; i < retries; i++) {
-          try {
-            const response = await fetch(API_URL, { timeout: 10000 });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            cache = { data, timestamp: Date.now() };
-            localStorage.setItem('cryptoData', JSON.stringify(cache));
-            return data;
-          } catch (error) {
-            console.error(`Fetch attempt ${i + 1} failed:`, error.message);
-            if (i < retries - 1) await new Promise(res => setTimeout(res, delay));
-          }
-        }
-
-        // Fallback to cached data
-        const cached = JSON.parse(localStorage.getItem('cryptoData'));
-        if (cached?.data?.length) return cached.data;
-
-        throw new Error('Failed to fetch crypto data');
-      }
-
-      // Render tokens
-      function renderTokens(data) {
-        const tokenList = document.getElementById('token-list');
-        const loaderTokens = document.getElementById('loader-tokens');
-        tokenList.innerHTML = '';
-        loaderTokens.style.display = 'none';
-
-        data.forEach(coin => {
-          const li = document.createElement('li');
-          li.className = 'hover-glow p-2 rounded gradient-bg cursor-pointer';
-          li.dataset.token = coin.slug;
-          li.innerHTML = `
-            ${coin.symbol} (#${coin.market_cap_rank}): $${formatNumber(coin.current_price)}
-            <span class="${coin.price_change_percentage_24h >= 0 ? 'text-green-500' : 'text-red-500'}">
-              (${coin.price_change_percentage_24h.toFixed(2)}%)
-            </span>
-          `;
-          li.setAttribute('data-tooltip', `Market Cap: $${coin.market_cap.toLocaleString()}`);
-          li.addEventListener('click', () => {
-            document.querySelectorAll('#token-list li').forEach(el => el.classList.remove('selected-token'));
-            li.classList.add('selected-token');
-            const symbol = symbolMap[coin.slug] || 'BINANCE:BTCUSDT';
-            initializeChart('chart-container-header', symbol);
-            initializeChart('chart-container-modal', symbol);
-            updateLivePrice(coin);
-          });
-          tokenList.appendChild(li);
-        });
-      }
-
-      // Render top/bottom performers
-      function renderProfitPairs(data) {
-        const profitPairs = document.getElementById('profit-pairs');
-        profitPairs.innerHTML = '';
-
-        // Sort by 24h price change
-        const sorted = [...data].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-        const topPairs = sorted.slice(0, 5);
-        const bottomPairs = sorted.slice(-5);
-
-        // Top performers
-        const topHeader = document.createElement('li');
-        topHeader.className = 'font-bold text-green-500 mt-2';
-        topHeader.textContent = 'Top Performers';
-        profitPairs.appendChild(topHeader);
-
-        topPairs.forEach(coin => {
-          const li = document.createElement('li');
-          li.className = 'top-pair p-2 rounded gradient-bg';
-          li.innerHTML = `
-            ${coin.symbol}: $${formatNumber(coin.current_price)}
-            <span class="text-green-500">(${coin.price_change_percentage_24h.toFixed(2)}%)</span>
-          `;
-          li.setAttribute('data-tooltip', `Rank: ${coin.market_cap_rank}`);
-          profitPairs.appendChild(li);
-        });
-
-        // Bottom performers
-        const bottomHeader = document.createElement('li');
-        bottomHeader.className = 'font-bold text-red-500 mt-2';
-        bottomHeader.textContent = 'Bottom Performers';
-        profitPairs.appendChild(bottomHeader);
-
-        bottomPairs.forEach(coin => {
-          const li = document.createElement('li');
-          li.className = 'bottom-pair p-2 rounded gradient-bg';
-          li.innerHTML = `
-            ${coin.symbol}: $${formatNumber(coin.current_price)}
-            <span class="text-red-500">(${coin.price_change_percentage_24h.toFixed(2)}%)</span>
-          `;
-          li.setAttribute('data-tooltip', `Rank: ${coin.market_cap_rank}`);
-          profitPairs.appendChild(li);
-        });
-      }
-
-      // Render marquee ticker
-      function renderMarquee(data) {
-        const marquees = [document.getElementById('ticker-marquee-header'), document.getElementById('ticker-marquee-modal')];
-        marquees.forEach(marquee => {
-          marquee.innerHTML = '';
-          data.forEach(coin => {
-            const span = document.createElement('span');
-            span.textContent = `${coin.symbol}: $${formatNumber(coin.current_price)} (${coin.price_change_percentage_24h.toFixed(2)}%)`;
-            marquee.appendChild(span);
-          });
-        });
-      }
-
-      // Update live price
-      function updateLivePrice(coin) {
-        const priceHeaders = [document.getElementById('live-price-header'), document.getElementById('live-price-modal')];
-        priceHeaders.forEach(header => {
-          header.textContent = `> Live Price: ${coin.symbol} $${formatNumber(coin.current_price)}`;
-        });
-        const chartTitles = [document.getElementById('chart-title-header'), document.getElementById('chart-title-modal')];
-        chartTitles.forEach(title => {
-          title.textContent = `${coin.name} (${coin.symbol})`;
-        });
-      }
-
-      // Initialize page
-      async function init() {
-        try {
-          const data = await fetchCryptoData();
-          renderTokens(data);
-          renderProfitPairs(data);
-          renderMarquee(data);
-          updateLivePrice(data[0] || { symbol: 'BTC', current_price: 0, name: 'Bitcoin' });
-
-          // Initialize charts
-          initializeChart('chart-container-header', 'BINANCE:BTCUSDT', '1D');
-          initializeChart('chart-container-modal', 'BINANCE:BTCUSDT', '1D');
-        } catch (error) {
-          console.error('Initialization failed:', error.message);
-          document.getElementById('loader-tokens').textContent = '> Failed to load tokens. Please refresh.';
-        }
-      }
+    // Initialize charts on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeChart('chart-container-header', 'BINANCE:BTCUSDT', '1D');
+      initializeChart('chart-container-modal', 'BINANCE:BTCUSDT', '1D');
 
       // Timeframe button handlers
       const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
@@ -948,12 +517,6 @@ xt-sm">
         });
       }
 
-      // Toggle data mode (mock/real)
-      document.getElementById('toggle-data-mode').addEventListener('click', async () => {
-        cache = { data: [], timestamp: 0 }; // Clear cache
-        await init();
-      });
-
       // Debug chart
       document.getElementById('toggle-debug').addEventListener('click', () => {
         console.log('Chart Debug:', {
@@ -971,13 +534,8 @@ xt-sm">
         chatList.appendChild(li);
         input.value = '';
       });
-
-      // Initialize
-      init();
-
-      // Periodic refresh
-      setInterval(init, 10 * 60 * 1000); // Refresh every 10 minutes
-    })();
+    });
   </script>
+  <script src="script.js"></script>
 </body>
 </html>
