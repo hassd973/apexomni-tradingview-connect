@@ -42,7 +42,7 @@ app.use(express.json());
 
 const coingeckoApiUrl = 'https://api.coingecko.com/api/v3/coins/markets';
 
-async function fetchCryptoData(retries = 3, delay = 1000) {
+async function fetchCryptoData(retries = 3, delay = 5000) {
   for (let i = 0; i < retries; i++) {
     try {
       const response = await axios.get(coingeckoApiUrl, {
@@ -58,6 +58,10 @@ async function fetchCryptoData(retries = 3, delay = 1000) {
       return response.data;
     } catch (error) {
       logger.error(`Error fetching CoinGecko data (attempt ${i + 1}/${retries}): ${error.message}`);
+      if (error.response && error.response.status === 429) {
+        logger.warn('Rate limit hit, increasing delay for next attempt');
+        delay = 10000; // Back off to 10 seconds on 429
+      }
       if (i === retries - 1) {
         throw error;
       }
