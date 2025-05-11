@@ -97,10 +97,10 @@ function sanitizeTokenData(data) {
     symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
     total_volume: Number(token.total_volume || token.volume_24h || 0),
     current_price: Number(token.current_price || token.price || 0),
-    price_change_percentage_24h: Number(token.price_change_percentage_24h || token.price_change_24h || 0),
+    price_change_percentage_24h: Number(token.price_change_percentage_24h || token.percent_change_24h || 0),
     market_cap: Number(token.market_cap || 0),
     circulating_supply: Number(token.circulating_supply || 0),
-    source: String(token.source || 'CoinGecko')
+    source: String(token.source || 'Coinpaprika') // Updated to reflect Coinpaprika
   })).filter(token => token.symbol && token.current_price > 0);
   console.log('[DEBUG] Sanitized token data:', sanitized);
   return sanitized.length > 0 ? sanitized : [];
@@ -199,12 +199,34 @@ async function updateTokens() {
   if (!tokens) {
     tokens = await fetchTokenData();
     cacheData(tokens, 'tokens');
+  } else {
+    console.log('[DEBUG] Using cached token data immediately');
+    // Force initial render with cached data
+    allTokens = tokens;
+    sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+    renderTokenList();
+    renderTopPairs();
+    if (!currentToken && allTokens.length > 0) {
+      currentToken = allTokens[0];
+      showPriceChart(currentToken, currentTimeframe, 'header');
+      console.log(`[DEBUG] Defaulted to token: ${currentToken.symbol}`);
+    }
   }
 
   allTokens = tokens;
   sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 
-  // Render token list
+  // Render token list and top pairs
+  renderTokenList();
+  renderTopPairs();
+
+  loader.style.display = 'none';
+  console.log('[DEBUG] Tokens updated');
+}
+
+// Separate rendering functions for clarity
+function renderTokenList() {
+  const tokenList = document.getElementById('token-list');
   tokenList.innerHTML = '';
   if (sortedTokens.length > 0) {
     sortedTokens.forEach((token, index) => {
@@ -248,8 +270,10 @@ async function updateTokens() {
     await logtail.warn('No tokens available to render');
     tokenList.innerHTML = '<li class="p-2 text-red-400">[No token data available]</li>';
   }
+}
 
-  // Render top pairs
+function renderTopPairs() {
+  const topPairs = document.getElementById('top-pairs');
   topPairs.innerHTML = sortedTokens.slice(0, 5).map((token, index) => {
     const opacity = 20 + (index / 4) * 30;
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
@@ -257,19 +281,6 @@ async function updateTokens() {
     const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
     return `<li class="px-2 py-1 rounded ${bgColor} hover-glow transition ${glowClass} ${hoverClass}">[${token.symbol}/USDT]</li>`;
   }).join('');
-
-  // Default token and chart
-  if (!currentToken && allTokens.length > 0) {
-    currentToken = allTokens[0];
-    showPriceChart(currentToken, currentTimeframe, 'header');
-    console.log(`[DEBUG] Defaulted to token: ${currentToken.symbol}`);
-  } else if (allTokens.length === 0) {
-    console.warn('[WARN] No tokens available for default selection');
-    await logtail.warn('No tokens for default selection');
-  }
-
-  loader.style.display = 'none';
-  console.log('[DEBUG] Tokens updated');
 }
 
 // Update logs
@@ -291,9 +302,20 @@ async function updateLogs() {
   if (!logs) {
     logs = await fetchLogs();
     cacheData(logs, 'logs');
+  } else {
+    console.log('[DEBUG] Using cached log data immediately');
+    // Force initial render with cached data
+    renderLogList();
   }
 
-  // Render log list
+  renderLogList();
+  loader.style.display = 'none';
+  console.log('[DEBUG] Logs updated');
+}
+
+// Separate rendering function for logs
+function renderLogList() {
+  const logList = document.getElementById('log-list');
   logList.innerHTML = '';
   if (logs.length > 0) {
     logs.forEach(log => {
@@ -315,9 +337,6 @@ async function updateLogs() {
     await logtail.warn('No logs available to render');
     logList.innerHTML = '<li class="p-2 text-red-400">[No log data available]</li>';
   }
-
-  loader.style.display = 'none';
-  console.log('[DEBUG] Logs updated');
 }
 
 // Show price chart using TradingView
