@@ -26,6 +26,7 @@ let sortedTokens = [...mockTokens].sort((a, b) => b.price_change_percentage_24h 
 let isChartDocked = false;
 let selectedTokenLi = null;
 let isMockData = false;
+let isDebugMode = false;
 
 // --- Utility Functions ---
 
@@ -104,10 +105,11 @@ function updateTokenList(tokens) {
   });
 }
 
-// Update live price and ticker
+// Update live price, ticker, and top pairs
 function updateLiveData(tokens) {
   const livePriceHeader = document.getElementById('live-price-header');
   const tickerMarqueeHeader = document.getElementById('ticker-marquee-header');
+  const topPairs = document.getElementById('top-pairs');
   if (tokens.length > 0) {
     const firstToken = tokens[0];
     livePriceHeader.textContent = `> Live Price: $${firstToken.current_price.toLocaleString()} (${firstToken.symbol})`;
@@ -117,6 +119,15 @@ function updateLiveData(tokens) {
     tickerMarqueeHeader.innerHTML = marqueeContent;
     const duration = Math.max(60, tokens.length * 2); // Dynamic duration based on number of tokens
     tickerMarqueeHeader.style.animationDuration = `${duration}s`;
+
+    // Populate top USDT pairs
+    topPairs.innerHTML = '';
+    const usdtPairs = tokens.filter(token => token.symbol && token.symbol !== 'USDT').slice(0, 5).map(token => `${token.symbol}/USDT`);
+    usdtPairs.forEach(pair => {
+      const li = document.createElement('li');
+      li.textContent = `> ${pair}`;
+      topPairs.appendChild(li);
+    });
   }
 }
 
@@ -125,7 +136,7 @@ function selectToken(token) {
   currentToken = token;
   document.getElementById('chart-title-header').textContent = `> Chart: ${token.name} (${token.symbol})`;
   document.getElementById('chart-title-modal').textContent = `> Chart: ${token.name} (${token.symbol})`;
-  updateChart(`BINANCE:${token.symbol}USDT`); // Changed to Binance exchange
+  updateChart(`BINANCE:${token.symbol}USDT`); // Try Binance exchange
   if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
   selectedTokenLi = event.target.closest('li');
   selectedTokenLi.classList.add('selected-token');
@@ -161,7 +172,7 @@ function loadTradingViewScript(callback) {
   }
 }
 
-// Update chart with loading indicator
+// Update chart with loading indicator and debug support
 function updateChart(symbol) {
   const containerId = isChartDocked ? 'chart-container-header' : 'chart-container-modal';
   const container = document.getElementById(containerId);
@@ -190,9 +201,11 @@ function updateChart(symbol) {
         studies: ['Volume@tv-basicstudies'],
       });
       console.log(`[DEBUG] TradingView widget initialized for ${symbol} on interval ${currentTimeframe}`);
+      if (isDebugMode) alert(`Chart initialized for ${symbol} on ${currentTimeframe}`);
     } catch (error) {
       console.error('[ERROR] Failed to initialize TradingView widget:', error);
       container.innerHTML = `<div class="text-red-500 text-sm">> Chart failed: ${error.message}</div>`;
+      if (isDebugMode) alert(`Chart failed: ${error.message}`);
     }
   });
 }
@@ -202,6 +215,12 @@ function toggleMockData() {
   isMockData = !isMockData;
   document.getElementById('toggle-data-mode').textContent = `[${isMockData ? 'Real' : 'Mock'} Data]`;
   initializeData();
+}
+
+// Toggle debug mode
+function toggleDebugMode() {
+  isDebugMode = !isDebugMode;
+  document.getElementById('toggle-debug').textContent = `[${isDebugMode ? 'Disable' : 'Debug'} Chart]`;
 }
 
 // --- Event Listeners ---
@@ -214,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const toggleStickyHeader = document.getElementById('toggle-sticky-header');
   const toggleStickyModal = document.getElementById('toggle-sticky-modal');
   const toggleDataMode = document.getElementById('toggle-data-mode');
+  const toggleDebug = document.getElementById('toggle-debug');
 
   // Initial fetch and render
   async function initializeData() {
@@ -277,4 +297,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Toggle mock data
   toggleDataMode.addEventListener('click', toggleMockData);
+
+  // Toggle debug mode
+  toggleDebug.addEventListener('click', toggleDebugMode);
 });
