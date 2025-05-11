@@ -11,12 +11,8 @@
   "dependencies": {
     "express": "^4.17.1",
     "cors": "^2.8.5",
-    "winston": "^3.3.3",
     "axios": "^1.6.0",
-    "@logtail/node": "^0.4.8",
-    "@logtail/winston": "^0.4.8",
-    "dotenv": "^16.0.3",
-    "winston-transport": "^4.7.1"
+    "dotenv": "^16.0.3"
   },
   "devDependencies": {
     "nodemon": "^2.0.20",
