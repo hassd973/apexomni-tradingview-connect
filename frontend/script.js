@@ -17,6 +17,26 @@ const mockTokens = [
   { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
 ];
 
+// --- Ice King Puns for Marquee ---
+const iceKingPuns = [
+  "Everything is Going to be okay! ❄️👑",
+  "Penguins are my royal guards! 🐧🧊",
+  "Time to freeze the market! ❄️😂",
+  "Ice to meet you, traders! 🧊🐧",
+  "I’m the coolest king around! 👑❄️",
+  "Penguin power activate! 🐧🧊😂",
+  "Snow way I’m missing this trade! ❄️📈",
+  "Freeze your doubts, let’s trade! 🧊💸",
+  "I’m skating through the market! ⛸️❄️",
+  "Cold cash, hot trades! 🥶💰",
+  "My portfolio’s cooler than ice! ❄️📊",
+  "Chill out, I’ve got this! 🧊😎",
+  "Ice King’s here to rule the charts! 👑📉",
+  "Let’s make it snow profits! ❄️💵",
+  "I’m frosting the competition! 🧊🏆",
+  "Cool trades, warm wins! ❄️🔥"
+];
+
 // --- Global State ---
 let usedPuns = [];
 let currentToken = mockTokens[0];
@@ -37,7 +57,7 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       console.log(`[DEBUG] Fetching ${url} (Attempt ${i + 1}/${retries})`);
       const response = await fetch(url, { 
         timeout: 5000,
-        headers: { 'Accept': 'application/json' } // Ensure JSON response
+        headers: { 'Accept': 'application/json' }
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -50,7 +70,7 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
       if (i === retries - 1) {
         console.error(`[ERROR] All retries failed for ${url}. Falling back to ${isMockData ? 'mock' : 'previous'} data.`);
-        document.getElementById('live-price-header').textContent = `> Live Price: Error - Connection unstable (${error.message})`;
+        document.getElementById('live-price-header').textContent = `> Live Price: Error - Connection unstable (${error.message}) ❄️`;
         return null;
       }
       await new Promise(resolve => setTimeout(resolve, delay));
@@ -82,21 +102,36 @@ function sanitizeTokenData(data) {
 
 // --- DOM Manipulation Functions ---
 
-// Update token list
+// Update token list with enhanced visuals
 function updateTokenList(tokens) {
   const tokenList = document.getElementById('token-list');
   const loaderTokens = document.getElementById('loader-tokens');
+  if (!tokenList || !loaderTokens) {
+    console.error('[ERROR] Token list or loader not found');
+    return;
+  }
   tokenList.innerHTML = '';
   loaderTokens.style.display = 'none';
-  tokens.slice(0, 10).forEach(token => {
+  tokens.slice(0, 10).forEach((token, index) => {
+    const opacity = 30 + (index / 10) * 40;
+    const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
+    const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const li = document.createElement('li');
-    li.className = 'gradient-bg p-2 rounded hover-glow hover-performance-green selected-token';
+    li.className = `gradient-bg p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} z-10`;
+    li.setAttribute('data-tooltip', '[Click to toggle chart] ❄️');
+    const priceChangeEmoji = token.price_change_percentage_24h >= 0 ? '🤑' : '🤮';
     li.innerHTML = `
-      > ${token.name} (${token.symbol})
+      > 🍀 ${token.name} (${token.symbol})
       <br>
       > Price: $${token.current_price.toLocaleString()}
       <br>
-      > 24h Change: ${token.price_change_percentage_24h.toFixed(2)}%
+      > 24h Change: ${token.price_change_percentage_24h.toFixed(2)}% ${priceChangeEmoji}
+      <br>
+      > 24h High: $${token.high_24h.toLocaleString()}
+      <br>
+      > 24h Low: $${token.low_24h.toLocaleString()}
+      <br>
+      > Market Cap Rank: #${token.market_cap_rank}
       <br>
       > Market Cap: $${token.market_cap.toLocaleString()}
     `;
@@ -105,27 +140,32 @@ function updateTokenList(tokens) {
   });
 }
 
-// Update live price, ticker, and top pairs
+// Update live price, ticker, and top pairs with Ice King flair
 function updateLiveData(tokens) {
   const livePriceHeader = document.getElementById('live-price-header');
   const tickerMarqueeHeader = document.getElementById('ticker-marquee-header');
   const topPairs = document.getElementById('top-pairs');
+  if (!livePriceHeader || !tickerMarqueeHeader || !topPairs) {
+    console.error('[ERROR] Live data elements not found');
+    return;
+  }
   if (tokens.length > 0) {
     const firstToken = tokens[0];
-    livePriceHeader.textContent = `> Live Price: $${firstToken.current_price.toLocaleString()} (${firstToken.symbol})`;
-    const marqueeContent = tokens
-      .map(token => `<span>[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`)
-      .join('');
-    tickerMarqueeHeader.innerHTML = marqueeContent;
-    const duration = Math.max(60, tokens.length * 2); // Dynamic duration based on number of tokens
-    tickerMarqueeHeader.style.animationDuration = `${duration}s`;
+    livePriceHeader.textContent = `> Live Price: $${firstToken.current_price.toLocaleString()} (${firstToken.symbol}) 👑`;
+    const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
+    const marqueeContent = [
+      ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
+      `<span class="glow-purple">[${uniquePun}]</span>`
+    ].join('');
+    tickerMarqueeHeader.innerHTML = marqueeContent.repeat(3); // Triple for continuous scroll
+    tickerMarqueeHeader.style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
 
-    // Populate top USDT pairs
     topPairs.innerHTML = '';
-    const usdtPairs = tokens.filter(token => token.symbol && token.symbol !== 'USDT').slice(0, 5).map(token => `${token.symbol}/USDT`);
+    const usdtPairs = tokens.filter(token => token.symbol && token.symbol !== 'USDT').slice(0, 5).map(token => `${token.symbol}/USDT (#${token.market_cap_rank})`);
     usdtPairs.forEach(pair => {
       const li = document.createElement('li');
-      li.textContent = `> ${pair}`;
+      li.className = 'gradient-bg p-1 rounded-md text-sm glow-blue';
+      li.innerHTML = `> 🧊 ${pair}`;
       topPairs.appendChild(li);
     });
   }
@@ -134,12 +174,14 @@ function updateLiveData(tokens) {
 // Select token for chart
 function selectToken(token) {
   currentToken = token;
-  document.getElementById('chart-title-header').textContent = `> Chart: ${token.name} (${token.symbol})`;
-  document.getElementById('chart-title-modal').textContent = `> Chart: ${token.name} (${token.symbol})`;
-  updateChart(`BINANCE:${token.symbol}USDT`); // Try Binance exchange
+  const chartTitleHeader = document.getElementById('chart-title-header');
+  const chartTitleModal = document.getElementById('chart-title-modal');
+  if (chartTitleHeader) chartTitleHeader.textContent = `> Chart: ${token.name} (${token.symbol}) ❄️`;
+  if (chartTitleModal) chartTitleModal.textContent = `> Chart: ${token.name} (${token.symbol}) ❄️`;
+  updateChart(`BINANCE:${token.symbol}USDT`);
   if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
   selectedTokenLi = event.target.closest('li');
-  selectedTokenLi.classList.add('selected-token');
+  if (selectedTokenLi) selectedTokenLi.classList.add('selected-token');
 }
 
 // Ensure TradingView script is loaded before initializing widget
@@ -180,7 +222,7 @@ function updateChart(symbol) {
     console.error(`[ERROR] Chart container ${containerId} not found`);
     return;
   }
-  container.innerHTML = '<div class="loader text-center text-gray-500 text-sm">> Loading Chart...</div>'; // Loading indicator
+  container.innerHTML = '<div class="loader text-center text-green-400 text-sm">> Loading Chart... ❄️</div>'; // Ice King-themed loader
   loadTradingViewScript(() => {
     try {
       new TradingView.widget({
@@ -199,13 +241,19 @@ function updateChart(symbol) {
         allow_symbol_change: true,
         details: true,
         studies: ['Volume@tv-basicstudies'],
+        overrides: {
+          "paneProperties.background": "#0a0f14",
+          "mainSeriesProperties.candleStyle.upColor": "#00ff00",
+          "mainSeriesProperties.candleStyle.downColor": "#ff0000"
+        }
       });
       console.log(`[DEBUG] TradingView widget initialized for ${symbol} on interval ${currentTimeframe}`);
       if (isDebugMode) alert(`Chart initialized for ${symbol} on ${currentTimeframe}`);
     } catch (error) {
       console.error('[ERROR] Failed to initialize TradingView widget:', error);
-      container.innerHTML = `<div class="text-red-500 text-sm">> Chart failed: ${error.message}</div>`;
+      container.innerHTML = `<div class="text-red-500 text-sm">> Chart failed: ${error.message} 🧊</div>`;
       if (isDebugMode) alert(`Chart failed: ${error.message}`);
+      setTimeout(() => updateChart('BINANCE:BTCUSDT'), 2000); // Retry with BTC as fallback
     }
   });
 }
@@ -213,14 +261,16 @@ function updateChart(symbol) {
 // Toggle mock data mode
 function toggleMockData() {
   isMockData = !isMockData;
-  document.getElementById('toggle-data-mode').textContent = `[${isMockData ? 'Real' : 'Mock'} Data]`;
+  const toggleDataMode = document.getElementById('toggle-data-mode');
+  if (toggleDataMode) toggleDataMode.textContent = `[${isMockData ? 'Real' : 'Mock'} Data] ❄️`;
   initializeData();
 }
 
 // Toggle debug mode
 function toggleDebugMode() {
   isDebugMode = !isDebugMode;
-  document.getElementById('toggle-debug').textContent = `[${isDebugMode ? 'Disable' : 'Debug'} Chart]`;
+  const toggleDebug = document.getElementById('toggle-debug');
+  if (toggleDebug) toggleDebug.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
 }
 
 // --- Event Listeners ---
@@ -229,11 +279,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const loaderTokens = document.getElementById('loader-tokens');
   const livePriceHeader = document.getElementById('live-price-header');
   const tickerMarqueeHeader = document.getElementById('ticker-marquee-header');
+  const topPairs = document.getElementById('top-pairs');
   const chartModal = document.getElementById('chart-modal');
   const toggleStickyHeader = document.getElementById('toggle-sticky-header');
   const toggleStickyModal = document.getElementById('toggle-sticky-modal');
   const toggleDataMode = document.getElementById('toggle-data-mode');
   const toggleDebug = document.getElementById('toggle-debug');
+
+  if (!tokenList || !loaderTokens || !livePriceHeader || !tickerMarqueeHeader || !topPairs || !chartModal || !toggleStickyHeader || !toggleStickyModal || !toggleDataMode || !toggleDebug) {
+    console.error('[ERROR] One or more DOM elements not found:', { tokenList, loaderTokens, livePriceHeader, tickerMarqueeHeader, topPairs, chartModal, toggleStickyHeader, toggleStickyModal, toggleDataMode, toggleDebug });
+    return;
+  }
 
   // Initial fetch and render
   async function initializeData() {
@@ -248,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
       allTokens = mockTokens;
       updateTokenList(allTokens);
       updateLiveData(allTokens);
+      updateChart(`BINANCE:${currentToken.symbol}USDT`);
     }
   }
   initializeData();
@@ -284,14 +341,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Toggle sticky chart
   toggleStickyHeader.addEventListener('click', () => {
-    isChartDocked = false;
-    chartModal.classList.add('active');
+    isChartDocked = !isChartDocked;
+    chartModal.classList.toggle('active', !isChartDocked);
+    toggleStickyHeader.textContent = `[${isChartDocked ? 'Undock' : 'Dock'} Chart] ❄️`;
+    toggleStickyHeader.classList.toggle('bg-green-500', isChartDocked);
+    toggleStickyHeader.classList.toggle('bg-blue-500', !isChartDocked);
     updateChart(`BINANCE:${currentToken.symbol}USDT`);
   });
 
   toggleStickyModal.addEventListener('click', () => {
-    isChartDocked = true;
-    chartModal.classList.remove('active');
+    isChartDocked = !isChartDocked;
+    chartModal.classList.toggle('active', !isChartDocked);
+    toggleStickyModal.textContent = `[${isChartDocked ? 'Undock' : 'Dock'} Chart] ❄️`;
+    toggleStickyModal.classList.toggle('bg-green-500', isChartDocked);
+    toggleStickyModal.classList.toggle('bg-blue-500', !isChartDocked);
     updateChart(`BINANCE:${currentToken.symbol}USDT`);
   });
 
