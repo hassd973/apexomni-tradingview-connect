@@ -5,6 +5,9 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Enable CORS for all origins (or specify your frontend domain)
+app.use(cors());
+
 // Mock data as fallback
 const mockCryptoData = [
   { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000 },
