@@ -43,58 +43,96 @@ app.use(express.json());
 const cmcApiKey = 'bef090eb-323d-4ae8-86dd-266236262f19';
 const cmcApiUrl = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/category';
 
-async function fetchCryptoData() {
-  try {
-    const response = await axios.get(cmcApiUrl, {
-      headers: {
-        'X-CMC_PRO_API_KEY': cmcApiKey,
-        'Accept': 'application/json'
-      },
-      params: {
-        id: '605e2ce9d41eae1066535f7c',
-        convert: 'USD'
+async function fetchCryptoData(retries = 3, delay = 1000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await axios.get(cmcApiUrl, {
+        headers: {
+          'X-CMC_PRO_API_KEY': cmcApiKey,
+          'Accept': 'application/json'
+        },
+        params: {
+          id: '605e2ce9d41eae1066535f7c',
+          convert: 'USD'
+        },
+        timeout: 10000
+      });
+      return response.data.data;
+    } catch (error) {
+      logger.error(`Error fetching CoinMarketCap data (attempt ${i + 1}/${retries}): ${error.message}`);
+      if (i === retries - 1) {
+        throw error;
       }
-    });
-    return response.data.data;
-  } catch (error) {
-    logger.error(`Error fetching CoinMarketCap data: ${error.message}`);
-    throw error;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
   }
 }
 
 async function fetchLiveLogs() {
-  const sourceId = '1303816';
-  const telemetryToken = 'WGdCT5KhHtg4kiGWAbdXRaSL';
-  const url = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
+  const username = 'utUpktCnjfkSuJ1my8BEQ9DpczfTifyHn';
+  const password = 'jRbcPkBws9m1J1d4BE52fqVFoVbhALthUgEh1uMGfCKjGxH7lWr2kmgh9q6f7eT0';
+  const url = 'https://eu-nbg-2-connect.betterstackdata.com?output_format_pretty_row_numbers=0';
+  const query = "SELECT * FROM remote('t371838_ice_king_logs') WHERE level = 'info' ORDER BY dt DESC LIMIT 10 FORMAT JSONEachRow";
+
   try {
-    const response = await axios.get(url, {
+    const auth = Buffer.from(`${username}:${password}`).toString('base64');
+    const response = await axios.post(url, query, {
       headers: {
-        'Authorization': `Bearer ${telemetryToken}`,
+        'Authorization': `Basic ${auth}`,
+        'Content-Type': 'plain/text',
         'Accept': 'application/json'
-      },
-      params: {
-        source_ids: sourceId,
-        query: 'level=info',
-        batch: 100,
-        order: 'newest_first'
       },
       maxRedirects: 5
     });
 
-    logger.info(`Telemetry API response status: ${response.status}`);
-    if (response.data && Array.isArray(response.data)) {
-      logger.info(`Retrieved ${response.data.length} logs from Telemetry API`);
-      return response.data;
+    logger.info(`Direct query response: ${JSON.stringify(response.data)}`);
+    if (response.data) {
+      const logs = parseDirectQueryResponse(response.data);
+      logger.info(`Parsed ${logs.length} logs from direct query`);
+      return logs;
     } else {
-      logger.warn('No logs returned from Telemetry API, returning mock logs');
+      logger.error('No logs returned from direct query');
       return getMockLogs();
     }
   } catch (error) {
-    logger.error(`Error fetching BetterStack logs via Telemetry API: ${error.message}`);
+    logger.error(`Error fetching logs via direct query: ${error.message}`);
     if (error.response) {
-      logger.error(`Telemetry API error details: ${JSON.stringify(error.response.data)}`);
+      logger.error(`Direct query error details: ${JSON.stringify(error.response.data)}`);
     }
-    logger.info('Returning mock logs as a fallback');
+    return getMockLogs();
+  }
+}
+
+function parseDirectQueryResponse(data) {
+  try {
+    if (typeof data === 'string') {
+      const lines = data.split('\n').filter(line => line.trim());
+      const logs = lines.map(line => {
+        try {
+          const parsed = JSON.parse(line);
+          return {
+            dt: parsed.dt || new Date().toISOString(),
+            message: parsed.message || 'No message',
+            level: parsed.level || 'info'
+          };
+        } catch (e) {
+          logger.error(`Error parsing log line: ${line}, error: ${e.message}`);
+          return null;
+        }
+      }).filter(log => log !== null);
+      return logs;
+    } else if (Array.isArray(data)) {
+      return data.map(log => ({
+        dt: log.dt || new Date().toISOString(),
+        message: log.message || 'No message',
+        level: log.level || 'info'
+      }));
+    } else {
+      logger.error('Unexpected direct query response format');
+      return [];
+    }
+  } catch (error) {
+    logger.error(`Error parsing direct query response: ${error.message}`);
     return getMockLogs();
   }
 }
