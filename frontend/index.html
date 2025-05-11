@@ -98,11 +98,11 @@
     .hover-performance-red:hover { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); transition: all 0.3s ease; }
     .selected-token { border: 2px solid rgba(0, 255, 0, 0.8); box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); background-opacity: 0.9 !important; }
     .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.6), rgba(0, 30, 0, 0.4)); border: 1px solid rgba(0, 255, 0, 0.2); }
-    .chart-container { position: relative; width: 100%; height: 100vh; }
+    .chart-container { position: relative; width: 100%; height: 60vh; } /* Adjusted height */
     .chart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 50; justify-content: center; align-items: center; }
     .chart-modal.active { display: flex; }
     .chart-modal-content { background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7)); padding: 1rem; border: 2px solid rgba(0, 255, 0, 0.5); border-radius: 5px; width: 95%; max-w-5xl; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
-    #chart-container-modal { width: 100% !important; height: 100vh !important; }
+    #chart-container-modal { width: 100% !important; height: 80vh !important; } /* Adjusted height */
     #token-list, #log-list, #chat-list { z-index: 10; }
     #token-list li, #log-list li, #chat-list li { z-index: 10; position: relative; }
     @media (min-width: 640px) { 
@@ -202,7 +202,7 @@
             <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active">[1D]</button>
           </div>
           <div class="flex space-x-2">
-            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded">[Lock Chart]</button>
+            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded">[Dock Chart 🔍]</button>
             <button id="toggle-data-mode" class="text-black px-2 py-1 rounded">[Mock Data]</button>
           </div>
         </div>
@@ -229,7 +229,7 @@
             <button id="modal-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded">[4H]</button>
             <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active">[1D]</button>
           </div>
-          <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded">[Unlock Chart]</button>
+          <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded">[Undock Chart 🔍]</button>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div id="live-price-modal" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
