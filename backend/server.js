@@ -34,30 +34,56 @@ const logger = winston.createLogger({
 });
 
 app.use(cors({
-  origin: ['https://ice-king-dashboard-tm48.onrender.com', 'http://localhost:3000'],
+  origin: ['https://ice-king-dashboard-tm4b.onrender.com', 'http://localhost:3000'],
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Accept']
 }));
 app.use(express.json());
 
-const coingeckoApiUrl = 'https://api.coingecko.com/api/v3/coins/markets';
+// Cache for token data
+let tokenCache = null;
+let lastCacheTime = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+const binanceApiUrl = 'https://api.binance.com/api/v3/ticker/price';
 
 async function fetchCryptoData(retries = 3, delay = 5000) {
+  // Check cache first
+  if (tokenCache && (Date.now() - lastCacheTime) < CACHE_DURATION) {
+    logger.info('Returning cached token data');
+    return tokenCache;
+  }
+
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await axios.get(coingeckoApiUrl, {
-        params: {
-          vs_currency: 'usd',
-          order: 'market_cap_desc',
-          per_page: 10,
-          page: 1,
-          sparkline: false
-        },
+      const response = await axios.get(binanceApiUrl, {
         timeout: 10000
       });
-      return response.data;
+      const data = response.data;
+
+      // Map Binance data to our format
+      const mappedData = data
+        .filter(token => token.symbol.endsWith('USDT')) // Only USDT pairs
+        .slice(0, 10) // Limit to top 10
+        .map(token => ({
+          id: token.symbol,
+          name: token.symbol.replace('USDT', ''),
+          symbol: token.symbol.replace('USDT', ''),
+          current_price: parseFloat(token.price),
+          total_volume: 0, // Binance ticker/price doesn't provide volume, set to 0
+          price_change_percentage_24h: 0, // Not available in this endpoint
+          market_cap: 0, // Not available in this endpoint
+          circulating_supply: 0, // Not available in this endpoint
+          source: 'Binance'
+        }));
+
+      // Update cache
+      tokenCache = mappedData;
+      lastCacheTime = Date.now();
+      logger.info('Fetched and cached Binance data');
+      return mappedData;
     } catch (error) {
-      logger.error(`Error fetching CoinGecko data (attempt ${i + 1}/${retries}): ${error.message}`);
+      logger.error(`Error fetching Binance data (attempt ${i + 1}/${retries}): ${error.message}`);
       if (error.response && error.response.status === 429) {
         logger.warn('Rate limit hit, increasing delay for next attempt');
         delay = 10000; // Back off to 10 seconds on 429
