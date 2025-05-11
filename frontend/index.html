@@ -6,15 +6,20 @@
   <title>🧊 ICE KING DASHBOARD 👑</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://s3.tradingview.com/tv.js"></script>
   <style>
+    /* Base Styles */
     body {
       font-family: 'Fira Code', monospace;
-      background: #0a0f14;
-      color: #00ff00;
+      background: linear-gradient(180deg, rgba(17, 24, 39, 0.9), rgba(17, 24, 39, 1)); /* Gradient from earlier CSS */
+      color: #d1d5db; /* Light gray for terminal feel */
       overflow-x: hidden;
       margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
+
+    /* Background Effects */
     .grid-bg {
       position: fixed;
       top: 0;
@@ -65,6 +70,111 @@
       50% { opacity: 0.8; }
       100% { transform: translate(100px, -100px); opacity: 0; }
     }
+
+    /* Header and Footer */
+    header, footer {
+      background: rgba(31, 41, 55, 0.5);
+      backdrop-filter: blur(10px);
+      padding: 1rem;
+      border-bottom: 1px solid rgba(0, 255, 0, 0.1);
+    }
+    footer {
+      border-top: 1px solid rgba(0, 255, 0, 0.1);
+    }
+
+    /* Sections */
+    section {
+      background: rgba(31, 41, 55, 0.5);
+      backdrop-filter: blur(10px);
+      padding: 1rem;
+      border: 1px solid rgba(0, 255, 0, 0.1);
+      border-radius: 8px;
+    }
+
+    /* Scrollbar and Lists */
+    ul {
+      scrollbar-width: thin;
+      scrollbar-color: #00ff00 #000; /* Ice King green */
+      list-style: none;
+      padding: 0;
+    }
+    ul::-webkit-scrollbar {
+      width: 8px;
+    }
+    ul::-webkit-scrollbar-track {
+      background: #000;
+    }
+    ul::-webkit-scrollbar-thumb {
+      background: #00ff00;
+      border-radius: 4px;
+    }
+    #token-list, #profit-pairs {
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 8px; /* Prevent overlap */
+    }
+
+    /* Chart Containers */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      min-height: 300px;
+    }
+    #chart-container-header,
+    #chart-container-modal {
+      height: 100%; /* Dynamic height from script.js */
+      width: 100%;
+    }
+    .tradingview-widget-container {
+      border: 1px solid rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+    .tradingview-widget-container iframe {
+      width: 100% !important;
+      height: 100% !important;
+    }
+    .chart-container:empty::after {
+      content: '> Chart failed to load. Please refresh or check your connection.';
+      display: block;
+      color: #ff0000;
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.875rem;
+    }
+
+    /* Modal */
+    .chart-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 50;
+      justify-content: center;
+      align-items: center;
+    }
+    .chart-modal.active { display: flex; }
+    .chart-modal-content {
+      background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7));
+      padding: 1rem;
+      border: 2px solid rgba(0, 255, 0, 0.5);
+      border-radius: 5px;
+      width: 95%;
+      max-width: 1200px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
+    #chart-container-modal {
+      min-height: 400px;
+    }
+
+    /* Animations */
     @keyframes glow-blue {
       0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
       50% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.8), 0 0 25px rgba(0, 255, 255, 0.5); }
@@ -93,73 +203,8 @@
     .hover-performance-red:hover { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); transition: all 0.3s ease; }
     .selected-token { border: 2px solid rgba(0, 255, 0, 0.8); box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); background: rgba(0, 15, 0, 0.9) !important; }
     .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.6), rgba(0, 30, 0, 0.4)); border: 1px solid rgba(0, 255, 0, 0.2); }
-    .chart-container {
-      position: relative;
-      width: 100%;
-      height: calc(100vh - 200px);
-      min-height: 300px;
-      max-height: 900px;
-    }
-    .chart-container:empty::after {
-      content: '> Chart failed to load. Please refresh or check your connection.';
-      display: block;
-      color: #ff0000;
-      text-align: center;
-      padding: 1rem;
-      font-size: 0.875rem;
-    }
-    .chart-modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 50;
-      justify-content: center;
-      align-items: center;
-    }
-    .chart-modal.active { display: flex; }
-    .chart-modal-content {
-      background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7));
-      padding: 1rem;
-      border: 2px solid rgba(0, 255, 0, 0.5);
-      border-radius: 5px;
-      width: 95%;
-      max-width: 1200px;
-      max-height: 90vh;
-      overflow-y: auto;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-    }
-    #chart-container-modal {
-      height: calc(100vh - 100px) !important;
-      min-height: 400px;
-      max-height: 1000px;
-    }
-    #token-list, #log-list, #chat-list, #profit-pairs { z-index: 10; }
-    #token-list li, #log-list li, #chat-list li, #profit-pairs li { z-index: 10; position: relative; }
-    @media (min-width: 640px) {
-      .chart-modal-content { width: 85%; }
-    }
-    @media (min-width: 1024px) {
-      .chart-container { height: calc(100vh - 150px); }
-    }
-    [data-tooltip] { position: relative; }
-    [data-tooltip]:hover::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0, 255, 0, 0.9);
-      color: #000;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      white-space: nowrap;
-      z-index: 60;
-    }
+
+    /* Marquee */
     .marquee-container {
       background: #000;
       border: 1px solid rgba(0, 255, 0, 0.3);
@@ -183,6 +228,8 @@
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
+
+    /* Buttons and Inputs */
     #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug {
       animation: glow-green 2s infinite;
       background-color: #00ff00;
@@ -200,6 +247,22 @@
       background-color: #00cc00;
       box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
     }
+    #chat-input {
+      background: #000;
+      border: 1px solid rgba(0, 255, 0, 0.3);
+      color: #00ff00;
+      resize: none;
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+    #chat-input:focus {
+      outline: none;
+      border-color: #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+
+    /* Loader */
     .loader {
       display: flex;
       justify-content: center;
@@ -216,6 +279,8 @@
       animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Typewriter and Titles */
     .typewriter {
       display: inline-block;
       overflow: hidden;
@@ -254,47 +319,25 @@
     @media (min-width: 768px) {
       .title-box { font-size: 1rem; }
     }
-    .tradingview-widget-container {
-      border: 1px solid rgba(0, 255, 0, 0.5);
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
-      width: 100%;
-      height: 100%;
-      position: relative;
-    }
-    .tradingview-widget-container iframe {
-      width: 100% !important;
-      height: 100% !important;
-    }
-    #chat-input {
-      background: #000;
-      border: 1px solid rgba(0, 255, 0, 0.3);
-      color: #00ff00;
-      resize: none;
-      width: 100%;
-      padding: 0.5rem;
+
+    /* Tooltip */
+    [data-tooltip] { position: relative; }
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 255, 0, 0.9);
+      color: #000;
+      padding: 4px 8px;
       border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 60;
     }
-    #chat-input:focus {
-      outline: none;
-      border-color: #00ff00;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-    }
-    #token-list, #profit-pairs {
-      max-height: 600px;
-      overflow-y: auto;
-      scrollbar-width: thin;
-      scrollbar-color: #00ff00 #000;
-    }
-    #token-list::-webkit-scrollbar, #profit-pairs::-webkit-scrollbar {
-      width: 8px;
-    }
-    #token-list::-webkit-scrollbar-track, #profit-pairs::-webkit-scrollbar-track {
-      background: #000;
-    }
-    #token-list::-webkit-scrollbar-thumb, #profit-pairs::-webkit-scrollbar-thumb {
-      background: #00ff00;
-      border-radius: 4px;
-    }
+
+    /* Profit Pairs */
     #profit-pairs .top-pair { animation: glow-green 2s infinite; }
     #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
   </style>
@@ -393,6 +436,7 @@
   <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
     <p class="typewriter">> Powered by CoinMarketCap & TradingView</p>
   </footer>
+
   <script>
     // Particle effect
     const particleContainer = document.getElementById('particles');
@@ -403,73 +447,6 @@
       star.style.top = `${Math.random() * 100}%`;
       star.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(star);
-    }
-
-    // TradingView chart initialization with retry
-    function initializeChart(containerId, symbol = 'BINANCE:BTCUSDT', interval = 'D', retries = 3, delay = 1000) {
-      const container = document.getElementById(containerId);
-      if (!container) {
-        console.error(`Chart container ${containerId} not found`);
-        return;
-      }
-
-      container.innerHTML = '<div class="loader text-center text-gray-500 text-sm">> Loading Chart...</div>';
-
-      function attemptInit(attempt = 1) {
-        if (typeof TradingView === 'undefined' || !TradingView.widget) {
-          if (attempt <= retries) {
-            console.warn(`TradingView not loaded, retrying (${attempt}/${retries})...`);
-            setTimeout(() => attemptInit(attempt + 1), delay);
-          } else {
-            container.innerHTML = '<div class="text-red-500 text-center p-4">> Failed to load TradingView chart. Please refresh.</div>';
-          }
-          return;
-        }
-
-        try {
-          new TradingView.widget({
-            width: '100%',
-            height: '100%',
-            symbol: symbol,
-            interval: interval,
-            timezone: 'Etc/UTC',
-            theme: 'dark',
-            style: '1',
-            locale: 'en',
-            toolbar_bg: '#0a0f14',
-            enable_publishing: false,
-            allow_symbol_change: true,
-            container_id: containerId,
-            autosize: true,
-            studies: ['RSI@tv-basicstudies', 'MACD@tv-basicstudies', 'Volume@tv-basicstudies'],
-            gridColor: 'rgba(0, 255, 0, 0.1)',
-            overrides: {
-              'mainSeriesProperties.candleStyle.upColor': '#00ff00',
-              'mainSeriesProperties.candleStyle.downColor': '#ff0000',
-              'mainSeriesProperties.candleStyle.borderUpColor': '#00ff00',
-              'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
-            },
-          });
-
-          const resizeObserver = new ResizeObserver(() => {
-            const widgetIframe = container.querySelector('iframe');
-            if (widgetIframe) {
-              widgetIframe.style.width = '100%';
-              widgetIframe.style.height = '100%';
-            }
-          });
-          resizeObserver.observe(container);
-        } catch (error) {
-          console.error(`Chart initialization failed: ${error.message}`);
-          if (attempt <= retries) {
-            setTimeout(() => attemptInit(attempt + 1), delay);
-          } else {
-            container.innerHTML = '<div class="text-red-500 text-center p-4">> Chart initialization error. Please refresh.</div>';
-          }
-        }
-      }
-
-      attemptInit();
     }
   </script>
   <script src="script.js"></script>
