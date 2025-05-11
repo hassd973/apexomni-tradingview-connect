@@ -1,18 +1,47 @@
 const express = require('express');
 const cors = require('cors');
 const winston = require('winston');
-const { Logtail } = require('@logtail/node');
-const { LogtailTransport } = require('@logtail/winston');
+const TransportStream = require('winston-transport');
 const axios = require('axios');
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Create a Logtail client
-const logtail = new Logtail('x5nvK7DNDURcpAHEBuCbHrza', {
-  endpoint: 'https://s1303816.eu-nbg-2.betterstackdata.com',
-});
+class BetterStackTransport extends TransportStream {
+  constructor(options = {}) {
+    super(options);
+    this.name = 'betterStack';
+    this.level = options.level || 'info';
+    this.token = 'x5nvK7DNDURcpAHEBuCbHrza';
+    this.url = 'https://s1303816.eu-nbg-2.betterstackdata.com';
+  }
 
-// Create a Winston logger with Logtail transport
+  log(info, callback) {
+    setImmediate(() => {
+      this.emit('logged', info);
+    });
+
+    const logEntry = {
+      message: info.message,
+      level: info.level,
+      dt: info.timestamp || new Date().toISOString()
+    };
+
+    axios.post(this.url, logEntry, {
+      headers: {
+        'Authorization': `Bearer ${this.token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(() => {
+        callback();
+      })
+      .catch(error => {
+        console.error(`[ERROR] Failed to send log to BetterStack: ${error.message}`);
+        callback(error);
+      });
+  }
+}
+
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -21,15 +50,15 @@ const logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
-    new LogtailTransport(logtail)
+    new BetterStackTransport()
   ],
   exceptionHandlers: [
     new winston.transports.Console(),
-    new LogtailTransport(logtail)
+    new BetterStackTransport()
   ],
   rejectionHandlers: [
     new winston.transports.Console(),
-    new LogtailTransport(logtail)
+    new BetterStackTransport()
   ]
 });
 
@@ -51,7 +80,7 @@ async function fetchCryptoData() {
         'Accept': 'application/json'
       },
       params: {
-        id: '605e2ce9d41eae1066535f7c', // A16Z Portfolio category ID
+        id: '605e2ce9d41eae1066535f7c',
         convert: 'USD'
       }
     });
