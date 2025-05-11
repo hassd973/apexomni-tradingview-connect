@@ -96,13 +96,14 @@
     .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
     .hover-performance-green:hover { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); transition: all 0.3s ease; }
     .hover-performance-red:hover { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); transition: all 0.3s ease; }
-    .selected-token { border: 2px solid rgba(0, 255, 0, 0.8); box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); background-opacity: 0.9 !important; }
+    .selected-token { border: 2px solid rgba(0, 255, 0, 0.8); box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); background: rgba(0, 15, 0, 0.9) !important; }
     .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.6), rgba(0, 30, 0, 0.4)); border: 1px solid rgba(0, 255, 0, 0.2); }
-    .chart-container { position: relative; width: 100%; height: 60vh; } /* Adjusted height */
+    .chart-container { position: relative; width: 100%; height: 60vh; min-height: 300px; }
+    .chart-container:empty::after { content: '> Chart failed to load. Please refresh or check your connection.'; display: block; color: #ff0000; text-align: center; padding: 1rem; font-size: 0.875rem; }
     .chart-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 50; justify-content: center; align-items: center; }
     .chart-modal.active { display: flex; }
     .chart-modal-content { background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7)); padding: 1rem; border: 2px solid rgba(0, 255, 0, 0.5); border-radius: 5px; width: 95%; max-w-5xl; max-height: 90vh; overflow-y: auto; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); }
-    #chart-container-modal { width: 100% !important; height: 80vh !important; } /* Adjusted height */
+    #chart-container-modal { width: 100% !important; height: 80vh !important; min-height: 400px; }
     #token-list, #log-list, #chat-list { z-index: 10; }
     #token-list li, #log-list li, #chat-list li { z-index: 10; position: relative; }
     @media (min-width: 640px) { 
@@ -111,12 +112,12 @@
     [data-tooltip] { position: relative; }
     [data-tooltip]:hover::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: rgba(0, 255, 0, 0.9); color: #000; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 60; }
     .marquee-container { background: #000; border: 1px solid rgba(0, 255, 0, 0.3); overflow: hidden; white-space: nowrap; padding: 4px 0; margin-top: 8px; width: 100%; }
-    .marquee { display: inline-block; animation: marquee 20s linear infinite; animation-play-state: running; will-change: transform; }
+    .marquee { display: inline-block; animation: marquee 60s linear infinite; animation-play-state: running; will-change: transform; }
     @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     @-webkit-keyframes marquee { 0% { -webkit-transform: translateX(100%); } 100% { -webkit-transform: translateX(-100%); } }
     .marquee span { margin-right: 20px; font-size: 0.75rem; color: #00ff00; }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
-    .marquee-container:hover .marquee { animation-play-state: running; }
+    .marquee-container:hover .marquee { animation-play-state: paused; }
     #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode { animation: glow-green 2s infinite; background-color: #00ff00; color: #000; border: 1px solid #00ff00; font-size: 0.75rem; }
     #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-mode:hover { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
     .timeframe-btn.active { background-color: #00cc00; box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
