@@ -45,7 +45,7 @@ let tokenCache = null;
 let lastCacheTime = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
-const coincapApiUrl = 'https://api.coincap.io/v2/assets?limit=10';
+const coinpaprikaApiUrl = 'https://api.coinpaprika.com/v1/tickers?limit=10';
 
 async function fetchCryptoData(retries = 3, delay = 5000) {
   // Check cache first
@@ -56,31 +56,31 @@ async function fetchCryptoData(retries = 3, delay = 5000) {
 
   for (let i = 0; i < retries; i++) {
     try {
-      const response = await axios.get(coincapApiUrl, {
+      const response = await axios.get(coinpaprikaApiUrl, {
         timeout: 10000
       });
-      const data = response.data.data;
+      const data = response.data;
 
-      // Map CoinCap data to our format
+      // Map Coinpaprika data to our format
       const mappedData = data.map(token => ({
         id: token.id,
         name: token.name,
         symbol: token.symbol,
-        current_price: parseFloat(token.priceUsd),
-        total_volume: parseFloat(token.volumeUsd24Hr) || 0,
-        price_change_percentage_24h: parseFloat(token.changePercent24Hr) || 0,
-        market_cap: parseFloat(token.marketCapUsd) || 0,
-        circulating_supply: parseFloat(token.supply) || 0,
-        source: 'CoinCap'
+        current_price: parseFloat(token.quotes.USD.price),
+        total_volume: parseFloat(token.quotes.USD.volume_24h) || 0,
+        price_change_percentage_24h: parseFloat(token.quotes.USD.percent_change_24h) || 0,
+        market_cap: parseFloat(token.quotes.USD.market_cap) || 0,
+        circulating_supply: parseFloat(token.circulating_supply) || 0,
+        source: 'Coinpaprika'
       }));
 
       // Update cache
       tokenCache = mappedData;
       lastCacheTime = Date.now();
-      logger.info('Fetched and cached CoinCap data');
+      logger.info('Fetched and cached Coinpaprika data');
       return mappedData;
     } catch (error) {
-      logger.error(`Error fetching CoinCap data (attempt ${i + 1}/${retries}): ${error.message}`);
+      logger.error(`Error fetching Coinpaprika data (attempt ${i + 1}/${retries}): ${error.message}`);
       if (error.response && error.response.status === 429) {
         logger.warn('Rate limit hit, increasing delay for next attempt');
         delay = 10000; // Back off to 10 seconds on 429
