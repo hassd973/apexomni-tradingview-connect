@@ -66,11 +66,11 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       const data = await response.json();
-      console.log(`[DEBUG] Fetch successful for ${url}`);
+      console.log(`[DEBUG] Fetch successful for ${url}, response:`, data);
       return data;
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
-      await logtail.error(`Fetch failed: ${error.message}`, { url, attempt: i + 1, retries });
+      await logtail.error(`Fetch failed: ${error.message}`, { url, attempt: i + 1, retries, errorDetails: error.stack });
       if (i === retries - 1) {
         console.error(`[ERROR] All retries failed for ${url}`);
         return null;
@@ -99,7 +99,7 @@ function sanitizeTokenData(data) {
     source: String(token.source || 'CoinGecko')
   })).filter(token => token.symbol && token.current_price > 0);
   console.log('[DEBUG] Sanitized token data:', sanitized);
-  return sanitized;
+  return sanitized.length > 0 ? sanitized : [];
 }
 
 // Validate and sanitize log data
@@ -145,7 +145,13 @@ async function fetchTokenData() {
   const data = await fetchWithRetry(url);
   if (data) {
     console.log('[DEBUG] Received token data:', data);
-    return sanitizeTokenData(data);
+    const sanitizedData = sanitizeTokenData(data);
+    if (sanitizedData.length === 0) {
+      console.warn('[WARN] Sanitized token data is empty, falling back to mock data');
+      await logtail.warn('Sanitized token data empty, using mock data');
+      return sanitizeTokenData(mockTokens);
+    }
+    return sanitizedData;
   }
   console.warn('[WARN] No valid backend token data, using mock data');
   await logtail.warn('Fallback to mock token data');
@@ -196,42 +202,48 @@ async function updateTokens() {
 
   // Render token list
   tokenList.innerHTML = '';
-  sortedTokens.forEach((token, index) => {
-    console.log('[DEBUG] Rendering token:', token.symbol);
-    const opacity = 30 + (index / sortedTokens.length) * 40;
-    const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
-    const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
-    const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
-    const li = document.createElement('li');
-    li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} ${hoverClass} z-20`;
-    li.setAttribute('data-tooltip', '[Click to toggle chart]');
-    const priceChange = token.price_change_percentage_24h;
-    const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
-    const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
-    li.innerHTML = `
-      <div class="flex flex-col space-y-1">
-        <div class="flex items-center justify-between">
-          <span class="font-medium truncate">[🍀 ${token.name} (${token.symbol})]</span>
-          <span class="text-xs">[Vol: $${token.total_volume.toLocaleString()}]</span>
-        </div>
-        <div class="text-xs">
-          <p>[Price: $${token.current_price.toLocaleString()}]</p>
-          <p class="${priceChangeColor}">[24h: ${priceChange.toFixed(2)}% ${priceChangeEmoji}]</p>
-          <p>[Market Cap: $${token.market_cap.toLocaleString()}]</p>
-          <p>[Circulating Supply: ${token.circulating_supply.toLocaleString()} ${token.symbol}]</p>
-          <p>[Source: ${token.source}]</p>
-        </div>
-      </div>`;
-    li.addEventListener('click', () => {
-      if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
-      li.classList.add('selected-token');
-      selectedTokenLi = li;
-      currentToken = token;
-      showPriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
-      console.log(`[DEBUG] Selected token: ${token.symbol}`);
+  if (sortedTokens.length > 0) {
+    sortedTokens.forEach((token, index) => {
+      console.log('[DEBUG] Rendering token:', token.symbol);
+      const opacity = 30 + (index / sortedTokens.length) * 40;
+      const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
+      const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
+      const hoverClass = token.price_change_percentage_24h >= 0 ? 'hover-performance-green' : 'hover-performance-red';
+      const li = document.createElement('li');
+      li.className = `p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} ${hoverClass} z-20`;
+      li.setAttribute('data-tooltip', '[Click to toggle chart]');
+      const priceChange = token.price_change_percentage_24h;
+      const priceChangeEmoji = priceChange >= 0 ? '🤑' : '🤮';
+      const priceChangeColor = priceChange >= 0 ? 'text-green-400' : 'text-red-400';
+      li.innerHTML = `
+        <div class="flex flex-col space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-medium truncate">[🍀 ${token.name} (${token.symbol})]</span>
+            <span class="text-xs">[Vol: $${token.total_volume.toLocaleString()}]</span>
+          </div>
+          <div class="text-xs">
+            <p>[Price: $${token.current_price.toLocaleString()}]</p>
+            <p class="${priceChangeColor}">[24h: ${priceChange.toFixed(2)}% ${priceChangeEmoji}]</p>
+            <p>[Market Cap: $${token.market_cap.toLocaleString()}]</p>
+            <p>[Circulating Supply: ${token.circulating_supply.toLocaleString()} ${token.symbol}]</p>
+            <p>[Source: ${token.source}]</p>
+          </div>
+        </div>`;
+      li.addEventListener('click', () => {
+        if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
+        li.classList.add('selected-token');
+        selectedTokenLi = li;
+        currentToken = token;
+        showPriceChart(token, currentTimeframe, isChartLocked ? 'modal' : 'header');
+        console.log(`[DEBUG] Selected token: ${token.symbol}`);
+      });
+      tokenList.appendChild(li);
     });
-    tokenList.appendChild(li);
-  });
+  } else {
+    console.warn('[WARN] No tokens to render');
+    await logtail.warn('No tokens available to render');
+    tokenList.innerHTML = '<li class="p-2 text-red-400">[No token data available]</li>';
+  }
 
   // Render top pairs
   topPairs.innerHTML = sortedTokens.slice(0, 5).map((token, index) => {
@@ -247,6 +259,9 @@ async function updateTokens() {
     currentToken = allTokens[0];
     showPriceChart(currentToken, currentTimeframe, 'header');
     console.log(`[DEBUG] Defaulted to token: ${currentToken.symbol}`);
+  } else if (allTokens.length === 0) {
+    console.warn('[WARN] No tokens available for default selection');
+    await logtail.warn('No tokens for default selection');
   }
 
   loader.style.display = 'none';
@@ -276,20 +291,26 @@ async function updateLogs() {
 
   // Render log list
   logList.innerHTML = '';
-  logs.forEach(log => {
-    console.log('[DEBUG] Rendering log:', log.message);
-    const li = document.createElement('li');
-    const levelColor = log.level === 'error' ? 'text-red-400 glow-red' : log.level === 'warn' ? 'text-yellow-400' : 'text-green-400 glow-green';
-    const date = new Date(log.timestamp);
-    date.setHours(date.getHours() + 1); // GMT+1 offset
-    li.className = `p-2 rounded-md bg-gray-800/50 text-xs fade-in ${levelColor}`;
-    li.innerHTML = `
-      <div class="flex flex-col">
-        <span>[${date.toLocaleString()}]</span>
-        <span>[${log.level.toUpperCase()}] ${log.message}</span>
-      </div>`;
-    logList.appendChild(li);
-  });
+  if (logs.length > 0) {
+    logs.forEach(log => {
+      console.log('[DEBUG] Rendering log:', log.message);
+      const li = document.createElement('li');
+      const levelColor = log.level === 'error' ? 'text-red-400 glow-red' : log.level === 'warn' ? 'text-yellow-400' : 'text-green-400 glow-green';
+      const date = new Date(log.timestamp);
+      date.setHours(date.getHours() + 1); // GMT+1 offset
+      li.className = `p-2 rounded-md bg-gray-800/50 text-xs fade-in ${levelColor}`;
+      li.innerHTML = `
+        <div class="flex flex-col">
+          <span>[${date.toLocaleString()}]</span>
+          <span>[${log.level.toUpperCase()}] ${log.message}</span>
+        </div>`;
+      logList.appendChild(li);
+    });
+  } else {
+    console.warn('[WARN] No logs to render');
+    await logtail.warn('No logs available to render');
+    logList.innerHTML = '<li class="p-2 text-red-400">[No log data available]</li>';
+  }
 
   loader.style.display = 'none';
   console.log('[DEBUG] Logs updated');
