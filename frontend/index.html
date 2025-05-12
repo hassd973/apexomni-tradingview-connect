@@ -272,7 +272,7 @@
     .marquee-container:hover .marquee { animation-play-state: paused; }
 
     /* Buttons and Inputs */
-    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug {
+    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug {
       animation: glow-green 2s infinite;
       background-color: #00ff00;
       color: #000;
@@ -281,7 +281,7 @@
       border-radius: 4px;
       padding: 0.5rem 1rem;
     }
-    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-mode:hover, #toggle-debug:hover {
+    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover {
       background-color: #00cc00;
       box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
     }
@@ -362,7 +362,7 @@
     }
     @media (min-width: 640px) {
       .title-box { font-size: 0.875rem; }
-      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug { font-size: 0.875rem; }
+      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug { font-size: 0.875rem; }
     }
     @media (min-width: 768px) {
       .title-box { font-size: 1rem; }
@@ -412,7 +412,7 @@
           </div>
           <div class="flex space-x-2">
             <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded" aria-label="Dock chart">Dock Chart 🔍</button>
-            <button id="toggle-data-mode" class="text-black px-2 py-1 rounded" aria-label="Toggle mock data">Mock Data</button>
+            <button id="toggle-data-source" class="text-black px-2 py-1 rounded" aria-label="Toggle data source">Toggle Data Source</button>
             <button id="toggle-debug" class="text-black px-2 py-1 rounded" aria-label="Debug chart">Debug Chart</button>
           </div>
         </div>
@@ -523,6 +523,16 @@
     // Store chart instances
     const chartInstances = new Map();
 
+    // Mock data as fallback
+    const mockData = [
+      { symbol: "BTCUSDT", performance: 5.2, volume: 450000, source: "Mock" },
+      { symbol: "ETHUSDT", performance: -2.1, volume: 300000, source: "Mock" },
+      { symbol: "PEOPLEUSDT", performance: 41.10, volume: 135674.745, source: "Mock" },
+      { symbol: "SOLUSDT", performance: 5.67, volume: 800000, source: "Mock" },
+      { symbol: "ADAUSDT", performance: 3.21, volume: 600000, source: "Mock" },
+      { symbol: "XRPUSDT", performance: -0.45, volume: 700000, source: "Mock" }
+    ];
+
     // TradingView chart initialization with retry
     function initializeChart(containerId, symbol, interval = '1D', retries = 2) {
       const container = document.getElementById(containerId);
@@ -611,107 +621,154 @@
       setTimeout(initWidget, 300);
     }
 
-    // Fetch and initialize with top-ranked coin from multiple sources
-    document.addEventListener('DOMContentLoaded', () => {
-      // Define API endpoints
+    // Function to populate UI with data
+    function populateUI(data) {
+      const lowVolumeTokens = data
+        .filter(t => t.symbol.endsWith('USDT') && t.volume < 1000000)
+        .sort((a, b) => b.performance - a.performance);
+
+      if (lowVolumeTokens.length === 0) {
+        console.error('No low-volume USDT pairs found.');
+        document.getElementById('chart-title-header').textContent = 'No data available';
+        document.getElementById('chart-title-modal').textContent = 'No data available';
+        document.getElementById('loader-tokens').textContent = '> No low-volume USDT pairs found';
+        return false;
+      }
+
+      const rankedSymbols = lowVolumeTokens.map(t => t.symbol);
+      const topToken = rankedSymbols[0];
+
+      // Initialize charts with top-ranked coin
+      initializeChart('chart-container-header', `BINANCE:${topToken}`, '1D');
+      initializeChart('chart-container-modal', `BINANCE:${topToken}`, '1D');
+      document.getElementById('chart-title-header').setAttribute('data-symbol', topToken);
+      document.getElementById('chart-title-header').textContent = topToken;
+      document.getElementById('chart-title-modal').setAttribute('data-symbol', topToken);
+      document.getElementById('chart-title-modal').textContent = topToken;
+
+      // Populate token list
+      const tokenList = document.getElementById('token-list');
+      tokenList.innerHTML = lowVolumeTokens.map((t, index) => {
+        const isPositive = t.performance >= 0;
+        const rankFactor = index / (lowVolumeTokens.length - 1);
+        const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
+        const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
+        const selectedClass = t.symbol === topToken ? 'selected-token' : '';
+        return `
+          <li class="${bgClass} ${selectedClass}" data-symbol="${t.symbol}">
+            <span>${t.symbol} (${t.source})</span>
+            <span class="performance ${textClass}">${t.performance >= 0 ? '+' : ''}${t.performance.toFixed(2)}%</span>
+          </li>
+        `;
+      }).join('');
+
+      // Populate top/bottom performers
+      const profitPairs = document.getElementById('profit-pairs');
+      profitPairs.innerHTML = `
+        <li class="top-pair p-2 rounded bg-black bg-opacity-50">${topToken} (${lowVolumeTokens[0].source}): +${lowVolumeTokens[0].performance.toFixed(2)}%</li>
+        <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">${lowVolumeTokens[lowVolumeTokens.length - 1].symbol} (${lowVolumeTokens[lowVolumeTokens.length - 1].source}): ${lowVolumeTokens[lowVolumeTokens.length - 1].performance.toFixed(2)}%</li>
+      `;
+
+      // Hide loaders
+      document.getElementById('loader-tokens').style.display = 'none';
+      return true;
+    }
+
+    // Fetch real data from APIs
+    async function fetchRealData() {
       const backendApiUrl = 'http://localhost:3000/api/crypto'; // Replace with your deployed Render URL
       const binanceApiUrl = 'https://api.binance.com/api/v3/ticker/24hr';
 
-      // Fetch data from both sources
-      Promise.all([
-        fetch(backendApiUrl)
-          .then(response => response.json())
-          .then(data => ({
-            source: 'CoinMarketCap',
-            data: data.map(coin => ({
-              symbol: `${coin.symbol}USDT`,
-              performance: coin.price_change_percentage_24h,
-              volume: coin.total_volume,
-              source: coin.source
-            }))
-          }))
-          .catch(error => {
-            console.error('Error fetching from backend API:', error);
-            return { source: 'CoinMarketCap', data: [] };
-          }),
-        fetch(binanceApiUrl)
-          .then(response => response.json())
-          .then(data => ({
-            source: 'Binance',
-            data: data
-              .filter(t => t.symbol.endsWith('USDT'))
-              .map(t => ({
-                symbol: t.symbol,
-                performance: parseFloat(t.priceChangePercent),
-                volume: parseFloat(t.quoteVolume),
-                source: 'Binance'
+      try {
+        const [backendResponse, binanceResponse] = await Promise.all([
+          fetch(backendApiUrl)
+            .then(response => response.json())
+            .then(data => ({
+              source: 'CoinMarketCap',
+              data: data.map(coin => ({
+                symbol: `${coin.symbol}USDT`,
+                performance: coin.price_change_percentage_24h,
+                volume: coin.total_volume,
+                source: coin.source
               }))
-          }))
-          .catch(error => {
-            console.error('Error fetching from Binance API:', error);
-            return { source: 'Binance', data: [] };
-          })
-      ])
-        .then(results => {
-          // Combine data from all sources
-          const combinedData = results.flatMap(result => result.data);
+            }))
+            .catch(error => {
+              console.error('Error fetching from backend API:', error);
+              return { source: 'CoinMarketCap', data: [] };
+            }),
+          fetch(binanceApiUrl)
+            .then(response => response.json())
+            .then(data => ({
+              source: 'Binance',
+              data: data
+                .filter(t => t.symbol.endsWith('USDT'))
+                .map(t => ({
+                  symbol: t.symbol,
+                  performance: parseFloat(t.priceChangePercent),
+                  volume: parseFloat(t.quoteVolume),
+                  source: 'Binance'
+                }))
+            }))
+            .catch(error => {
+              console.error('Error fetching from Binance API:', error);
+              return { source: 'Binance', data: [] };
+            })
+        ]);
 
-          // Filter for USDT pairs under 1M trading volume
-          const lowVolumeTokens = combinedData
-            .filter(t => t.symbol.endsWith('USDT') && t.volume < 1000000)
-            .sort((a, b) => b.performance - a.performance);
+        const combinedData = backendResponse.data.concat(binanceResponse.data);
+        if (combinedData.length === 0) {
+          throw new Error('No data fetched from APIs');
+        }
 
-          if (lowVolumeTokens.length === 0) {
-            console.error('No low-volume USDT pairs found from any source.');
-            document.getElementById('chart-title-header').textContent = 'No data available';
-            document.getElementById('chart-title-modal').textContent = 'No data available';
-            document.getElementById('loader-tokens').textContent = '> No low-volume USDT pairs found';
-            return;
+        return combinedData;
+      } catch (error) {
+        console.error('Failed to fetch real data:', error);
+        throw error;
+      }
+    }
+
+    // Main logic to load data
+    let isUsingMockData = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleDataSourceBtn = document.getElementById('toggle-data-source');
+
+      // Function to attempt loading data
+      const loadData = async () => {
+        if (isUsingMockData) {
+          const success = populateUI(mockData);
+          if (success) {
+            toggleDataSourceBtn.textContent = 'Use Real Data';
           }
+          return;
+        }
 
-          const rankedSymbols = lowVolumeTokens.map(t => t.symbol);
-          const topToken = rankedSymbols[0];
-
-          // Initialize charts with top-ranked coin
-          initializeChart('chart-container-header', `BINANCE:${topToken}`, '1D');
-          initializeChart('chart-container-modal', `BINANCE:${topToken}`, '1D');
-          document.getElementById('chart-title-header').setAttribute('data-symbol', topToken);
-          document.getElementById('chart-title-header').textContent = topToken;
-          document.getElementById('chart-title-modal').setAttribute('data-symbol', topToken);
-          document.getElementById('chart-title-modal').textContent = topToken;
-
-          // Populate token list
-          const tokenList = document.getElementById('token-list');
-          tokenList.innerHTML = lowVolumeTokens.map((t, index) => {
-            const isPositive = t.performance >= 0;
-            const rankFactor = index / (lowVolumeTokens.length - 1);
-            const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
-            const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
-            const selectedClass = t.symbol === topToken ? 'selected-token' : '';
-            return `
-              <li class="${bgClass} ${selectedClass}" data-symbol="${t.symbol}">
-                <span>${t.symbol} (${t.source})</span>
-                <span class="performance ${textClass}">${t.performance >= 0 ? '+' : ''}${t.performance.toFixed(2)}%</span>
-              </li>
-            `;
-          }).join('');
-
-          // Populate top/bottom performers
-          const profitPairs = document.getElementById('profit-pairs');
-          profitPairs.innerHTML = `
-            <li class="top-pair p-2 rounded bg-black bg-opacity-50">${topToken} (${lowVolumeTokens[0].source}): +${lowVolumeTokens[0].performance.toFixed(2)}%</li>
-            <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">${lowVolumeTokens[lowVolumeTokens.length - 1].symbol} (${lowVolumeTokens[lowVolumeTokens.length - 1].source}): ${lowVolumeTokens[lowVolumeTokens.length - 1].performance.toFixed(2)}%</li>
-          `;
-
-          // Hide loaders
-          document.getElementById('loader-tokens').style.display = 'none';
-        })
-        .catch(error => {
-          console.error('Error combining data:', error);
+        try {
+          const realData = await fetchRealData();
+          const success = populateUI(realData);
+          if (success) {
+            toggleDataSourceBtn.textContent = 'Use Mock Data';
+            toggleDataSourceBtn.disabled = false;
+          } else {
+            throw new Error('No low-volume USDT pairs found in real data');
+          }
+        } catch (error) {
           document.getElementById('chart-title-header').textContent = 'Error loading data';
           document.getElementById('chart-title-modal').textContent = 'Error loading data';
-          document.getElementById('loader-tokens').textContent = '> Failed to load token data';
-        });
+          document.getElementById('loader-tokens').textContent = '> Failed to load real data. Click "Toggle Data Source" to use mock data.';
+          toggleDataSourceBtn.textContent = 'Use Mock Data';
+          toggleDataSourceBtn.disabled = false;
+        }
+      };
+
+      // Initial load
+      loadData();
+
+      // Toggle data source button handler
+      toggleDataSourceBtn.addEventListener('click', () => {
+        isUsingMockData = !isUsingMockData;
+        loadData();
+      });
 
       // Timeframe button handlers
       const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
