@@ -192,8 +192,7 @@
     }
     #token-list li {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
       padding: 0.75rem 1rem;
       border-radius: 6px;
       margin-bottom: 0.5rem;
@@ -208,9 +207,17 @@
       border: 2px solid rgba(0, 255, 0, 0.8);
       box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
     }
+    #token-list .metric {
+      font-size: 0.75rem;
+      color: #a0a0a0;
+    }
     #token-list .performance {
       font-size: 0.875rem;
       font-weight: 600;
+    }
+    #profit-pairs .metric {
+      font-size: 0.75rem;
+      color: #a0a0a0;
     }
 
     /* Animations */
@@ -407,7 +414,6 @@
             <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
             <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
             <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
-            <button id="header-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240" aria-label="4 hour timeframe">4H</button>
             <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
           <div class="flex space-x-2">
@@ -447,7 +453,6 @@
             <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
             <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
             <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
-            <button id="modal-timeframe-4hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="240" aria-label="4 hour timeframe">4H</button>
             <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
           <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded" aria-label="Undock chart">Undock Chart 🔍</button>
@@ -523,14 +528,14 @@
     // Store chart instances
     const chartInstances = new Map();
 
-    // Mock data as fallback
+    // Mock data with all metrics
     const mockData = [
-      { symbol: "BTCUSDT", performance: 5.2, volume: 450000, source: "Mock" },
-      { symbol: "ETHUSDT", performance: -2.1, volume: 300000, source: "Mock" },
-      { symbol: "PEOPLEUSDT", performance: 41.10, volume: 135674.745, source: "Mock" },
-      { symbol: "SOLUSDT", performance: 5.67, volume: 800000, source: "Mock" },
-      { symbol: "ADAUSDT", performance: 3.21, volume: 600000, source: "Mock" },
-      { symbol: "XRPUSDT", performance: -0.45, volume: 700000, source: "Mock" }
+      { symbol: "BTCUSDT", price: 60000, performance: 5.2, volume: 450000, circulating_supply: 19000000, source: "Mock" },
+      { symbol: "ETHUSDT", price: 4000, performance: -2.1, volume: 300000, circulating_supply: 120000000, source: "Mock" },
+      { symbol: "PEOPLEUSDT", price: 0.01962, performance: 41.10, volume: 135674.745, circulating_supply: 5066406500, source: "Mock" },
+      { symbol: "SOLUSDT", price: 145.67, performance: 5.67, volume: 800000, circulating_supply: 300000000, source: "Mock" },
+      { symbol: "ADAUSDT", price: 0.4567, performance: 3.21, volume: 600000, circulating_supply: 32000000000, source: "Mock" },
+      { symbol: "XRPUSDT", price: 0.5678, performance: -0.45, volume: 700000, circulating_supply: 47000000000, source: "Mock" }
     ];
 
     // TradingView chart initialization with retry
@@ -646,7 +651,7 @@
       document.getElementById('chart-title-modal').setAttribute('data-symbol', topToken);
       document.getElementById('chart-title-modal').textContent = topToken;
 
-      // Populate token list
+      // Populate token list with all metrics
       const tokenList = document.getElementById('token-list');
       tokenList.innerHTML = lowVolumeTokens.map((t, index) => {
         const isPositive = t.performance >= 0;
@@ -656,17 +661,34 @@
         const selectedClass = t.symbol === topToken ? 'selected-token' : '';
         return `
           <li class="${bgClass} ${selectedClass}" data-symbol="${t.symbol}">
-            <span>${t.symbol} (${t.source})</span>
-            <span class="performance ${textClass}">${t.performance >= 0 ? '+' : ''}${t.performance.toFixed(2)}%</span>
+            <div class="flex justify-between">
+              <span>${t.symbol} (${t.source})</span>
+              <span class="performance ${textClass}">${t.performance >= 0 ? '+' : ''}${t.performance.toFixed(2)}%</span>
+            </div>
+            <div class="metric">Price: $${t.price.toLocaleString()}</div>
+            <div class="metric">Volume: ${t.volume.toLocaleString()} USD</div>
+            <div class="metric">Circ. Supply: ${t.circulating_supply.toLocaleString()}</div>
           </li>
         `;
       }).join('');
 
-      // Populate top/bottom performers
+      // Populate top/bottom performers with all metrics
       const profitPairs = document.getElementById('profit-pairs');
+      const topTokenData = lowVolumeTokens[0];
+      const bottomTokenData = lowVolumeTokens[lowVolumeTokens.length - 1];
       profitPairs.innerHTML = `
-        <li class="top-pair p-2 rounded bg-black bg-opacity-50">${topToken} (${lowVolumeTokens[0].source}): +${lowVolumeTokens[0].performance.toFixed(2)}%</li>
-        <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">${lowVolumeTokens[lowVolumeTokens.length - 1].symbol} (${lowVolumeTokens[lowVolumeTokens.length - 1].source}): ${lowVolumeTokens[lowVolumeTokens.length - 1].performance.toFixed(2)}%</li>
+        <li class="top-pair p-2 rounded bg-black bg-opacity-50">
+          <div>${topTokenData.symbol} (${topTokenData.source}): +${topTokenData.performance.toFixed(2)}%</div>
+          <div class="metric">Price: $${topTokenData.price.toLocaleString()}</div>
+          <div class="metric">Volume: ${topTokenData.volume.toLocaleString()} USD</div>
+          <div class="metric">Circ. Supply: ${topTokenData.circulating_supply.toLocaleString()}</div>
+        </li>
+        <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">
+          <div>${bottomTokenData.symbol} (${bottomTokenData.source}): ${bottomTokenData.performance.toFixed(2)}%</div>
+          <div class="metric">Price: $${bottomTokenData.price.toLocaleString()}</div>
+          <div class="metric">Volume: ${bottomTokenData.volume.toLocaleString()} USD</div>
+          <div class="metric">Circ. Supply: ${bottomTokenData.circulating_supply.toLocaleString()}</div>
+        </li>
       `;
 
       // Hide loaders
@@ -687,8 +709,10 @@
               source: 'CoinMarketCap',
               data: data.map(coin => ({
                 symbol: `${coin.symbol}USDT`,
+                price: coin.current_price,
                 performance: coin.price_change_percentage_24h,
                 volume: coin.total_volume,
+                circulating_supply: coin.circulating_supply,
                 source: coin.source
               }))
             }))
@@ -704,8 +728,10 @@
                 .filter(t => t.symbol.endsWith('USDT'))
                 .map(t => ({
                   symbol: t.symbol,
+                  price: parseFloat(t.lastPrice),
                   performance: parseFloat(t.priceChangePercent),
                   volume: parseFloat(t.quoteVolume),
+                  circulating_supply: null, // Binance API doesn't provide circulating supply
                   source: 'Binance'
                 }))
             }))
@@ -771,7 +797,7 @@
       });
 
       // Timeframe button handlers
-      const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
+      const timeframes = ['1min', '5min', '15min', '1hr', '1d']; // Removed '4hr'
       timeframes.forEach(tf => {
         const headerBtn = document.getElementById(`header-timeframe-${tf}`);
         const modalBtn = document.getElementById(`modal-timeframe-${tf}`);
