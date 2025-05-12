@@ -190,14 +190,27 @@
       overflow-y: auto;
       padding-right: 8px;
     }
-
-    /* Token List Color Grading */
-    .token-item {
-      transition: background-color 0.3s ease, color 0.3s ease;
+    #token-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
     }
-    .token-item:hover {
-      transform: scale(1.02);
+    #token-list li:hover {
+      transform: translateX(5px);
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+    #token-list li.selected-token {
+      border: 2px solid rgba(0, 255, 0, 0.8);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    }
+    #token-list .performance {
+      font-size: 0.875rem;
+      font-weight: 600;
     }
 
     /* Animations */
@@ -231,9 +244,6 @@
     .glow-purple { animation: glow-purple 2s infinite; }
     .fade-in { animation: fadeIn 0.5s ease-in; }
     .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
-    .hover-performance-green:hover { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); transition: all 0.3s ease; }
-    .hover-performance-red:hover { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); transition: all 0.3s ease; }
-    .selected-token { border: 2px solid rgba(0, 255, 0, 0.8); box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); background: rgba(0, 15, 0, 0.9) !important; }
     .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2)); border: 1px solid rgba(0, 255, 0, 0.2); }
 
     /* Marquee */
@@ -344,6 +354,12 @@
       padding: 0.5rem;
       animation: glow-green 2s infinite;
     }
+    #chart-title-header, #chart-title-modal {
+      text-align: center;
+      padding: 0.5rem;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.8);
+    }
     @media (min-width: 640px) {
       .title-box { font-size: 0.875rem; }
       #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-mode, #toggle-debug { font-size: 0.875rem; }
@@ -406,10 +422,10 @@
         <div id="chart-container-header" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading chart...</div>
+            <div class="ml-2">Loading MATIC/USDT chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
+        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue" data-symbol="MATICUSDT">MATIC/USDT</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -417,6 +433,7 @@
             <span>🚀 SOL: $145.67 (+5.67%)</span>
             <span>📉 XRP: $0.5678 (-0.45%)</span>
             <span>🌟 ADA: $0.4567 (+3.21%)</span>
+            <span>💎 MATIC: $0.7890 (+7.89%)</span>
           </div>
         </div>
       </div>
@@ -442,10 +459,10 @@
         <div id="chart-container-modal" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading chart...</div>
+            <div class="ml-2">Loading MATIC/USDT chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer"></h3>
+        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue" data-symbol="MATICUSDT"></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -453,6 +470,7 @@
             <span>🚀 SOL: $145.67 (+5.67%)</span>
             <span>📉 XRP: $0.5678 (-0.45%)</span>
             <span>🌟 ADA: $0.4567 (+3.21%)</span>
+            <span>💎 MATIC: $0.7890 (+7.89%)</span>
           </div>
         </div>
       </div>
@@ -462,12 +480,33 @@
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
+      <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full">
+        <li class="bg-green-900 selected-token" data-symbol="MATICUSDT">
+          <span>MATIC/USDT</span>
+          <span class="performance text-green-400">+7.89%</span>
+        </li>
+        <li class="bg-green-800" data-symbol="SOLUSDT">
+          <span>SOL/USDT</span>
+          <span class="performance text-green-500">+5.67%</span>
+        </li>
+        <li class="bg-green-700" data-symbol="ADAUSDT">
+          <span>ADA/USDT</span>
+          <span class="performance text-green-600">+3.21%</span>
+        </li>
+        <li class="bg-green-600" data-symbol="DOTUSDT">
+          <span>DOT/USDT</span>
+          <span class="performance text-green-700">+0.12%</span>
+        </li>
+        <li class="bg-red-600" data-symbol="XRPUSDT">
+          <span>XRP/USDT</span>
+          <span class="performance text-red-500">-0.45%</span>
+        </li>
+      </ul>
       <div class="mt-4">
         <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top/Bottom Performers</h3>
         <ul id="profit-pairs" class="space-y-2 text-xs sm:text-sm w-full">
+          <li class="top-pair p-2 rounded bg-black bg-opacity-50">💎 MATIC/USDT: +7.89%</li>
           <li class="top-pair p-2 rounded bg-black bg-opacity-50">🚀 SOL/USDT: +5.67%</li>
-          <li class="top-pair p-2 rounded bg-black bg-opacity-50">🌟 ADA/USDT: +3.21%</li>
           <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">📉 XRP/USDT: -0.45%</li>
         </ul>
       </div>
@@ -479,17 +518,7 @@
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Live Logs 📜</h2>
       <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <!-- Placeholder for live logs - integrate with backend service -->
-      <ul id="log-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full">
-        <!-- Logs will be populated via JavaScript/backend API -->
-        <!-- Example: <li class="p-2 rounded bg-black bg-opacity-50">[2023-05-11 10:00:00] Trade executed: BTC/USDT</li> -->
-      </ul>
-      <!-- Links to log services for backend integration -->
-      <!-- Better Stack (current): https://betterstack.com/ -->
-      <!-- Alternatives: -->
-      <!-- Loggly: https://www.loggly.com/ -->
-      <!-- Papertrail: https://www.papertrail.com/ -->
-      <!-- AWS CloudWatch: https://aws.amazon.com/cloudwatch/ -->
+      <ul id="log-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
     </section>
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Grok Trading Bot 🤖</h2>
@@ -519,10 +548,10 @@
 
     // Define tokens under 1M trading volume with performance (simulated)
     const lowVolumeTokens = [
+      { symbol: 'MATICUSDT', performance: 7.89 },
       { symbol: 'SOLUSDT', performance: 5.67 },
       { symbol: 'ADAUSDT', performance: 3.21 },
-      { symbol: 'DOTUSDT', performance: 0 },
-      { symbol: 'MATICUSDT', performance: 0 },
+      { symbol: 'DOTUSDT', performance: 0.12 },
       { symbol: 'XRPUSDT', performance: -0.45 }
     ];
 
@@ -621,18 +650,9 @@
       setTimeout(initWidget, 300);
     }
 
-    // Function to calculate color based on performance rank
-    function getRankColor(index, total) {
-      const performance = lowVolumeTokens[index].performance;
-      const maxPerf = Math.max(...lowVolumeTokens.map(t => Math.abs(t.performance)));
-      const normalizedPerf = performance / maxPerf || 0;
-      const hue = normalizedPerf > 0 ? 120 - (120 * (1 - normalizedPerf)) : 0 + (120 * (normalizedPerf + 1));
-      return `hsl(${hue}, 100%, 50%)`;
-    }
-
     // Initialize charts on load with top-ranked low-volume token
     document.addEventListener('DOMContentLoaded', () => {
-      const topToken = rankedSymbols[0]; // Dynamically set to top-ranked
+      const topToken = rankedSymbols[0]; // MATICUSDT as the top-ranked
       initializeChart('chart-container-header', `BINANCE:${topToken}`, '1D');
       initializeChart('chart-container-modal', `BINANCE:${topToken}`, '1D');
       document.getElementById('chart-title-header').setAttribute('data-symbol', topToken);
@@ -640,18 +660,12 @@
       document.getElementById('chart-title-modal').setAttribute('data-symbol', topToken);
       document.getElementById('chart-title-modal').textContent = topToken;
 
-      // Populate token list with color grading
-      const tokenList = document.getElementById('token-list');
-      rankedSymbols.forEach((symbol, index) => {
-        const performance = lowVolumeTokens.find(t => t.symbol === symbol).performance;
-        const color = getRankColor(index, rankedSymbols.length);
-        const li = document.createElement('li');
-        li.className = 'token-item p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer';
-        li.setAttribute('data-symbol', symbol);
-        li.style.backgroundColor = color;
-        li.style.color = performance >= 0 ? '#000' : '#fff';
-        li.textContent = `${symbol} (${performance >= 0 ? '+' : ''}${performance.toFixed(2)}%)`;
-        tokenList.appendChild(li);
+      // Highlight the top token in the list
+      const tokenListItems = document.querySelectorAll('#token-list li');
+      tokenListItems.forEach(item => {
+        if (item.dataset.symbol === topToken) {
+          item.classList.add('selected-token');
+        }
       });
 
       // Timeframe button handlers
@@ -679,25 +693,11 @@
         }
       });
 
-      // Chart title click to toggle among low-volume tokens
-      ['chart-title-header', 'chart-title-modal'].forEach(id => {
-        const title = document.getElementById(id);
-        title.addEventListener('click', () => {
-          const currentSymbol = title.getAttribute('data-symbol');
-          const currentIndex = rankedSymbols.indexOf(currentSymbol);
-          const newIndex = (currentIndex + 1) % rankedSymbols.length;
-          const newSymbol = rankedSymbols[newIndex];
-          const interval = document.querySelector(`#${id.replace('-title', '')}-timeframe-1d`).getAttribute('data-interval');
-          initializeChart(id.replace('-title', '-container-'), `BINANCE:${newSymbol}`, interval);
-          console.log(`Toggled ${id} to symbol: ${newSymbol}`);
-        });
-      });
-
       // Token list click to toggle chart
-      const tokenListElement = document.getElementById('token-list');
-      if (tokenListElement) {
-        tokenListElement.addEventListener('click', (e) => {
-          const li = e.target.closest('.token-item');
+      const tokenList = document.getElementById('token-list');
+      if (tokenList) {
+        tokenList.addEventListener('click', (e) => {
+          const li = e.target.closest('li');
           if (li && li.dataset.symbol) {
             const symbol = li.dataset.symbol;
             const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
@@ -707,6 +707,11 @@
             document.getElementById('chart-title-header').textContent = symbol;
             document.getElementById('chart-title-modal').setAttribute('data-symbol', symbol);
             document.getElementById('chart-title-modal').textContent = symbol;
+
+            // Update selected token styling
+            tokenListItems.forEach(item => item.classList.remove('selected-token'));
+            li.classList.add('selected-token');
+
             console.log(`Switched to token from list: ${symbol}`);
           }
         });
