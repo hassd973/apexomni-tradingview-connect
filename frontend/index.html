@@ -505,7 +505,7 @@
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
     <p class="typewriter">> Powered by CoinMarketCap & TradingView</p>
-    <p class="typewriter">> Data Source: Binance API (https://api.binance.com/api/v3/ticker/24hr)</p>
+    <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API (https://api.binance.com/api/v3/ticker/24hr)</p>
   </footer>
 
   <script>
@@ -611,23 +611,61 @@
       setTimeout(initWidget, 300);
     }
 
-    // Fetch and initialize with top-ranked coin
+    // Fetch and initialize with top-ranked coin from multiple sources
     document.addEventListener('DOMContentLoaded', () => {
-      // Fetch data from Binance API
-      fetch('https://api.binance.com/api/v3/ticker/24hr')
-        .then(response => response.json())
-        .then(data => {
-          // Filter for USDT pairs under 1M trading volume
-          const lowVolumeTokens = data
-            .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.quoteVolume) < 1000000)
-            .map(t => ({
-              symbol: t.symbol,
-              performance: parseFloat(t.priceChangePercent)
+      // Define API endpoints
+      const backendApiUrl = 'http://localhost:3000/api/crypto'; // Replace with your deployed Render URL
+      const binanceApiUrl = 'https://api.binance.com/api/v3/ticker/24hr';
+
+      // Fetch data from both sources
+      Promise.all([
+        fetch(backendApiUrl)
+          .then(response => response.json())
+          .then(data => ({
+            source: 'CoinMarketCap',
+            data: data.map(coin => ({
+              symbol: `${coin.symbol}USDT`,
+              performance: coin.price_change_percentage_24h,
+              volume: coin.total_volume,
+              source: coin.source
             }))
+          }))
+          .catch(error => {
+            console.error('Error fetching from backend API:', error);
+            return { source: 'CoinMarketCap', data: [] };
+          }),
+        fetch(binanceApiUrl)
+          .then(response => response.json())
+          .then(data => ({
+            source: 'Binance',
+            data: data
+              .filter(t => t.symbol.endsWith('USDT'))
+              .map(t => ({
+                symbol: t.symbol,
+                performance: parseFloat(t.priceChangePercent),
+                volume: parseFloat(t.quoteVolume),
+                source: 'Binance'
+              }))
+          }))
+          .catch(error => {
+            console.error('Error fetching from Binance API:', error);
+            return { source: 'Binance', data: [] };
+          })
+      ])
+        .then(results => {
+          // Combine data from all sources
+          const combinedData = results.flatMap(result => result.data);
+
+          // Filter for USDT pairs under 1M trading volume
+          const lowVolumeTokens = combinedData
+            .filter(t => t.symbol.endsWith('USDT') && t.volume < 1000000)
             .sort((a, b) => b.performance - a.performance);
 
           if (lowVolumeTokens.length === 0) {
-            console.error('No low-volume USDT pairs found.');
+            console.error('No low-volume USDT pairs found from any source.');
+            document.getElementById('chart-title-header').textContent = 'No data available';
+            document.getElementById('chart-title-modal').textContent = 'No data available';
+            document.getElementById('loader-tokens').textContent = '> No low-volume USDT pairs found';
             return;
           }
 
@@ -652,7 +690,7 @@
             const selectedClass = t.symbol === topToken ? 'selected-token' : '';
             return `
               <li class="${bgClass} ${selectedClass}" data-symbol="${t.symbol}">
-                <span>${t.symbol}</span>
+                <span>${t.symbol} (${t.source})</span>
                 <span class="performance ${textClass}">${t.performance >= 0 ? '+' : ''}${t.performance.toFixed(2)}%</span>
               </li>
             `;
@@ -661,15 +699,15 @@
           // Populate top/bottom performers
           const profitPairs = document.getElementById('profit-pairs');
           profitPairs.innerHTML = `
-            <li class="top-pair p-2 rounded bg-black bg-opacity-50">${topToken}: +${lowVolumeTokens[0].performance.toFixed(2)}%</li>
-            <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">${lowVolumeTokens[lowVolumeTokens.length - 1].symbol}: ${lowVolumeTokens[lowVolumeTokens.length - 1].performance.toFixed(2)}%</li>
+            <li class="top-pair p-2 rounded bg-black bg-opacity-50">${topToken} (${lowVolumeTokens[0].source}): +${lowVolumeTokens[0].performance.toFixed(2)}%</li>
+            <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">${lowVolumeTokens[lowVolumeTokens.length - 1].symbol} (${lowVolumeTokens[lowVolumeTokens.length - 1].source}): ${lowVolumeTokens[lowVolumeTokens.length - 1].performance.toFixed(2)}%</li>
           `;
 
           // Hide loaders
           document.getElementById('loader-tokens').style.display = 'none';
         })
         .catch(error => {
-          console.error('Error fetching data:', error);
+          console.error('Error combining data:', error);
           document.getElementById('chart-title-header').textContent = 'Error loading data';
           document.getElementById('chart-title-modal').textContent = 'Error loading data';
           document.getElementById('loader-tokens').textContent = '> Failed to load token data';
