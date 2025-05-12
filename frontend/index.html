@@ -418,8 +418,8 @@
           </div>
           <div class="flex space-x-2">
             <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded" aria-label="Dock chart">Dock Chart 🔍</button>
-            <button id="toggle-data-source" class="text-black px-2 py-1 rounded" aria-label="Toggle data source">Toggle Data Source</button>
-            <button id="toggle-debug" class="text-black px-2 py-1 rounded" aria-label="Debug chart">Debug Chart</button>
+            <button id="toggle-data-source" class="text-black px-2 py-1 rounded" aria-label="Toggle data source">[Real Data] ❄️</button>
+            <button id="toggle-debug" class="text-black px-2 py-1 rounded" aria-label="Debug chart">[Enable Debug] 👑</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
@@ -525,21 +525,8 @@
       particleContainer.appendChild(star);
     }
 
-    // Store chart instances
-    const chartInstances = new Map();
-
-    // Mock data with all metrics
-    const mockData = [
-      { symbol: "BTCUSDT", price: 60000, performance: 5.2, volume: 450000, circulating_supply: 19000000, source: "Mock" },
-      { symbol: "ETHUSDT", price: 4000, performance: -2.1, volume: 300000, circulating_supply: 120000000, source: "Mock" },
-      { symbol: "PEOPLEUSDT", price: 0.01962, performance: 41.10, volume: 135674.745, circulating_supply: 5066406500, source: "Mock" },
-      { symbol: "SOLUSDT", price: 145.67, performance: 5.67, volume: 800000, circulating_supply: 300000000, source: "Mock" },
-      { symbol: "ADAUSDT", price: 0.4567, performance: 3.21, volume: 600000, circulating_supply: 32000000000, source: "Mock" },
-      { symbol: "XRPUSDT", price: 0.5678, performance: -0.45, volume: 700000, circulating_supply: 47000000000, source: "Mock" }
-    ];
-
     // TradingView chart initialization with retry
-    function initializeChart(containerId, symbol, interval = '1D', retries = 2) {
+    function initializeChart(containerId, symbol, interval = 'D', retries = 2) {
       const container = document.getElementById(containerId);
       const chartTitle = document.getElementById(containerId === 'chart-container-header' ? 'chart-title-header' : 'chart-title-modal');
       if (!container || !chartTitle) return;
@@ -558,27 +545,12 @@
       `;
       container.appendChild(loadingDiv);
 
-      // Update chart title and data-symbol
-      const cleanSymbol = symbol.replace('BINANCE:', '');
-      chartTitle.textContent = cleanSymbol;
-      chartTitle.setAttribute('data-symbol', cleanSymbol);
-
-      // Remove existing chart instance if it exists
-      if (chartInstances.has(containerId)) {
-        try {
-          chartInstances.get(containerId).remove();
-          chartInstances.delete(containerId);
-        } catch (error) {
-          console.warn(`Failed to remove previous chart for ${containerId}:`, error);
-        }
-      }
-
       // Initialize new TradingView widget
       const initWidget = () => {
         try {
           const widget = new TradingView.widget({
             autosize: true,
-            symbol: `BINANCE:${cleanSymbol}`,
+            symbol: symbol,
             interval: interval,
             timezone: 'Etc/UTC',
             theme: 'dark',
@@ -608,92 +580,21 @@
                 console.log(`Retrying (${retries} attempts left)...`);
                 setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
               } else {
-                loadingDiv.textContent = `Failed to load ${cleanSymbol} chart.`;
+                loadingDiv.textContent = `Failed to load ${symbol.replace('BINANCE:', '')} chart.`;
               }
             }
           });
-          chartInstances.set(containerId, widget);
         } catch (error) {
           console.error(`Critical error initializing chart for ${containerId}:`, error);
           if (retries > 0) {
             setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
           } else {
-            loadingDiv.textContent = `Critical failure loading ${cleanSymbol} chart.`;
+            loadingDiv.textContent = `Critical failure loading ${symbol.replace('BINANCE:', '')} chart.`;
           }
         }
       };
 
       setTimeout(initWidget, 300);
-    }
-
-    // Function to populate UI with data
-    function populateUI(data) {
-      const lowVolumeTokens = data
-        .filter(t => t.symbol.endsWith('USDT') && t.total_volume < 1000000)
-        .sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-
-      if (lowVolumeTokens.length === 0) {
-        console.error('No low-volume USDT pairs found.');
-        document.getElementById('chart-title-header').textContent = 'No data available';
-        document.getElementById('chart-title-modal').textContent = 'No data available';
-        document.getElementById('loader-tokens').textContent = '> No low-volume USDT pairs found';
-        return false;
-      }
-
-      const rankedSymbols = lowVolumeTokens.map(t => t.symbol);
-      const topToken = rankedSymbols[0];
-
-      // Initialize charts with top-ranked coin
-      initializeChart('chart-container-header', `BINANCE:${topToken}`, '1D');
-      initializeChart('chart-container-modal', `BINANCE:${topToken}`, '1D');
-      document.getElementById('chart-title-header').setAttribute('data-symbol', topToken);
-      document.getElementById('chart-title-header').textContent = topToken;
-      document.getElementById('chart-title-modal').setAttribute('data-symbol', topToken);
-      document.getElementById('chart-title-modal').textContent = topToken;
-
-      // Populate token list with all metrics
-      const tokenList = document.getElementById('token-list');
-      tokenList.innerHTML = lowVolumeTokens.map((t, index) => {
-        const isPositive = t.price_change_percentage_24h >= 0;
-        const rankFactor = index / (lowVolumeTokens.length - 1);
-        const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
-        const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
-        const selectedClass = t.symbol === topToken ? 'selected-token' : '';
-        return `
-          <li class="${bgClass} ${selectedClass}" data-symbol="${t.symbol}">
-            <div class="flex justify-between">
-              <span>${t.symbol} (${t.source})</span>
-              <span class="performance ${textClass}">${t.price_change_percentage_24h >= 0 ? '+' : ''}${t.price_change_percentage_24h.toFixed(2)}%</span>
-            </div>
-            <div class="metric">Price: $${t.current_price.toLocaleString()}</div>
-            <div class="metric">Volume: ${t.total_volume.toLocaleString()} USD</div>
-            <div class="metric">Circ. Supply: ${t.circulating_supply ? t.circulating_supply.toLocaleString() : 'N/A'}</div>
-          </li>
-        `;
-      }).join('');
-
-      // Populate top/bottom performers with all metrics
-      const profitPairs = document.getElementById('profit-pairs');
-      const topTokenData = lowVolumeTokens[0];
-      const bottomTokenData = lowVolumeTokens[lowVolumeTokens.length - 1];
-      profitPairs.innerHTML = `
-        <li class="top-pair p-2 rounded bg-black bg-opacity-50">
-          <div>${topTokenData.symbol} (${topTokenData.source}): +${topTokenData.price_change_percentage_24h.toFixed(2)}%</div>
-          <div class="metric">Price: $${topTokenData.current_price.toLocaleString()}</div>
-          <div class="metric">Volume: ${topTokenData.total_volume.toLocaleString()} USD</div>
-          <div class="metric">Circ. Supply: ${topTokenData.circulating_supply ? topTokenData.circulating_supply.toLocaleString() : 'N/A'}</div>
-        </li>
-        <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">
-          <div>${bottomTokenData.symbol} (${bottomTokenData.source}): ${bottomTokenData.price_change_percentage_24h.toFixed(2)}%</div>
-          <div class="metric">Price: $${bottomTokenData.current_price.toLocaleString()}</div>
-          <div class="metric">Volume: ${bottomTokenData.total_volume.toLocaleString()} USD</div>
-          <div class="metric">Circ. Supply: ${bottomTokenData.circulating_supply ? bottomTokenData.circulating_supply.toLocaleString() : 'N/A'}</div>
-        </li>
-      `;
-
-      // Hide loaders
-      document.getElementById('loader-tokens').style.display = 'none';
-      return true;
     }
 
     // Fetch with retry logic
@@ -720,125 +621,118 @@
       }
     }
 
-    // Fetch real data from APIs
-    async function fetchRealData() {
-      const backendApiUrl = 'http://localhost:3000/api/crypto'; // Replace with your deployed Render URL, e.g., https://your-app-name.onrender.com/api/crypto
-      const binanceApiUrl = 'https://api.binance.com/api/v3/ticker/24hr';
-
-      let backendData = [];
-      let binanceData = [];
-      let errorMessage = '';
-
-      // Fetch from backend API (CoinMarketCap)
-      try {
-        const data = await fetchWithRetry(backendApiUrl);
-        console.log('Raw CoinMarketCap response:', data); // Log the raw response for debugging
-
-        // Validate the response structure
-        if (!Array.isArray(data)) {
-          throw new Error('CoinMarketCap response is not an array');
-        }
-
-        backendData = data
-          .filter(coin => {
-            return (
-              coin &&
-              typeof coin.symbol === 'string' &&
-              typeof coin.current_price === 'number' &&
-              typeof coin.price_change_percentage_24h === 'number' &&
-              typeof coin.total_volume === 'number' &&
-              typeof coin.circulating_supply === 'number'
-            );
-          })
-          .map(coin => ({
-            symbol: `${coin.symbol}USDT`,
-            price: parseFloat(coin.current_price),
-            performance: parseFloat(coin.price_change_percentage_24h),
-            volume: parseFloat(coin.total_volume),
-            circulating_supply: parseFloat(coin.circulating_supply),
-            source: coin.source || 'CoinMarketCap'
-          }));
-
-        if (backendData.length === 0) {
-          throw new Error('No valid CoinMarketCap data after filtering');
-        }
-
-        console.log('Successfully fetched and processed CoinMarketCap data:', backendData);
-      } catch (error) {
-        console.error('Error fetching or processing CoinMarketCap data:', error.message);
-        errorMessage += `Failed to fetch/process CoinMarketCap data: ${error.message}. `;
-      }
-
-      // Fetch from Binance API
-      try {
-        const data = await fetchWithRetry(binanceApiUrl);
-        console.log('Raw Binance response:', data); // Log the raw response for debugging
-
-        binanceData = data
-          .filter(t => t.symbol.endsWith('USDT'))
-          .map(t => ({
-            symbol: t.symbol,
-            price: parseFloat(t.lastPrice),
-            performance: parseFloat(t.priceChangePercent),
-            volume: parseFloat(t.quoteVolume),
-            circulating_supply: null, // Binance API doesn't provide circulating supply
-            source: 'Binance'
-          }));
-        console.log('Successfully fetched Binance data:', binanceData);
-      } catch (error) {
-        console.error('Error fetching Binance data:', error.message);
-        errorMessage += `Failed to fetch Binance data: ${error.message}. `;
-      }
-
-      const combinedData = [...backendData, ...binanceData];
-      if (combinedData.length === 0) {
-        throw new Error(errorMessage || 'No data fetched from APIs');
-      }
-
-      return { data: combinedData, errorMessage };
-    }
-
-    // Main logic to load data
+    // Main logic to load and populate data
     let isUsingMockData = false;
 
     document.addEventListener('DOMContentLoaded', () => {
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
 
-      // Function to attempt loading data
+      // Function to load and populate data
       const loadData = async () => {
+        const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
         if (isUsingMockData) {
-          const success = populateUI(mockData);
-          if (success) {
-            toggleDataSourceBtn.textContent = 'Use Real Data';
-          }
+          // Use mock data when toggled
+          updateUI(mockTokens);
+          toggleDataSourceBtn.textContent = '[Real Data] ❄️';
           return;
         }
 
         try {
-          const { data: realData, errorMessage } = await fetchRealData();
-          const success = populateUI(realData);
-          if (success) {
-            toggleDataSourceBtn.textContent = 'Use Mock Data';
-            toggleDataSourceBtn.disabled = false;
-            if (errorMessage) {
-              document.getElementById('loader-tokens').textContent = `> Partial success: ${errorMessage}Click "Toggle Data Source" to use mock data if needed.`;
-              document.getElementById('loader-tokens').style.display = 'block';
-              setTimeout(() => {
-                document.getElementById('loader-tokens').style.display = 'none';
-              }, 5000);
-            }
-          } else {
-            throw new Error('No low-volume USDT pairs found in real data');
+          const data = await fetchWithRetry(backendApiUrl);
+          console.log('Raw backend response:', data); // Log the raw response for debugging
+          if (!Array.isArray(data) || data.length === 0) {
+            throw new Error('Invalid or empty response from backend');
           }
+          updateUI(data);
+          toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
         } catch (error) {
           console.error('Failed to load real data:', error);
+          document.getElementById('live-price-header').textContent = `> Live Price: Error - ${error.message} ❄️`;
           document.getElementById('chart-title-header').textContent = 'Error loading data';
           document.getElementById('chart-title-modal').textContent = 'Error loading data';
-          document.getElementById('loader-tokens').textContent = `> ${error.message || 'Failed to load real data. Ensure backend server is running at http://localhost:3000/api/crypto or update the URL if deployed.'} Click "Toggle Data Source" to use mock data.`;
-          toggleDataSourceBtn.textContent = 'Use Mock Data';
-          toggleDataSourceBtn.disabled = false;
+          document.getElementById('loader-tokens').textContent = `> ${error.message}. Click "Toggle Data Source" to use mock data.`;
+          document.getElementById('loader-tokens').style.display = 'block';
+          toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
         }
       };
+
+      // Function to update UI with token data
+      function updateUI(tokens) {
+        document.getElementById('loader-tokens').style.display = 'none';
+
+        // Update token list
+        const tokenList = document.getElementById('token-list');
+        tokenList.innerHTML = tokens.map((token, index) => {
+          const isPositive = token.price_change_percentage_24h >= 0;
+          const rankFactor = index / (tokens.length - 1);
+          const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
+          const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
+          const symbol = `${token.symbol}USDT`; // Append USDT for TradingView compatibility
+          return `
+            <li class="${bgClass} ${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}">
+              <div class="flex justify-between">
+                <span>${token.name} (${token.symbol})</span>
+                <span class="performance ${textClass}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
+              </div>
+              <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
+              <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
+              <div class="metric">Circ. Supply: ${token.circulating_supply.toLocaleString()}</div>
+            </li>
+          `;
+        }).join('');
+
+        // Update top/bottom performers
+        const profitPairs = document.getElementById('profit-pairs');
+        const sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+        const topToken = sortedTokens[0];
+        const bottomToken = sortedTokens[sortedTokens.length - 1];
+        profitPairs.innerHTML = `
+          <li class="top-pair p-2 rounded bg-black bg-opacity-50">
+            <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
+            <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
+            <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
+            <div class="metric">Circ. Supply: ${topToken.circulating_supply.toLocaleString()}</div>
+          </li>
+          <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">
+            <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
+            <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
+            <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
+            <div class="metric">Circ. Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
+          </li>
+        `;
+
+        // Update live price
+        document.getElementById('live-price-header').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
+        document.getElementById('live-price-modal').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
+
+        // Update top pairs
+        const topPairs = document.getElementById('top-pairs');
+        topPairs.innerHTML = tokens
+          .filter(token => token.symbol && token.symbol !== 'USDT')
+          .slice(0, 5)
+          .map(token => `<li class="gradient-bg p-1 rounded-md text-sm glow-blue">> 🧊 ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
+          .join('');
+
+        // Update marquee
+        const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
+        const marqueeContent = [
+          ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
+          `<span class="glow-purple">[${uniquePun}]</span>`
+        ].join('');
+        document.getElementById('ticker-marquee-header').innerHTML = marqueeContent.repeat(3);
+        document.getElementById('ticker-marquee-modal').innerHTML = marqueeContent.repeat(3);
+        document.getElementById('ticker-marquee-header').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
+        document.getElementById('ticker-marquee-modal').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
+
+        // Initialize charts with top token
+        const topSymbol = `${topToken.symbol}USDT`;
+        initializeChart('chart-container-header', `BINANCE:${topSymbol}`, 'D');
+        initializeChart('chart-container-modal', `BINANCE:${topSymbol}`, 'D');
+        document.getElementById('chart-title-header').setAttribute('data-symbol', topSymbol);
+        document.getElementById('chart-title-header').textContent = topSymbol;
+        document.getElementById('chart-title-modal').setAttribute('data-symbol', topSymbol);
+        document.getElementById('chart-title-modal').textContent = topSymbol;
+      }
 
       // Initial load
       loadData();
@@ -861,7 +755,7 @@
             document.querySelectorAll('#header-timeframe-' + timeframes.map(t => `#header-timeframe-${t}`).join(',')).forEach(btn => btn.classList.remove('active'));
             headerBtn.classList.add('active');
             const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
-            initializeChart('chart-container-header', `BINANCE:${symbol}`, interval);
+            initializeChart('chart-container-header', symbol, interval);
           });
         }
         if (modalBtn) {
@@ -869,7 +763,7 @@
             document.querySelectorAll('#modal-timeframe-' + timeframes.map(t => `#modal-timeframe-${t}`).join(',')).forEach(btn => btn.classList.remove('active'));
             modalBtn.classList.add('active');
             const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
-            initializeChart('chart-container-modal', `BINANCE:${symbol}`, interval);
+            initializeChart('chart-container-modal', symbol, interval);
           });
         }
       });
@@ -882,8 +776,8 @@
           if (li && li.dataset.symbol) {
             const symbol = li.dataset.symbol;
             const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
-            initializeChart('chart-container-header', `BINANCE:${symbol}`, interval);
-            initializeChart('chart-container-modal', `BINANCE:${symbol}`, interval);
+            initializeChart('chart-container-header', symbol, interval);
+            initializeChart('chart-container-modal', symbol, interval);
             document.getElementById('chart-title-header').setAttribute('data-symbol', symbol);
             document.getElementById('chart-title-header').textContent = symbol;
             document.getElementById('chart-title-modal').setAttribute('data-symbol', symbol);
@@ -909,7 +803,7 @@
           chartModal.classList.add('active');
           const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
           const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
-          initializeChart('chart-container-modal', `BINANCE:${symbol}`, interval);
+          initializeChart('chart-container-modal', symbol, interval);
         });
       }
       if (toggleStickyModal) {
@@ -917,10 +811,46 @@
           chartModal.classList.remove('active');
           const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
           const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
-          initializeChart('chart-container-header', `BINANCE:${symbol}`, interval);
+          initializeChart('chart-container-header', symbol, interval);
         });
       }
+
+      // Toggle debug mode
+      const toggleDebugBtn = document.getElementById('toggle-debug');
+      toggleDebugBtn.addEventListener('click', () => {
+        isDebugMode = !isDebugMode;
+        toggleDebugBtn.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
+      });
     });
+
+    // Mock data for fallback
+    const mockTokens = [
+      { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
+      { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2 },
+      { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
+    ];
+
+    // Ice King Puns for Marquee
+    const iceKingPuns = [
+      "Everything is Going to be okay! ❄️👑",
+      "Penguins are my royal guards! 🐧🧊",
+      "Time to freeze the market! ❄️😂",
+      "Ice to meet you, traders! 🧊🐧",
+      "I’m the coolest king around! 👑❄️",
+      "Penguin power activate! 🐧🧊😂",
+      "Snow way I’m missing this trade! ❄️📈",
+      "Freeze your doubts, let’s trade! 🧊💸",
+      "I’m skating through the market! ⛸️❄️",
+      "Cold cash, hot trades! 🥶💰",
+      "My portfolio’s cooler than ice! ❄️📊",
+      "Chill out, I’ve got this! 🧊😎",
+      "Ice King’s here to rule the charts! 👑📉",
+      "Let’s make it snow profits! ❄️💵",
+      "I’m frosting the competition! 🧊🏆",
+      "Cool trades, warm wins! ❄️🔥"
+    ];
+
+    let isDebugMode = false;
   </script>
   <script src="script.js"></script>
 </body>
