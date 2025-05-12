@@ -4,53 +4,17 @@
 // Features: Terminal-style UI, sticky chart toggle, backend integration
 
 // --- Constants and Configuration ---
-const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com'; // Not used since we're hardcoding data
+const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
 const TOKEN_REFRESH_INTERVAL = 30000;
 const LOG_REFRESH_INTERVAL = 10000;
 const MAX_RETRIES = 5;
 const RETRY_DELAY = 2000;
 
-// --- Hardcoded Data from Backend (Temporary) ---
-const hardcodedTokens = [
-  {
-    "id": "bitcoin",
-    "name": "Bitcoin",
-    "symbol": "BTC",
-    "current_price": 60000,
-    "total_volume": 4500000,
-    "price_change_percentage_24h": 5.2,
-    "market_cap": 1500000000,
-    "circulating_supply": 19000000,
-    "source": "Mock",
-    "high_24h": 61000,
-    "low_24h": 59000
-  },
-  {
-    "id": "ethereum",
-    "name": "Ethereum",
-    "symbol": "ETH",
-    "current_price": 4000,
-    "total_volume": 3000000,
-    "price_change_percentage_24h": -2.1,
-    "market_cap": 7500000000,
-    "circulating_supply": 120000000,
-    "source": "Mock",
-    "high_24h": 4100,
-    "low_24h": 3900
-  },
-  {
-    "id": "constitutiondao",
-    "name": "ConstitutionDAO",
-    "symbol": "PEOPLE",
-    "current_price": 0.01962,
-    "total_volume": 135674.745,
-    "price_change_percentage_24h": 41.10,
-    "market_cap": 99400658.805,
-    "circulating_supply": 5066406500,
-    "source": "Mock",
-    "high_24h": 0.02,
-    "low_24h": 0.018
-  }
+// --- Mock Data (Fallback) ---
+const mockTokens = [
+  { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
+  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2 },
+  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
 ];
 
 // --- Ice King Puns for Marquee ---
@@ -75,10 +39,10 @@ const iceKingPuns = [
 
 // --- Global State ---
 let usedPuns = [];
-let currentToken = hardcodedTokens[0];
+let currentToken = mockTokens[0];
 let currentTimeframe = 'D'; // TradingView uses 'D' for 1-day
-let allTokens = hardcodedTokens;
-let sortedTokens = [...hardcodedTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+let allTokens = mockTokens;
+let sortedTokens = [...mockTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 let isChartDocked = false;
 let selectedTokenLi = null;
 let isMockData = false;
@@ -86,8 +50,7 @@ let isDebugMode = false;
 
 // --- Utility Functions ---
 
-// Fetch with retry and detailed logging (Commented out since we're using hardcoded data)
-/*
+// Fetch with retry and detailed logging
 async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -95,22 +58,21 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       const response = await fetch(url, { 
         method: 'GET',
         headers: { 'Accept': 'application/json' },
-        timeout: 5000
+        mode: 'cors', // Explicitly set CORS mode
+        timeout: 10000 // Increased timeout to 10 seconds
       });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       const data = await response.json();
-      console.log(`[DEBUG] Fetch successful for ${url}, response structure:`, { length: data.length, firstItem: data[0] });
-      if (!Array.isArray(data)) {
-        throw new Error('Response is not an array');
-      }
-      return data;
+      console.log(`[DEBUG] Fetch successful for ${url}, response structure:`, { length: data.length, firstItem: data[0] || data.data?.[0], raw: data });
+      // Handle nested CMC response (e.g., { data: [...] })
+      return Array.isArray(data) ? data : (data.data || []);
     } catch (error) {
-      console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
+      console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message, error.stack);
       if (i === retries - 1) {
-        console.error(`[ERROR] All retries failed for ${url}. Falling back to ${isMockData ? 'mock' : 'previous'} data.`);
+        console.error(`[ERROR] All retries failed for ${url}. Falling back to mock data.`);
         document.getElementById('live-price-header').textContent = `> Live Price: Error - Connection unstable (${error.message}) ❄️`;
         return null;
       }
@@ -118,16 +80,15 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
     }
   }
 }
-*/
 
 // Validate and sanitize token data
 function sanitizeTokenData(data) {
   if (!data || !Array.isArray(data)) {
     console.error('[ERROR] Invalid token data format, expected array:', data);
-    return hardcodedTokens;
+    return mockTokens; // Fall back to mock data
   }
   return data.map(token => {
-    // Handle nested structure from CoinMarketCap (e.g., data.data)
+    // Handle nested structure from CoinMarketCap or flat structure from mock
     const processedToken = Array.isArray(token) ? token[0] : token;
     return {
       id: String(processedToken.id || processedToken.slug || '').replace(/[^a-zA-Z0-9-]/g, ''),
@@ -178,7 +139,7 @@ function updateTokenList(tokens) {
       <br>
       > 24h Low: $${token.low_24h.toLocaleString()}
       <br>
-      > Market Cap Rank: #${token.market_cap_rank || 'N/A'}
+      > Market Cap Rank: #${token.market_cap_rank}
       <br>
       > Market Cap: $${token.market_cap.toLocaleString()}
     `;
@@ -208,7 +169,7 @@ function updateLiveData(tokens) {
     tickerMarqueeHeader.style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
 
     topPairs.innerHTML = '';
-    const usdtPairs = tokens.filter(token => token.symbol && token.symbol !== 'USDT').slice(0, 5).map(token => `${token.symbol}/USDT (#${token.market_cap_rank || 'N/A'})`);
+    const usdtPairs = tokens.filter(token => token.symbol && token.symbol !== 'USDT').slice(0, 5).map(token => `${token.symbol}/USDT (#${token.market_cap_rank})`);
     usdtPairs.forEach(pair => {
       const li = document.createElement('li');
       li.className = 'gradient-bg p-1 rounded-md text-sm glow-blue';
@@ -324,7 +285,7 @@ function toggleMockData() {
 function toggleDebugMode() {
   isDebugMode = !isDebugMode;
   const toggleDebug = document.getElementById('toggle-debug');
-  if (toggleDebug) toggleDebug.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
+  if (toggleDebug) toggleDataMode.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
 }
 
 // --- Event Listeners ---
@@ -348,8 +309,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial fetch and render
   async function initializeData() {
-    // Temporarily use hardcoded data instead of fetching
-    let data = isMockData ? hardcodedTokens : hardcodedTokens; // Replace hardcodedTokens with await fetchWithRetry(`${BACKEND_URL}/api/crypto`) once fetch issue is resolved
+    let data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    if (data === null || data.length === 0) {
+      console.warn('[WARN] Fetch returned no data, using mock data');
+      data = mockTokens;
+    }
     allTokens = sanitizeTokenData(data);
     sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
     console.log('[DEBUG] Initialized tokens:', allTokens.slice(0, 2)); // Log first 2 tokens
@@ -360,13 +324,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   initializeData();
 
-  // Refresh tokens (Disabled since we're using hardcoded data)
-  /*
+  // Refresh tokens
   setInterval(async () => {
-    let data = isMockData ? hardcodedTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
-    if (data === null) {
-      console.warn('[WARN] Refresh fetch returned null, using mock data');
-      data = hardcodedTokens;
+    let data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    if (data === null || data.length === 0) {
+      console.warn('[WARN] Refresh fetch returned no data, using mock data');
+      data = mockTokens;
     }
     allTokens = sanitizeTokenData(data);
     sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
@@ -375,7 +338,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLiveData(allTokens);
     updateProfitPairs(sortedTokens);
   }, TOKEN_REFRESH_INTERVAL);
-  */
 
   // Timeframe buttons
   document.querySelectorAll('.timeframe-btn').forEach(button => {
