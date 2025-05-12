@@ -191,6 +191,32 @@
       padding-right: 8px;
     }
 
+    /* Token Menu */
+    #token-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 0.5rem;
+    }
+    #token-list li {
+      padding: 0.75rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      font-weight: 500;
+    }
+    #token-list li:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    }
+
+    /* Color Gradient for Ranking */
+    .rank-1 { background: linear-gradient(90deg, #00ff00, #00cc00); color: #000; }
+    .rank-2 { background: linear-gradient(90deg, #33ff33, #00cc00); color: #000; }
+    .rank-3 { background: linear-gradient(90deg, #66ff66, #00cc00); color: #000; }
+    .rank-4 { background: linear-gradient(90deg, #ff6666, #cc0000); color: #fff; }
+    .rank-5 { background: linear-gradient(90deg, #ff3333, #cc0000); color: #fff; }
+
     /* Animations */
     @keyframes glow-blue {
       0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
@@ -259,7 +285,7 @@
       color: #000;
       border: 1px solid #00ff00;
       font-size: 0.75rem;
-      border-radius: 4px;
+      border-radius: 0.375rem;
       padding: 0.5rem 1rem;
     }
     #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-mode:hover, #toggle-debug:hover {
@@ -277,7 +303,7 @@
       resize: none;
       width: 100%;
       padding: 0.5rem;
-      border-radius: 4px;
+      border-radius: 0.375rem;
     }
     #chat-input:focus {
       outline: none;
@@ -354,7 +380,7 @@
       background: rgba(0, 255, 0, 0.9);
       color: #000;
       padding: 4px 8px;
-      border-radius: 4px;
+      border-radius: 0.375rem;
       font-size: 12px;
       white-space: nowrap;
       z-index: 60;
@@ -397,10 +423,10 @@
         <div id="chart-container-header" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading SOL/USDT chart...</div>
+            <div class="ml-2">Loading top-ranked pair chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="SOLUSDT">SOL/USDT</h3>
+        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol=""></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -433,10 +459,10 @@
         <div id="chart-container-modal" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading SOL/USDT chart...</div>
+            <div class="ml-2">Loading top-ranked pair chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol="SOLUSDT"></h3>
+        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue hover:opacity-75 transition-opacity cursor-pointer" data-symbol=""></h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -454,11 +480,7 @@
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
       <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full">
-        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="SOLUSDT">SOL/USDT</li>
-        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="ADAUSDT">ADA/USDT</li>
-        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="DOTUSDT">DOT/USDT</li>
-        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="MATICUSDT">MATIC/USDT</li>
-        <li class="p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="XRPUSDT">XRP/USDT</li>
+        <!-- Populated dynamically -->
       </ul>
       <div class="mt-4">
         <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top/Bottom Performers</h3>
@@ -618,9 +640,19 @@
       setTimeout(initWidget, 300);
     }
 
+    // Populate token list with ranking colors
+    function updateTokenList() {
+      const tokenList = document.getElementById('token-list');
+      tokenList.innerHTML = rankedSymbols.map((symbol, index) => {
+        const rank = index + 1;
+        return `<li class="rank-${rank} p-2 rounded bg-black bg-opacity-50 hover-glow cursor-pointer" data-symbol="${symbol}">${symbol}</li>`;
+      }).join('');
+    }
+
     // Initialize charts on load with top-ranked low-volume token
     document.addEventListener('DOMContentLoaded', () => {
-      const topToken = rankedSymbols[0]; // SOLUSDT as the top-ranked
+      updateTokenList(); // Populate the token list with ranked colors
+      const topToken = rankedSymbols[0]; // Dynamically get top-ranked pair
       initializeChart('chart-container-header', `BINANCE:${topToken}`, '1D');
       initializeChart('chart-container-modal', `BINANCE:${topToken}`, '1D');
       document.getElementById('chart-title-header').setAttribute('data-symbol', topToken);
