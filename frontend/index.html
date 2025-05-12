@@ -422,10 +422,10 @@
         <div id="chart-container-header" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading MATIC/USDT chart...</div>
+            <div class="ml-2">Loading top ranked chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue" data-symbol="MATICUSDT">MATIC/USDT</h3>
+        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -433,7 +433,6 @@
             <span>🚀 SOL: $145.67 (+5.67%)</span>
             <span>📉 XRP: $0.5678 (-0.45%)</span>
             <span>🌟 ADA: $0.4567 (+3.21%)</span>
-            <span>💎 MATIC: $0.7890 (+7.89%)</span>
           </div>
         </div>
       </div>
@@ -459,10 +458,10 @@
         <div id="chart-container-modal" class="chart-container mt-2">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading MATIC/USDT chart...</div>
+            <div class="ml-2">Loading top ranked chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue" data-symbol="MATICUSDT"></h3>
+        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -470,7 +469,6 @@
             <span>🚀 SOL: $145.67 (+5.67%)</span>
             <span>📉 XRP: $0.5678 (-0.45%)</span>
             <span>🌟 ADA: $0.4567 (+3.21%)</span>
-            <span>💎 MATIC: $0.7890 (+7.89%)</span>
           </div>
         </div>
       </div>
@@ -480,35 +478,10 @@
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full">
-        <li class="bg-green-900 selected-token" data-symbol="MATICUSDT">
-          <span>MATIC/USDT</span>
-          <span class="performance text-green-400">+7.89%</span>
-        </li>
-        <li class="bg-green-800" data-symbol="SOLUSDT">
-          <span>SOL/USDT</span>
-          <span class="performance text-green-500">+5.67%</span>
-        </li>
-        <li class="bg-green-700" data-symbol="ADAUSDT">
-          <span>ADA/USDT</span>
-          <span class="performance text-green-600">+3.21%</span>
-        </li>
-        <li class="bg-green-600" data-symbol="DOTUSDT">
-          <span>DOT/USDT</span>
-          <span class="performance text-green-700">+0.12%</span>
-        </li>
-        <li class="bg-red-600" data-symbol="XRPUSDT">
-          <span>XRP/USDT</span>
-          <span class="performance text-red-500">-0.45%</span>
-        </li>
-      </ul>
+      <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
       <div class="mt-4">
         <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top/Bottom Performers</h3>
-        <ul id="profit-pairs" class="space-y-2 text-xs sm:text-sm w-full">
-          <li class="top-pair p-2 rounded bg-black bg-opacity-50">💎 MATIC/USDT: +7.89%</li>
-          <li class="top-pair p-2 rounded bg-black bg-opacity-50">🚀 SOL/USDT: +5.67%</li>
-          <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">📉 XRP/USDT: -0.45%</li>
-        </ul>
+        <ul id="profit-pairs" class="space-y-2 text-xs sm:text-sm w-full"></ul>
       </div>
       <div class="mt-4">
         <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top USDT Pairs</h3>
@@ -532,6 +505,7 @@
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
     <p class="typewriter">> Powered by CoinMarketCap & TradingView</p>
+    <p class="typewriter">> Data Source: Binance API (https://api.binance.com/api/v3/ticker/24hr)</p>
   </footer>
 
   <script>
@@ -545,19 +519,6 @@
       star.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(star);
     }
-
-    // Define tokens under 1M trading volume with performance (simulated)
-    const lowVolumeTokens = [
-      { symbol: 'MATICUSDT', performance: 7.89 },
-      { symbol: 'SOLUSDT', performance: 5.67 },
-      { symbol: 'ADAUSDT', performance: 3.21 },
-      { symbol: 'DOTUSDT', performance: 0.12 },
-      { symbol: 'XRPUSDT', performance: -0.45 }
-    ];
-
-    // Sort tokens by performance (highest to lowest)
-    lowVolumeTokens.sort((a, b) => b.performance - a.performance);
-    const rankedSymbols = lowVolumeTokens.map(token => token.symbol);
 
     // Store chart instances
     const chartInstances = new Map();
@@ -650,23 +611,69 @@
       setTimeout(initWidget, 300);
     }
 
-    // Initialize charts on load with top-ranked low-volume token
+    // Fetch and initialize with top-ranked coin
     document.addEventListener('DOMContentLoaded', () => {
-      const topToken = rankedSymbols[0]; // MATICUSDT as the top-ranked
-      initializeChart('chart-container-header', `BINANCE:${topToken}`, '1D');
-      initializeChart('chart-container-modal', `BINANCE:${topToken}`, '1D');
-      document.getElementById('chart-title-header').setAttribute('data-symbol', topToken);
-      document.getElementById('chart-title-header').textContent = topToken;
-      document.getElementById('chart-title-modal').setAttribute('data-symbol', topToken);
-      document.getElementById('chart-title-modal').textContent = topToken;
+      // Fetch data from Binance API
+      fetch('https://api.binance.com/api/v3/ticker/24hr')
+        .then(response => response.json())
+        .then(data => {
+          // Filter for USDT pairs under 1M trading volume
+          const lowVolumeTokens = data
+            .filter(t => t.symbol.endsWith('USDT') && parseFloat(t.quoteVolume) < 1000000)
+            .map(t => ({
+              symbol: t.symbol,
+              performance: parseFloat(t.priceChangePercent)
+            }))
+            .sort((a, b) => b.performance - a.performance);
 
-      // Highlight the top token in the list
-      const tokenListItems = document.querySelectorAll('#token-list li');
-      tokenListItems.forEach(item => {
-        if (item.dataset.symbol === topToken) {
-          item.classList.add('selected-token');
-        }
-      });
+          if (lowVolumeTokens.length === 0) {
+            console.error('No low-volume USDT pairs found.');
+            return;
+          }
+
+          const rankedSymbols = lowVolumeTokens.map(t => t.symbol);
+          const topToken = rankedSymbols[0];
+
+          // Initialize charts with top-ranked coin
+          initializeChart('chart-container-header', `BINANCE:${topToken}`, '1D');
+          initializeChart('chart-container-modal', `BINANCE:${topToken}`, '1D');
+          document.getElementById('chart-title-header').setAttribute('data-symbol', topToken);
+          document.getElementById('chart-title-header').textContent = topToken;
+          document.getElementById('chart-title-modal').setAttribute('data-symbol', topToken);
+          document.getElementById('chart-title-modal').textContent = topToken;
+
+          // Populate token list
+          const tokenList = document.getElementById('token-list');
+          tokenList.innerHTML = lowVolumeTokens.map((t, index) => {
+            const isPositive = t.performance >= 0;
+            const rankFactor = index / (lowVolumeTokens.length - 1);
+            const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
+            const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
+            const selectedClass = t.symbol === topToken ? 'selected-token' : '';
+            return `
+              <li class="${bgClass} ${selectedClass}" data-symbol="${t.symbol}">
+                <span>${t.symbol}</span>
+                <span class="performance ${textClass}">${t.performance >= 0 ? '+' : ''}${t.performance.toFixed(2)}%</span>
+              </li>
+            `;
+          }).join('');
+
+          // Populate top/bottom performers
+          const profitPairs = document.getElementById('profit-pairs');
+          profitPairs.innerHTML = `
+            <li class="top-pair p-2 rounded bg-black bg-opacity-50">${topToken}: +${lowVolumeTokens[0].performance.toFixed(2)}%</li>
+            <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">${lowVolumeTokens[lowVolumeTokens.length - 1].symbol}: ${lowVolumeTokens[lowVolumeTokens.length - 1].performance.toFixed(2)}%</li>
+          `;
+
+          // Hide loaders
+          document.getElementById('loader-tokens').style.display = 'none';
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          document.getElementById('chart-title-header').textContent = 'Error loading data';
+          document.getElementById('chart-title-modal').textContent = 'Error loading data';
+          document.getElementById('loader-tokens').textContent = '> Failed to load token data';
+        });
 
       // Timeframe button handlers
       const timeframes = ['1min', '5min', '15min', '1hr', '4hr', '1d'];
@@ -709,6 +716,7 @@
             document.getElementById('chart-title-modal').textContent = symbol;
 
             // Update selected token styling
+            const tokenListItems = document.querySelectorAll('#token-list li');
             tokenListItems.forEach(item => item.classList.remove('selected-token'));
             li.classList.add('selected-token');
 
