@@ -279,7 +279,7 @@
     .marquee-container:hover .marquee { animation-play-state: paused; }
 
     /* Buttons and Inputs */
-    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug {
+    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
       animation: glow-green 2s infinite;
       background-color: #00ff00;
       color: #000;
@@ -288,7 +288,7 @@
       border-radius: 4px;
       padding: 0.5rem 1rem;
     }
-    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover {
+    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
       background-color: #00cc00;
       box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
     }
@@ -369,7 +369,7 @@
     }
     @media (min-width: 640px) {
       .title-box { font-size: 0.875rem; }
-      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug { font-size: 0.875rem; }
+      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal { font-size: 0.875rem; }
     }
     @media (min-width: 768px) {
       .title-box { font-size: 1rem; }
@@ -417,6 +417,7 @@
             <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
           <div class="flex space-x-2">
+            <button id="toggle-indicator-header" class="text-black px-2 py-1 rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
             <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded" aria-label="Dock chart">Dock Chart 🔍</button>
             <button id="toggle-data-source" class="text-black px-2 py-1 rounded" aria-label="Toggle data source">[Real Data] ❄️</button>
             <button id="toggle-debug" class="text-black px-2 py-1 rounded" aria-label="Debug chart">[Enable Debug] 👑</button>
@@ -455,7 +456,10 @@
             <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
             <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
-          <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded" aria-label="Undock chart">Undock Chart 🔍</button>
+          <div class="flex space-x-2">
+            <button id="toggle-indicator-modal" class="text-black px-2 py-1 rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
+            <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded" aria-label="Undock chart">Undock Chart 🔍</button>
+          </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
           <div id="live-price-modal" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
@@ -525,6 +529,10 @@
       particleContainer.appendChild(star);
     }
 
+    // Track indicator toggle state
+    let isIndicatorEnabledHeader = false;
+    let isIndicatorEnabledModal = false;
+
     // TradingView chart initialization with retry
     function initializeChart(containerId, symbol, interval = 'D', retries = 2) {
       const container = document.getElementById(containerId);
@@ -545,10 +553,14 @@
       `;
       container.appendChild(loadingDiv);
 
+      // Determine if indicator should be applied
+      const isHeader = containerId === 'chart-container-header';
+      const isIndicatorEnabled = isHeader ? isIndicatorEnabledHeader : isIndicatorEnabledModal;
+
       // Initialize new TradingView widget
       const initWidget = () => {
         try {
-          const widget = new TradingView.widget({
+          const widgetConfig = {
             autosize: true,
             symbol: symbol,
             interval: interval,
@@ -573,6 +585,9 @@
             },
             onChartReady: () => {
               console.log(`Chart loaded successfully for ${containerId} with symbol ${symbol}`);
+              if (isIndicatorEnabled) {
+                alert('Note: Please manually add the "ICE KING Lite V1.0" indicator from TradingView’s Indicators menu.');
+              }
             },
             onError: (error) => {
               console.error(`Chart initialization error for ${containerId} with symbol ${symbol}:`, error);
@@ -583,7 +598,14 @@
                 loadingDiv.textContent = `Failed to load ${symbol.replace('BINANCE:', '')} chart.`;
               }
             }
-          });
+          };
+
+          // Add studies if indicator is enabled (simulated by prompting user to add manually)
+          if (isIndicatorEnabled) {
+            widgetConfig.studies = ["ICEKINGLiteV1.0@tv-basicstudies"];
+          }
+
+          const widget = new TradingView.widget(widgetConfig);
         } catch (error) {
           console.error(`Critical error initializing chart for ${containerId}:`, error);
           if (retries > 0) {
@@ -626,6 +648,8 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
+      const toggleIndicatorHeaderBtn = document.getElementById('toggle-indicator-header');
+      const toggleIndicatorModalBtn = document.getElementById('toggle-indicator-modal');
 
       // Function to load and populate data
       const loadData = async () => {
@@ -725,9 +749,9 @@
         document.getElementById('ticker-marquee-modal').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
 
         // Initialize charts with top token
-        const topSymbol = `${topToken.symbol}USDT`;
-        initializeChart('chart-container-header', `BINANCE:${topSymbol}`, 'D');
-        initializeChart('chart-container-modal', `BINANCE:${topSymbol}`, 'D');
+        const topSymbol = `BINANCE:${topToken.symbol}USDT`;
+        initializeChart('chart-container-header', topSymbol, 'D');
+        initializeChart('chart-container-modal', topSymbol, 'D');
         document.getElementById('chart-title-header').setAttribute('data-symbol', topSymbol);
         document.getElementById('chart-title-header').textContent = topSymbol;
         document.getElementById('chart-title-modal').setAttribute('data-symbol', topSymbol);
@@ -741,6 +765,23 @@
       toggleDataSourceBtn.addEventListener('click', () => {
         isUsingMockData = !isUsingMockData;
         loadData();
+      });
+
+      // Toggle indicator button handlers
+      toggleIndicatorHeaderBtn.addEventListener('click', () => {
+        isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
+        toggleIndicatorHeaderBtn.textContent = `[${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} ICE KING] 🧊`;
+        const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
+        const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
+        initializeChart('chart-container-header', symbol, interval);
+      });
+
+      toggleIndicatorModalBtn.addEventListener('click', () => {
+        isIndicatorEnabledModal = !isIndicatorEnabledModal;
+        toggleIndicatorModalBtn.textContent = `[${isIndicatorEnabledModal ? 'Disable' : 'Enable'} ICE KING] 🧊`;
+        const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
+        const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
+        initializeChart('chart-container-modal', symbol, interval);
       });
 
       // Timeframe button handlers
