@@ -629,8 +629,8 @@
     // Function to populate UI with data
     function populateUI(data) {
       const lowVolumeTokens = data
-        .filter(t => t.symbol.endsWith('USDT') && t.volume < 1000000)
-        .sort((a, b) => b.performance - a.performance);
+        .filter(t => t.symbol.endsWith('USDT') && t.total_volume < 1000000)
+        .sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 
       if (lowVolumeTokens.length === 0) {
         console.error('No low-volume USDT pairs found.');
@@ -654,7 +654,7 @@
       // Populate token list with all metrics
       const tokenList = document.getElementById('token-list');
       tokenList.innerHTML = lowVolumeTokens.map((t, index) => {
-        const isPositive = t.performance >= 0;
+        const isPositive = t.price_change_percentage_24h >= 0;
         const rankFactor = index / (lowVolumeTokens.length - 1);
         const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
         const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
@@ -663,10 +663,10 @@
           <li class="${bgClass} ${selectedClass}" data-symbol="${t.symbol}">
             <div class="flex justify-between">
               <span>${t.symbol} (${t.source})</span>
-              <span class="performance ${textClass}">${t.performance >= 0 ? '+' : ''}${t.performance.toFixed(2)}%</span>
+              <span class="performance ${textClass}">${t.price_change_percentage_24h >= 0 ? '+' : ''}${t.price_change_percentage_24h.toFixed(2)}%</span>
             </div>
-            <div class="metric">Price: $${t.price.toLocaleString()}</div>
-            <div class="metric">Volume: ${t.volume.toLocaleString()} USD</div>
+            <div class="metric">Price: $${t.current_price.toLocaleString()}</div>
+            <div class="metric">Volume: ${t.total_volume.toLocaleString()} USD</div>
             <div class="metric">Circ. Supply: ${t.circulating_supply ? t.circulating_supply.toLocaleString() : 'N/A'}</div>
           </li>
         `;
@@ -678,15 +678,15 @@
       const bottomTokenData = lowVolumeTokens[lowVolumeTokens.length - 1];
       profitPairs.innerHTML = `
         <li class="top-pair p-2 rounded bg-black bg-opacity-50">
-          <div>${topTokenData.symbol} (${topTokenData.source}): +${topTokenData.performance.toFixed(2)}%</div>
-          <div class="metric">Price: $${topTokenData.price.toLocaleString()}</div>
-          <div class="metric">Volume: ${topTokenData.volume.toLocaleString()} USD</div>
+          <div>${topTokenData.symbol} (${topTokenData.source}): +${topTokenData.price_change_percentage_24h.toFixed(2)}%</div>
+          <div class="metric">Price: $${topTokenData.current_price.toLocaleString()}</div>
+          <div class="metric">Volume: ${topTokenData.total_volume.toLocaleString()} USD</div>
           <div class="metric">Circ. Supply: ${topTokenData.circulating_supply ? topTokenData.circulating_supply.toLocaleString() : 'N/A'}</div>
         </li>
         <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">
-          <div>${bottomTokenData.symbol} (${bottomTokenData.source}): ${bottomTokenData.performance.toFixed(2)}%</div>
-          <div class="metric">Price: $${bottomTokenData.price.toLocaleString()}</div>
-          <div class="metric">Volume: ${bottomTokenData.volume.toLocaleString()} USD</div>
+          <div>${bottomTokenData.symbol} (${bottomTokenData.source}): ${bottomTokenData.price_change_percentage_24h.toFixed(2)}%</div>
+          <div class="metric">Price: $${bottomTokenData.current_price.toLocaleString()}</div>
+          <div class="metric">Volume: ${bottomTokenData.total_volume.toLocaleString()} USD</div>
           <div class="metric">Circ. Supply: ${bottomTokenData.circulating_supply ? bottomTokenData.circulating_supply.toLocaleString() : 'N/A'}</div>
         </li>
       `;
@@ -700,9 +700,13 @@
     async function fetchWithRetry(url, retries = 2, delay = 1000) {
       for (let i = 0; i <= retries; i++) {
         try {
-          const response = await fetch(url, { method: 'GET', mode: 'cors' });
+          const response = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
+          });
           if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+            throw new Error(`HTTP error! Status: ${response.status}, Status Text: ${response.statusText}`);
           }
           return await response.json();
         } catch (error) {
@@ -710,7 +714,7 @@
             console.error(`Failed to fetch from ${url} after ${retries + 1} attempts:`, error);
             throw error;
           }
-          console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${delay}ms...`);
+          console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${delay}ms... Error: ${error.message}`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
@@ -718,7 +722,7 @@
 
     // Fetch real data from APIs
     async function fetchRealData() {
-      const backendApiUrl = 'http://localhost:3000/api/crypto'; // Replace with your deployed Render URL
+      const backendApiUrl = 'http://localhost:3000/api/crypto'; // Replace with your deployed Render URL, e.g., https://your-app-name.onrender.com/api/crypto
       const binanceApiUrl = 'https://api.binance.com/api/v3/ticker/24hr';
 
       let backendData = [];
@@ -728,23 +732,48 @@
       // Fetch from backend API (CoinMarketCap)
       try {
         const data = await fetchWithRetry(backendApiUrl);
-        backendData = data.map(coin => ({
-          symbol: `${coin.symbol}USDT`,
-          price: parseFloat(coin.current_price),
-          performance: parseFloat(coin.price_change_percentage_24h),
-          volume: parseFloat(coin.total_volume),
-          circulating_supply: parseFloat(coin.circulating_supply),
-          source: coin.source || 'CoinMarketCap'
-        }));
-        console.log('Successfully fetched CoinMarketCap data:', backendData);
+        console.log('Raw CoinMarketCap response:', data); // Log the raw response for debugging
+
+        // Validate the response structure
+        if (!Array.isArray(data)) {
+          throw new Error('CoinMarketCap response is not an array');
+        }
+
+        backendData = data
+          .filter(coin => {
+            return (
+              coin &&
+              typeof coin.symbol === 'string' &&
+              typeof coin.current_price === 'number' &&
+              typeof coin.price_change_percentage_24h === 'number' &&
+              typeof coin.total_volume === 'number' &&
+              typeof coin.circulating_supply === 'number'
+            );
+          })
+          .map(coin => ({
+            symbol: `${coin.symbol}USDT`,
+            price: parseFloat(coin.current_price),
+            performance: parseFloat(coin.price_change_percentage_24h),
+            volume: parseFloat(coin.total_volume),
+            circulating_supply: parseFloat(coin.circulating_supply),
+            source: coin.source || 'CoinMarketCap'
+          }));
+
+        if (backendData.length === 0) {
+          throw new Error('No valid CoinMarketCap data after filtering');
+        }
+
+        console.log('Successfully fetched and processed CoinMarketCap data:', backendData);
       } catch (error) {
-        console.error('Error fetching from backend API:', error);
-        errorMessage += 'Failed to fetch CoinMarketCap data. ';
+        console.error('Error fetching or processing CoinMarketCap data:', error.message);
+        errorMessage += `Failed to fetch/process CoinMarketCap data: ${error.message}. `;
       }
 
       // Fetch from Binance API
       try {
         const data = await fetchWithRetry(binanceApiUrl);
+        console.log('Raw Binance response:', data); // Log the raw response for debugging
+
         binanceData = data
           .filter(t => t.symbol.endsWith('USDT'))
           .map(t => ({
@@ -757,8 +786,8 @@
           }));
         console.log('Successfully fetched Binance data:', binanceData);
       } catch (error) {
-        console.error('Error fetching from Binance API:', error);
-        errorMessage += 'Failed to fetch Binance data. ';
+        console.error('Error fetching Binance data:', error.message);
+        errorMessage += `Failed to fetch Binance data: ${error.message}. `;
       }
 
       const combinedData = [...backendData, ...binanceData];
@@ -805,7 +834,7 @@
           console.error('Failed to load real data:', error);
           document.getElementById('chart-title-header').textContent = 'Error loading data';
           document.getElementById('chart-title-modal').textContent = 'Error loading data';
-          document.getElementById('loader-tokens').textContent = `> ${error.message || 'Failed to load real data.'} Click "Toggle Data Source" to use mock data.`;
+          document.getElementById('loader-tokens').textContent = `> ${error.message || 'Failed to load real data. Ensure backend server is running at http://localhost:3000/api/crypto or update the URL if deployed.'} Click "Toggle Data Source" to use mock data.`;
           toggleDataSourceBtn.textContent = 'Use Mock Data';
           toggleDataSourceBtn.disabled = false;
         }
