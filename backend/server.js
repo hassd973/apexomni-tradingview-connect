@@ -50,10 +50,10 @@ async function fetchCryptoData() {
       market_cap_rank: coin.cmc_rank,
     }));
 
-    console.log(`Successfully fetched crypto data, count: ${data.length}`);
+    console.log(`Successfully fetched crypto data, count: ${data.length}`, data);
     return data;
   } catch (error) {
-    console.error('Failed to fetch crypto data from CoinMarketCap:', error.message);
+    console.error('Failed to fetch crypto data from CoinMarketCap:', error.message, error.response?.data || error.response?.status);
     console.warn('Falling back to mock data');
     return mockCryptoData;
   }
@@ -62,13 +62,14 @@ async function fetchCryptoData() {
 // API endpoint to get crypto data
 app.get('/api/crypto', async (req, res) => {
   try {
-    console.log('Received request for /api/crypto');
+    console.log('Received request for /api/crypto from:', req.headers['user-agent']);
     const data = await fetchCryptoData();
     if (data.length === 0) {
       console.warn('No crypto data available');
       res.status(500).json({ error: 'Failed to fetch crypto data' });
       return;
     }
+    console.log('Sending crypto data response:', data);
     res.json(data);
   } catch (error) {
     console.error('Error in /api/crypto endpoint:', error.message);
