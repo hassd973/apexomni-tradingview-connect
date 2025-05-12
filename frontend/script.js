@@ -56,15 +56,19 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
     try {
       console.log(`[DEBUG] Fetching ${url} (Attempt ${i + 1}/${retries})`);
       const response = await fetch(url, { 
-        timeout: 5000,
-        headers: { 'Accept': 'application/json' }
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        timeout: 5000
       });
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
       const data = await response.json();
-      console.log(`[DEBUG] Fetch successful for ${url}, response:`, data);
+      console.log(`[DEBUG] Fetch successful for ${url}, response structure:`, { length: data.length, firstItem: data[0] });
+      if (!Array.isArray(data)) {
+        throw new Error('Response is not an array');
+      }
       return data;
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message);
@@ -84,20 +88,24 @@ function sanitizeTokenData(data) {
     console.error('[ERROR] Invalid token data format, expected array:', data);
     return mockTokens;
   }
-  return data.map(token => ({
-    id: String(token.id || '').replace(/[^a-zA-Z0-9-]/g, ''),
-    name: String(token.name || 'Unknown').substring(0, 50),
-    symbol: String(token.symbol || '').toUpperCase().substring(0, 10),
-    current_price: Number(token.current_price || 0),
-    total_volume: Number(token.total_volume || 0),
-    price_change_percentage_24h: Number(token.price_change_percentage_24h || 0),
-    market_cap: Number(token.market_cap || 0),
-    circulating_supply: Number(token.circulating_supply || 0),
-    source: String(token.source || 'Unknown'),
-    high_24h: Number(token.high_24h || 0),
-    low_24h: Number(token.low_24h || 0),
-    market_cap_rank: Number(token.market_cap_rank || 0)
-  })).filter(token => token.current_price > 0);
+  return data.map(token => {
+    // Handle nested structure from CoinMarketCap (e.g., data.data)
+    const processedToken = Array.isArray(token) ? token[0] : token;
+    return {
+      id: String(processedToken.id || processedToken.slug || '').replace(/[^a-zA-Z0-9-]/g, ''),
+      name: String(processedToken.name || 'Unknown').substring(0, 50),
+      symbol: String(processedToken.symbol || '').toUpperCase().substring(0, 10),
+      current_price: Number(processedToken.current_price || processedToken.quote?.USD?.price || 0),
+      total_volume: Number(processedToken.total_volume || processedToken.quote?.USD?.volume_24h || 0),
+      price_change_percentage_24h: Number(processedToken.price_change_percentage_24h || processedToken.quote?.USD?.percent_change_24h || 0),
+      market_cap: Number(processedToken.market_cap || processedToken.quote?.USD?.market_cap || 0),
+      circulating_supply: Number(processedToken.circulating_supply || 0),
+      source: String(processedToken.source || 'Unknown'),
+      high_24h: Number(processedToken.high_24h || 0),
+      low_24h: Number(processedToken.low_24h || 0),
+      market_cap_rank: Number(processedToken.market_cap_rank || processedToken.cmc_rank || 0)
+    };
+  }).filter(token => token.current_price > 0);
 }
 
 // --- DOM Manipulation Functions ---
@@ -112,6 +120,7 @@ function updateTokenList(tokens) {
   }
   tokenList.innerHTML = '';
   loaderTokens.style.display = 'none';
+  console.log('[DEBUG] Updating token list with:', tokens.slice(0, 2)); // Log first 2 tokens for debugging
   tokens.forEach((token, index) => {
     const opacity = 30 + (index / tokens.length) * 40; // Dynamic opacity based on position in list
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
@@ -168,6 +177,8 @@ function updateLiveData(tokens) {
       li.innerHTML = `> 🧊 ${pair}`;
       topPairs.appendChild(li);
     });
+  } else {
+    console.warn('[WARN] No tokens to update live data with');
   }
 }
 
@@ -179,6 +190,10 @@ function updateProfitPairs(tokens) {
     return;
   }
   profitPairs.innerHTML = '';
+  if (tokens.length === 0) {
+    console.warn('[WARN] No tokens to update profit pairs with');
+    return;
+  }
   
   // Get top 3 and bottom 3 performers
   const topPerformers = tokens.slice(0, 3); // Already sorted by price_change_percentage_24h
@@ -271,7 +286,7 @@ function toggleMockData() {
 function toggleDebugMode() {
   isDebugMode = !isDebugMode;
   const toggleDebug = document.getElementById('toggle-debug');
-  if (toggleDebug) toggleDebug.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
+  if (toggleDebug) toggleDataMode.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
 }
 
 // --- Event Listeners ---
@@ -295,34 +310,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial fetch and render
   async function initializeData() {
-    const data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
-    if (data) {
-      allTokens = sanitizeTokenData(data);
-      sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-      updateTokenList(allTokens);
-      updateLiveData(allTokens);
-      updateProfitPairs(sortedTokens); // Add top/bottom performers
-      updateChart(`BINANCE:${currentToken.symbol}USDT`);
-    } else {
-      allTokens = mockTokens;
-      updateTokenList(allTokens);
-      updateLiveData(allTokens);
-      updateProfitPairs(sortedTokens);
-      updateChart(`BINANCE:${currentToken.symbol}USDT`);
+    let data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    if (data === null) {
+      console.warn('[WARN] Fetch returned null, using mock data');
+      data = mockTokens;
     }
+    allTokens = sanitizeTokenData(data);
+    sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+    console.log('[DEBUG] Initialized tokens:', allTokens.slice(0, 2)); // Log first 2 tokens
+    updateTokenList(allTokens);
+    updateLiveData(allTokens);
+    updateProfitPairs(sortedTokens);
+    updateChart(`BINANCE:${currentToken.symbol}USDT`);
   }
   initializeData();
 
   // Refresh tokens
   setInterval(async () => {
-    const data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
-    if (data) {
-      allTokens = sanitizeTokenData(data);
-      sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-      updateTokenList(allTokens);
-      updateLiveData(allTokens);
-      updateProfitPairs(sortedTokens);
+    let data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    if (data === null) {
+      console.warn('[WARN] Refresh fetch returned null, using mock data');
+      data = mockTokens;
     }
+    allTokens = sanitizeTokenData(data);
+    sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+    console.log('[DEBUG] Refreshed tokens:', allTokens.slice(0, 2)); // Log first 2 tokens
+    updateTokenList(allTokens);
+    updateLiveData(allTokens);
+    updateProfitPairs(sortedTokens);
   }, TOKEN_REFRESH_INTERVAL);
 
   // Timeframe buttons
