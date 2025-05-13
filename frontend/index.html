@@ -586,7 +586,7 @@
             onChartReady: () => {
               console.log(`Chart loaded successfully for ${containerId} with symbol ${symbol}`);
               if (isIndicatorEnabled) {
-                alert('Note: Please manually add the "ICE KING Lite V1.0" indicator from TradingView’s Indicators menu.');
+                alert('Please manually add the "ICE KING Lite V1.0" indicator from TradingView’s Indicators menu.');
               }
             },
             onError: (error) => {
@@ -600,9 +600,9 @@
             }
           };
 
-          // Add studies if indicator is enabled (simulated by prompting user to add manually)
+          // Add studies if indicator is enabled
           if (isIndicatorEnabled) {
-            widgetConfig.studies = ["ICEKINGLiteV1.0@tv-basicstudies"];
+            widgetConfig.studies = ["AMeHB36y@tv-basicstudies"];
           }
 
           const widget = new TradingView.widget(widgetConfig);
