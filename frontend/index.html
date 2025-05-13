@@ -537,7 +537,10 @@
     function initializeChart(containerId, symbol, interval = 'D', retries = 2) {
       const container = document.getElementById(containerId);
       const chartTitle = document.getElementById(containerId === 'chart-container-header' ? 'chart-title-header' : 'chart-title-modal');
-      if (!container || !chartTitle) return;
+      if (!container || !chartTitle) {
+        console.error(`Container or chart title not found for ${containerId}`);
+        return;
+      }
 
       // Clear the container
       while (container.firstChild) {
@@ -586,7 +589,7 @@
             onChartReady: () => {
               console.log(`Chart loaded successfully for ${containerId} with symbol ${symbol}`);
               if (isIndicatorEnabled) {
-                alert('Please manually add the "ICE KING Lite V1.0" indicator from TradingView’s Indicators menu.');
+                alert('Please manually add the "ICE KING Lite V1.0" indicator:\n1. Click the Indicators button (f(x)) on the chart.\n2. Search for "ICE KING Lite V1.0".\n3. Click to apply it.');
               }
             },
             onError: (error) => {
@@ -599,11 +602,6 @@
               }
             }
           };
-
-          // Add studies if indicator is enabled
-          if (isIndicatorEnabled) {
-            widgetConfig.studies = ["AMeHB36y@tv-basicstudies"];
-          }
 
           const widget = new TradingView.widget(widgetConfig);
         } catch (error) {
