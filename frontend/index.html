@@ -73,88 +73,449 @@
       100% { transform: translate(100px, -100px); opacity: 0; }
     }
 
-    /* Remaining original styles */
+    /* Header and Footer */
+    header, footer {
+      background: rgba(31, 41, 55, 0.3);
+      backdrop-filter: blur(10px) saturate(1.2);
+      padding: 1rem;
+      border-bottom: 1px solid rgba(0, 255, 0, 0.1);
+    }
+    footer {
+      border-top: 1px solid rgba(0, 255, 0, 0.1);
+    }
+
+    /* Chart Containers */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 260px);
+      min-height: 300px;
+      max-height: 750px;
+    }
+    .tradingview-widget-container {
+      position: absolute !important;
+      width: 100% !important;
+      height: 100% !important;
+      border: 1px solid rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+    .chart-loading {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0, 15, 0, 0.7);
+      z-index: 10;
+      color: #00ff00;
+      font-size: 1rem;
+    }
+    #chart-container-modal {
+      height: calc(90vh - 140px) !important;
+      min-height: 350px;
+      max-height: 850px;
+    }
+    @media (max-height: 600px) {
+      .chart-container { height: 250px; }
+      #chart-container-modal { height: 300px !important; }
+    }
+    @media (min-width: 1024px) {
+      .chart-container { max-height: 700px; }
+      #chart-container-modal { max-height: 800px; }
+    }
+
+    /* Modal */
+    .chart-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 50;
+      justify-content: center;
+      align-items: center;
+      overflow-y: auto;
+    }
+    .chart-modal.active { display: flex; }
+    .chart-modal-content {
+      background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7));
+      padding: 1rem;
+      border: 2px solid rgba(0, 255, 0, 0.5);
+      border-radius: 5px;
+      width: 95%;
+      max-width: 1200px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+    }
+
+    /* Main Content */
+    main {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* Sections */
+    section {
+      background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2));
+      border: 1px solid rgba(0, 255, 0, 0.1);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    /* Scrollbar and Lists */
+    ul {
+      scrollbar-width: thin;
+      scrollbar-color: #00ff00 #000;
+      list-style: none;
+      padding: 0;
+    }
+    ul::-webkit-scrollbar {
+      width: 8px;
+    }
+    ul::-webkit-scrollbar-track {
+      background: #000;
+    }
+    ul::-webkit-scrollbar-thumb {
+      background: #00ff00;
+      border-radius: 4px;
+    }
+    #token-list, #profit-pairs, #log-list, #chat-list {
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    #token-list li {
+      display: flex;
+      flex-direction: column;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    #token-list li:hover {
+      transform: translateX(5px);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+    #token-list li.selected-token {
+      border: 2px solid rgba(0, 255, 0, 0.8);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+    }
+    #token-list .metric {
+      font-size: 0.75rem;
+      color: #a0a0a0;
+    }
+    #token-list .performance {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    #profit-pairs .metric {
+      font-size: 0.75rem;
+      color: #a0a0a0;
+    }
+
+    /* Animations */
+    @keyframes glow-blue {
+      0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
+      50% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.8), 0 0 25px rgba(0, 255, 255, 0.5); }
+      100% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
+    }
+    @keyframes glow-green {
+      0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+    }
+    @keyframes glow-red {
+      0% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes glow-purple {
+      0% { text-shadow: 0 0 5px rgba(128, 0, 128, 0.5), 0 0 10px rgba(128, 0, 128, 0.3); }
+      50% { text-shadow: 0 0 15px rgba(128, 0, 128, 0.8), 0 0 25px rgba(128, 0, 128, 0.5); }
+      100% { text-shadow: 0 0 5px rgba(128, 0, 128, 0.5), 0 0 10px rgba(128, 0, 128, 0.3); }
+    }
+    .glow-blue { animation: glow-blue 2s infinite; }
+    .glow-green { animation: glow-green 2s infinite; }
+    .glow-red { animation: glow-red 2s infinite; }
+    .glow-purple { animation: glow-purple 2s infinite; }
+    .fade-in { animation: fadeIn 0.5s ease-in; }
+    .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
+    .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2)); border: 1px solid rgba(0, 255, 0, 0.2); }
+
+    /* Marquee */
+    .marquee-container {
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(0, 255, 0, 0.3);
+      overflow: hidden;
+      white-space: nowrap;
+      padding: 4px 0;
+      margin-top: 8px;
+      width: 100%;
+    }
+    .marquee {
+      display: inline-block;
+      animation: marquee 60s linear infinite;
+      animation-play-state: running;
+      will-change: transform;
+    }
+    @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    .marquee span {
+      margin-right: 20px;
+      font-size: 0.75rem;
+      color: #00ff00;
+    }
+    @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
+    .marquee-container:hover .marquee { animation-play-state: paused; }
+
+    /* Buttons and Inputs */
+    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
+      animation: glow-green 2s infinite;
+      background-color: #00ff00;
+      color: #000;
+      border: 1px solid #00ff00;
+      font-size: 0.75rem;
+      border-radius: 4px;
+      padding: 0.5rem 1rem;
+    }
+    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
+      background-color: #00cc00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
+    }
+    .timeframe-btn.active {
+      background-color: #00cc00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
+    }
+    #chat-input {
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(0, 255, 0, 0.3);
+      color: #00ff00;
+      resize: none;
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 4px;
+    }
+    #chat-input:focus {
+      outline: none;
+      border-color: #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+    }
+
+    /* Loader */
+    .loader {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+    }
+    .loader::after {
+      content: '';
+      width: 24px;
+      height: 24px;
+      border: 4px solid #00ff00;
+      border-top: 4px solid transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Typewriter and Titles */
+    .typewriter {
+      display: inline-block;
+      overflow: hidden;
+      white-space: nowrap;
+      border-right: 2px solid #00ff00;
+      animation: typing 3s steps(30, end), blink-caret 0.75s step-end infinite;
+    }
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 100%; }
+    }
+    @keyframes blink-caret {
+      from, to { border-color: transparent; }
+      50% { border-color: #00ff00; }
+    }
+    .title-box {
+      font-family: 'Fira Code', monospace;
+      color: #00ff00;
+      text-align: center;
+      line-height: 1.4;
+      margin-bottom: 0.5rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      padding: 0.5rem;
+      animation: glow-green 2s infinite;
+    }
+    #chart-title-header, #chart-title-modal {
+      text-align: center;
+      padding: 0.5rem;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.8);
+    }
+    @media (min-width: 640px) {
+      .title-box { font-size: 0.875rem; }
+      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal { font-size: 0.875rem; }
+    }
+    @media (min-width: 768px) {
+      .title-box { font-size: 1rem; }
+    }
+
+    /* Tooltip */
+    [data-tooltip] { position: relative; }
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 255, 0, 0.9);
+      color: #000;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      z-index: 60;
+    }
+
+    /* Profit Pairs */
+    #profit-pairs .top-pair { animation: glow-green 2s infinite; }
+    #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col">
   <div class="grid-bg w-full h-full"></div>
   <div class="particles w-full h-full" id="particles"></div>
   <header class="w-full gradient-bg backdrop-blur-lg p-3 flex justify-center items-center overflow-x-hidden">
-    <!-- Existing header content -->
+    <div class="text-center w-full max-w-[95vw] sm:max-w-4xl lg:max-w-6xl mx-auto px-2">
+      <div class="title-box glow-green">
+        <h1 class="text-sm sm:text-lg md:text-xl">🧊 ICE KING DASHBOARD 👑</h1>
+      </div>
+      <p class="text-sm sm:text-base mt-1 text-gray-300 typewriter">Live Crypto Market Analytics</p>
+      <p class="text-xs sm:text-sm mt-1 text-green-500">Powered by CoinMarketCap & xAI</p>
+      <div class="chart-wrapper w-full">
+        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+          <div class="flex space-x-2 flex-wrap gap-2">
+            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
+            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
+            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
+            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
+            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
+          </div>
+          <div class="flex space-x-2">
+            <button id="toggle-indicator-header" class="text-black px-2 py-1 rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
+            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded" aria-label="Dock chart">Dock Chart 🔍</button>
+            <button id="toggle-data-source" class="text-black px-2 py-1 rounded" aria-label="Toggle data source">[Real Data] ❄️</button>
+            <button id="toggle-debug" class="text-black px-2 py-1 rounded" aria-label="Debug chart">[Enable Debug] 👑</button>
+          </div>
+        </div>
+        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+          <div id="live-price-header" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
+        </div>
+        <div id="chart-container-header" class="chart-container mt-2">
+          <div class="chart-loading">
+            <div class="loader"></div>
+            <div class="ml-2">Loading top ranked chart...</div>
+          </div>
+        </div>
+        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
+        <div class="marquee-container">
+          <div class="marquee" id="ticker-marquee-header">
+            <span>💰 BTC: $61,234.56 (+2.34%)</span>
+            <span>🔥 ETH: $3,456.78 (+1.23%)</span>
+            <span>🚀 SOL: $145.67 (+5.67%)</span>
+            <span>📉 XRP: $0.5678 (-0.45%)</span>
+            <span>🌟 ADA: $0.4567 (+3.21%)</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </header>
   <div class="chart-modal" id="chart-modal">
-    <!-- Existing chart modal content -->
+    <div class="chart-modal-content">
+      <div class="chart-wrapper w-full">
+        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+          <div class="flex space-x-2 flex-wrap gap-2">
+            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
+            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
+            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
+            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
+          </div>
+          <div class="flex space-x-2">
+            <button id="toggle-indicator-modal" class="text-black px-2 py-1 rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
+            <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded" aria-label="Undock chart">Undock Chart 🔍</button>
+          </div>
+        </div>
+        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
+          <div id="live-price-modal" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
+        </div>
+        <div id="chart-container-modal" class="chart-container mt-2">
+          <div class="chart-loading">
+            <div class="loader"></div>
+            <div class="ml-2">Loading top ranked chart...</div>
+          </div>
+        </div>
+        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
+        <div class="marquee-container">
+          <div class="marquee" id="ticker-marquee-modal">
+            <span>💰 BTC: $61,234.56 (+2.34%)</span>
+            <span>🔥 ETH: $3,456.78 (+1.23%)</span>
+            <span>🚀 SOL: $145.67 (+5.67%)</span>
+            <span>📉 XRP: $0.5678 (-0.45%)</span>
+            <span>🌟 ADA: $0.4567 (+3.21%)</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
   <main class="flex-1 p-3 max-w-7xl mx-auto w-full flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0">
-    <!-- Existing main content sections -->
+    <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
+      <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+      <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
+      <div class="mt-4">
+        <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top/Bottom Performers</h3>
+        <ul id="profit-pairs" class="space-y-2 text-xs sm:text-sm w-full"></ul>
+      </div>
+      <div class="mt-4">
+        <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top USDT Pairs</h3>
+        <ul id="top-pairs" class="text-xs sm:text-sm text-gray-500 flex flex-wrap gap-2"></ul>
+      </div>
+    </section>
+    <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Live Logs 📜</h2>
+      <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+      <ul id="log-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
+    </section>
+    <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Grok Trading Bot 🤖</h2>
+      <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+      <ul id="chat-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
+      <div class="mt-4 flex flex-col sm:flex-row gap-2">
+        <textarea id="chat-input" rows="2" placeholder="Ask Grok: What are the top rising tokens to trade today?" class="p-2 rounded" aria-label="Chat input"></textarea>
+        <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message">Send</button>
+      </div>
+    </section>
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
-    <!-- Existing footer content -->
+    <p class="typewriter">> Powered by CoinMarketCap & TradingView</p>
+    <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API (https://api.binance.com/api/v3/ticker/24hr)</p>
   </footer>
-
-  <script src="grok-ai.js"></script>
-  <script>
-    // Function to add a message to the chat list
-    function addChatMessage(message, sender) {
-      const chatList = document.getElementById('chat-list');
-      const li = document.createElement('li');
-      li.classList.add('p-2', 'rounded', 'bg-black', 'bg-opacity-50');
-      li.innerHTML = `
-        <div class="font-bold ${sender === 'user' ? 'text-green-400' : 'text-blue-400'}">
-          ${sender === 'user' ? '👤 You' : '🤖 Grok AI'}
-        </div>
-        <div class="text-sm">${message}</div>
-        <div class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString()}</div>
-      `;
-      chatList.appendChild(li);
-      chatList.scrollTop = chatList.scrollHeight;
-    }
-
-    // Send message function
-    async function sendMessage() {
-      const chatInput = document.getElementById('chat-input');
-      const loaderChat = document.getElementById('loader-chat');
-      const prompt = chatInput.value.trim();
-      
-      if (!prompt) return;
-
-      // Clear input and show loading
-      chatInput.value = '';
-      loaderChat.style.display = 'block';
-
-      try {
-        // Add user message
-        addChatMessage(prompt, 'user');
-
-        // Call Grok AI function from grok-ai.js
-        const response = await queryGrokAI(prompt);
-
-        // Hide loader
-        loaderChat.style.display = 'none';
-
-        // Add AI response
-        addChatMessage(response, 'ai');
-      } catch (error) {
-        console.error('Grok AI Error:', error);
-        loaderChat.style.display = 'none';
-        addChatMessage('Sorry, I could not process your request. Please try again.', 'ai');
-      }
-    }
-
-    // Event listeners for sending messages
-    document.addEventListener('DOMContentLoaded', () => {
-      const chatSendBtn = document.getElementById('chat-send');
-      const chatInput = document.getElementById('chat-input');
-
-      chatSendBtn.addEventListener('click', sendMessage);
-      chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-    });
-  </script>
 
   <script>
     // Particle effect
@@ -168,751 +529,368 @@
       particleContainer.appendChild(star);
     }
 
-    // Remaining original script content
-  </script>
-  <script src="script.js"></script>
-</body>
+    // Track indicator toggle state
+    let isIndicatorEnabledHeader = false;
+    let isIndicatorEnabledModal = false;
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧊 ICE KING DASHBOARD 👑</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://s3.tradingview.com/tv.js" async></script>
-  <style>
-    /* Base Styles */
-    body {
-      font-family: 'Fira Code', monospace;
-      background: linear-gradient(180deg, rgba(10, 15, 20, 0.95), rgba(10, 15, 20, 1));
-      color: #d1d5db;
-      overflow-x: hidden;
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
+    // TradingView chart initialization with retry
+    function initializeChart(containerId, symbol, interval = 'D', retries = 2) {
+      const container = document.getElementById(containerId);
+      const chartTitle = document.getElementById(containerId === 'chart-container-header' ? 'chart-title-header' : 'chart-title-modal');
+      if (!container || !chartTitle) {
+        console.error(`Container or chart title not found for ${containerId}`);
+        return;
+      }
 
-    /* Background Effects */
-    .grid-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 255, 0, 0.05),
-        rgba(0, 255, 0, 0.05) 1px,
-        transparent 1px,
-        transparent 20px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        rgba(0, 255, 0, 0.05),
-        rgba(0, 255, 0, 0.05) 1px,
-        transparent 1px,
-        transparent 20px
-      );
-      animation: glitch 4s infinite;
-      z-index: -1;
-      opacity: 0.8;
-    }
-    @keyframes glitch {
-      0%, 100% { transform: translate(0, 0); opacity: 0.7; }
-      5% { transform: translate(2px, -2px); opacity: 0.5; }
-      10% { transform: translate(-2px, 2px); opacity: 0.9; }
-    }
-    .particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -1;
-    }
-    .star {
-      position: absolute;
-      width: 2px;
-      height: 2px;
-      background: rgba(0, 255, 0, 0.7);
-      border-radius: 50%;
-      animation: float 10s infinite linear;
-    }
-    @keyframes float {
-      0% { transform: translate(0, 0); opacity: 0; }
-      50% { opacity: 0.8; }
-      100% { transform: translate(100px, -100px); opacity: 0; }
-    }
+      // Clear the container
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
 
-    /* Remaining original styles */
-  </style>
-</head>
-<body class="text-white min-h-screen flex flex-col">
-  <!-- Existing body content from original implementation -->
-
-  <!-- Grok AI Integration Scripts -->
-  <script src="grok-ai.js"></script>
-  <script>
-    // Function to add a message to the chat list
-    function addChatMessage(message, sender) {
-      const chatList = document.getElementById('chat-list');
-      const li = document.createElement('li');
-      li.classList.add('p-2', 'rounded', 'bg-black', 'bg-opacity-50');
-      li.innerHTML = `
-        <div class="font-bold ${sender === 'user' ? 'text-green-400' : 'text-blue-400'}">
-          ${sender === 'user' ? '👤 You' : '🤖 Grok AI'}
-        </div>
-        <div class="text-sm">${message}</div>
-        <div class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString()}</div>
+      // Show loading state
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'chart-loading';
+      loadingDiv.innerHTML = `
+        <div class="loader"></div>
+        <div class="ml-2">Loading ${symbol.replace('BINANCE:', '')} chart...</div>
       `;
-      chatList.appendChild(li);
-      chatList.scrollTop = chatList.scrollHeight;
-    }
+      container.appendChild(loadingDiv);
 
-    // Send message function
-    async function sendMessage() {
-      const chatInput = document.getElementById('chat-input');
-      const loaderChat = document.getElementById('loader-chat');
-      const prompt = chatInput.value.trim();
-      
-      if (!prompt) return;
+      // Determine if indicator should be applied
+      const isHeader = containerId === 'chart-container-header';
+      const isIndicatorEnabled = isHeader ? isIndicatorEnabledHeader : isIndicatorEnabledModal;
 
-      // Clear input and show loading
-      chatInput.value = '';
-      loaderChat.style.display = 'block';
+      // Initialize new TradingView widget
+      const initWidget = () => {
+        try {
+          const widgetConfig = {
+            autosize: true,
+            symbol: symbol,
+            interval: interval,
+            timezone: 'Etc/UTC',
+            theme: 'dark',
+            style: '1',
+            locale: 'en',
+            toolbar_bg: '#0a0f14',
+            enable_publishing: false,
+            hide_top_toolbar: false,
+            hide_side_toolbar: false,
+            allow_symbol_change: true,
+            container_id: containerId,
+            overrides: {
+              'paneProperties.background': '#0a0f14',
+              'paneProperties.vertGridProperties.color': 'rgba(0, 255, 0, 0.1)',
+              'paneProperties.horzGridProperties.color': 'rgba(0, 255, 0, 0.1)',
+              'mainSeriesProperties.candleStyle.upColor': '#00ff00',
+              'mainSeriesProperties.candleStyle.downColor': '#ff0000',
+              'mainSeriesProperties.candleStyle.borderUpColor': '#00ff00',
+              'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
+            },
+            onChartReady: () => {
+              console.log(`Chart loaded successfully for ${containerId} with symbol ${symbol}`);
+              if (isIndicatorEnabled) {
+                alert('Please manually add the "ICE KING Lite V1.0" indicator:\n1. Click the Indicators button (f(x)) on the chart.\n2. Search for "ICE KING Lite V1.0".\n3. Click to apply it.');
+              }
+            },
+            onError: (error) => {
+              console.error(`Chart initialization error for ${containerId} with symbol ${symbol}:`, error);
+              if (retries > 0) {
+                console.log(`Retrying (${retries} attempts left)...`);
+                setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
+              } else {
+                loadingDiv.textContent = `Failed to load ${symbol.replace('BINANCE:', '')} chart.`;
+              }
+            }
+          };
 
-      try {
-        // Add user message
-        addChatMessage(prompt, 'user');
-
-        // Call Grok AI function from grok-ai.js
-        const response = await queryGrokAI(prompt);
-
-        // Hide loader
-        loaderChat.style.display = 'none';
-
-        // Add AI response
-        addChatMessage(response, 'ai');
-      } catch (error) {
-        console.error('Grok AI Error:', error);
-        loaderChat.style.display = 'none';
-        addChatMessage('Sorry, I could not process your request. Please try again.', 'ai');
-      }
-    }
-
-    // Event listeners for sending messages
-    document.addEventListener('DOMContentLoaded', () => {
-      const chatSendBtn = document.getElementById('chat-send');
-      const chatInput = document.getElementById('chat-input');
-
-      chatSendBtn.addEventListener('click', sendMessage);
-      chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
+          const widget = new TradingView.widget(widgetConfig);
+        } catch (error) {
+          console.error(`Critical error initializing chart for ${containerId}:`, error);
+          if (retries > 0) {
+            setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
+          } else {
+            loadingDiv.textContent = `Critical failure loading ${symbol.replace('BINANCE:', '')} chart.`;
+          }
         }
-      });
-    });
-  </script>
+      };
 
-  <!-- Existing scripts -->
-  <script src="script.js"></script>
-</body>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧊 ICE KING DASHBOARD 👑</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://s3.tradingview.com/tv.js" async></script>
-  <style>
-    /* Base Styles */
-    body {
-      font-family: 'Fira Code', monospace;
-      background: linear-gradient(180deg, rgba(10, 15, 20, 0.95), rgba(10, 15, 20, 1));
-      color: #d1d5db;
-      overflow-x: hidden;
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      setTimeout(initWidget, 300);
     }
 
-    /* Existing styles remain unchanged */
-  </style>
-</head>
-<body class="text-white min-h-screen flex flex-col">
-  <!-- Existing body content -->
-
-  <!-- Grok AI Integration -->
-  <script src="grok-ai.js"></script>
-  <script>
-    // Function to add a message to the chat list
-    function addChatMessage(message, sender) {
-      const chatList = document.getElementById('chat-list');
-      const li = document.createElement('li');
-      li.classList.add('p-2', 'rounded', 'bg-black', 'bg-opacity-50');
-      li.innerHTML = `
-        <div class="font-bold ${sender === 'user' ? 'text-green-400' : 'text-blue-400'}">
-          ${sender === 'user' ? '👤 You' : '🤖 Grok AI'}
-        </div>
-        <div class="text-sm">${message}</div>
-        <div class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString()}</div>
-      `;
-      chatList.appendChild(li);
-      chatList.scrollTop = chatList.scrollHeight;
-    }
-
-    // Send message function
-    async function sendMessage() {
-      const chatInput = document.getElementById('chat-input');
-      const loaderChat = document.getElementById('loader-chat');
-      const prompt = chatInput.value.trim();
-      
-      if (!prompt) return;
-
-      // Clear input and show loading
-      chatInput.value = '';
-      loaderChat.style.display = 'block';
-
-      try {
-        // Add user message
-        addChatMessage(prompt, 'user');
-
-        // Call Grok AI function from grok-ai.js
-        const response = await queryGrokAI(prompt);
-
-        // Hide loader
-        loaderChat.style.display = 'none';
-
-        // Add AI response
-        addChatMessage(response, 'ai');
-      } catch (error) {
-        console.error('Grok AI Error:', error);
-        loaderChat.style.display = 'none';
-        addChatMessage('Sorry, I could not process your request. Please try again.', 'ai');
-      }
-    }
-
-    // Event listeners for sending messages
-    document.addEventListener('DOMContentLoaded', () => {
-      const chatSendBtn = document.getElementById('chat-send');
-      const chatInput = document.getElementById('chat-input');
-
-      chatSendBtn.addEventListener('click', sendMessage);
-      chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
+    // Fetch with retry logic
+    async function fetchWithRetry(url, retries = 2, delay = 1000) {
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const response = await fetch(url, {
+            method: 'GET',
+            mode: 'cors',
+            credentials: 'omit',
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}, Status Text: ${response.statusText}`);
+          }
+          return await response.json();
+        } catch (error) {
+          if (i === retries) {
+            console.error(`Failed to fetch from ${url} after ${retries + 1} attempts:`, error);
+            throw error;
+          }
+          console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${delay}ms... Error: ${error.message}`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         }
-      });
-    });
-  </script>
-
-  <!-- Existing scripts -->
-  <script src="script.js"></script>
-</body>
-</html>
-<html lang="en" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>🧊 ICE KING DASHBOARD 👑 | Responsive Crypto Analytics</title>
-  
-  <!-- Performance and PWA Meta Tags -->
-  <meta name="description" content="Advanced Crypto Trading Dashboard with AI Insights - Responsive Web and Mobile Platform">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0a0f14">
-  
-  <!-- Preload Critical Resources -->
-  <link rel="preload" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" as="style">
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" as="style">
-  <link rel="preload" href="https://s3.tradingview.com/tv.js" as="script">
-  
-  <!-- Stylesheets -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  
-  <!-- Custom Responsive Styles -->
-  <style>
-    /* All previous CSS remains unchanged */
-    /* Existing styles from the original implementation */
-  </style>
-</head>
-<body class="min-h-screen flex flex-col">
-  <!-- Background Effects -->
-  <div class="particles" id="particles"></div>
-
-  <!-- Existing body content -->
-
-  <!-- Grok AI Integration Scripts -->
-  <script src="grok-ai.js"></script>
-  <script>
-    // Function to add a message to the chat list
-    function addChatMessage(message, sender) {
-      const chatList = document.getElementById('chat-list');
-      const li = document.createElement('li');
-      li.classList.add('p-2', 'rounded', 'bg-black', 'bg-opacity-50');
-      li.innerHTML = `
-        <div class="font-bold ${sender === 'user' ? 'text-green-400' : 'text-blue-400'}">
-          ${sender === 'user' ? '👤 You' : '🤖 Grok AI'}
-        </div>
-        <div class="text-sm">${message}</div>
-        <div class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString()}</div>
-      `;
-      chatList.appendChild(li);
-      chatList.scrollTop = chatList.scrollHeight;
-    }
-
-    // Send message function
-    async function sendMessage() {
-      const chatInput = document.getElementById('chat-input');
-      const loaderChat = document.getElementById('loader-chat');
-      const prompt = chatInput.value.trim();
-      
-      if (!prompt) return;
-
-      // Clear input and show loading
-      chatInput.value = '';
-      loaderChat.style.display = 'block';
-
-      try {
-        // Add user message
-        addChatMessage(prompt, 'user');
-
-        // Call Grok AI function from grok-ai.js
-        const response = await queryGrokAI(prompt);
-
-        // Hide loader
-        loaderChat.style.display = 'none';
-
-        // Add AI response
-        addChatMessage(response, 'ai');
-      } catch (error) {
-        console.error('Grok AI Error:', error);
-        loaderChat.style.display = 'none';
-        addChatMessage('Sorry, I could not process your request. Please try again.', 'ai');
       }
     }
 
-    // Event listeners for sending messages
-    document.addEventListener('DOMContentLoaded', () => {
-      const chatSendBtn = document.getElementById('chat-send');
-      const chatInput = document.getElementById('chat-input');
+    // Main logic to load and populate data
+    let isUsingMockData = false;
 
-      chatSendBtn.addEventListener('click', sendMessage);
-      chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleDataSourceBtn = document.getElementById('toggle-data-source');
+      const toggleIndicatorHeaderBtn = document.getElementById('toggle-indicator-header');
+      const toggleIndicatorModalBtn = document.getElementById('toggle-indicator-modal');
+
+      // Function to load and populate data
+      const loadData = async () => {
+        const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
+        if (isUsingMockData) {
+          // Use mock data when toggled
+          updateUI(mockTokens);
+          toggleDataSourceBtn.textContent = '[Real Data] ❄️';
+          return;
         }
-      });
-    });
-  </script>
-
-  <!-- Existing scripts -->
-  <script src="script.js"></script>
-</body>
-
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧊 ICE KING DASHBOARD 👑</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://s3.tradingview.com/tv.js" async></script>
-  <style>
-    /* Entire existing CSS from previous implementation */
-    /* (All previous CSS remains unchanged) */
-  </style>
-</head>
-<body class="text-white min-h-screen flex flex-col">
-  <!-- Existing body content from previous implementation -->
-  
-  <script src="grok-ai.js"></script>
-  <script>
-    // Grok AI Chat Integration
-    document.addEventListener('DOMContentLoaded', () => {
-      const chatInput = document.getElementById('chat-input');
-      const chatSendBtn = document.getElementById('chat-send');
-      const chatList = document.getElementById('chat-list');
-      const loaderChat = document.getElementById('loader-chat');
-
-      // Function to add a message to the chat list
-      function addChatMessage(message, sender) {
-        const li = document.createElement('li');
-        li.classList.add('p-2', 'rounded', 'bg-black', 'bg-opacity-50');
-        li.innerHTML = `
-          <div class="font-bold ${sender === 'user' ? 'text-green-400' : 'text-blue-400'}">
-            ${sender === 'user' ? '👤 You' : '🤖 Grok AI'}
-          </div>
-          <div class="text-sm">${message}</div>
-          <div class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString()}</div>
-        `;
-        chatList.appendChild(li);
-        chatList.scrollTop = chatList.scrollHeight;
-      }
-
-      // Send message function
-      async function sendMessage() {
-        const prompt = chatInput.value.trim();
-        if (!prompt) return;
-
-        // Clear input and show loading
-        chatInput.value = '';
-        loaderChat.style.display = 'block';
 
         try {
-          // Add user message
-          addChatMessage(prompt, 'user');
-
-          // Call Grok AI function from grok-ai.js
-          const response = await queryGrokAI(prompt);
-
-          // Hide loader
-          loaderChat.style.display = 'none';
-
-          // Add AI response
-          addChatMessage(response, 'ai');
+          const data = await fetchWithRetry(backendApiUrl);
+          console.log('Raw backend response:', data); // Log the raw response for debugging
+          if (!Array.isArray(data) || data.length === 0) {
+            throw new Error('Invalid or empty response from backend');
+          }
+          updateUI(data);
+          toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
         } catch (error) {
-          console.error('Grok AI Error:', error);
-          loaderChat.style.display = 'none';
-          addChatMessage('Sorry, I could not process your request. Please try again.', 'ai');
+          console.error('Failed to load real data:', error);
+          document.getElementById('live-price-header').textContent = `> Live Price: Error - ${error.message} ❄️`;
+          document.getElementById('chart-title-header').textContent = 'Error loading data';
+          document.getElementById('chart-title-modal').textContent = 'Error loading data';
+          document.getElementById('loader-tokens').textContent = `> ${error.message}. Click "Toggle Data Source" to use mock data.`;
+          document.getElementById('loader-tokens').style.display = 'block';
+          toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
         }
-      }
+      };
 
-      // Event listeners for sending messages
-      chatSendBtn.addEventListener('click', sendMessage);
-      chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-    });
-  </script>
-  <script src="script.js"></script>
-</body>
-</html>
-<html lang="en" class="dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>🧊 ICE KING DASHBOARD 👑 | Responsive Crypto Analytics</title>
-  
-  <!-- Performance and PWA Meta Tags -->
-  <meta name="description" content="Advanced Crypto Trading Dashboard with AI Insights - Responsive Web and Mobile Platform">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#0a0f14">
-  
-  <!-- Preload Critical Resources -->
-  <link rel="preload" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" as="style">
-  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" as="style">
-  <link rel="preload" href="https://s3.tradingview.com/tv.js" as="script">
-  
-  <!-- Stylesheets -->
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
-  
-  <!-- Custom Responsive Styles -->
-  <style>
-    :root {
-      --bg-primary: #0a0f14;
-      --text-primary: #d1d5db;
-      --accent-green: #00ff00;
-      --accent-blue: #00ffff;
-    }
+      // Function to update UI with token data
+      function updateUI(tokens) {
+        document.getElementById('loader-tokens').style.display = 'none';
 
-    * {
-      -webkit-tap-highlight-color: transparent;
-      box-sizing: border-box;
-      scrollbar-width: thin;
-      scrollbar-color: var(--accent-green) var(--bg-primary);
-    }
+        // Update token list
+        const tokenList = document.getElementById('token-list');
+        tokenList.innerHTML = tokens.map((token, index) => {
+          const isPositive = token.price_change_percentage_24h >= 0;
+          const rankFactor = index / (tokens.length - 1);
+          const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
+          const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
+          const symbol = `${token.symbol}USDT`; // Append USDT for TradingView compatibility
+          return `
+            <li class="${bgClass} ${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}">
+              <div class="flex justify-between">
+                <span>${token.name} (${token.symbol})</span>
+                <span class="performance ${textClass}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
+              </div>
+              <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
+              <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
+              <div class="metric">Circ. Supply: ${token.circulating_supply.toLocaleString()}</div>
+            </li>
+          `;
+        }).join('');
 
-    html, body {
-      max-width: 100%;
-      overflow-x: hidden;
-      scroll-behavior: smooth;
-      font-family: 'Fira Code', monospace;
-      background: linear-gradient(180deg, rgba(10, 15, 20, 0.95), rgba(10, 15, 20, 1));
-      color: var(--text-primary);
-      line-height: 1.6;
-      overscroll-behavior-y: none;
-    }
-
-    /* Responsive Typography */
-    html {
-      font-size: 14px;
-    }
-
-    @media (min-width: 375px) {
-      html { font-size: 15px; }
-    }
-
-    @media (min-width: 768px) {
-      html { font-size: 16px; }
-    }
-
-    @media (min-width: 1024px) {
-      html { font-size: 17px; }
-    }
-
-    @media (min-width: 1440px) {
-      html { font-size: 18px; }
-    }
-
-    /* Flexible Grid Layout */
-    .responsive-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 1rem;
-    }
-
-    @media (min-width: 768px) {
-      .responsive-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (min-width: 1024px) {
-      .responsive-grid {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    /* High-Resolution Friendly Elements */
-    .section-card {
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid rgba(0, 255, 0, 0.2);
-      border-radius: 0.75rem;
-      padding: 1rem;
-      transition: all 0.3s ease;
-    }
-
-    .section-card:hover {
-      transform: scale(1.02);
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
-    }
-
-    /* Enhanced Touch and Interaction */
-    @media (max-width: 767px) {
-      button, input, textarea {
-        min-height: 44px;
-        min-width: 44px;
-      }
-    }
-
-    /* High DPI and Retina Display Support */
-    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-      body {
-        -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
-      }
-    }
-
-    /* Adaptive Background and Particle Effects */
-    .particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: -1;
-      opacity: 0.5;
-    }
-
-    .star {
-      position: absolute;
-      background: rgba(0, 255, 0, 0.7);
-      border-radius: 50%;
-      opacity: 0.7;
-    }
-
-    /* Responsive Animations */
-    @keyframes subtle-pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-    }
-
-    /* Reduced Motion Consideration */
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation: none !important;
-        transition: none !important;
-      }
-    }
-  </style>
-</head>
-<body class="min-h-screen flex flex-col">
-  <!-- Background Effects -->
-  <div class="particles" id="particles"></div>
-
-  <!-- Responsive Header -->
-  <header class="w-full bg-opacity-30 backdrop-blur-lg p-4 text-center">
-    <div class="container mx-auto max-w-7xl">
-      <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-accent-green mb-2">🧊 ICE KING DASHBOARD 👑</h1>
-      <p class="text-sm md:text-base text-gray-400">Advanced Crypto Market Analytics</p>
-    </div>
-  </header>
-
-  <!-- Main Content with Responsive Grid -->
-  <main class="flex-grow container mx-auto px-4 py-6 max-w-7xl">
-    <div class="responsive-grid">
-      <!-- Crypto Tokens Section -->
-      <section class="section-card">
-        <h2 class="text-xl font-semibold mb-4 text-accent-green">🍀 Crypto Tokens</h2>
-        <div id="token-list" class="space-y-2 max-h-96 overflow-y-auto">
-          <!-- Tokens will be dynamically loaded -->
-        </div>
-      </section>
-
-      <!-- Live Logs Section -->
-      <section class="section-card">
-        <h2 class="text-xl font-semibold mb-4 text-accent-green">📜 Live Logs</h2>
-        <div id="log-list" class="space-y-2 max-h-96 overflow-y-auto">
-          <!-- Logs will be dynamically loaded -->
-        </div>
-      </section>
-
-      <!-- Grok AI Chat Section -->
-      <section class="section-card">
-        <h2 class="text-xl font-semibold mb-4 text-accent-green">🤖 Grok Trading Bot</h2>
-        <div id="chat-list" class="space-y-2 max-h-96 overflow-y-auto mb-4">
-          <!-- Chat messages will be dynamically loaded -->
-        </div>
-        
-        <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
-          <textarea 
-            id="chat-input" 
-            placeholder="Ask Grok about trading insights..." 
-            class="w-full md:flex-grow p-2 bg-gray-800 text-accent-green border border-accent-green rounded resize-none"
-            rows="3"
-          ></textarea>
-          <button 
-            id="chat-send" 
-            class="w-full md:w-auto bg-accent-green text-black px-4 py-2 rounded hover:bg-opacity-80 transition-colors"
-          >
-            Send
-          </button>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <!-- Responsive Footer -->
-  <footer class="w-full bg-opacity-30 backdrop-blur-lg p-4 text-center text-sm text-gray-500">
-    <p>🧊 Powered by CoinMarketCap & TradingView | 2025 Ice King Technologies</p>
-  </footer>
-
-  <!-- Performance-Optimized Scripts -->
-  <script src="https://s3.tradingview.com/tv.js" async defer></script>
-  <script src="grok-ai.js"></script>
-  <script>
-    // Grok AI Chat Integration
-    document.addEventListener('DOMContentLoaded', () => {
-      const chatInput = document.getElementById('chat-input');
-      const chatSendBtn = document.getElementById('chat-send');
-      const chatList = document.getElementById('chat-list');
-      const loaderChat = document.getElementById('loader-chat');
-
-      // Function to add a message to the chat list
-      function addChatMessage(message, sender) {
-        const li = document.createElement('li');
-        li.classList.add('p-2', 'rounded', 'bg-black', 'bg-opacity-50');
-        li.innerHTML = `
-          <div class="font-bold ${sender === 'user' ? 'text-green-400' : 'text-blue-400'}">
-            ${sender === 'user' ? '👤 You' : '🤖 Grok AI'}
-          </div>
-          <div class="text-sm">${message}</div>
-          <div class="text-xs text-gray-500 mt-1">${new Date().toLocaleTimeString()}</div>
+        // Update top/bottom performers
+        const profitPairs = document.getElementById('profit-pairs');
+        const sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+        const topToken = sortedTokens[0];
+        const bottomToken = sortedTokens[sortedTokens.length - 1];
+        profitPairs.innerHTML = `
+          <li class="top-pair p-2 rounded bg-black bg-opacity-50">
+            <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
+            <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
+            <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
+            <div class="metric">Circ. Supply: ${topToken.circulating_supply.toLocaleString()}</div>
+          </li>
+          <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">
+            <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
+            <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
+            <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
+            <div class="metric">Circ. Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
+          </li>
         `;
-        chatList.appendChild(li);
-        chatList.scrollTop = chatList.scrollHeight;
+
+        // Update live price
+        document.getElementById('live-price-header').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
+        document.getElementById('live-price-modal').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
+
+        // Update top pairs
+        const topPairs = document.getElementById('top-pairs');
+        topPairs.innerHTML = tokens
+          .filter(token => token.symbol && token.symbol !== 'USDT')
+          .slice(0, 5)
+          .map(token => `<li class="gradient-bg p-1 rounded-md text-sm glow-blue">> 🧊 ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
+          .join('');
+
+        // Update marquee
+        const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
+        const marqueeContent = [
+          ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
+          `<span class="glow-purple">[${uniquePun}]</span>`
+        ].join('');
+        document.getElementById('ticker-marquee-header').innerHTML = marqueeContent.repeat(3);
+        document.getElementById('ticker-marquee-modal').innerHTML = marqueeContent.repeat(3);
+        document.getElementById('ticker-marquee-header').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
+        document.getElementById('ticker-marquee-modal').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
+
+        // Initialize charts with top token
+        const topSymbol = `BINANCE:${topToken.symbol}USDT`;
+        initializeChart('chart-container-header', topSymbol, 'D');
+        initializeChart('chart-container-modal', topSymbol, 'D');
+        document.getElementById('chart-title-header').setAttribute('data-symbol', topSymbol);
+        document.getElementById('chart-title-header').textContent = topSymbol;
+        document.getElementById('chart-title-modal').setAttribute('data-symbol', topSymbol);
+        document.getElementById('chart-title-modal').textContent = topSymbol;
       }
 
-      // Send message function
-      async function sendMessage() {
-        const prompt = chatInput.value.trim();
-        if (!prompt) return;
+      // Initial load
+      loadData();
 
-        // Clear input and show loading
-        chatInput.value = '';
-        loaderChat.style.display = 'block';
-
-        try {
-          // Add user message
-          addChatMessage(prompt, 'user');
-
-          // Call Grok AI function from grok-ai.js
-          const response = await queryGrokAI(prompt);
-
-          // Hide loader
-          loaderChat.style.display = 'none';
-
-          // Add AI response
-          addChatMessage(response, 'ai');
-        } catch (error) {
-          console.error('Grok AI Error:', error);
-          loaderChat.style.display = 'none';
-          addChatMessage('Sorry, I could not process your request. Please try again.', 'ai');
-        }
-      }
-
-      // Event listeners for sending messages
-      chatSendBtn.addEventListener('click', sendMessage);
-      chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-    });
-  </script>
-  <script src="script.js"></script>
-  <script>
-    // Responsive Particle Effect
-    function initParticles() {
-      const particleContainer = document.getElementById('particles');
-      const particleCount = window.innerWidth < 768 ? 50 : 100;
-      
-      for (let i = 0; i < particleCount; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-        star.style.width = `${Math.random() * 3}px`;
-        star.style.height = `${Math.random() * 3}px`;
-        star.style.left = `${Math.random() * 100}%`;
-        star.style.top = `${Math.random() * 100}%`;
-        star.style.animationDelay = `${Math.random() * 10}s`;
-        particleContainer.appendChild(star);
-      }
-    }
-
-    // Performance and Responsiveness Optimization
-    document.addEventListener('DOMContentLoaded', () => {
-      initParticles();
-      
-      // Responsive Resize Handler
-      window.addEventListener('resize', () => {
-        // Reinitialize particles on significant width change
-        if (window.innerWidth !== window.lastWidth) {
-          document.getElementById('particles').innerHTML = '';
-          initParticles();
-          window.lastWidth = window.innerWidth;
-        }
+      // Toggle data source button handler
+      toggleDataSourceBtn.addEventListener('click', () => {
+        isUsingMockData = !isUsingMockData;
+        loadData();
       });
 
-      // Performance Monitoring
-      if ('performance' in window) {
-        window.addEventListener('load', () => {
-          const loadTime = window.performance.now();
-          console.log(`Page loaded in ${loadTime.toFixed(2)} milliseconds`);
+      // Toggle indicator button handlers
+      toggleIndicatorHeaderBtn.addEventListener('click', () => {
+        isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
+        toggleIndicatorHeaderBtn.textContent = `[${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} ICE KING] 🧊`;
+        const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
+        const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
+        initializeChart('chart-container-header', symbol, interval);
+      });
+
+      toggleIndicatorModalBtn.addEventListener('click', () => {
+        isIndicatorEnabledModal = !isIndicatorEnabledModal;
+        toggleIndicatorModalBtn.textContent = `[${isIndicatorEnabledModal ? 'Disable' : 'Enable'} ICE KING] 🧊`;
+        const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
+        const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
+        initializeChart('chart-container-modal', symbol, interval);
+      });
+
+      // Timeframe button handlers
+      const timeframes = ['1min', '5min', '15min', '1hr', '1d'];
+      timeframes.forEach(tf => {
+        const headerBtn = document.getElementById(`header-timeframe-${tf}`);
+        const modalBtn = document.getElementById(`modal-timeframe-${tf}`);
+        const interval = headerBtn?.dataset.interval;
+
+        if (headerBtn) {
+          headerBtn.addEventListener('click', () => {
+            document.querySelectorAll('#header-timeframe-' + timeframes.map(t => `#header-timeframe-${t}`).join(',')).forEach(btn => btn.classList.remove('active'));
+            headerBtn.classList.add('active');
+            const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
+            initializeChart('chart-container-header', symbol, interval);
+          });
+        }
+        if (modalBtn) {
+          modalBtn.addEventListener('click', () => {
+            document.querySelectorAll('#modal-timeframe-' + timeframes.map(t => `#modal-timeframe-${t}`).join(',')).forEach(btn => btn.classList.remove('active'));
+            modalBtn.classList.add('active');
+            const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
+            initializeChart('chart-container-modal', symbol, interval);
+          });
+        }
+      });
+
+      // Token list click to toggle chart
+      const tokenList = document.getElementById('token-list');
+      if (tokenList) {
+        tokenList.addEventListener('click', (e) => {
+          const li = e.target.closest('li');
+          if (li && li.dataset.symbol) {
+            const symbol = li.dataset.symbol;
+            const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
+            initializeChart('chart-container-header', symbol, interval);
+            initializeChart('chart-container-modal', symbol, interval);
+            document.getElementById('chart-title-header').setAttribute('data-symbol', symbol);
+            document.getElementById('chart-title-header').textContent = symbol;
+            document.getElementById('chart-title-modal').setAttribute('data-symbol', symbol);
+            document.getElementById('chart-title-modal').textContent = symbol;
+
+            // Update selected token styling
+            const tokenListItems = document.querySelectorAll('#token-list li');
+            tokenListItems.forEach(item => item.classList.remove('selected-token'));
+            li.classList.add('selected-token');
+
+            console.log(`Switched to token from list: ${symbol}`);
+          }
         });
       }
+
+      // Modal toggle
+      const toggleStickyHeader = document.getElementById('toggle-sticky-header');
+      const toggleStickyModal = document.getElementById('toggle-sticky-modal');
+      const chartModal = document.getElementById('chart-modal');
+
+      if (toggleStickyHeader) {
+        toggleStickyHeader.addEventListener('click', () => {
+          chartModal.classList.add('active');
+          const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
+          const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
+          initializeChart('chart-container-modal', symbol, interval);
+        });
+      }
+      if (toggleStickyModal) {
+        toggleStickyModal.addEventListener('click', () => {
+          chartModal.classList.remove('active');
+          const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
+          const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
+          initializeChart('chart-container-header', symbol, interval);
+        });
+      }
+
+      // Toggle debug mode
+      const toggleDebugBtn = document.getElementById('toggle-debug');
+      toggleDebugBtn.addEventListener('click', () => {
+        isDebugMode = !isDebugMode;
+        toggleDebugBtn.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
+      });
     });
+
+    // Mock data for fallback
+    const mockTokens = [
+      { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
+      { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2 },
+      { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
+    ];
+
+    // Ice King Puns for Marquee
+    const iceKingPuns = [
+      "Everything is Going to be okay! ❄️👑",
+      "Penguins are my royal guards! 🐧🧊",
+      "Time to freeze the market! ❄️😂",
+      "Ice to meet you, traders! 🧊🐧",
+      "I’m the coolest king around! 👑❄️",
+      "Penguin power activate! 🐧🧊😂",
+      "Snow way I’m missing this trade! ❄️📈",
+      "Freeze your doubts, let’s trade! 🧊💸",
+      "I’m skating through the market! ⛸️❄️",
+      "Cold cash, hot trades! 🥶💰",
+      "My portfolio’s cooler than ice! ❄️📊",
+      "Chill out, I’ve got this! 🧊😎",
+      "Ice King’s here to rule the charts! 👑📉",
+      "Let’s make it snow profits! ❄️💵",
+      "I’m frosting the competition! 🧊🏆",
+      "Cool trades, warm wins! ❄️🔥"
+    ];
+
+    let isDebugMode = false;
   </script>
+  <script src="script.js"></script>
 </body>
 </html>
