@@ -397,9 +397,8 @@
     #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
   </style>
 </head>
-<body class="text-white min-h-screen flex flex-col">
-  <div class="grid-bg w-full h-full"></div>
-  <div class="particles w-full h-full" id="particles"></div>
+<body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-green-600">
+  <div class="particles" id="particles"></div>
   <header class="w-full gradient-bg backdrop-blur-lg p-3 flex justify-center items-center overflow-x-hidden">
     <div class="text-center w-full max-w-[95vw] sm:max-w-4xl lg:max-w-6xl mx-auto px-2">
       <div class="title-box glow-green">
@@ -504,8 +503,16 @@
     </section>
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Grok Trading Bot 🤖</h2>
+      <div class="mt-4">
+        <h3 class="text-md font-semibold mb-2 glow-green">📡 Live System Logs</h3>
+        <div id="live-logs-container" class="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 p-2 bg-gray-900 rounded">
+          <!-- Live logs will be dynamically added here -->
+        </div>
+      </div>
       <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="chat-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
+      <div id="chat-list" class="flex-grow overflow-y-auto p-4 space-y-2 max-h-[70vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600">
+        <!-- Chat messages will be dynamically added here -->
+      </div>
       <div class="mt-4 flex flex-col sm:flex-row gap-2">
         <textarea id="chat-input" rows="2" placeholder="Ask Grok: What are the top rising tokens to trade today?" class="p-2 rounded" aria-label="Chat input"></textarea>
         <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message">Send</button>
@@ -892,5 +899,6 @@
     let isDebugMode = false;
   </script>
   <script src="script.js"></script>
+<script src="live-logs.js"></script>
 </body>
 </html>
