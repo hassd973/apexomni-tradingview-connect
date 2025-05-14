@@ -24,9 +24,10 @@ async function queryGrokAI(prompt) {
 // Function to display Grok AI response in the UI
 async function displayGrokAIResponse(prompt) {
   const grokResponseElement = document.getElementById('grok-ai-response');
+  const chatList = document.getElementById('chat-list');
   
-  if (!grokResponseElement) {
-    console.error('[ERROR] Grok AI response element not found');
+  if (!grokResponseElement || !chatList) {
+    console.error('[ERROR] Grok AI response or chat list element not found');
     return;
   }
 
@@ -37,39 +38,81 @@ async function displayGrokAIResponse(prompt) {
     const response = await queryGrokAI(prompt);
     
     // Display the response with Ice King flair
-    grokResponseElement.innerHTML = `
-      > 👑 Ice King's Wisdom: 
-      <br>
-      ${response}
-      <br>
-      > ❄️ Powered by Grok AI
+    const formattedResponse = `🧊 ${response}`;
+    grokResponseElement.innerHTML = formattedResponse;
+    
+    // Add to chat history
+    const chatItem = document.createElement('li');
+    chatItem.classList.add('bg-gray-800', 'p-2', 'rounded', 'text-green-400', 'fade-in');
+    chatItem.innerHTML = `
+      <div class="flex justify-between">
+        <span class="font-bold text-green-300">🤖 Grok AI</span>
+        <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+      </div>
+      <div class="mt-1">${formattedResponse}</div>
     `;
+    
+    // Add user prompt to chat history
+    const userPromptItem = document.createElement('li');
+    userPromptItem.classList.add('bg-gray-900', 'p-2', 'rounded', 'text-blue-300', 'fade-in');
+    userPromptItem.innerHTML = `
+      <div class="flex justify-between">
+        <span class="font-bold text-blue-200">👑 Ice King</span>
+        <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+      </div>
+      <div class="mt-1">${prompt}</div>
+    `;
+    
+    // Prepend items to chat list and scroll to top
+    chatList.insertBefore(chatItem, chatList.firstChild);
+    chatList.insertBefore(userPromptItem, chatList.firstChild);
+    chatList.scrollTop = 0;
+    
+    // Clear input after sending
+    const chatInput = document.getElementById('chat-input');
+    if (chatInput) chatInput.value = '';
+    
   } catch (error) {
-    grokResponseElement.innerHTML = '> Oops! The Ice King is chilling. Try again later. ❄️';
+    console.error('Grok AI Display Error:', error);
+    grokResponseElement.innerHTML = '> Oops! The Ice King is taking a break. ❄️🐧';
+    
+    // Add error to chat history
+    const errorItem = document.createElement('li');
+    errorItem.classList.add('bg-red-900', 'p-2', 'rounded', 'text-red-300', 'fade-in');
+    errorItem.innerHTML = `
+      <div class="flex justify-between">
+        <span class="font-bold text-red-200">❌ Error</span>
+        <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+      </div>
+      <div class="mt-1">Sorry, the Ice King's magic is temporarily frozen. ${error.message}</div>
+    `;
+    
+    chatList.insertBefore(errorItem, chatList.firstChild);
+    chatList.scrollTop = 0;
   }
 }
 
-// Add Grok AI interaction to the existing event listeners
+// Event listener for chat send button
 document.addEventListener('DOMContentLoaded', () => {
-  const grokAIInput = document.getElementById('grok-ai-input');
-  const grokAISubmit = document.getElementById('grok-ai-submit');
+  const chatSendBtn = document.getElementById('chat-send');
+  const chatInput = document.getElementById('chat-input');
 
-  if (grokAIInput && grokAISubmit) {
-    grokAISubmit.addEventListener('click', () => {
-      const prompt = grokAIInput.value.trim();
+  if (chatSendBtn && chatInput) {
+    // Send message on button click
+    chatSendBtn.addEventListener('click', () => {
+      const prompt = chatInput.value.trim();
       if (prompt) {
         displayGrokAIResponse(prompt);
-        grokAIInput.value = ''; // Clear input after submission
       }
     });
 
-    // Optional: Add enter key support
-    grokAIInput.addEventListener('keypress', (event) => {
-      if (event.key === 'Enter') {
-        const prompt = grokAIInput.value.trim();
+    // Send message on Enter key press
+    chatInput.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        const prompt = chatInput.value.trim();
         if (prompt) {
           displayGrokAIResponse(prompt);
-          grokAIInput.value = ''; // Clear input after submission
         }
       }
     });
