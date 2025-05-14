@@ -105,6 +105,25 @@ async function fetchCryptoData() {
   }
 }
 
+// API endpoint for live logs
+app.get('/api/live-logs', async (req, res) => {
+  try {
+    const { query = '', batch = 50 } = req.query;
+    const logs = await fetchLiveLogs(query, parseInt(batch));
+    res.json({
+      success: true,
+      logs: logs.map(log => ({
+        timestamp: log.timestamp,
+        message: log.message,
+        level: log.level || 'info'
+      }))
+    });
+  } catch (error) {
+    console.error('Error fetching live logs:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch live logs' });
+  }
+});
+
 // API endpoint to get crypto data
 app.get('/api/crypto', async (req, res) => {
   try {
