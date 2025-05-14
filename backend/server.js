@@ -8,12 +8,25 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Determine the correct frontend path
+const frontendPath = process.env.FRONTEND_PATH || path.join(__dirname, 'frontend');
+console.log('Frontend Path:', frontendPath);
+
 // Serve static files from the frontend directory
-app.use(express.static(path.join(__dirname, 'frontend')));
+app.use(express.static(frontendPath));
 
 // Root route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+  const indexPath = path.join(frontendPath, 'index.html');
+  console.log('Serving index.html from:', indexPath);
+  
+  // Check if the file exists before sending
+  if (require('fs').existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    console.error('index.html not found at:', indexPath);
+    res.status(404).send('index.html not found');
+  }
 });
 
 // Enable CORS for all origins (or specify your frontend domain)
