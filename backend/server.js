@@ -1,6 +1,8 @@
+require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -8,17 +10,21 @@ const port = process.env.PORT || 3001;
 // Enable CORS for all origins (or specify your frontend domain)
 app.use(cors());
 
+// Parse JSON bodies
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
 // Better Stack configuration
-const BETTER_STACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
-const BETTER_STACK_SOURCE_ID = '1303816'; // Extracted from the provided link
+const BETTER_STACK_TOKEN = process.env.BETTER_STACK_TOKEN;
+const BETTER_STACK_SOURCE_ID = process.env.BETTER_STACK_SOURCE_ID;
 const BETTER_STACK_API_URL = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
 
 // CoinMarketCap API configuration
-const CMC_API_KEY = 'bef090eb-323d-4ae8-86dd-266236262f19';
+const CMC_API_KEY = process.env.COINMARKETCAP_API_KEY;
 const CMC_API_URL = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
 
 // CoinGecko API configuration
-const COINGECKO_API_KEY = 'CG-zH5yUbmxFumgf3Yu1BeNqyx3';
+const COINGECKO_API_KEY = process.env.COINGECKO_API_KEY;
 const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3/coins/markets';
 
 // Mock data as fallback
@@ -72,22 +78,25 @@ async function fetchCryptoData() {
       timeout: 10000,
     });
 
-    const data = response.data.data.map(coin => ({
-      id: coin.slug, // CMC uses slug instead of id
-      name: coin.name,
-      symbol: coin.symbol.toUpperCase(),
-      current_price: parseFloat(coin.quote.USD.price),
-      total_volume: parseFloat(coin.quote.USD.volume_24h),
-      price_change_percentage_24h: parseFloat(coin.quote.USD.percent_change_24h),
-      market_cap: parseFloat(coin.quote.USD.market_cap),
-      circulating_supply: parseFloat(coin.circulating_supply),
-      source: 'CoinMarketCap',
-      high_24h: null, // CMC doesn't provide high_24h in this endpoint
-      low_24h: null, // CMC doesn't provide low_24h in this endpoint
-      market_cap_rank: coin.cmc_rank,
-    }));
+    const data = response.data.data.map(coin => {
+      const usdQuote = coin.quote.USD;
+      return {
+        id: coin.slug,
+        name: coin.name,
+        symbol: coin.symbol.toUpperCase(),
+        current_price: parseFloat(usdQuote.price),
+        total_volume: parseFloat(usdQuote.volume_24h),
+        price_change_percentage_24h: parseFloat(usdQuote.percent_change_24h),
+        market_cap: parseFloat(usdQuote.market_cap),
+        circulating_supply: parseFloat(coin.circulating_supply),
+        source: 'CoinMarketCap',
+        high_24h: null, // CMC doesn't provide high_24h
+        low_24h: null, // CMC doesn't provide low_24h
+        market_cap_rank: coin.cmc_rank
+      };
+    }).filter(token => token.current_price > 0);
 
-    console.log(`Successfully fetched crypto data, count: ${data.length}`, data);
+    console.log(`Successfully fetched crypto data, count: ${data.length}`, data.slice(0, 2));
     return data;
   } catch (error) {
     console.error('Failed to fetch crypto data from CoinMarketCap:', error.message, error.response?.data || error.response?.status);
@@ -139,6 +148,49 @@ app.get('/api/logs', async (req, res) => {
 app.get('/health', (req, res) => {
   console.log('Health check requested');
   res.status(200).json({ status: 'OK' });
+});
+
+// Grok AI Interaction Endpoint
+async function queryGrokAI(prompt) {
+  try {
+    const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
+      model: 'mixtral-8x7b-32768', // or another Groq model
+      messages: [
+        { role: 'system', content: 'You are a helpful crypto trading assistant.' },
+        { role: 'user', content: prompt }
+      ],
+      max_tokens: 300,
+      temperature: 0.7
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error('Grok AI Query Error:', error.response?.data || error.message);
+    return 'Sorry, I could not process your request at the moment.';
+  }
+}
+
+// Grok AI endpoint
+app.post('/api/grok', express.json(), async (req, res) => {
+  try {
+    const { prompt } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    console.log('Received Grok AI request:', prompt);
+    const response = await queryGrokAI(prompt);
+    
+    res.json({ response });
+  } catch (error) {
+    console.error('Error in /api/grok endpoint:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // Start the server
