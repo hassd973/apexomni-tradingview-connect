@@ -3,9 +3,18 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3001;
+
+// Serve static files from the frontend directory
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// Root route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+});
 
 // Enable CORS for all origins (or specify your frontend domain)
 app.use(cors());
@@ -15,9 +24,18 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Better Stack configuration
-const BETTER_STACK_TOKEN = process.env.BETTER_STACK_TOKEN;
-const BETTER_STACK_SOURCE_ID = process.env.BETTER_STACK_SOURCE_ID;
-const BETTER_STACK_API_URL = 'https://telemetry.betterstack.com/api/v2/query/live-tail';
+const BETTER_STACK_USERNAME = 'uJDSRvXdjN0eT2afRJ88m24R6YZiEwGcJ';
+const BETTER_STACK_PASSWORD = '2WT0nhxDRzsw3KxyNJx9sOCmvajKzjaW3VTIRaY1vwPvHdTvGk3TVubeUFHPrEve';
+const BETTER_STACK_HOST = 'eu-nbg-2-connect.betterstackdata.com';
+const BETTER_STACK_PORT = 443;
+const BETTER_STACK_API_URL = `https://${BETTER_STACK_HOST}:${BETTER_STACK_PORT}`;
+const BETTER_STACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
+
+// Specific log collections
+const LOG_COLLECTIONS = [
+  't371838_ice_king',
+  't371838_ice_king_2'
+];
 
 // CoinMarketCap API configuration
 const CMC_API_KEY = process.env.COINMARKETCAP_API_KEY;
@@ -35,30 +53,41 @@ const mockCryptoData = [
 ];
 
 // Function to fetch live logs from Better Stack
-async function fetchLiveLogs(query = '', batch = 100) {
-  if (!BETTER_STACK_TOKEN || !BETTER_STACK_SOURCE_ID) {
-    console.warn('Better Stack credentials not configured');
-    return [];
-  }
+async function fetchLiveLogs(query = '', batch = 100, sourceId = '1303816') {
+  // Fallback logs if Better Stack is not configured
+  const fallbackLogs = [
+    { timestamp: new Date().toISOString(), message: 'No live logs available', level: 'info' },
+    { timestamp: new Date().toISOString(), message: 'Check Better Stack configuration', level: 'warn' }
+  ];
+
+  // Credentials are hardcoded, no need to check
 
   try {
-    const response = await axios.get(BETTER_STACK_API_URL, {
+    const response = await axios.get('https://telemetry.betterstack.com/api/v2/query/live-tail', {
       headers: {
-        'Authorization': `Bearer ${BETTER_STACK_TOKEN}`,
+        'Authorization': `Bearer ${BETTER_STACK_TOKEN}`
       },
       params: {
-        source_ids: BETTER_STACK_SOURCE_ID,
+        source_ids: sourceId,
         query: query,
-        batch: batch,
+        batch: Math.min(batch, 1000),
         order: 'newest_first'
       },
-      timeout: 10000
+      timeout: 15000 // Increased timeout
     });
 
-    return response.data.rows || [];
+    // Parse the response and transform logs
+    const logs = response.data.rows.map(log => ({
+      timestamp: log.timestamp || new Date().toISOString(),
+      message: log.message || log.raw || 'No message available',
+      level: log.level || (log.message?.includes('error') ? 'error' : 
+             log.message?.includes('warn') ? 'warn' : 'info')
+    }));
+
+    return logs.length > 0 ? logs : fallbackLogs;
   } catch (error) {
     console.error('Failed to fetch live logs:', error.message);
-    return [];
+    return fallbackLogs;
   }
 }
 
