@@ -1,7 +1,7 @@
 // === Ice King Dashboard Script ===
 // Author: ZEL
-// Purpose: Display token data, logs, and top/bottom performers with TradingView chart
-// Features: Terminal-style UI, sticky chart toggle, backend integration
+// Purpose: Display token data, logs, top/bottom performers with TradingView chart and ETH gas fee heatmap
+// Features: Terminal-style UI, sticky chart toggle, backend integration, gas price heatmap
 
 // --- Constants and Configuration ---
 const BACKEND_URL = 'https://apexomni-backend-fppm.onrender.com';
@@ -13,7 +13,7 @@ const RETRY_DELAY = 2000;
 // --- Mock Data (Fallback) ---
 const mockTokens = [
   { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
-  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2 },
+  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 30 },
   { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
 ];
 
@@ -40,13 +40,14 @@ const iceKingPuns = [
 // --- Global State ---
 let usedPuns = [];
 let currentToken = mockTokens[0];
-let currentTimeframe = 'D'; // TradingView uses 'D' for 1-day
+let currentTimeframe = 'D';
 let allTokens = mockTokens;
 let sortedTokens = [...mockTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
 let isChartDocked = false;
 let selectedTokenLi = null;
 let isMockData = false;
 let isDebugMode = false;
+let gasHistory = []; // Store gas price history for heatmap
 
 // --- Utility Functions ---
 
@@ -58,8 +59,8 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       const response = await fetch(url, { 
         method: 'GET',
         headers: { 'Accept': 'application/json' },
-        mode: 'cors', // Explicitly set CORS mode
-        timeout: 10000 // Increased timeout to 10 seconds
+        mode: 'cors',
+        timeout: 10000
       });
       if (!response.ok) {
         const errorText = await response.text();
@@ -67,7 +68,6 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
       }
       const data = await response.json();
       console.log(`[DEBUG] Fetch successful for ${url}, response structure:`, { length: data.length, firstItem: data[0] || data.data?.[0], raw: data });
-      // Handle nested CMC response (e.g., { data: [...] })
       return Array.isArray(data) ? data : (data.data || []);
     } catch (error) {
       console.error(`[ERROR] Fetch attempt ${i + 1}/${retries} failed for ${url}:`, error.message, error.stack);
@@ -85,10 +85,9 @@ async function fetchWithRetry(url, retries = MAX_RETRIES, delay = RETRY_DELAY) {
 function sanitizeTokenData(data) {
   if (!data || !Array.isArray(data)) {
     console.error('[ERROR] Invalid token data format, expected array:', data);
-    return mockTokens; // Fall back to mock data
+    return mockTokens;
   }
   return data.map(token => {
-    // Handle nested structure from CoinMarketCap or flat structure from mock
     const processedToken = Array.isArray(token) ? token[0] : token;
     return {
       id: String(processedToken.id || processedToken.slug || '').replace(/[^a-zA-Z0-9-]/g, ''),
@@ -102,14 +101,80 @@ function sanitizeTokenData(data) {
       source: String(processedToken.source || 'Unknown'),
       high_24h: Number(processedToken.high_24h || 0),
       low_24h: Number(processedToken.low_24h || 0),
-      market_cap_rank: Number(processedToken.market_cap_rank || processedToken.cmc_rank || 0)
+      market_cap_rank: Number(processedToken.market_cap_rank || processedToken.cmc_rank || 0),
+      gasPrice: Number(processedToken.gasPrice || 0) // Include gas price for ETH
     };
   }).filter(token => token.current_price > 0);
 }
 
+// Render ETH gas fee heatmap
+async function renderGasHeatmap() {
+  const canvas = document.getElementById('gas-heatmap-canvas');
+  const ctx = canvas.getContext('2d');
+  const gasList = document.getElementById('gas-heatmap-list');
+  const loader = document.getElementById('loader-gas');
+  if (!canvas || !ctx || !gasList || !loader) {
+    console.error('[ERROR] Gas heatmap elements not found');
+    return;
+  }
+
+  loader.style.display = 'block';
+  gasList.innerHTML = '';
+
+  const maxHistory = 50;
+
+  const updateHeatmap = async () => {
+    const data = await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    if (!data || data.length === 0) {
+      loader.textContent = '> Failed to load gas prices';
+      return;
+    }
+    const ethToken = data.find(token => token.symbol === 'ETH');
+    if (!ethToken || !ethToken.gasPrice) {
+      loader.textContent = '> No gas price data for ETH';
+      return;
+    }
+
+    const gasData = {
+      gasPrice: ethToken.gasPrice,
+      timestamp: new Date().getTime()
+    };
+    gasHistory.push(gasData);
+    if (gasHistory.length > maxHistory) gasHistory.shift();
+
+    gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
+      <li class="p-2 rounded bg-black bg-opacity-50 glow-blue">
+        <div>Gas Price: ${data.gasPrice} Gwei</div>
+        <div class="metric">Time: ${new Date(data.timestamp).toLocaleTimeString()}</div>
+      </li>
+    `).join('');
+
+    const maxGas = Math.max(...gasHistory.map(d => d.gasPrice), 100);
+    const cellWidth = canvas.width / maxHistory;
+    const cellHeight = canvas.height;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    gasHistory.forEach((data, i) => {
+      const intensity = data.gasPrice / maxGas;
+      ctx.fillStyle = `rgba(0, 255, 0, ${intensity * 0.8})`;
+      ctx.fillRect(i * cellWidth, 0, cellWidth, cellHeight);
+      ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
+      ctx.strokeRect(i * cellWidth, 0, cellWidth, cellHeight);
+    });
+
+    loader.style.display = 'none';
+  };
+
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 300;
+
+  updateHeatmap();
+  setInterval(updateHeatmap, 60000);
+}
+
 // --- DOM Manipulation Functions ---
 
-// Update token list with enhanced visuals (display all tokens)
+// Update token list with enhanced visuals
 function updateTokenList(tokens) {
   const tokenList = document.getElementById('token-list');
   const loaderTokens = document.getElementById('loader-tokens');
@@ -119,9 +184,9 @@ function updateTokenList(tokens) {
   }
   tokenList.innerHTML = '';
   loaderTokens.style.display = 'none';
-  console.log('[DEBUG] Updating token list with:', tokens.slice(0, 2)); // Log first 2 tokens for debugging
+  console.log('[DEBUG] Updating token list with:', tokens.slice(0, 2));
   tokens.forEach((token, index) => {
-    const opacity = 30 + (index / tokens.length) * 40; // Dynamic opacity based on position in list
+    const opacity = 30 + (index / tokens.length) * 40;
     const bgColor = token.price_change_percentage_24h >= 0 ? `bg-green-500/${opacity}` : `bg-red-500/${opacity}`;
     const glowClass = token.price_change_percentage_24h >= 0 ? 'glow-green' : 'glow-red';
     const li = document.createElement('li');
@@ -142,13 +207,14 @@ function updateTokenList(tokens) {
       > Market Cap Rank: #${token.market_cap_rank}
       <br>
       > Market Cap: $${token.market_cap.toLocaleString()}
+      ${token.symbol === 'ETH' && token.gasPrice ? `<br>> Gas Price: ${token.gasPrice} Gwei` : ''}
     `;
     li.addEventListener('click', () => selectToken(token));
     tokenList.appendChild(li);
   });
 }
 
-// Update live price, ticker, and top pairs with Ice King flair
+// Update live price, ticker, and top pairs
 function updateLiveData(tokens) {
   const livePriceHeader = document.getElementById('live-price-header');
   const tickerMarqueeHeader = document.getElementById('ticker-marquee-header');
@@ -165,7 +231,7 @@ function updateLiveData(tokens) {
       ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
       `<span class="glow-purple">[${uniquePun}]</span>`
     ].join('');
-    tickerMarqueeHeader.innerHTML = marqueeContent.repeat(3); // Triple for continuous scroll
+    tickerMarqueeHeader.innerHTML = marqueeContent.repeat(3);
     tickerMarqueeHeader.style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
 
     topPairs.innerHTML = '';
@@ -181,7 +247,7 @@ function updateLiveData(tokens) {
   }
 }
 
-// New function to update top/bottom performers
+// Update top/bottom performers
 function updateProfitPairs(tokens) {
   const profitPairs = document.getElementById('profit-pairs');
   if (!profitPairs) {
@@ -194,23 +260,36 @@ function updateProfitPairs(tokens) {
     return;
   }
   
-  // Get top 3 and bottom 3 performers
-  const topPerformers = tokens.slice(0, 3); // Already sorted by price_change_percentage_24h
+  const topPerformers = tokens.slice(0, 3);
   const bottomPerformers = tokens.slice(-3);
 
-  // Display top performers
   topPerformers.forEach(token => {
     const li = document.createElement('li');
     li.className = 'gradient-bg p-1 rounded-md text-sm top-pair';
-    li.innerHTML = `> 🤑 ${token.name} (${token.symbol}): ${token.price_change_percentage_24h.toFixed(2)}%`;
+    li.innerHTML = `
+      > 🤑 ${token.name} (${token.symbol}): ${token.price_change_percentage_24h.toFixed(2)}%
+      <br>
+      > Price: $${token.current_price.toLocaleString()}
+      <br>
+      > 24h High: $${token.high_24h.toLocaleString()}
+      <br>
+      > 24h Low: $${token.low_24h.toLocaleString()}
+    `;
     profitPairs.appendChild(li);
   });
 
-  // Display bottom performers
   bottomPerformers.forEach(token => {
     const li = document.createElement('li');
     li.className = 'gradient-bg p-1 rounded-md text-sm bottom-pair';
-    li.innerHTML = `> 🤮 ${token.name} (${token.symbol}): ${token.price_change_percentage_24h.toFixed(2)}%`;
+    li.innerHTML = `
+      > 🤮 ${token.name} (${token.symbol}): ${token.price_change_percentage_24h.toFixed(2)}%
+      <br>
+      > Price: $${token.current_price.toLocaleString()}
+      <br>
+      > 24h High: $${token.high_24h.toLocaleString()}
+      <br>
+      > 24h Low: $${token.low_24h.toLocaleString()}
+    `;
     profitPairs.appendChild(li);
   });
 }
@@ -228,7 +307,7 @@ function selectToken(token) {
   if (selectedTokenLi) selectedTokenLi.classList.add('selected-token');
 }
 
-// Simplified TradingView initialization (script is now in HTML)
+// TradingView initialization
 function updateChart(symbol) {
   const containerId = isChartDocked ? 'chart-container-header' : 'chart-container-modal';
   const container = document.getElementById(containerId);
@@ -236,7 +315,7 @@ function updateChart(symbol) {
     console.error(`[ERROR] Chart container ${containerId} not found`);
     return;
   }
-  container.innerHTML = '<div class="loader text-center text-green-400 text-sm">> Loading Chart... ❄️</div>'; // Ice King-themed loader
+  container.innerHTML = '<div class="loader text-center text-green-400 text-sm">> Loading Chart... ❄️</div>';
   try {
     if (typeof TradingView === 'undefined') {
       throw new Error('TradingView script not loaded');
@@ -269,7 +348,7 @@ function updateChart(symbol) {
     console.error('[ERROR] Failed to initialize TradingView widget:', error);
     container.innerHTML = `<div class="text-red-500 text-sm">> Chart failed: ${error.message} 🧊</div>`;
     if (isDebugMode) alert(`Chart failed: ${error.message}`);
-    setTimeout(() => updateChart('BINANCE:BTCUSDT'), 2000); // Retry with BTC as fallback
+    setTimeout(() => updateChart('BINANCE:BTCUSDT'), 2000);
   }
 }
 
@@ -285,7 +364,7 @@ function toggleMockData() {
 function toggleDebugMode() {
   isDebugMode = !isDebugMode;
   const toggleDebug = document.getElementById('toggle-debug');
-  if (toggleDebug) toggleDataMode.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
+  if (toggleDebug) toggleDebug.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
 }
 
 // --- Event Listeners ---
@@ -316,11 +395,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     allTokens = sanitizeTokenData(data);
     sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-    console.log('[DEBUG] Initialized tokens:', allTokens.slice(0, 2)); // Log first 2 tokens
+    console.log('[DEBUG] Initialized tokens:', allTokens.slice(0, 2));
     updateTokenList(allTokens);
     updateLiveData(allTokens);
     updateProfitPairs(sortedTokens);
     updateChart(`BINANCE:${currentToken.symbol}USDT`);
+    renderGasHeatmap();
   }
   initializeData();
 
@@ -333,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     allTokens = sanitizeTokenData(data);
     sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-    console.log('[DEBUG] Refreshed tokens:', allTokens.slice(0, 2)); // Log first 2 tokens
+    console.log('[DEBUG] Refreshed tokens:', allTokens.slice(0, 2));
     updateTokenList(allTokens);
     updateLiveData(allTokens);
     updateProfitPairs(sortedTokens);
