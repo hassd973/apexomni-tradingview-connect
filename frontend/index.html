@@ -155,6 +155,18 @@
       border-radius: 8px;
       padding: 0.5rem;
       min-width: 0;
+      cursor: move;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+      touch-action: none; /* Prevents default touch scrolling during drag */
+    }
+    section.dragging {
+      opacity: 0.7;
+      transform: scale(0.98);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+      z-index: 100;
+    }
+    section:hover {
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
     ul {
       scrollbar-width: thin;
@@ -179,7 +191,7 @@
     }
     @media (min-width: 640px) {
       #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
-        max-height: 600px;
+        max-height: 60vh;
       }
     }
     #token-list li {
@@ -386,13 +398,13 @@
     #gas-heatmap-canvas {
       width: 100%;
       max-width: 100%;
-      height: 20rem;
+      height: 48rem;
       border: 1px solid rgba(0, 255, 0, 0.5);
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
     @media (min-width: 640px) {
-      #gas-heatmap-canvas { height: 300px; }
+      #gas-heatmap-canvas { height: 64rem; }
     }
     #gas-heatmap-legend {
       display: flex;
@@ -423,7 +435,7 @@
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-green-600">
   <div class="particles" id="particles"></div>
   <header class="w-full gradient-bg backdrop-blur-lg flex justify-center items-center overflow-x-hidden">
-    <div class="text-center w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto px-2">
+    <div class="text-center w-full max-w-[95vw] sm:max-w-[95vw] md:max-w-[95vw] lg:max-w-[95vw] mx-auto px-2">
       <div class="title-box glow-green">
         <h1 class="text-xs sm:text-base md:text-lg">🧊 ICE KING DASHBOARD 👑</h1>
       </div>
@@ -505,8 +517,8 @@
       </div>
     </div>
   </div>
-  <main class="flex-1 p-2 max-w-6xl mx-auto w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-    <section class="gradient-bg rounded-lg shadow-md">
+  <main class="flex-1 p-2 w-full max-w-[95vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="module-grid">
+    <section class="gradient-bg rounded-lg shadow-md" draggable="true">
       <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-xs">> Loading...</div>
       <ul id="token-list" class="space-y-2 text-xs sm:text-sm"></ul>
@@ -519,7 +531,7 @@
         <ul id="top-pairs" class="text-xs text-gray-500 flex flex-wrap gap-2"></ul>
       </div>
     </section>
-    <section class="gradient-bg rounded-lg shadow-md">
+    <section class="gradient-bg rounded-lg shadow-md" draggable="true">
       <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> ETH Gas Fee Heatmap ⛽</h2>
       <div id="loader-gas" class="loader text-center text-gray-500 text-xs">> Loading Gas Heatmap...</div>
       <canvas id="gas-heatmap-canvas"></canvas>
@@ -530,12 +542,12 @@
       </div>
       <ul id="gas-heatmap-list" class="space-y-2 text-xs sm:text-sm mt-2"></ul>
     </section>
-    <section class="gradient-bg rounded-lg shadow-md">
+    <section class="gradient-bg rounded-lg shadow-md" draggable="true">
       <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Live Logs 📜</h2>
       <div id="loader-logs" class="loader text-center text-gray-500 text-xs">> Loading...</div>
       <ul id="log-list" class="space-y-2 text-xs sm:text-sm"></ul>
     </section>
-    <section class="gradient-bg rounded-lg shadow-md">
+    <section class="gradient-bg rounded-lg shadow-md" draggable="true">
       <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Grok Trading Bot 🤖</h2>
       <div class="mt-2">
         <h3 class="text-sm sm:text-base font-semibold mb-2 glow-green">📡 Live System Logs</h3>
@@ -548,7 +560,7 @@
         <!-- Chat messages will be dynamically added here -->
       </div>
       <div class="mt-2 flex flex-col sm:flex-row gap-2">
-        <textarea id="chat-input" rows="2" placeholder="Ask Grok: Top rising tokens?" class="p-2 rounded" aria-label="Chat input"></textarea>
+        <textarea id="chat-input" rows="2" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input"></textarea>
         <button id="chat-send" class="px-2 py-1 rounded" aria-label="Send chat message">Send</button>
       </div>
     </section>
@@ -567,6 +579,100 @@
       star.style.top = `${Math.random() * 100}%`;
       star.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(star);
+    }
+
+    // Drag-and-drop functionality
+    const moduleGrid = document.getElementById('module-grid');
+    let draggedModule = null;
+
+    function setupDragAndDrop() {
+      const modules = document.querySelectorAll('#module-grid section');
+
+      modules.forEach(module => {
+        module.setAttribute('draggable', 'true');
+
+        module.addEventListener('dragstart', (e) => {
+          draggedModule = module;
+          module.classList.add('dragging');
+          e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+        });
+
+        module.addEventListener('dragend', () => {
+          module.classList.remove('dragging');
+          draggedModule = null;
+        });
+
+        module.addEventListener('dragover', (e) => {
+          e.preventDefault(); // Allow drop
+        });
+
+        module.addEventListener('dragenter', (e) => {
+          e.preventDefault();
+          module.classList.add('hover-glow');
+        });
+
+        module.addEventListener('dragleave', () => {
+          module.classList.remove('hover-glow');
+        });
+
+        module.addEventListener('drop', (e) => {
+          e.preventDefault();
+          module.classList.remove('hover-glow');
+          if (draggedModule && draggedModule !== module) {
+            const allModules = Array.from(moduleGrid.children);
+            const draggedIndex = allModules.indexOf(draggedModule);
+            const targetIndex = allModules.indexOf(module);
+
+            if (draggedIndex < targetIndex) {
+              moduleGrid.insertBefore(draggedModule, module.nextSibling);
+            } else {
+              moduleGrid.insertBefore(draggedModule, module);
+            }
+
+            // Trigger resize for canvas elements
+            window.dispatchEvent(new Event('resize'));
+          }
+        });
+
+        // Basic touch support
+        module.addEventListener('touchstart', (e) => {
+          draggedModule = module;
+          module.classList.add('dragging');
+        });
+
+        module.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const target = document.elementFromPoint(touch.clientX, touch.clientY);
+          const dropTarget = target?.closest('#module-grid section');
+          if (dropTarget && dropTarget !== draggedModule) {
+            dropTarget.classList.add('hover-glow');
+          }
+        });
+
+        module.addEventListener('touchend', (e) => {
+          module.classList.remove('dragging');
+          const touch = e.changedTouches[0];
+          const target = document.elementFromPoint(touch.clientX, touch.clientY);
+          const dropTarget = target?.closest('#module-grid section');
+          if (dropTarget && dropTarget !== draggedModule) {
+            const allModules = Array.from(moduleGrid.children);
+            const draggedIndex = allModules.indexOf(draggedModule);
+            const targetIndex = allModules.indexOf(dropTarget);
+
+            if (draggedIndex < targetIndex) {
+              moduleGrid.insertBefore(draggedModule, dropTarget.nextSibling);
+            } else {
+              moduleGrid.insertBefore(draggedModule, dropTarget);
+            }
+
+            // Trigger resize for canvas elements
+            window.dispatchEvent(new Event('resize'));
+          }
+          draggedModule = null;
+          modules.forEach(m => m.classList.remove('hover-glow'));
+        });
+      });
     }
 
     // Track indicator toggle state
@@ -913,8 +1019,8 @@
           <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
           <div class="metric">Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
-          <div class="metric">24h High: $${bottomToken.high_24h?.toLocaleString() || 'N/A'}</div>
-          <div class="metric">24h Low: $${bottomToken.low_24h?.toLocaleString() || 'N/A'}</div>
+          <div class="metric">24h High: $${topToken.high_24h?.toLocaleString() || 'N/A'}</div>
+          <div class="metric">24h Low: $${topToken.low_24h?.toLocaleString() || 'N/A'}</div>
         </li>
       `;
 
@@ -957,6 +1063,7 @@
       const toggleDebugBtn = document.getElementById('toggle-debug');
       const tokenList = document.getElementById('token-list');
 
+      setupDragAndDrop();
       loadData();
 
       toggleDataSourceBtn.addEventListener('click', () => {
