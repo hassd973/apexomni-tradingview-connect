@@ -8,7 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://s3.tradingview.com/tv.js" async></script>
   <style>
-    /* Existing styles unchanged */
     body {
       font-family: 'Fira Code', monospace;
       background: linear-gradient(180deg, rgba(10, 15, 20, 0.95), rgba(10, 15, 20, 1));
@@ -367,13 +366,30 @@
     }
     #profit-pairs .top-pair { animation: glow-green 2s infinite; }
     #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
-    /* New styles for gas heatmap */
     #gas-heatmap-canvas {
       width: 100%;
       height: 300px;
       border: 1px solid rgba(0, 255, 0, 0.5);
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+    #gas-heatmap-legend {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: #d1d5db;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
     }
   </style>
 </head>
@@ -480,6 +496,11 @@
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> ETH Gas Fee Heatmap ⛽</h2>
       <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading Gas Heatmap...</div>
       <canvas id="gas-heatmap-canvas"></canvas>
+      <div id="gas-heatmap-legend">
+        <div class="legend-item"><div class="legend-color" style="background: #00ff00"></div>Safe</div>
+        <div class="legend-item"><div class="legend-color" style="background: #ffff00"></div>Propose</div>
+        <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div>Fast</div>
+      </div>
       <ul id="gas-heatmap-list" class="space-y-2 max-h-[200px] overflow-y-auto text-sm sm:text-base w-full mt-2"></ul>
     </section>
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
@@ -534,12 +555,10 @@
         return;
       }
 
-      // Clear the container
       while (container.firstChild) {
         container.removeChild(container.firstChild);
       }
 
-      // Show loading state
       const loadingDiv = document.createElement('div');
       loadingDiv.className = 'chart-loading';
       loadingDiv.innerHTML = `
@@ -548,11 +567,9 @@
       `;
       container.appendChild(loadingDiv);
 
-      // Determine if indicator should be applied
       const isHeader = containerId === 'chart-container-header';
       const isIndicatorEnabled = isHeader ? isIndicatorEnabledHeader : isIndicatorEnabledModal;
 
-      // Initialize new TradingView widget
       const initWidget = () => {
         try {
           const widgetConfig = {
@@ -633,9 +650,6 @@
       }
     }
 
-    // Main logic to load and populate data
-    let isUsingMockData = false;
-
     // Fetch ETH gas prices from Etherscan
     async function fetchGasPrices() {
       const apiKey = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
@@ -644,10 +658,10 @@
         const data = await fetchWithRetry(url);
         if (data.status === '1' && data.result) {
           return {
-            safeGasPrice: parseInt(data.result.SafeGasPrice),
-            proposeGasPrice: parseInt(data.result.ProposeGasPrice),
-            fastGasPrice: parseInt(data.result.FastGasPrice),
-            lastBlock: data.result.LastBlock,
+            safeGasPrice: parseInt(data.result.SafeGasPrice) || 10,
+            proposeGasPrice: parseInt(data.result.ProposeGasPrice) || 15,
+            fastGasPrice: parseInt(data.result.FastGasPrice) || 20,
+            lastBlock: data.result.LastBlock || 'N/A',
             timestamp: new Date().getTime()
           };
         } else {
@@ -662,211 +676,278 @@
     // Render ETH gas fee heatmap
     async function renderGasHeatmap() {
       const canvas = document.getElementById('gas-heatmap-canvas');
-      const ctx = canvas.getContext('2d');
       const gasList = document.getElementById('gas-heatmap-list');
       const loader = document.getElementById('loader-gas');
-      if (!canvas || !ctx || !gasList) return;
+      if (!canvas || !gasList || !loader) {
+        console.error('[ERROR] Gas heatmap elements not found:', { canvas, gasList, loader });
+        return;
+      }
 
-      loader.style.display = 'block';
-      gasList.innerHTML = '';
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        console.error('[ERROR] Failed to get 2D context for gas heatmap canvas');
+        loader.textContent = '> Failed to initialize canvas';
+        loader.style.display = 'block';
+        return;
+      }
 
-      // Store gas price history
       let gasHistory = [];
-      const maxHistory = 50; // Store last 50 data points
+      const maxHistory = 50;
+      const canvasHeight = 300;
+      const margin = { top: 20, right: 20, bottom: 20, left: 50 };
 
-      const updateHeatmap = async () => {
-        const gasData = await fetchGasPrices();
-        if (!gasData) {
-          loader.textContent = '> Failed to load gas prices';
-          return;
-        }
-
-        gasHistory.push(gasData);
-        if (gasHistory.length > maxHistory) gasHistory.shift();
-
-        // Update list
-        gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
-          <li class="p-2 rounded bg-black bg-opacity-50 glow-blue">
-            <div>Block: ${data.lastBlock}</div>
-            <div>Safe: ${data.safeGasPrice} Gwei</div>
-            <div>Propose: ${data.proposeGasPrice} Gwei</div>
-            <div>Fast: ${data.fastGasPrice} Gwei</div>
-            <div class="metric">Time: ${new Date(data.timestamp).toLocaleTimeString()}</div>
-          </li>
-        `).join('');
-
-        // Normalize gas prices for heatmap
-        const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
-        const cellWidth = canvas.width / maxHistory;
-        const cellHeight = canvas.height / 3;
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        gasHistory.forEach((data, i) => {
-          const intensities = [
-            data.safeGasPrice / maxGas,
-            data.proposeGasPrice / maxGas,
-            data.fastGasPrice / maxGas
-          ];
-          intensities.forEach((intensity, j) => {
-            ctx.fillStyle = `rgba(0, 255, 0, ${intensity * 0.8})`;
-            ctx.fillRect(i * cellWidth, j * cellHeight, cellWidth, cellHeight);
-            ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
-            ctx.strokeRect(i * cellWidth, j * cellHeight, cellWidth, cellHeight);
-          });
-        });
-
-        loader.style.display = 'none';
+      // Set canvas dimensions
+      const resizeCanvas = () => {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = canvas.offsetWidth * dpr;
+        canvas.height = canvasHeight * dpr;
+        canvas.style.width = `${canvas.offsetWidth}px`;
+        canvas.style.height = `${canvasHeight}px`;
+        ctx.scale(dpr, dpr);
       };
 
-      // Set canvas size
-      canvas.width = canvas.offsetWidth;
-      canvas.height = 300;
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
 
-      // Initial render and periodic update
+      // Color interpolation for gas prices
+      const getColor = (intensity) => {
+        if (intensity < 0.5) {
+          const t = intensity * 2;
+          const r = Math.round(0 + t * (255 - 0));
+          const g = Math.round(255);
+          const b = Math.round(0);
+          return `rgb(${r}, ${g}, ${b})`; // Green to Yellow
+        } else {
+          const t = (intensity - 0.5) * 2;
+          const r = Math.round(255);
+          const g = Math.round(255 - t * (255 - 0));
+          const b = Math.round(0);
+          return `rgb(${r}, ${g}, ${b})`; // Yellow to Red
+        }
+      };
+
+      const updateHeatmap = async () => {
+        try {
+          loader.style.display = 'block';
+          gasList.innerHTML = '';
+
+          const gasData = await fetchGasPrices();
+          if (!gasData) {
+            loader.textContent = '> Failed to load gas prices';
+            loader.style.display = 'block';
+            return;
+          }
+
+          gasHistory.push(gasData);
+          if (gasHistory.length > maxHistory) gasHistory.shift();
+
+          // Update list
+          gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
+            <li class="p-2 rounded bg-black bg-opacity-50 glow-blue">
+              <div>Block: ${data.lastBlock}</div>
+              <div>Safe: ${data.safeGasPrice} Gwei</div>
+              <div>Propose: ${data.proposeGasPrice} Gwei</div>
+              <div>Fast: ${data.fastGasPrice} Gwei</div>
+              <div class="metric">Time: ${new Date(data.timestamp).toLocaleTimeString()}</div>
+            </li>
+          `).join('');
+
+          // Clear canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Calculate scales
+          const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
+          const plotWidth = canvas.offsetWidth - margin.left - margin.right;
+          const plotHeight = canvasHeight - margin.top - margin.bottom;
+          const barWidth = plotWidth / maxHistory / 3; // Three bars per data point
+
+          // Draw bars
+          gasHistory.forEach((data, i) => {
+            const x = margin.left + (i * plotWidth / maxHistory);
+            const prices = [
+              { value: data.safeGasPrice, color: '#00ff00' }, // Green
+              { value: data.proposeGasPrice, color: '#ffff00' }, // Yellow
+              { value: data.fastGasPrice, color: '#ff0000' } // Red
+            ];
+
+            prices.forEach((price, j) => {
+              const intensity = price.value / maxGas;
+              const height = (price.value / maxGas) * plotHeight;
+              const y = margin.top + plotHeight - height;
+              ctx.fillStyle = getColor(intensity);
+              ctx.fillRect(x + j * barWidth, y, barWidth - 1, height);
+            });
+          });
+
+          // Draw y-axis labels
+          ctx.fillStyle = '#d1d5db';
+          ctx.font = '10px Fira Code';
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'middle';
+          const yTicks = [0, Math.round(maxGas / 2), maxGas];
+          yTicks.forEach(tick => {
+            const y = margin.top + plotHeight - (tick / maxGas) * plotHeight;
+            ctx.fillText(`${tick} Gwei`, margin.left - 10, y);
+          });
+
+          // Draw x-axis labels (time)
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          const latestTime = new Date(gasHistory[gasHistory.length - 1]?.timestamp);
+          ctx.fillText(latestTime.toLocaleTimeString(), margin.left + plotWidth, margin.top + plotHeight + 5);
+
+          loader.style.display = 'none';
+          console.log('[DEBUG] Gas heatmap updated:', { gasHistoryLength: gasHistory.length, latestGasData: gasData });
+        } catch (error) {
+          console.error('[ERROR] Failed to update gas heatmap:', error);
+          loader.textContent = '> Error loading gas heatmap';
+          loader.style.display = 'block';
+        }
+      };
+
       updateHeatmap();
-      setInterval(updateHeatmap, 60000); // Update every minute
+      setInterval(updateHeatmap, 60000);
     }
 
+    // Main logic to load and populate data
+    let isUsingMockData = false;
+
+    // Function to load and populate data
+    const loadData = async () => {
+      const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
+      const toggleDataSourceBtn = document.getElementById('toggle-data-source');
+      if (isUsingMockData) {
+        updateUI(mockTokens);
+        toggleDataSourceBtn.textContent = '[Real Data] ❄️';
+        return;
+      }
+
+      try {
+        const data = await fetchWithRetry(backendApiUrl);
+        console.log('Raw backend response:', data);
+        if (!Array.isArray(data) || data.length === 0) {
+          throw new Error('Invalid or empty response from backend');
+        }
+        const ethData = data.find(token => token.symbol === 'ETH');
+        if (ethData) {
+          const gasData = await fetchGasPrices();
+          if (gasData) {
+            ethData.gasPrice = gasData.proposeGasPrice;
+          }
+        }
+        updateUI(data);
+        toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
+        renderGasHeatmap();
+      } catch (error) {
+        console.error('Failed to load real data:', error);
+        document.getElementById('live-price-header').textContent = `> Live Price: Error - ${error.message} ❄️`;
+        document.getElementById('chart-title-header').textContent = 'Error loading data';
+        document.getElementById('chart-title-modal').textContent = 'Error loading data';
+        document.getElementById('loader-tokens').textContent = `> ${error.message}. Click "Toggle Data Source" to use mock data.`;
+        document.getElementById('loader-tokens').style.display = 'block';
+        toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
+        document.getElementById('loader-gas').textContent = '> Failed to load gas prices';
+      }
+    };
+
+    // Function to update UI with token data
+    function updateUI(tokens) {
+      document.getElementById('loader-tokens').style.display = 'none';
+
+      const tokenList = document.getElementById('token-list');
+      tokenList.innerHTML = tokens.map((token, index) => {
+        const isPositive = token.price_change_percentage_24h >= 0;
+        const rankFactor = index / (tokens.length - 1);
+        const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
+        const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
+        const symbol = `BINANCE:${token.symbol}USDT`;
+        return `
+          <li class="${bgClass} ${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}">
+            <div class="flex justify-between">
+              <span>${token.name} (${token.symbol})</span>
+              <span class="performance ${textClass}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
+            </div>
+            <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
+            <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
+            <div class="metric">Circ. Supply: ${token.circulating_supply.toLocaleString()}</div>
+            <div class="metric">24h High: $${token.high_24h?.toLocaleString() || 'N/A'}</div>
+            <div class="metric">24h Low: $${token.low_24h?.toLocaleString() || 'N/A'}</div>
+            <div class="metric">Market Cap: $${token.market_cap?.toLocaleString() || 'N/A'}</div>
+            ${token.symbol === 'ETH' && token.gasPrice ? `<div class="metric">Gas Price: ${token.gasPrice} Gwei</div>` : ''}
+          </li>
+        `;
+      }).join('');
+
+      const profitPairs = document.getElementById('profit-pairs');
+      const sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+      const topToken = sortedTokens[0];
+      const bottomToken = sortedTokens[sortedTokens.length - 1];
+      profitPairs.innerHTML = `
+        <li class="top-pair p-2 rounded bg-black bg-opacity-50">
+          <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
+          <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
+          <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
+          <div class="metric">Circ. Supply: ${topToken.circulating_supply.toLocaleString()}</div>
+          <div class="metric">24h High: $${topToken.high_24h?.toLocaleString() || 'N/A'}</div>
+          <div class="metric">24h Low: $${topToken.low_24h?.toLocaleString() || 'N/A'}</div>
+        </li>
+        <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">
+          <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
+          <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
+          <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
+          <div class="metric">Circ. Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
+          <div class="metric">24h High: $${bottomToken.high_24h?.toLocaleString() || 'N/A'}</div>
+          <div class="metric">24h Low: $${bottomToken.low_24h?.toLocaleString() || 'N/A'}</div>
+        </li>
+      `;
+
+      document.getElementById('live-price-header').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
+      document.getElementById('live-price-modal').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
+
+      const topPairs = document.getElementById('top-pairs');
+      topPairs.innerHTML = tokens
+        .filter(token => token.symbol && token.symbol !== 'USDT')
+        .slice(0, 5)
+        .map(token => `<li class="gradient-bg p-1 rounded-md text-sm glow-blue">> 🧊 ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
+        .join('');
+
+      const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
+      const marqueeContent = [
+        ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
+        `<span class="glow-purple">[${uniquePun}]</span>`
+      ].join('');
+      document.getElementById('ticker-marquee-header').innerHTML = marqueeContent.repeat(3);
+      document.getElementById('ticker-marquee-modal').innerHTML = marqueeContent.repeat(3);
+      document.getElementById('ticker-marquee-header').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
+      document.getElementById('ticker-marquee-modal').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
+
+      const topSymbol = `BINANCE:${topToken.symbol}USDT`;
+      initializeChart('chart-container-header', topSymbol, 'D');
+      initializeChart('chart-container-modal', topSymbol, 'D');
+      document.getElementById('chart-title-header').setAttribute('data-symbol', topSymbol);
+      document.getElementById('chart-title-header').textContent = topSymbol;
+      document.getElementById('chart-title-modal').setAttribute('data-symbol', topSymbol);
+      document.getElementById('chart-title-modal').textContent = topSymbol;
+    }
+
+    // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
       const toggleIndicatorHeaderBtn = document.getElementById('toggle-indicator-header');
       const toggleIndicatorModalBtn = document.getElementById('toggle-indicator-modal');
+      const toggleStickyHeader = document.getElementById('toggle-sticky-header');
+      const toggleStickyModal = document.getElementById('toggle-sticky-modal');
+      const chartModal = document.getElementById('chart-modal');
+      const toggleDebugBtn = document.getElementById('toggle-debug');
+      const tokenList = document.getElementById('token-list');
 
-      // Function to load and populate data
-      const loadData = async () => {
-        const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
-        if (isUsingMockData) {
-          // Use mock data when toggled
-          updateUI(mockTokens);
-          toggleDataSourceBtn.textContent = '[Real Data] ❄️';
-          return;
-        }
-
-        try {
-          const data = await fetchWithRetry(backendApiUrl);
-          console.log('Raw backend response:', data);
-          if (!Array.isArray(data) || data.length === 0) {
-            throw new Error('Invalid or empty response from backend');
-          }
-          // Enhance token data with Etherscan data for ETH
-          const ethData = data.find(token => token.symbol === 'ETH');
-          if (ethData) {
-            const gasData = await fetchGasPrices();
-            if (gasData) {
-              ethData.gasPrice = gasData.proposeGasPrice;
-            }
-          }
-          updateUI(data);
-          toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
-          renderGasHeatmap();
-        } catch (error) {
-          console.error('Failed to load real data:', error);
-          document.getElementById('live-price-header').textContent = `> Live Price: Error - ${error.message} ❄️`;
-          document.getElementById('chart-title-header').textContent = 'Error loading data';
-          document.getElementById('chart-title-modal').textContent = 'Error loading data';
-          document.getElementById('loader-tokens').textContent = `> ${error.message}. Click "Toggle Data Source" to use mock data.`;
-          document.getElementById('loader-tokens').style.display = 'block';
-          toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
-          document.getElementById('loader-gas').textContent = '> Failed to load gas prices';
-        }
-      };
-
-      // Function to update UI with token data
-      function updateUI(tokens) {
-        document.getElementById('loader-tokens').style.display = 'none';
-
-        // Update token list with additional metrics
-        const tokenList = document.getElementById('token-list');
-        tokenList.innerHTML = tokens.map((token, index) => {
-          const isPositive = token.price_change_percentage_24h >= 0;
-          const rankFactor = index / (tokens.length - 1);
-          const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
-          const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
-          const symbol = `BINANCE:${token.symbol}USDT`;
-          return `
-            <li class="${bgClass} ${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}">
-              <div class="flex justify-between">
-                <span>${token.name} (${token.symbol})</span>
-                <span class="performance ${textClass}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
-              </div>
-              <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
-              <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
-              <div class="metric">Circ. Supply: ${token.circulating_supply.toLocaleString()}</div>
-              <div class="metric">24h High: $${token.high_24h?.toLocaleString() || 'N/A'}</div>
-              <div class="metric">24h Low: $${token.low_24h?.toLocaleString() || 'N/A'}</div>
-              <div class="metric">Market Cap: $${token.market_cap?.toLocaleString() || 'N/A'}</div>
-              ${token.symbol === 'ETH' && token.gasPrice ? `<div class="metric">Gas Price: ${token.gasPrice} Gwei</div>` : ''}
-            </li>
-          `;
-        }).join('');
-
-        // Update top/bottom performers
-        const profitPairs = document.getElementById('profit-pairs');
-        const sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-        const topToken = sortedTokens[0];
-        const bottomToken = sortedTokens[sortedTokens.length - 1];
-        profitPairs.innerHTML = `
-          <li class="top-pair p-2 rounded bg-black bg-opacity-50">
-            <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
-            <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
-            <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
-            <div class="metric">Circ. Supply: ${topToken.circulating_supply.toLocaleString()}</div>
-            <div class="metric">24h High: $${topToken.high_24h?.toLocaleString() || 'N/A'}</div>
-            <div class="metric">24h Low: $${topToken.low_24h?.toLocaleString() || 'N/A'}</div>
-          </li>
-          <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">
-            <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
-            <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
-            <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
-            <div class="metric">Circ. Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
-            <div class="metric">24h High: $${bottomToken.high_24h?.toLocaleString() || 'N/A'}</div>
-            <div class="metric">24h Low: $${bottomToken.low_24h?.toLocaleString() || 'N/A'}</div>
-          </li>
-        `;
-
-        // Update live price
-        document.getElementById('live-price-header').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
-        document.getElementById('live-price-modal').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
-
-        // Update top pairs
-        const topPairs = document.getElementById('top-pairs');
-        topPairs.innerHTML = tokens
-          .filter(token => token.symbol && token.symbol !== 'USDT')
-          .slice(0, 5)
-          .map(token => `<li class="gradient-bg p-1 rounded-md text-sm glow-blue">> 🧊 ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
-          .join('');
-
-        // Update marquee
-        const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
-        const marqueeContent = [
-          ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
-          `<span class="glow-purple">[${uniquePun}]</span>`
-        ].join('');
-        document.getElementById('ticker-marquee-header').innerHTML = marqueeContent.repeat(3);
-        document.getElementById('ticker-marquee-modal').innerHTML = marqueeContent.repeat(3);
-        document.getElementById('ticker-marquee-header').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
-        document.getElementById('ticker-marquee-modal').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
-
-        // Initialize charts with top token
-        const topSymbol = `BINANCE:${topToken.symbol}USDT`;
-        initializeChart('chart-container-header', topSymbol, 'D');
-        initializeChart('chart-container-modal', topSymbol, 'D');
-        document.getElementById('chart-title-header').setAttribute('data-symbol', topSymbol);
-        document.getElementById('chart-title-header').textContent = topSymbol;
-        document.getElementById('chart-title-modal').setAttribute('data-symbol', topSymbol);
-        document.getElementById('chart-title-modal').textContent = topSymbol;
-      }
-
-      // Initial load
       loadData();
 
-      // Toggle data source button handler
       toggleDataSourceBtn.addEventListener('click', () => {
         isUsingMockData = !isUsingMockData;
         loadData();
       });
 
-      // Toggle indicator button handlers
       toggleIndicatorHeaderBtn.addEventListener('click', () => {
         isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
         toggleIndicatorHeaderBtn.textContent = `[${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} ICE KING] 🧊`;
@@ -883,7 +964,6 @@
         initializeChart('chart-container-modal', symbol, interval);
       });
 
-      // Timeframe button handlers
       const timeframes = ['1min', '5min', '15min', '1hr', '1d'];
       timeframes.forEach(tf => {
         const headerBtn = document.getElementById(`header-timeframe-${tf}`);
@@ -908,8 +988,6 @@
         }
       });
 
-      // Token list click to toggle chart
-      const tokenList = document.getElementById('token-list');
       if (tokenList) {
         tokenList.addEventListener('click', (e) => {
           const li = e.target.closest('li');
@@ -923,20 +1001,13 @@
             document.getElementById('chart-title-modal').setAttribute('data-symbol', symbol);
             document.getElementById('chart-title-modal').textContent = symbol;
 
-            // Update selected token styling
             const tokenListItems = document.querySelectorAll('#token-list li');
             tokenListItems.forEach(item => item.classList.remove('selected-token'));
             li.classList.add('selected-token');
-
             console.log(`Switched to token from list: ${symbol}`);
           }
         });
       }
-
-      // Modal toggle
-      const toggleStickyHeader = document.getElementById('toggle-sticky-header');
-      const toggleStickyModal = document.getElementById('toggle-sticky-modal');
-      const chartModal = document.getElementById('chart-modal');
 
       if (toggleStickyHeader) {
         toggleStickyHeader.addEventListener('click', () => {
@@ -955,8 +1026,6 @@
         });
       }
 
-      // Toggle debug mode
-      const toggleDebugBtn = document.getElementById('toggle-debug');
       toggleDebugBtn.addEventListener('click', () => {
         isDebugMode = !isDebugMode;
         toggleDebugBtn.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
