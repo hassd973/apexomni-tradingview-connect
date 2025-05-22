@@ -20,7 +20,6 @@ app.get('/', (req, res) => {
   const indexPath = path.join(frontendPath, 'index.html');
   console.log('Serving index.html from:', indexPath);
   
-  // Check if the file exists before sending
   if (require('fs').existsSync(indexPath)) {
     res.sendFile(indexPath);
   } else {
@@ -29,7 +28,7 @@ app.get('/', (req, res) => {
   }
 });
 
-// Enable CORS for all origins (or specify your frontend domain)
+// Enable CORS for all origins
 app.use(cors());
 
 // Parse JSON bodies
@@ -43,6 +42,10 @@ const BETTER_STACK_HOST = 'eu-nbg-2-connect.betterstackdata.com';
 const BETTER_STACK_PORT = 443;
 const BETTER_STACK_API_URL = `https://${BETTER_STACK_HOST}:${BETTER_STACK_PORT}`;
 const BETTER_STACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
+
+// Etherscan API configuration
+const ETHERSCAN_API_KEY = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
+const ETHERSCAN_API_URL = 'https://api.etherscan.io/api';
 
 // Specific log collections
 const LOG_COLLECTIONS = [
@@ -60,47 +63,36 @@ const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3/coins/markets';
 
 // Mock data as fallback
 const mockCryptoData = [
-  { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000 },
-  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900 },
-  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018 }
+  { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
+  { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 30 },
+  { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
 ];
 
-// Function to fetch live logs from Better Stack
-async function fetchLiveLogs(query = '', batch = 100, sourceId = '1303816') {
-  // Fallback logs if Better Stack is not configured
-  const fallbackLogs = [
-    { timestamp: new Date().toISOString(), message: 'No live logs available', level: 'info' },
-    { timestamp: new Date().toISOString(), message: 'Check Better Stack configuration', level: 'warn' }
-  ];
-
-  // Credentials are hardcoded, no need to check
-
+// Function to fetch ETH gas prices from Etherscan
+async function fetchGasPrices() {
   try {
-    const response = await axios.get('https://telemetry.betterstack.com/api/v2/query/live-tail', {
-      headers: {
-        'Authorization': `Bearer ${BETTER_STACK_TOKEN}`
-      },
+    console.log('Fetching gas prices from Etherscan');
+    const response = await axios.get(ETHERSCAN_API_URL, {
       params: {
-        source_ids: sourceId,
-        query: query,
-        batch: Math.min(batch, 1000),
-        order: 'newest_first'
+        module: 'gastracker',
+        action: 'gasoracle',
+        apikey: ETHERSCAN_API_KEY
       },
-      timeout: 15000 // Increased timeout
+      timeout: 10000
     });
-
-    // Parse the response and transform logs
-    const logs = response.data.rows.map(log => ({
-      timestamp: log.timestamp || new Date().toISOString(),
-      message: log.message || log.raw || 'No message available',
-      level: log.level || (log.message?.includes('error') ? 'error' : 
-             log.message?.includes('warn') ? 'warn' : 'info')
-    }));
-
-    return logs.length > 0 ? logs : fallbackLogs;
+    if (response.data.status === '1' && response.data.result) {
+      return {
+        safeGasPrice: parseInt(response.data.result.SafeGasPrice),
+        proposeGasPrice: parseInt(response.data.result.ProposeGasPrice),
+        fastGasPrice: parseInt(response.data.result.FastGasPrice),
+        lastBlock: response.data.result.LastBlock
+      };
+    } else {
+      throw new Error('Invalid gas price data');
+    }
   } catch (error) {
-    console.error('Failed to fetch live logs:', error.message);
-    return fallbackLogs;
+    console.error('Failed to fetch gas prices from Etherscan:', error.message);
+    return null;
   }
 }
 
@@ -114,15 +106,16 @@ async function fetchCryptoData() {
       },
       params: {
         start: 1,
-        limit: 50, // Fetch top 50 tokens by market cap
+        limit: 50,
         convert: 'USD',
       },
       timeout: 10000,
     });
 
+    const gasData = await fetchGasPrices();
     const data = response.data.data.map(coin => {
       const usdQuote = coin.quote.USD;
-      return {
+      const tokenData = {
         id: coin.slug,
         name: coin.name,
         symbol: coin.symbol.toUpperCase(),
@@ -136,6 +129,10 @@ async function fetchCryptoData() {
         low_24h: null, // CMC doesn't provide low_24h
         market_cap_rank: coin.cmc_rank
       };
+      if (coin.symbol.toUpperCase() === 'ETH' && gasData) {
+        tokenData.gasPrice = gasData.proposeGasPrice;
+      }
+      return tokenData;
     }).filter(token => token.current_price > 0);
 
     console.log(`Successfully fetched crypto data, count: ${data.length}`, data.slice(0, 2));
@@ -144,6 +141,41 @@ async function fetchCryptoData() {
     console.error('Failed to fetch crypto data from CoinMarketCap:', error.message, error.response?.data || error.response?.status);
     console.warn('Falling back to mock data');
     return mockCryptoData;
+  }
+}
+
+// Function to fetch live logs from Better Stack
+async function fetchLiveLogs(query = '', batch = 100, sourceId = '1303816') {
+  const fallbackLogs = [
+    { timestamp: new Date().toISOString(), message: 'No live logs available', level: 'info' },
+    { timestamp: new Date().toISOString(), message: 'Check Better Stack configuration', level: 'warn' }
+  ];
+
+  try {
+    const response = await axios.get('https://telemetry.betterstack.com/api/v2/query/live-tail', {
+      headers: {
+        'Authorization': `Bearer ${BETTER_STACK_TOKEN}`
+      },
+      params: {
+        source_ids: sourceId,
+        query: query,
+        batch: Math.min(batch, 1000),
+        order: 'newest_first'
+      },
+      timeout: 15000
+    });
+
+    const logs = response.data.rows.map(log => ({
+      timestamp: log.timestamp || new Date().toISOString(),
+      message: log.message || log.raw || 'No message available',
+      level: log.level || (log.message?.includes('error') ? 'error' : 
+             log.message?.includes('warn') ? 'warn' : 'info')
+    }));
+
+    return logs.length > 0 ? logs : fallbackLogs;
+  } catch (error) {
+    console.error('Failed to fetch live logs:', error.message);
+    return fallbackLogs;
   }
 }
 
@@ -215,7 +247,7 @@ app.get('/health', (req, res) => {
 async function queryGrokAI(prompt) {
   try {
     const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-      model: 'mixtral-8x7b-32768', // or another Groq model
+      model: 'mixtral-8x7b-32768',
       messages: [
         { role: 'system', content: 'You are a helpful crypto trading assistant.' },
         { role: 'user', content: prompt }
