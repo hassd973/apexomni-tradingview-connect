@@ -47,7 +47,7 @@ let isChartDocked = false;
 let selectedTokenLi = null;
 let isMockData = false;
 let isDebugMode = false;
-let gasHistory = []; // Store gas price history for heatmap
+let gasHistory = [];
 
 // --- Utility Functions ---
 
@@ -102,7 +102,7 @@ function sanitizeTokenData(data) {
       high_24h: Number(processedToken.high_24h || 0),
       low_24h: Number(processedToken.low_24h || 0),
       market_cap_rank: Number(processedToken.market_cap_rank || processedToken.cmc_rank || 0),
-      gasPrice: Number(processedToken.gasPrice || 0) // Include gas price for ETH
+      gasPrice: Number(processedToken.gasPrice || 0)
     };
   }).filter(token => token.current_price > 0);
 }
@@ -110,28 +110,43 @@ function sanitizeTokenData(data) {
 // Render ETH gas fee heatmap
 async function renderGasHeatmap() {
   const canvas = document.getElementById('gas-heatmap-canvas');
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas?.getContext('2d');
   const gasList = document.getElementById('gas-heatmap-list');
   const loader = document.getElementById('loader-gas');
   if (!canvas || !ctx || !gasList || !loader) {
-    console.error('[ERROR] Gas heatmap elements not found');
+    console.error('[ERROR] Gas heatmap elements not found:', { canvas, ctx, gasList, loader });
     return;
   }
 
-  loader.style.display = 'block';
-  gasList.innerHTML = '';
+  // Ensure canvas is visible and sized correctly
+  canvas.style.display = 'block';
+  canvas.width = canvas.offsetWidth || 300; // Fallback to 300px if offsetWidth is 0
+  canvas.height = 300;
+  console.log('[DEBUG] Canvas initialized:', { width: canvas.width, height: canvas.height });
 
   const maxHistory = 50;
 
   const updateHeatmap = async () => {
-    const data = await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
+    console.log('[DEBUG] Updating gas heatmap');
+    const data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
     if (!data || data.length === 0) {
+      console.error('[ERROR] No data for gas heatmap');
       loader.textContent = '> Failed to load gas prices';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ff0000';
+      ctx.font = '14px Fira Code';
+      ctx.fillText('No data available', 10, canvas.height / 2);
       return;
     }
+
     const ethToken = data.find(token => token.symbol === 'ETH');
     if (!ethToken || !ethToken.gasPrice) {
-      loader.textContent = '> No gas price data for ETH';
+      console.warn('[WARN] No gas price data for ETH');
+      loader.textContent = '> No gas price data';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ff0000';
+      ctx.font = '14px Fira Code';
+      ctx.fillText('No gas price data', 10, canvas.height / 2);
       return;
     }
 
@@ -142,6 +157,9 @@ async function renderGasHeatmap() {
     gasHistory.push(gasData);
     if (gasHistory.length > maxHistory) gasHistory.shift();
 
+    console.log('[DEBUG] Gas history updated:', { length: gasHistory.length, latest: gasData });
+
+    // Update list
     gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
       <li class="p-2 rounded bg-black bg-opacity-50 glow-blue">
         <div>Gas Price: ${data.gasPrice} Gwei</div>
@@ -149,13 +167,14 @@ async function renderGasHeatmap() {
       </li>
     `).join('');
 
+    // Render heatmap
     const maxGas = Math.max(...gasHistory.map(d => d.gasPrice), 100);
     const cellWidth = canvas.width / maxHistory;
     const cellHeight = canvas.height;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     gasHistory.forEach((data, i) => {
-      const intensity = data.gasPrice / maxGas;
+      const intensity = Math.min(data.gasPrice / maxGas, 1);
       ctx.fillStyle = `rgba(0, 255, 0, ${intensity * 0.8})`;
       ctx.fillRect(i * cellWidth, 0, cellWidth, cellHeight);
       ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
@@ -163,13 +182,30 @@ async function renderGasHeatmap() {
     });
 
     loader.style.display = 'none';
+    console.log('[DEBUG] Heatmap rendered successfully');
   };
 
-  canvas.width = canvas.offsetWidth;
-  canvas.height = 300;
+  // Initial render
+  try {
+    await updateHeatmap();
+  } catch (error) {
+    console.error('[ERROR] Initial heatmap render failed:', error);
+    loader.textContent = '> Error rendering heatmap';
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#ff0000';
+    ctx.font = '14px Fira Code';
+    ctx.fillText('Error rendering heatmap', 10, canvas.height / 2);
+  }
 
-  updateHeatmap();
-  setInterval(updateHeatmap, 60000);
+  // Periodic update
+  setInterval(async () => {
+    try {
+      await updateHeatmap();
+    } catch (error) {
+      console.error('[ERROR] Heatmap update failed:', error);
+      loader.textContent = '> Error updating heatmap';
+    }
+  }, 60000);
 }
 
 // --- DOM Manipulation Functions ---
@@ -192,6 +228,7 @@ function updateTokenList(tokens) {
     const li = document.createElement('li');
     li.className = `gradient-bg p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} z-10`;
     li.setAttribute('data-tooltip', '[Click to toggle chart] ❄️');
+    li.setAttribute('data-symbol', `BINANCE:${token.symbol}USDT`);
     const priceChangeEmoji = token.price_change_percentage_24h >= 0 ? '🤑' : '🤮';
     li.innerHTML = `
       > 🍀 ${token.name} (${token.symbol})
@@ -355,7 +392,7 @@ function updateChart(symbol) {
 // Toggle mock data mode
 function toggleMockData() {
   isMockData = !isMockData;
-  const toggleDataMode = document.getElementById('toggle-data-mode');
+  const toggleDataMode = document.getElementById('toggle-data-source');
   if (toggleDataMode) toggleDataMode.textContent = `[${isMockData ? 'Real' : 'Mock'} Data] ❄️`;
   initializeData();
 }
@@ -378,88 +415,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const chartModal = document.getElementById('chart-modal');
   const toggleStickyHeader = document.getElementById('toggle-sticky-header');
   const toggleStickyModal = document.getElementById('toggle-sticky-modal');
-  const toggleDataMode = document.getElementById('toggle-data-mode');
+  const toggleDataMode = document.getElementById('toggle-data-source');
   const toggleDebug = document.getElementById('toggle-debug');
 
   if (!tokenList || !loaderTokens || !livePriceHeader || !tickerMarqueeHeader || !topPairs || !profitPairs || !chartModal || !toggleStickyHeader || !toggleStickyModal || !toggleDataMode || !toggleDebug) {
     console.error('[ERROR] One or more DOM elements not found:', { tokenList, loaderTokens, livePriceHeader, tickerMarqueeHeader, topPairs, profitPairs, chartModal, toggleStickyHeader, toggleStickyModal, toggleDataMode, toggleDebug });
-    return;
-  }
-
-  // Initial fetch and render
-  async function initializeData() {
-    let data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
-    if (data === null || data.length === 0) {
-      console.warn('[WARN] Fetch returned no data, using mock data');
-      data = mockTokens;
-    }
-    allTokens = sanitizeTokenData(data);
-    sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-    console.log('[DEBUG] Initialized tokens:', allTokens.slice(0, 2));
-    updateTokenList(allTokens);
-    updateLiveData(allTokens);
-    updateProfitPairs(sortedTokens);
-    updateChart(`BINANCE:${currentToken.symbol}USDT`);
-    renderGasHeatmap();
-  }
-  initializeData();
-
-  // Refresh tokens
-  setInterval(async () => {
-    let data = isMockData ? mockTokens : await fetchWithRetry(`${BACKEND_URL}/api/crypto`);
-    if (data === null || data.length === 0) {
-      console.warn('[WARN] Refresh fetch returned no data, using mock data');
-      data = mockTokens;
-    }
-    allTokens = sanitizeTokenData(data);
-    sortedTokens = [...allTokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-    console.log('[DEBUG] Refreshed tokens:', allTokens.slice(0, 2));
-    updateTokenList(allTokens);
-    updateLiveData(allTokens);
-    updateProfitPairs(sortedTokens);
-  }, TOKEN_REFRESH_INTERVAL);
-
-  // Timeframe buttons
-  document.querySelectorAll('.timeframe-btn').forEach(button => {
-    button.addEventListener('click', () => {
-      const timeframeMap = {
-        '1min': '1',
-        '5min': '5',
-        '15min': '15',
-        '1hr': '60',
-        '4hr': '240',
-        '1d': 'D'
-      };
-      const timeframeKey = button.id.split('-').pop();
-      currentTimeframe = timeframeMap[timeframeKey] || 'D';
-      updateChart(`BINANCE:${currentToken.symbol}USDT`);
-      document.querySelectorAll('.timeframe-btn').forEach(btn => btn.classList.remove('active'));
-      button.classList.add('active');
-    });
-  });
-
-  // Toggle sticky chart
-  toggleStickyHeader.addEventListener('click', () => {
-    isChartDocked = !isChartDocked;
-    chartModal.classList.toggle('active', !isChartDocked);
-    toggleStickyHeader.textContent = `[${isChartDocked ? 'Undock' : 'Dock'} Chart] ❄️`;
-    toggleStickyHeader.classList.toggle('bg-green-500', isChartDocked);
-    toggleStickyHeader.classList.toggle('bg-blue-500', !isChartDocked);
-    updateChart(`BINANCE:${currentToken.symbol}USDT`);
-  });
-
-  toggleStickyModal.addEventListener('click', () => {
-    isChartDocked = !isChartDocked;
-    chartModal.classList.toggle('active', !isChartDocked);
-    toggleStickyModal.textContent = `[${isChartDocked ? 'Undock' : 'Dock'} Chart] ❄️`;
-    toggleStickyModal.classList.toggle('bg-green-500', isChartDocked);
-    toggleStickyModal.classList.toggle('bg-blue-500', !isChartDocked);
-    updateChart(`BINANCE:${currentToken.symbol}USDT`);
-  });
-
-  // Toggle mock data
-  toggleDataMode.addEventListener('click', toggleMockData);
-
-  // Toggle debug mode
-  toggleDebug.addEventListener('click', toggleDebugMode);
-});
