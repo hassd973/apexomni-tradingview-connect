@@ -12,7 +12,6 @@
       font-family: 'Fira Code', monospace;
       background: linear-gradient(180deg, rgba(10, 15, 20, 0.95), rgba(10, 15, 20, 1));
       color: #d1d5db;
-      overflow-x: hidden;
       margin: 0;
       min-height: 100vh;
       display: flex;
@@ -72,18 +71,19 @@
     header, footer {
       background: rgba(31, 41, 55, 0.3);
       backdrop-filter: blur(10px) saturate(1.2);
-      padding: 1rem;
+      padding: 0.5rem 1rem;
       border-bottom: 1px solid rgba(0, 255, 0, 0.1);
     }
     footer {
       border-top: 1px solid rgba(0, 255, 0, 0.1);
+      padding: 0.5rem 1rem;
     }
     .chart-container {
       position: relative;
       width: 100%;
-      height: calc(100vh - 260px);
-      min-height: 300px;
-      max-height: 750px;
+      height: calc(100vh - 300px);
+      min-height: 250px;
+      max-height: 700px;
     }
     .tradingview-widget-container {
       position: absolute !important;
@@ -104,20 +104,20 @@
       background: rgba(0, 15, 0, 0.7);
       z-index: 10;
       color: #00ff00;
-      font-size: 1rem;
+      font-size: 0.875rem;
     }
     #chart-container-modal {
-      height: calc(90vh - 140px) !important;
-      min-height: 350px;
-      max-height: 850px;
+      height: calc(90vh - 160px) !important;
+      min-height: 300px;
+      max-height: 800px;
     }
     @media (max-height: 600px) {
-      .chart-container { height: 250px; }
-      #chart-container-modal { height: 300px !important; }
+      .chart-container { height: 200px; }
+      #chart-container-modal { height: 250px !important; }
     }
     @media (min-width: 1024px) {
-      .chart-container { max-height: 700px; }
-      #chart-container-modal { max-height: 800px; }
+      .chart-container { max-height: 650px; }
+      #chart-container-modal { max-height: 750px; }
     }
     .chart-modal {
       display: none;
@@ -135,7 +135,7 @@
     .chart-modal.active { display: flex; }
     .chart-modal-content {
       background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7));
-      padding: 1rem;
+      padding: 0.5rem;
       border: 2px solid rgba(0, 255, 0, 0.5);
       border-radius: 5px;
       width: 95%;
@@ -146,13 +146,15 @@
     }
     main {
       flex: 1;
+      overflow-x: hidden;
       overflow-y: auto;
     }
     section {
       background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2));
       border: 1px solid rgba(0, 255, 0, 0.1);
       border-radius: 8px;
-      padding: 1rem;
+      padding: 0.5rem;
+      min-width: 0;
     }
     ul {
       scrollbar-width: thin;
@@ -161,7 +163,7 @@
       padding: 0;
     }
     ul::-webkit-scrollbar {
-      width: 8px;
+      width: 6px;
     }
     ul::-webkit-scrollbar-track {
       background: #000;
@@ -171,14 +173,19 @@
       border-radius: 4px;
     }
     #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
-      max-height: 600px;
+      max-height: 50vh;
       overflow-y: auto;
-      padding-right: 8px;
+      padding-right: 4px;
+    }
+    @media (min-width: 640px) {
+      #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
+        max-height: 600px;
+      }
     }
     #token-list li {
       display: flex;
       flex-direction: column;
-      padding: 0.75rem 1rem;
+      padding: 0.5rem;
       border-radius: 6px;
       margin-bottom: 0.5rem;
       transition: all 0.3s ease;
@@ -193,15 +200,15 @@
       box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
     }
     #token-list .metric {
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
       color: #a0a0a0;
     }
     #token-list .performance {
-      font-size: 0.875rem;
+      font-size: 0.75rem;
       font-weight: 600;
     }
     #profit-pairs .metric {
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
       color: #a0a0a0;
     }
     @keyframes glow-blue {
@@ -241,7 +248,7 @@
       overflow: hidden;
       white-space: nowrap;
       padding: 4px 0;
-      margin-top: 8px;
+      margin-top: 4px;
       width: 100%;
     }
     .marquee {
@@ -252,20 +259,26 @@
     }
     @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     .marquee span {
-      margin-right: 20px;
-      font-size: 0.75rem;
+      margin-right: 12px;
+      font-size: 0.6875rem;
       color: #00ff00;
     }
-    @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
+    @media (min-width: 640px) { .marquee span { font-size: 0.75rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
     #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
       animation: glow-green 2s infinite;
       background-color: #00ff00;
       color: #000;
       border: 1px solid #00ff00;
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
       border-radius: 4px;
-      padding: 0.5rem 1rem;
+      padding: 0.25rem 0.5rem;
+    }
+    @media (min-width: 640px) {
+      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
+        font-size: 0.75rem;
+        padding: 0.5rem 1rem;
+      }
     }
     #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
       background-color: #00cc00;
@@ -281,8 +294,12 @@
       color: #00ff00;
       resize: none;
       width: 100%;
-      padding: 0.5rem;
+      padding: 0.25rem;
       border-radius: 4px;
+      font-size: 0.75rem;
+    }
+    @media (min-width: 640px) {
+      #chat-input { padding: 0.5rem; font-size: 0.875rem; }
     }
     #chat-input:focus {
       outline: none;
@@ -293,14 +310,14 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 1rem;
+      padding: 0.5rem;
     }
     .loader::after {
       content: '';
-      width: 24px;
-      height: 24px;
-      border: 4px solid #00ff00;
-      border-top: 4px solid transparent;
+      width: 16px;
+      height: 16px;
+      border: 3px solid #00ff00;
+      border-top: 3px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -326,28 +343,28 @@
       text-align: center;
       line-height: 1.4;
       margin-bottom: 0.5rem;
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
       background: rgba(0, 0, 0, 0.8);
       border: 1px solid #00ff00;
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-      padding: 0.5rem;
+      padding: 0.25rem;
       animation: glow-green 2s infinite;
+    }
+    @media (min-width: 640px) {
+      .title-box { font-size: 0.875rem; padding: 0.5rem; }
     }
     #chart-title-header, #chart-title-modal {
       text-align: center;
-      padding: 0.5rem;
+      padding: 0.25rem;
       border-radius: 4px;
       background: rgba(0, 0, 0, 0.8);
+      font-size: 0.75rem;
     }
     @media (min-width: 640px) {
-      .title-box { font-size: 0.875rem; }
-      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal { font-size: 0.875rem; }
-    }
-    @media (min-width: 768px) {
-      .title-box { font-size: 1rem; }
+      #chart-title-header, #chart-title-modal { font-size: 0.875rem; padding: 0.5rem; }
     }
     [data-tooltip] { position: relative; }
     [data-tooltip]:hover::after {
@@ -360,7 +377,7 @@
       color: #000;
       padding: 4px 8px;
       border-radius: 4px;
-      font-size: 12px;
+      font-size: 10px;
       white-space: nowrap;
       z-index: 60;
     }
@@ -368,18 +385,25 @@
     #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
     #gas-heatmap-canvas {
       width: 100%;
-      height: 300px;
+      max-width: 100%;
+      height: 20rem;
       border: 1px solid rgba(0, 255, 0, 0.5);
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
+    @media (min-width: 640px) {
+      #gas-heatmap-canvas { height: 300px; }
+    }
     #gas-heatmap-legend {
       display: flex;
       justify-content: center;
-      gap: 1rem;
-      margin-top: 0.5rem;
-      font-size: 0.75rem;
+      gap: 0.5rem;
+      margin-top: 0.25rem;
+      font-size: 0.6875rem;
       color: #d1d5db;
+    }
+    @media (min-width: 640px) {
+      #gas-heatmap-legend { gap: 1rem; font-size: 0.75rem; margin-top: 0.5rem; }
     }
     .legend-item {
       display: flex;
@@ -387,39 +411,42 @@
       gap: 0.25rem;
     }
     .legend-color {
-      width: 12px;
-      height: 12px;
+      width: 10px;
+      height: 10px;
       border-radius: 2px;
+    }
+    @media (min-width: 640px) {
+      .legend-color { width: 12px; height: 12px; }
     }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-green-600">
   <div class="particles" id="particles"></div>
-  <header class="w-full gradient-bg backdrop-blur-lg p-3 flex justify-center items-center overflow-x-hidden">
-    <div class="text-center w-full max-w-[95vw] sm:max-w-4xl lg:max-w-6xl mx-auto px-2">
+  <header class="w-full gradient-bg backdrop-blur-lg flex justify-center items-center overflow-x-hidden">
+    <div class="text-center w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto px-2">
       <div class="title-box glow-green">
-        <h1 class="text-sm sm:text-lg md:text-xl">🧊 ICE KING DASHBOARD 👑</h1>
+        <h1 class="text-xs sm:text-base md:text-lg">🧊 ICE KING DASHBOARD 👑</h1>
       </div>
-      <p class="text-sm sm:text-base mt-1 text-gray-300 typewriter">Live Crypto Market Analytics</p>
-      <p class="text-xs sm:text-sm mt-1 text-green-500">Powered by CoinMarketCap & xAI</p>
+      <p class="text-xs sm:text-sm mt-1 text-gray-300 typewriter">Live Crypto Market Analytics</p>
+      <p class="text-xs mt-1 text-green-500">Powered by CoinMarketCap & xAI</p>
       <div class="chart-wrapper w-full">
-        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div class="flex space-x-2 flex-wrap gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
-            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
-            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
-            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
+        <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
+          <div class="flex flex-wrap space-x-1 gap-2">
+            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
+            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
+            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
+            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
+            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
-          <div class="flex space-x-2">
-            <button id="toggle-indicator-header" class="text-black px-2 py-1 rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
-            <button id="toggle-sticky-header" class="text-black px-2 py-1 rounded" aria-label="Dock chart">Dock Chart 🔍</button>
-            <button id="toggle-data-source" class="text-black px-2 py-1 rounded" aria-label="Toggle data source">[Real Data] ❄️</button>
-            <button id="toggle-debug" class="text-black px-2 py-1 rounded" aria-label="Debug chart">[Enable Debug] 👑</button>
+          <div class="flex flex-wrap space-x-1 gap-2">
+            <button id="toggle-indicator-header" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
+            <button id="toggle-sticky-header" class="text-black rounded" aria-label="Dock chart">Dock Chart 🔍</button>
+            <button id="toggle-data-source" class="text-black rounded" aria-label="Toggle data source">[Real Data] ❄️</button>
+            <button id="toggle-debug" class="text-black rounded" aria-label="Debug chart">[Enable Debug] 👑</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div id="live-price-header" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
+          <div id="live-price-header" class="text-xs sm:text-sm text-gray-300 glow-blue">> Live Price: Loading...</div>
         </div>
         <div id="chart-container-header" class="chart-container mt-2">
           <div class="chart-loading">
@@ -427,7 +454,7 @@
             <div class="ml-2">Loading top ranked chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-header" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
+        <h3 id="chart-title-header" class="font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -443,21 +470,21 @@
   <div class="chart-modal" id="chart-modal">
     <div class="chart-modal-content">
       <div class="chart-wrapper w-full">
-        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div class="flex space-x-2 flex-wrap gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black px-2 py-1 rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
+        <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
+          <div class="flex flex-wrap space-x-1 gap-2">
+            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
+            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
+            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
+            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
-          <div class="flex space-x-2">
-            <button id="toggle-indicator-modal" class="text-black px-2 py-1 rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
-            <button id="toggle-sticky-modal" class="text-black px-2 py-1 rounded" aria-label="Undock chart">Undock Chart 🔍</button>
+          <div class="flex flex-wrap space-x-1 gap-2">
+            <button id="toggle-indicator-modal" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
+            <button id="toggle-sticky-modal" class="text-black rounded" aria-label="Undock chart">Undock Chart 🔍</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div id="live-price-modal" class="text-sm sm:text-base text-gray-300 glow-blue">> Live Price: Loading...</div>
+          <div id="live-price-modal" class="text-xs sm:text-sm text-gray-300 glow-blue">> Live Price: Loading...</div>
         </div>
         <div id="chart-container-modal" class="chart-container mt-2">
           <div class="chart-loading">
@@ -465,7 +492,7 @@
             <div class="ml-2">Loading top ranked chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-modal" class="text-sm sm:text-lg font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
+        <h3 id="chart-title-modal" class="font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -478,57 +505,57 @@
       </div>
     </div>
   </div>
-  <main class="flex-1 p-3 max-w-7xl mx-auto w-full flex flex-col lg:flex-row lg:space-x-4 space-y-4 lg:space-y-0">
-    <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
-      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
-      <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="token-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
-      <div class="mt-4">
-        <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top/Bottom Performers</h3>
-        <ul id="profit-pairs" class="space-y-2 text-xs sm:text-sm w-full"></ul>
+  <main class="flex-1 p-2 max-w-6xl mx-auto w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <section class="gradient-bg rounded-lg shadow-md">
+      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
+      <div id="loader-tokens" class="loader text-center text-gray-500 text-xs">> Loading...</div>
+      <ul id="token-list" class="space-y-2 text-xs sm:text-sm"></ul>
+      <div class="mt-2">
+        <h3 class="text-sm sm:text-base md:text-lg font-bold mb-2 glow-purple typewriter">> Top/Bottom Performers</h3>
+        <ul id="profit-pairs" class="space-y-2 text-xs"></ul>
       </div>
-      <div class="mt-4">
-        <h3 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Top USDT Pairs</h3>
-        <ul id="top-pairs" class="text-xs sm:text-sm text-gray-500 flex flex-wrap gap-2"></ul>
+      <div class="mt-2">
+        <h3 class="text-sm sm:text-base md:text-lg font-bold mb-2 glow-purple typewriter">> Top USDT Pairs</h3>
+        <ul id="top-pairs" class="text-xs text-gray-500 flex flex-wrap gap-2"></ul>
       </div>
     </section>
-    <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
-      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> ETH Gas Fee Heatmap ⛽</h2>
-      <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading Gas Heatmap...</div>
+    <section class="gradient-bg rounded-lg shadow-md">
+      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> ETH Gas Fee Heatmap ⛽</h2>
+      <div id="loader-gas" class="loader text-center text-gray-500 text-xs">> Loading Gas Heatmap...</div>
       <canvas id="gas-heatmap-canvas"></canvas>
       <div id="gas-heatmap-legend">
         <div class="legend-item"><div class="legend-color" style="background: #00ff00"></div>Safe</div>
         <div class="legend-item"><div class="legend-color" style="background: #ffff00"></div>Propose</div>
         <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div>Fast</div>
       </div>
-      <ul id="gas-heatmap-list" class="space-y-2 max-h-[200px] overflow-y-auto text-sm sm:text-base w-full mt-2"></ul>
+      <ul id="gas-heatmap-list" class="space-y-2 text-xs sm:text-sm mt-2"></ul>
     </section>
-    <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
-      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Live Logs 📜</h2>
-      <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="log-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
+    <section class="gradient-bg rounded-lg shadow-md">
+      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Live Logs 📜</h2>
+      <div id="loader-logs" class="loader text-center text-gray-500 text-xs">> Loading...</div>
+      <ul id="log-list" class="space-y-2 text-xs sm:text-sm"></ul>
     </section>
-    <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
-      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Grok Trading Bot 🤖</h2>
-      <div class="mt-4">
-        <h3 class="text-md font-semibold mb-2 glow-green">📡 Live System Logs</h3>
-        <div id="live-logs-container" class="max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 p-2 bg-gray-900 rounded">
+    <section class="gradient-bg rounded-lg shadow-md">
+      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Grok Trading Bot 🤖</h2>
+      <div class="mt-2">
+        <h3 class="text-sm sm:text-base font-semibold mb-2 glow-green">📡 Live System Logs</h3>
+        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 p-2 bg-gray-900 rounded text-xs sm:text-sm">
           <!-- Live logs will be dynamically added here -->
         </div>
       </div>
-      <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <div id="chat-list" class="flex-grow overflow-y-auto p-4 space-y-2 max-h-[70vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600">
+      <div id="loader-chat" class="loader text-center text-gray-500 text-xs">> Loading...</div>
+      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 text-xs sm:text-sm">
         <!-- Chat messages will be dynamically added here -->
       </div>
-      <div class="mt-4 flex flex-col sm:flex-row gap-2">
-        <textarea id="chat-input" rows="2" placeholder="Ask Grok: What are the top rising tokens to trade today?" class="p-2 rounded" aria-label="Chat input"></textarea>
-        <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message">Send</button>
+      <div class="mt-2 flex flex-col sm:flex-row gap-2">
+        <textarea id="chat-input" rows="2" placeholder="Ask Grok: Top rising tokens?" class="p-2 rounded" aria-label="Chat input"></textarea>
+        <button id="chat-send" class="px-2 py-1 rounded" aria-label="Send chat message">Send</button>
       </div>
     </section>
   </main>
-  <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
+  <footer class="gradient-bg text-center text-gray-500 text-xs">
     <p class="typewriter">> Powered by CoinMarketCap, Etherscan & TradingView</p>
-    <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API (https://api.binance.com/api/v3/ticker/24hr), Etherscan API</p>
+    <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API, Etherscan API</p>
   </footer>
   <script>
     // Particle effect
@@ -546,7 +573,7 @@
     let isIndicatorEnabledHeader = false;
     let isIndicatorEnabledModal = false;
 
-    // TradingView chart initialization with retry
+    // TradingView chart initialization
     function initializeChart(containerId, symbol, interval = 'D', retries = 2) {
       const container = document.getElementById(containerId);
       const chartTitle = document.getElementById(containerId === 'chart-container-header' ? 'chart-title-header' : 'chart-title-modal');
@@ -596,13 +623,13 @@
               'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
             },
             onChartReady: () => {
-              console.log(`Chart loaded successfully for ${containerId} with symbol ${symbol}`);
+              console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
               if (isIndicatorEnabled) {
-                alert('Please manually add the "ICE KING Lite V1.0" indicator:\n1. Click the Indicators button (f(x)) on the chart.\n2. Search for "ICE KING Lite V1.0".\n3. Click to apply it.');
+                alert('Please manually add the "ICE KING Lite V1.0" indicator:\n1. Click Indicators (f(x)).\n2. Search "ICE KING Lite V1.0".\n3. Apply.');
               }
             },
             onError: (error) => {
-              console.error(`Chart initialization error for ${containerId} with symbol ${symbol}:`, error);
+              console.error(`Chart error for ${containerId} with symbol ${symbol}:`, error);
               if (retries > 0) {
                 console.log(`Retrying (${retries} attempts left)...`);
                 setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
@@ -626,7 +653,7 @@
       setTimeout(initWidget, 300);
     }
 
-    // Fetch with retry logic
+    // Fetch with retry
     async function fetchWithRetry(url, retries = 2, delay = 1000) {
       for (let i = 0; i <= retries; i++) {
         try {
@@ -636,21 +663,21 @@
             credentials: 'omit',
           });
           if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}, Status Text: ${response.statusText}`);
+            throw new Error(`HTTP error! Status: ${response.status}, Text: ${response.statusText}`);
           }
           return await response.json();
         } catch (error) {
           if (i === retries) {
-            console.error(`Failed to fetch from ${url} after ${retries + 1} attempts:`, error);
+            console.error(`Failed to fetch ${url} after ${retries + 1} attempts:`, error);
             throw error;
           }
-          console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${delay}ms... Error: ${error.message}`);
+          console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${delay}ms: ${error.message}`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
     }
 
-    // Fetch ETH gas prices from Etherscan
+    // Fetch ETH gas prices
     async function fetchGasPrices() {
       const apiKey = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
       const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
@@ -693,10 +720,9 @@
 
       let gasHistory = [];
       const maxHistory = 50;
-      const canvasHeight = 300;
-      const margin = { top: 20, right: 20, bottom: 20, left: 50 };
+      const canvasHeight = canvas.offsetHeight;
+      const margin = { top: 20, right: 10, bottom: 20, left: 40 };
 
-      // Set canvas dimensions
       const resizeCanvas = () => {
         const dpr = window.devicePixelRatio || 1;
         canvas.width = canvas.offsetWidth * dpr;
@@ -709,20 +735,19 @@
       resizeCanvas();
       window.addEventListener('resize', resizeCanvas);
 
-      // Color interpolation for gas prices
       const getColor = (intensity) => {
         if (intensity < 0.5) {
           const t = intensity * 2;
           const r = Math.round(0 + t * (255 - 0));
           const g = Math.round(255);
           const b = Math.round(0);
-          return `rgb(${r}, ${g}, ${b})`; // Green to Yellow
+          return `rgb(${r}, ${g}, ${b})`;
         } else {
           const t = (intensity - 0.5) * 2;
           const r = Math.round(255);
           const g = Math.round(255 - t * (255 - 0));
           const b = Math.round(0);
-          return `rgb(${r}, ${g}, ${b})`; // Yellow to Red
+          return `rgb(${r}, ${g}, ${b})`;
         }
       };
 
@@ -741,9 +766,8 @@
           gasHistory.push(gasData);
           if (gasHistory.length > maxHistory) gasHistory.shift();
 
-          // Update list
           gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
-            <li class="p-2 rounded bg-black bg-opacity-50 glow-blue">
+            <li class="p-1 rounded bg-black bg-opacity-50 glow-blue">
               <div>Block: ${data.lastBlock}</div>
               <div>Safe: ${data.safeGasPrice} Gwei</div>
               <div>Propose: ${data.proposeGasPrice} Gwei</div>
@@ -752,22 +776,19 @@
             </li>
           `).join('');
 
-          // Clear canvas
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-          // Calculate scales
           const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
           const plotWidth = canvas.offsetWidth - margin.left - margin.right;
           const plotHeight = canvasHeight - margin.top - margin.bottom;
-          const barWidth = plotWidth / maxHistory / 3; // Three bars per data point
+          const barWidth = plotWidth / maxHistory / 3;
 
-          // Draw bars
           gasHistory.forEach((data, i) => {
             const x = margin.left + (i * plotWidth / maxHistory);
             const prices = [
-              { value: data.safeGasPrice, color: '#00ff00' }, // Green
-              { value: data.proposeGasPrice, color: '#ffff00' }, // Yellow
-              { value: data.fastGasPrice, color: '#ff0000' } // Red
+              { value: data.safeGasPrice, color: '#00ff00' },
+              { value: data.proposeGasPrice, color: '#ffff00' },
+              { value: data.fastGasPrice, color: '#ff0000' }
             ];
 
             prices.forEach((price, j) => {
@@ -779,18 +800,16 @@
             });
           });
 
-          // Draw y-axis labels
           ctx.fillStyle = '#d1d5db';
-          ctx.font = '10px Fira Code';
+          ctx.font = '9px Fira Code';
           ctx.textAlign = 'right';
           ctx.textBaseline = 'middle';
           const yTicks = [0, Math.round(maxGas / 2), maxGas];
           yTicks.forEach(tick => {
             const y = margin.top + plotHeight - (tick / maxGas) * plotHeight;
-            ctx.fillText(`${tick} Gwei`, margin.left - 10, y);
+            ctx.fillText(`${tick} Gwei`, margin.left - 5, y);
           });
 
-          // Draw x-axis labels (time)
           ctx.textAlign = 'center';
           ctx.textBaseline = 'top';
           const latestTime = new Date(gasHistory[gasHistory.length - 1]?.timestamp);
@@ -809,10 +828,9 @@
       setInterval(updateHeatmap, 60000);
     }
 
-    // Main logic to load and populate data
+    // Main logic
     let isUsingMockData = false;
 
-    // Function to load and populate data
     const loadData = async () => {
       const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
@@ -843,14 +861,13 @@
         document.getElementById('live-price-header').textContent = `> Live Price: Error - ${error.message} ❄️`;
         document.getElementById('chart-title-header').textContent = 'Error loading data';
         document.getElementById('chart-title-modal').textContent = 'Error loading data';
-        document.getElementById('loader-tokens').textContent = `> ${error.message}. Click "Toggle Data Source" to use mock data.`;
+        document.getElementById('loader-tokens').textContent = `> ${error.message}. Try Mock Data.`;
         document.getElementById('loader-tokens').style.display = 'block';
         toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
         document.getElementById('loader-gas').textContent = '> Failed to load gas prices';
       }
     };
 
-    // Function to update UI with token data
     function updateUI(tokens) {
       document.getElementById('loader-tokens').style.display = 'none';
 
@@ -869,11 +886,11 @@
             </div>
             <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
-            <div class="metric">Circ. Supply: ${token.circulating_supply.toLocaleString()}</div>
+            <div class="metric">Supply: ${token.circulating_supply.toLocaleString()}</div>
             <div class="metric">24h High: $${token.high_24h?.toLocaleString() || 'N/A'}</div>
             <div class="metric">24h Low: $${token.low_24h?.toLocaleString() || 'N/A'}</div>
             <div class="metric">Market Cap: $${token.market_cap?.toLocaleString() || 'N/A'}</div>
-            ${token.symbol === 'ETH' && token.gasPrice ? `<div class="metric">Gas Price: ${token.gasPrice} Gwei</div>` : ''}
+            ${token.symbol === 'ETH' && token.gasPrice ? `<div class="metric">Gas: ${token.gasPrice} Gwei</div>` : ''}
           </li>
         `;
       }).join('');
@@ -883,19 +900,19 @@
       const topToken = sortedTokens[0];
       const bottomToken = sortedTokens[sortedTokens.length - 1];
       profitPairs.innerHTML = `
-        <li class="top-pair p-2 rounded bg-black bg-opacity-50">
+        <li class="top-pair p-1 rounded bg-black bg-opacity-50">
           <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
-          <div class="metric">Circ. Supply: ${topToken.circulating_supply.toLocaleString()}</div>
+          <div class="metric">Supply: ${topToken.circulating_supply.toLocaleString()}</div>
           <div class="metric">24h High: $${topToken.high_24h?.toLocaleString() || 'N/A'}</div>
           <div class="metric">24h Low: $${topToken.low_24h?.toLocaleString() || 'N/A'}</div>
         </li>
-        <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">
+        <li class="bottom-pair p-1 rounded bg-black bg-opacity-50">
           <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
-          <div class="metric">Circ. Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
+          <div class="metric">Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
           <div class="metric">24h High: $${bottomToken.high_24h?.toLocaleString() || 'N/A'}</div>
           <div class="metric">24h Low: $${bottomToken.low_24h?.toLocaleString() || 'N/A'}</div>
         </li>
@@ -908,7 +925,7 @@
       topPairs.innerHTML = tokens
         .filter(token => token.symbol && token.symbol !== 'USDT')
         .slice(0, 5)
-        .map(token => `<li class="gradient-bg p-1 rounded-md text-sm glow-blue">> 🧊 ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
+        .map(token => `<li class="gradient-bg p-1 rounded-md glow-blue">> 🧊 ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
         .join('');
 
       const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
@@ -930,7 +947,6 @@
       document.getElementById('chart-title-modal').textContent = topSymbol;
     }
 
-    // Event Listeners
     document.addEventListener('DOMContentLoaded', () => {
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
       const toggleIndicatorHeaderBtn = document.getElementById('toggle-indicator-header');
@@ -1004,7 +1020,7 @@
             const tokenListItems = document.querySelectorAll('#token-list li');
             tokenListItems.forEach(item => item.classList.remove('selected-token'));
             li.classList.add('selected-token');
-            console.log(`Switched to token from list: ${symbol}`);
+            console.log(`Switched to token: ${symbol}`);
           }
         });
       }
@@ -1032,14 +1048,12 @@
       });
     });
 
-    // Mock data for fallback
     const mockTokens = [
       { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
       { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 30 },
       { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
     ];
 
-    // Ice King Puns for Marquee
     const iceKingPuns = [
       "Everything is Going to be okay! ❄️👑",
       "Penguins are my royal guards! 🐧🧊",
