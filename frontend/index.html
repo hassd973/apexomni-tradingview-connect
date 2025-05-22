@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://s3.tradingview.com/tv.js" async></script>
   <style>
-    /* Base Styles */
+    /* Existing styles unchanged */
     body {
       font-family: 'Fira Code', monospace;
       background: linear-gradient(180deg, rgba(10, 15, 20, 0.95), rgba(10, 15, 20, 1));
@@ -19,8 +19,6 @@
       display: flex;
       flex-direction: column;
     }
-
-    /* Background Effects */
     .grid-bg {
       position: fixed;
       top: 0;
@@ -72,8 +70,6 @@
       50% { opacity: 0.8; }
       100% { transform: translate(100px, -100px); opacity: 0; }
     }
-
-    /* Header and Footer */
     header, footer {
       background: rgba(31, 41, 55, 0.3);
       backdrop-filter: blur(10px) saturate(1.2);
@@ -83,8 +79,6 @@
     footer {
       border-top: 1px solid rgba(0, 255, 0, 0.1);
     }
-
-    /* Chart Containers */
     .chart-container {
       position: relative;
       width: 100%;
@@ -126,8 +120,6 @@
       .chart-container { max-height: 700px; }
       #chart-container-modal { max-height: 800px; }
     }
-
-    /* Modal */
     .chart-modal {
       display: none;
       position: fixed;
@@ -153,22 +145,16 @@
       overflow-y: auto;
       box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
     }
-
-    /* Main Content */
     main {
       flex: 1;
       overflow-y: auto;
     }
-
-    /* Sections */
     section {
       background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2));
       border: 1px solid rgba(0, 255, 0, 0.1);
       border-radius: 8px;
       padding: 1rem;
     }
-
-    /* Scrollbar and Lists */
     ul {
       scrollbar-width: thin;
       scrollbar-color: #00ff00 #000;
@@ -185,7 +171,7 @@
       background: #00ff00;
       border-radius: 4px;
     }
-    #token-list, #profit-pairs, #log-list, #chat-list {
+    #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
       max-height: 600px;
       overflow-y: auto;
       padding-right: 8px;
@@ -219,8 +205,6 @@
       font-size: 0.75rem;
       color: #a0a0a0;
     }
-
-    /* Animations */
     @keyframes glow-blue {
       0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
       50% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.8), 0 0 25px rgba(0, 255, 255, 0.5); }
@@ -252,8 +236,6 @@
     .fade-in { animation: fadeIn 0.5s ease-in; }
     .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
     .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2)); border: 1px solid rgba(0, 255, 0, 0.2); }
-
-    /* Marquee */
     .marquee-container {
       background: rgba(0, 0, 0, 0.8);
       border: 1px solid rgba(0, 255, 0, 0.3);
@@ -277,8 +259,6 @@
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
-
-    /* Buttons and Inputs */
     #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
       animation: glow-green 2s infinite;
       background-color: #00ff00;
@@ -310,8 +290,6 @@
       border-color: #00ff00;
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
     }
-
-    /* Loader */
     .loader {
       display: flex;
       justify-content: center;
@@ -328,8 +306,6 @@
       animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* Typewriter and Titles */
     .typewriter {
       display: inline-block;
       overflow: hidden;
@@ -374,8 +350,6 @@
     @media (min-width: 768px) {
       .title-box { font-size: 1rem; }
     }
-
-    /* Tooltip */
     [data-tooltip] { position: relative; }
     [data-tooltip]:hover::after {
       content: attr(data-tooltip);
@@ -391,10 +365,16 @@
       white-space: nowrap;
       z-index: 60;
     }
-
-    /* Profit Pairs */
     #profit-pairs .top-pair { animation: glow-green 2s infinite; }
     #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
+    /* New styles for gas heatmap */
+    #gas-heatmap-canvas {
+      width: 100%;
+      height: 300px;
+      border: 1px solid rgba(0, 255, 0, 0.5);
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-green-600">
@@ -497,6 +477,12 @@
       </div>
     </section>
     <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
+      <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> ETH Gas Fee Heatmap ⛽</h2>
+      <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading Gas Heatmap...</div>
+      <canvas id="gas-heatmap-canvas"></canvas>
+      <ul id="gas-heatmap-list" class="space-y-2 max-h-[200px] overflow-y-auto text-sm sm:text-base w-full mt-2"></ul>
+    </section>
+    <section class="gradient-bg p-3 rounded-lg shadow-md flex-1 w-full">
       <h2 class="text-lg sm:text-xl md:text-2xl font-bold mb-2 glow-purple typewriter">> Live Logs 📜</h2>
       <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
       <ul id="log-list" class="space-y-2 max-h-[600px] overflow-y-auto text-sm sm:text-base w-full"></ul>
@@ -520,10 +506,9 @@
     </section>
   </main>
   <footer class="gradient-bg p-2 text-center text-gray-500 text-xs sm:text-sm">
-    <p class="typewriter">> Powered by CoinMarketCap & TradingView</p>
-    <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API (https://api.binance.com/api/v3/ticker/24hr)</p>
+    <p class="typewriter">> Powered by CoinMarketCap, Etherscan & TradingView</p>
+    <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API (https://api.binance.com/api/v3/ticker/24hr), Etherscan API</p>
   </footer>
-
   <script>
     // Particle effect
     const particleContainer = document.getElementById('particles');
@@ -651,6 +636,97 @@
     // Main logic to load and populate data
     let isUsingMockData = false;
 
+    // Fetch ETH gas prices from Etherscan
+    async function fetchGasPrices() {
+      const apiKey = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
+      const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
+      try {
+        const data = await fetchWithRetry(url);
+        if (data.status === '1' && data.result) {
+          return {
+            safeGasPrice: parseInt(data.result.SafeGasPrice),
+            proposeGasPrice: parseInt(data.result.ProposeGasPrice),
+            fastGasPrice: parseInt(data.result.FastGasPrice),
+            lastBlock: data.result.LastBlock,
+            timestamp: new Date().getTime()
+          };
+        } else {
+          throw new Error('Invalid gas price data');
+        }
+      } catch (error) {
+        console.error('Failed to fetch gas prices:', error);
+        return null;
+      }
+    }
+
+    // Render ETH gas fee heatmap
+    async function renderGasHeatmap() {
+      const canvas = document.getElementById('gas-heatmap-canvas');
+      const ctx = canvas.getContext('2d');
+      const gasList = document.getElementById('gas-heatmap-list');
+      const loader = document.getElementById('loader-gas');
+      if (!canvas || !ctx || !gasList) return;
+
+      loader.style.display = 'block';
+      gasList.innerHTML = '';
+
+      // Store gas price history
+      let gasHistory = [];
+      const maxHistory = 50; // Store last 50 data points
+
+      const updateHeatmap = async () => {
+        const gasData = await fetchGasPrices();
+        if (!gasData) {
+          loader.textContent = '> Failed to load gas prices';
+          return;
+        }
+
+        gasHistory.push(gasData);
+        if (gasHistory.length > maxHistory) gasHistory.shift();
+
+        // Update list
+        gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
+          <li class="p-2 rounded bg-black bg-opacity-50 glow-blue">
+            <div>Block: ${data.lastBlock}</div>
+            <div>Safe: ${data.safeGasPrice} Gwei</div>
+            <div>Propose: ${data.proposeGasPrice} Gwei</div>
+            <div>Fast: ${data.fastGasPrice} Gwei</div>
+            <div class="metric">Time: ${new Date(data.timestamp).toLocaleTimeString()}</div>
+          </li>
+        `).join('');
+
+        // Normalize gas prices for heatmap
+        const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
+        const cellWidth = canvas.width / maxHistory;
+        const cellHeight = canvas.height / 3;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        gasHistory.forEach((data, i) => {
+          const intensities = [
+            data.safeGasPrice / maxGas,
+            data.proposeGasPrice / maxGas,
+            data.fastGasPrice / maxGas
+          ];
+          intensities.forEach((intensity, j) => {
+            ctx.fillStyle = `rgba(0, 255, 0, ${intensity * 0.8})`;
+            ctx.fillRect(i * cellWidth, j * cellHeight, cellWidth, cellHeight);
+            ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
+            ctx.strokeRect(i * cellWidth, j * cellHeight, cellWidth, cellHeight);
+          });
+        });
+
+        loader.style.display = 'none';
+      };
+
+      // Set canvas size
+      canvas.width = canvas.offsetWidth;
+      canvas.height = 300;
+
+      // Initial render and periodic update
+      updateHeatmap();
+      setInterval(updateHeatmap, 60000); // Update every minute
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
       const toggleIndicatorHeaderBtn = document.getElementById('toggle-indicator-header');
@@ -668,12 +744,21 @@
 
         try {
           const data = await fetchWithRetry(backendApiUrl);
-          console.log('Raw backend response:', data); // Log the raw response for debugging
+          console.log('Raw backend response:', data);
           if (!Array.isArray(data) || data.length === 0) {
             throw new Error('Invalid or empty response from backend');
           }
+          // Enhance token data with Etherscan data for ETH
+          const ethData = data.find(token => token.symbol === 'ETH');
+          if (ethData) {
+            const gasData = await fetchGasPrices();
+            if (gasData) {
+              ethData.gasPrice = gasData.proposeGasPrice;
+            }
+          }
           updateUI(data);
           toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
+          renderGasHeatmap();
         } catch (error) {
           console.error('Failed to load real data:', error);
           document.getElementById('live-price-header').textContent = `> Live Price: Error - ${error.message} ❄️`;
@@ -682,6 +767,7 @@
           document.getElementById('loader-tokens').textContent = `> ${error.message}. Click "Toggle Data Source" to use mock data.`;
           document.getElementById('loader-tokens').style.display = 'block';
           toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
+          document.getElementById('loader-gas').textContent = '> Failed to load gas prices';
         }
       };
 
@@ -689,14 +775,14 @@
       function updateUI(tokens) {
         document.getElementById('loader-tokens').style.display = 'none';
 
-        // Update token list
+        // Update token list with additional metrics
         const tokenList = document.getElementById('token-list');
         tokenList.innerHTML = tokens.map((token, index) => {
           const isPositive = token.price_change_percentage_24h >= 0;
           const rankFactor = index / (tokens.length - 1);
           const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
           const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
-          const symbol = `${token.symbol}USDT`; // Append USDT for TradingView compatibility
+          const symbol = `BINANCE:${token.symbol}USDT`;
           return `
             <li class="${bgClass} ${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}">
               <div class="flex justify-between">
@@ -706,6 +792,10 @@
               <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
               <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
               <div class="metric">Circ. Supply: ${token.circulating_supply.toLocaleString()}</div>
+              <div class="metric">24h High: $${token.high_24h?.toLocaleString() || 'N/A'}</div>
+              <div class="metric">24h Low: $${token.low_24h?.toLocaleString() || 'N/A'}</div>
+              <div class="metric">Market Cap: $${token.market_cap?.toLocaleString() || 'N/A'}</div>
+              ${token.symbol === 'ETH' && token.gasPrice ? `<div class="metric">Gas Price: ${token.gasPrice} Gwei</div>` : ''}
             </li>
           `;
         }).join('');
@@ -721,12 +811,16 @@
             <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
             <div class="metric">Circ. Supply: ${topToken.circulating_supply.toLocaleString()}</div>
+            <div class="metric">24h High: $${topToken.high_24h?.toLocaleString() || 'N/A'}</div>
+            <div class="metric">24h Low: $${topToken.low_24h?.toLocaleString() || 'N/A'}</div>
           </li>
           <li class="bottom-pair p-2 rounded bg-black bg-opacity-50">
             <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
             <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
             <div class="metric">Circ. Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
+            <div class="metric">24h High: $${bottomToken.high_24h?.toLocaleString() || 'N/A'}</div>
+            <div class="metric">24h Low: $${bottomToken.low_24h?.toLocaleString() || 'N/A'}</div>
           </li>
         `;
 
@@ -872,7 +966,7 @@
     // Mock data for fallback
     const mockTokens = [
       { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
-      { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2 },
+      { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 30 },
       { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
     ];
 
@@ -899,6 +993,6 @@
     let isDebugMode = false;
   </script>
   <script src="script.js"></script>
-<script src="live-logs.js"></script>
+  <script src="live-logs.js"></script>
 </body>
 </html>
