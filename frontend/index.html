@@ -3,50 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧊 ICE KING DASHBOARD 👑</title>
+  <meta name="description" content="Ice King Dashboard: Live crypto market analytics powered by CoinMarketCap, Etherscan, and TradingView.">
+  <meta name="keywords" content="crypto, dashboard, Ice King, Adventure Time, trading, analytics">
+  <meta name="author" content="xAI">
+  <title>❄️ ICE KING 🌎🤑 DASHBOARD 👑</title>
+  <link rel="icon" type="image/png" href="https://i.imgur.com/7YkZ3Xh.png">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Limelight&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Limelight&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.96/build/spline-viewer.js"></script>
   <script src="https://s3.tradingview.com/tv.js" async></script>
   <style>
     body {
       font-family: 'Fira Code', monospace;
-      background: linear-gradient(180deg, rgba(10, 15, 20, 0.95), rgba(10, 15, 20, 1));
-      color: #d1d5db;
+      background: #1e2727;
+      color: #e0f7fa;
       margin: 0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      line-height: 1.6;
     }
-    .grid-bg {
+    h1, h2, h3 {
+      font-family: 'Limelight', cursive;
+      color: #e0f7fa;
+      text-shadow: 0 0 8px rgba(0, 204, 0, 0.3);
+    }
+    .spline-bg {
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: repeating-linear-gradient(
-        0deg,
-        rgba(0, 255, 0, 0.05),
-        rgba(0, 255, 0, 0.05) 1px,
-        transparent 1px,
-        transparent 20px
-      ),
-      repeating-linear-gradient(
-        90deg,
-        rgba(0, 255, 0, 0.05),
-        rgba(0, 255, 0, 0.05) 1px,
-        transparent 1px,
-        transparent 20px
-      );
-      animation: glitch 4s infinite;
-      z-index: -1;
-      opacity: 0.8;
+      opacity: 0.5;
+      z-index: -2;
+      pointer-events: none;
     }
-    @keyframes glitch {
-      0%, 100% { transform: translate(0, 0); opacity: 0.7; }
-      5% { transform: translate(2px, -2px); opacity: 0.5; }
-      10% { transform: translate(-2px, 2px); opacity: 0.9; }
+    spline-viewer {
+      width: 100%;
+      height: 100%;
+    }
+    .snowflake {
+      position: absolute;
+      color: #e0f7fa;
+      font-size: 6px;
+      animation: snowflake linear infinite;
+      pointer-events: none;
+      z-index: -1;
+    }
+    @keyframes snowflake {
+      0% { transform: translate(0, 0) rotate(0deg); opacity: 0.6; }
+      100% { transform: translate(calc(-20px + var(--drift)), 100vh) rotate(360deg); opacity: 0; }
     }
     .particles {
       position: fixed;
@@ -59,49 +67,38 @@
     }
     .star {
       position: absolute;
-      width: 2px;
-      height: 2px;
-      background: rgba(0, 255, 0, 0.7);
+      width: 1px;
+      height: 1px;
+      background: rgba(0, 204, 0, 0.3);
       border-radius: 50%;
-      animation: float 10s infinite linear;
-    }
-    .penguin {
-      position: absolute;
-      font-size: 12px;
-      animation: float 12s infinite linear, rotate 5s infinite linear;
+      animation: float 15s infinite linear;
     }
     @keyframes float {
       0% { transform: translate(0, 0); opacity: 0; }
-      50% { opacity: 0.8; }
-      100% { transform: translate(100px, -100px); opacity: 0; }
-    }
-    @keyframes rotate {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      50% { opacity: 0.4; }
+      100% { transform: translate(50px, -50px); opacity: 0; }
     }
     header, footer {
-      background: rgba(31, 41, 55, 0.3);
-      backdrop-filter: blur(10px) saturate(1.2);
-      padding: 0.5rem 1rem;
-      border-bottom: 1px solid rgba(0, 255, 0, 0.1);
+      background: rgba(30, 39, 39, 0.8);
+      padding: 1rem;
+      border-bottom: 1px solid rgba(0, 204, 0, 0.1);
     }
     footer {
-      border-top: 1px solid rgba(0, 255, 0, 0.1);
-      padding: 0.5rem 1rem;
+      border-top: 1px solid rgba(0, 204, 0, 0.1);
     }
     .chart-container {
       position: relative;
       width: 100%;
-      height: calc(100vh - 300px);
+      height: calc(100vh - 320px);
       min-height: 250px;
-      max-height: 700px;
+      max-height: 600px;
+      border: 1px solid rgba(0, 204, 0, 0.2);
+      border-radius: 6px;
     }
     .tradingview-widget-container {
       position: absolute !important;
       width: 100% !important;
       height: 100% !important;
-      border: 1px solid rgba(0, 255, 0, 0.5);
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
     .chart-loading {
       position: absolute;
@@ -112,23 +109,23 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: rgba(0, 15, 0, 0.7);
+      background: rgba(30, 39, 39, 0.5);
       z-index: 10;
-      color: #00ff00;
+      color: #00b7eb;
       font-size: 0.875rem;
     }
     #chart-container-modal {
-      height: calc(90vh - 160px) !important;
+      height: calc(90vh - 180px) !important;
       min-height: 300px;
-      max-height: 800px;
+      max-height: 700px;
     }
     @media (max-height: 600px) {
       .chart-container { height: 200px; }
       #chart-container-modal { height: 250px !important; }
     }
     @media (min-width: 1024px) {
-      .chart-container { max-height: 650px; }
-      #chart-container-modal { max-height: 750px; }
+      .chart-container { max-height: 600px; }
+      #chart-container-modal { max-height: 700px; }
     }
     .chart-modal {
       display: none;
@@ -137,7 +134,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(30, 39, 39, 0.7);
       z-index: 50;
       justify-content: center;
       align-items: center;
@@ -145,61 +142,56 @@
     }
     .chart-modal.active { display: flex; }
     .chart-modal-content {
-      background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7));
-      padding: 0.5rem;
-      border: 2px solid rgba(0, 255, 0, 0.5);
-      border-radius: 5px;
+      background: #232e2e;
+      padding: 1rem;
+      border: 1px solid rgba(0, 204, 0, 0.2);
+      border-radius: 6px;
       width: 95%;
       max-width: 1200px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     main {
       flex: 1;
-      overflow-x: hidden;
-      overflow-y: auto;
+      padding: 1rem;
     }
     section {
-      background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2));
-      border: 1px solid rgba(0, 255, 0, 0.2);
-      border-radius: 8px;
-      padding: 0.75rem;
+      background: #232e2e;
+      border: 1px solid rgba(0, 204, 0, 0.2);
+      border-radius: 6px;
+      padding: 1rem;
       min-width: 0;
       cursor: move;
-      transition: transform 0.2s ease, opacity 0.2s ease;
-      box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     @media (max-width: 639px) {
-      section {
-        touch-action: auto;
-        cursor: default;
-      }
+      section { cursor: default; }
     }
     section.dragging {
-      opacity: 0.7;
+      opacity: 0.8;
       transform: scale(0.98);
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       z-index: 100;
     }
     section:hover {
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     }
     ul {
       scrollbar-width: thin;
-      scrollbar-color: #00ff00 #000;
+      scrollbar-color: #00b7eb #232e2e;
       list-style: none;
       padding: 0;
-      touch-action: pan-y;
     }
     ul::-webkit-scrollbar {
       width: 6px;
     }
     ul::-webkit-scrollbar-track {
-      background: #000;
+      background: #232e2e;
     }
     ul::-webkit-scrollbar-thumb {
-      background: #00ff00;
+      background: #00b7eb;
       border-radius: 4px;
     }
     #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
@@ -215,137 +207,98 @@
     #token-list li {
       display: flex;
       flex-direction: column;
-      padding: 0.5rem;
+      padding: 0.75rem;
       border-radius: 6px;
       margin-bottom: 0.5rem;
       transition: all 0.3s ease;
       cursor: pointer;
+      font-size: 0.875rem;
+      background: rgba(30, 39, 39, 0.5);
     }
     #token-list li:hover {
-      transform: translateX(5px);
-      box-shadow: 0 0 12px rgba(0, 255, 0, 0.6);
+      background: rgba(0, 204, 0, 0.1);
+      transform: translateX(2px);
     }
     #token-list li.selected-token {
-      border: 2px solid rgba(0, 255, 0, 0.9);
-      box-shadow: 0 0 18px rgba(0, 255, 0, 0.7);
+      border: 1px solid #ffbb33;
+      background: rgba(255, 187, 51, 0.1);
     }
     #token-list .metric {
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       color: #a0a0a0;
     }
     #token-list .performance {
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.875rem;
+      font-weight: 700;
     }
     #profit-pairs .metric {
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       color: #a0a0a0;
-    }
-    @keyframes glow-blue {
-      0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.6), 0 0 10px rgba(0, 255, 255, 0.4); }
-      50% { text-shadow: 0 0 18px rgba(0, 255, 255, 0.9), 0 0 30px rgba(0, 255, 255, 0.6); }
-      100% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.6), 0 0 10px rgba(0, 255, 255, 0.4); }
-    }
-    @keyframes glow-green {
-      0% { box-shadow: 0 0 6px rgba(0, 255, 0, 0.6), 0 0 12px rgba(0, 255, 0, 0.4); }
-      50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.9), 0 0 35px rgba(0, 255, 0, 0.6); }
-      100% { box-shadow: 0 0 6px rgba(0, 255, 0, 0.6), 0 0 12px rgba(0, 255, 0, 0.4); }
-    }
-    @keyframes glow-red {
-      0% { box-shadow: 0 0 6px rgba(255, 0, 0, 0.6), 0 0 12px rgba(255, 0, 0, 0.4); }
-      50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.9), 0 0 35px rgba(255, 0, 0, 0.6); }
-      100% { box-shadow: 0 0 6px rgba(255, 0, 0, 0.6), 0 0 12px rgba(255, 0, 0, 0.4); }
-    }
-    @keyframes glow-purple {
-      0% { text-shadow: 0 0 4px rgba(128, 0, 128, 0.6), 0 0 8px rgba(128, 0, 128, 0.4); }
-      50% { text-shadow: 0 0 10px rgba(128, 0, 128, 0.9), 0 0 15px rgba(128, 0, 128, 0.6); }
-      100% { text-shadow: 0 0 4px rgba(128, 0, 128, 0.6), 0 0 8px rgba(128, 0, 128, 0.4); }
     }
     @keyframes pulse {
       0% { transform: scale(1); }
-      50% { transform: scale(1.05); }
+      50% { transform: scale(1.02); }
       100% { transform: scale(1); }
     }
-    @keyframes color-shift {
-      0% { color: #00ff00; }
-      50% { color: #00ccff; }
-      100% { color: #00ff00; }
-    }
-    .glow-blue { animation: glow-blue 2s infinite; }
-    .glow-green { animation: glow-green 2s infinite; }
-    .glow-red { animation: glow-red 2s infinite; }
-    .glow-purple { animation: glow-purple 2s infinite; }
-    .fade-in { animation: fadeIn 0.5s ease-in; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
-    .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2)); border: 1px solid rgba(0, 255, 0, 0.2); }
+    .fade-in { animation: fadeIn 0.5s ease-in; }
+    .hover-transition { transition: all 0.3s ease; }
+    .hover-transition:hover { background-color: rgba(255, 187, 51, 0.1); }
     .marquee-container {
-      background: rgba(0, 0, 0, 0.8);
-      border: 1px solid rgba(0, 255, 0, 0.3);
+      background: rgba(30, 39, 39, 0.5);
+      border: 1px solid rgba(0, 204, 0, 0.2);
       overflow: hidden;
       white-space: nowrap;
-      padding: 4px 0;
-      margin-top: 4px;
-      width: 100%;
+      padding: 0.5rem 0;
+      margin-top: 0.5rem;
+      border-radius: 6px;
     }
     .marquee {
       display: inline-block;
-      animation: marquee 60s linear infinite;
+      animation: marquee 80s linear infinite;
       animation-play-state: running;
-      will-change: transform;
     }
     @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
     .marquee span {
-      margin-right: 12px;
-      font-size: 0.6875rem;
-      animation: color-shift 5s infinite;
+      margin-right: 1rem;
+      font-size: 0.875rem;
+      color: #e0f7fa;
     }
-    @media (min-width: 640px) { .marquee span { font-size: 0.75rem; } }
+    @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
-    #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
-      animation: glow-green 2s infinite;
-      background-color: #00ff00;
-      color: #000;
-      border: 1px solid #00ff00;
-      font-size: 0.6875rem;
-      border-radius: 4px;
-      padding: 0.25rem 0.5rem;
+    button, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
+      background-color: #00b7eb;
+      color: #1e2727;
+      border: 1px solid rgba(0, 183, 235, 0.3);
+      font-size: 0.875rem;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
-    @media (min-width: 640px) {
-      #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
-        font-size: 0.75rem;
-        padding: 0.5rem 1rem;
-      }
-    }
-    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
-      background-color: #00cc00;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.9), 0 0 30px rgba(0, 255, 0, 0.7);
+    button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
+      background-color: #ffbb33;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     .timeframe-btn.active {
-      background-color: #00cc00;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.9), 0 0 30px rgba(0, 255, 0, 0.7);
+      background-color: #ffbb33;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     #chat-input {
-      background: rgba(0, 0, 0, 0.8);
-      border: 1px solid rgba(0, 255, 0, 0.3);
-      color: #00ff00;
-      resize: none;
+      background: rgba(30, 39, 39, 0.5);
+      border: 1px solid rgba(0, 204, 0, 0.2);
+      color: #e0f7fa;
       width: 100%;
-      padding: 0.25rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-    }
-    @media (min-width: 640px) {
-      #chat-input { padding: 0.5rem; font-size: 0.875rem; }
+      padding: 0.5rem;
+      border-radius: 6px;
+      font-size: 0.875rem;
     }
     #chat-input:focus {
       outline: none;
-      border-color: #00ff00;
-      box-shadow: 0 0 12px rgba(0, 255, 0, 0.6);
+      border-color: #ffbb33;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     .loader {
       display: flex;
@@ -355,10 +308,10 @@
     }
     .loader::after {
       content: '';
-      width: 16px;
-      height: 16px;
-      border: 3px solid #00ff00;
-      border-top: 3px solid transparent;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #00b7eb;
+      border-top: 2px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
@@ -367,8 +320,8 @@
       display: inline-block;
       overflow: hidden;
       white-space: nowrap;
-      border-right: 2px solid #00ff00;
-      animation: typing 3s steps(30, end), blink-caret 0.75s step-end infinite;
+      border-right: 2px solid #00b7eb;
+      animation: typing 4s steps(30, end), blink-caret 0.75s step-end infinite;
     }
     @keyframes typing {
       from { width: 0; }
@@ -376,36 +329,31 @@
     }
     @keyframes blink-caret {
       from, to { border-color: transparent; }
-      50% { border-color: #00ff00; }
+      50% { border-color: #00b7eb; }
     }
     .title-box {
-      font-family: 'Limelight', cursive;
-      color: #00ff00;
+      color: #e0f7fa;
       text-align: center;
-      line-height: 1.4;
-      margin-bottom: 0.5rem;
-      font-size: 0.75rem;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-      background: rgba(0, 0, 0, 0.8);
-      border: 2px solid #00ff00;
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
-      padding: 0.5rem;
-      animation: glow-green 2s infinite, pulse 3s infinite;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      background: rgba(30, 39, 39, 0.5);
+      border: 1px solid rgba(0, 204, 0, 0.2);
+      border-radius: 6px;
+      padding: 0.75rem;
+      animation: pulse 4s infinite;
     }
     @media (min-width: 640px) {
-      .title-box { font-size: 1rem; padding: 0.75rem; }
+      .title-box { font-size: 1.25rem; }
     }
     #chart-title-header, #chart-title-modal {
       text-align: center;
-      padding: 0.25rem;
-      border-radius: 4px;
-      background: rgba(0, 0, 0, 0.8);
-      font-size: 0.75rem;
+      padding: 0.5rem;
+      border-radius: 6px;
+      background: rgba(30, 39, 39, 0.5);
+      font-size: 0.875rem;
     }
     @media (min-width: 640px) {
-      #chart-title-header, #chart-title-modal { font-size: 0.875rem; padding: 0.5rem; }
+      #chart-title-header, #chart-title-modal { font-size: 1rem; }
     }
     [data-tooltip] { position: relative; }
     [data-tooltip]:hover::after {
@@ -414,36 +362,33 @@
       bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 255, 0, 0.9);
-      color: #000;
-      padding: 4px 8px;
+      background: rgba(0, 183, 235, 0.8);
+      color: #1e2727;
+      padding: 0.25rem 0.5rem;
       border-radius: 4px;
-      font-size: 10px;
+      font-size: 0.75rem;
       white-space: nowrap;
       z-index: 60;
-      box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    #profit-pairs .top-pair { animation: glow-green 2s infinite; }
-    #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
+    #profit-pairs .top-pair { color: #00cc00; }
+    #profit-pairs .bottom-pair { color: #cc0000; }
     .gas-heatmap-section {
-      padding-right: 1rem;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
     .gas-heatmap-title {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      padding-right: 0.5rem;
     }
     #gas-heatmap-canvas {
       width: 100%;
-      max-width: 100%;
       height: 20vh;
-      border: 1px solid rgba(0, 255, 0, 0.5);
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+      border: 1px solid rgba(0, 204, 0, 0.2);
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     @media (min-width: 640px) {
       #gas-heatmap-canvas { height: 25vh; }
@@ -451,13 +396,12 @@
     #gas-heatmap-legend {
       display: flex;
       justify-content: center;
-      gap: 0.5rem;
-      margin-top: 0.25rem;
-      font-size: 0.6875rem;
-      color: #d1d5db;
+      gap: 1rem;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
     }
     @media (min-width: 640px) {
-      #gas-heatmap-legend { gap: 1rem; font-size: 0.75rem; margin-top: 0.5rem; }
+      #gas-heatmap-legend { font-size: 0.875rem; }
     }
     .legend-item {
       display: flex;
@@ -469,54 +413,52 @@
       height: 10px;
       border-radius: 2px;
     }
-    @media (min-width: 640px) {
-      .legend-color { width: 12px; height: 12px; }
-    }
   </style>
 </head>
-<body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-green-600">
-  <div class="grid-bg"></div>
+<body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
+  <div class="spline-bg">
+    <spline-viewer url="https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode"></spline-viewer>
+  </div>
   <div class="particles" id="particles"></div>
-  <header class="w-full gradient-bg backdrop-blur-lg flex justify-center items-center overflow-x-hidden">
-    <div class="text-center w-full max-w-[95vw] sm:max-w-[95vw] md:max-w-[95vw] lg:max-w-[95vw] mx-auto px-2">
-      <div class="title-box glow-green">
-        <h1 class="text-xs sm:text-base md:text-lg">🧊 ICE KING DASHBOARD 👑</h1>
+  <header class="w-full flex justify-center items-center">
+    <div class="w-full max-w-[98vw] mx-auto px-4">
+      <div class="title-box">
+        <h1 class="text-lg md:text-xl">❄️ ICE KING DASHBOARD</h1>
       </div>
-      <p class="text-xs sm:text-sm mt-1 text-gray-300 typewriter">Live Crypto Market Analytics</p>
-      <p class="text-xs mt-1 text-green-500">Powered by CoinMarketCap & xAI</p>
+      <p class="text-sm text-center typewriter">Live Crypto Analytics</p>
       <div class="chart-wrapper w-full">
-        <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
-          <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" data-tooltip="1-minute chart">1M</button>
-            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" data-tooltip="5-minute chart">5M</button>
-            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" data-tooltip="15-minute chart">15M</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" data-tooltip="1-hour chart">1H</button>
-            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" data-tooltip="Daily chart">1D</button>
+        <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+          <div class="flex flex-wrap space-x-2 gap-2">
+            <button id="header-timeframe-1min" class="timeframe-btn" data-interval="1" data-tooltip="1-minute chart">1M</button>
+            <button id="header-timeframe-5min" class="timeframe-btn" data-interval="5" data-tooltip="5-minute chart">5M</button>
+            <button id="header-timeframe-15min" class="timeframe-btn" data-interval="15" data-tooltip="15-minute chart">15M</button>
+            <button id="header-timeframe-1hr" class="timeframe-btn" data-interval="60" data-tooltip="1-hour chart">1H</button>
+            <button id="header-timeframe-1d" class="timeframe-btn active" data-interval="D" data-tooltip="Daily chart">1D</button>
           </div>
-          <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="toggle-indicator-header" class="text-black rounded" data-tooltip="Toggle ICE KING indicator">[Enable ICE KING] 🧊</button>
-            <button id="toggle-sticky-header" class="text-black rounded" data-tooltip="Open chart in modal">Dock Chart 🔍</button>
-            <button id="toggle-data-source" class="text-black rounded" data-tooltip="Switch data source">[Real Data] ❄️</button>
-            <button id="toggle-debug" class="text-black rounded" data-tooltip="Toggle debug mode">[Enable Debug] 👑</button>
+          <div class="flex flex-wrap space-x-2 gap-2">
+            <button id="toggle-indicator-header" data-tooltip="Toggle ICE KING indicator">Toggle Indicator</button>
+            <button id="toggle-sticky-header" data-tooltip="Open chart in modal">Dock Chart</button>
+            <button id="toggle-data-source" data-tooltip="Switch data source">Real Data</button>
+            <button id="toggle-debug" data-tooltip="Toggle debug mode">Debug</button>
           </div>
         </div>
-        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div id="live-price-header" class="text-xs sm:text-sm text-gray-300 glow-blue">> Live Price: Loading...</div>
+        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <div id="live-price-header" class="text-sm">> Live Price: Loading...</div>
         </div>
-        <div id="chart-container-header" class="chart-container mt-2">
+        <div id="chart-container-header" class="chart-container">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading top ranked chart...</div>
+            <div class="ml-2">Loading chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-header" class="font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
+        <h3 id="chart-title-header" class="mt-2">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
-            <span>💰 BTC: $61,234.56 (+2.34%)</span>
-            <span>🔥 ETH: $3,456.78 (+1.23%)</span>
-            <span>🚀 SOL: $145.67 (+5.67%)</span>
-            <span>📉 XRP: $0.5678 (-0.45%)</span>
-            <span>🌟 ADA: $0.4567 (+3.21%)</span>
+            <span>BTC: $61,234.56 (+2.34%)</span>
+            <span>ETH: $3,456.78 (+1.23%)</span>
+            <span>SOL: $145.67 (+5.67%)</span>
+            <span>XRP: $0.5678 (-0.45%)</span>
+            <span>ADA: $0.4567 (+3.21%)</span>
           </div>
         </div>
       </div>
@@ -525,113 +467,116 @@
   <div class="chart-modal" id="chart-modal">
     <div class="chart-modal-content">
       <div class="chart-wrapper w-full">
-        <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
-          <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" data-tooltip="1-minute chart">1M</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" data-tooltip="5-minute chart">5M</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" data-tooltip="15-minute chart">15M</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" data-tooltip="1-hour chart">1H</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" data-tooltip="Daily chart">1D</button>
+        <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+          <div class="flex flex-wrap space-x-2 gap-2">
+            <button id="modal-timeframe-1min" class="timeframe-btn" data-interval="1" data-tooltip="1-minute chart">1M</button>
+            <button id="modal-timeframe-5min" class="timeframe-btn" data-interval="5" data-tooltip="5-minute chart">5M</button>
+            <button id="modal-timeframe-15min" class="timeframe-btn" data-interval="15" data-tooltip="15-minute chart">15M</button>
+            <button id="modal-timeframe-1hr" class="timeframe-btn" data-interval="60" data-tooltip="1-hour chart">1H</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn active" data-interval="D" data-tooltip="Daily chart">1D</button>
           </div>
-          <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="toggle-indicator-modal" class="text-black rounded" data-tooltip="Toggle ICE KING indicator">[Enable ICE KING] 🧊</button>
-            <button id="toggle-sticky-modal" class="text-black rounded" data-tooltip="Close chart modal">Undock Chart 🔍</button>
+          <div class="flex flex-wrap space-x-2 gap-2">
+            <button id="toggle-indicator-modal" data-tooltip="Toggle ICE KING indicator">Toggle Indicator</button>
+            <button id="toggle-sticky-modal" data-tooltip="Close chart modal">Undock Chart</button>
           </div>
         </div>
-        <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div id="live-price-modal" class="text-xs sm:text-sm text-gray-300 glow-blue">> Live Price: Loading...</div>
+        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <div id="live-price-modal" class="text-sm">> Live Price: Loading...</div>
         </div>
-        <div id="chart-container-modal" class="chart-container mt-2">
+        <div id="chart-container-modal" class="chart-container">
           <div class="chart-loading">
             <div class="loader"></div>
-            <div class="ml-2">Loading top ranked chart...</div>
+            <div class="ml-2">Loading chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-modal" class="font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
+        <h3 id="chart-title-modal" class="mt-2">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
-            <span>💰 BTC: $61,234.56 (+2.34%)</span>
-            <span>🔥 ETH: $3,456.78 (+1.23%)</span>
-            <span>🚀 SOL: $145.67 (+5.67%)</span>
-            <span>📉 XRP: $0.5678 (-0.45%)</span>
-            <span>🌟 ADA: $0.4567 (+3.21%)</span>
+            <span>BTC: $61,234.56 (+2.34%)</span>
+            <span>ETH: $3,456.78 (+1.23%)</span>
+            <span>SOL: $145.67 (+5.67%)</span>
+            <span>XRP: $0.5678 (-0.45%)</span>
+            <span>ADA: $0.4567 (+3.21%)</span>
           </div>
         </div>
       </div>
     </div>
   </div>
-  <main class="flex-1 p-3 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" id="module-grid">
-    <section class="gradient-bg rounded-lg shadow-md" draggable="true">
-      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
-      <div id="loader-tokens" class="loader text-center text-gray-500 text-xs">> Loading...</div>
-      <ul id="token-list" class="space-y-2 text-xs sm:text-sm"></ul>
-      <div class="mt-2">
-        <h3 class="text-sm sm:text-base md:text-lg font-bold mb-2 glow-purple typewriter">> Top/Bottom Performers</h3>
-        <ul id="profit-pairs" class="space-y-2 text-xs"></ul>
+  <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="module-grid">
+    <section class="rounded-lg" draggable="true">
+      <h2 class="text-lg md:text-xl mb-3 typewriter">> Tokens</h2>
+      <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+      <ul id="token-list" class="space-y-2 text-sm"></ul>
+      <div class="mt-4">
+        <h3 class="text-base md:text-lg mb-2 typewriter">> Performers</h3>
+        <ul id="profit-pairs" class="space-y-2 text-sm"></ul>
       </div>
-      <div class="mt-2">
-        <h3 class="text-sm sm:text-base md:text-lg font-bold mb-2 glow-purple typewriter">> Top USDT Pairs</h3>
-        <ul id="top-pairs" class="text-xs text-gray-500 flex flex-wrap gap-2"></ul>
+      <div class="mt-4">
+        <h3 class="text-base md:text-lg mb-2 typewriter">> Top USDT Pairs</h3>
+        <ul id="top-pairs" class="text-sm text-gray-500 flex flex-wrap gap-2"></ul>
       </div>
     </section>
-    <section class="gradient-bg rounded-lg shadow-md gas-heatmap-section" draggable="true">
-      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple gas-heatmap-title"><span class="typewriter">> ETH Gas Fee Heatmap</span> ⛽</h2>
-      <div id="loader-gas" class="loader text-center text-gray-500 text-xs">> Loading Gas Heatmap...</div>
+    <section class="rounded-lg gas-heatmap-section" draggable="true">
+      <h2 class="text-lg md:text-xl mb-3 gas-heatmap-title typewriter">> ETH Gas Heatmap</h2>
+      <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading...</div>
       <canvas id="gas-heatmap-canvas"></canvas>
       <div id="gas-heatmap-legend">
-        <div class="legend-item"><div class="legend-color" style="background: #00ff00"></div>Safe</div>
-        <div class="legend-item"><div class="legend-color" style="background: #ffff00"></div>Propose</div>
-        <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div>Fast</div>
+        <div class="legend-item"><div class="legend-color" style="background: #00cc00"></div><span>Safe</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: #cc0000"></div><span>Fast</span></div>
       </div>
-      <ul id="gas-heatmap-list" class="space-y-2 text-xs sm:text-sm mt-2"></ul>
+      <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
     </section>
-    <section class="gradient-bg rounded-lg shadow-md" draggable="true">
-      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Live Logs 📜</h2>
-      <div id="loader-logs" class="loader text-center text-gray-500 text-xs">> Loading...</div>
-      <ul id="log-list" class="space-y-2 text-xs sm:text-sm"></ul>
+    <section class="rounded-lg" draggable="true">
+      <h2 class="text-lg md:text-xl mb-3 typewriter">> Live Logs</h2>
+      <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+      <ul id="log-list" class="space-y-2 text-sm"></ul>
     </section>
-    <section class="gradient-bg rounded-lg shadow-md" draggable="true">
-      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Grok Trading Bot 🤖</h2>
-      <div class="mt-2">
-        <h3 class="text-sm sm:text-base font-semibold mb-2 glow-green">📡 Live System Logs</h3>
-        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 p-2 bg-gray-900 rounded text-xs sm:text-sm">
-          <!-- Live logs will be dynamically added here -->
+    <section class="rounded-lg" draggable="true">
+      <h2 class="text-lg md:text-xl mb-3 typewriter">> Trading Bot</h2>
+      <div class="mt-4">
+        <h3 class="text-base md:text-lg mb-2">System Logs</h3>
+        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 bg-gray-900 rounded text-sm">
         </div>
       </div>
-      <div id="loader-chat" class="loader text-center text-gray-500 text-xs">> Loading...</div>
-      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 text-xs sm:text-sm">
-        <!-- Chat messages will be dynamically added here -->
+      <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm">
       </div>
-      <div class="mt-2 flex flex-col sm:flex-row gap-2">
-        <textarea id="chat-input" rows="2" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query for Grok"></textarea>
-        <button id="chat-send" class="px-2 py-1 rounded" aria-label="Send chat message" data-tooltip="Send message to Grok">Send</button>
+      <div class="mt-4 flex flex-col sm:flex-row gap-2">
+        <input id="chat-input" type="text" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
+        <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message" data-tooltip="Send message">Send</button>
       </div>
     </section>
   </main>
-  <footer class="gradient-bg text-center text-gray-500 text-xs">
-    <p class="typewriter">> Powered by CoinMarketCap, Etherscan & TradingView</p>
-    <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API, Etherscan API</p>
+  <footer class="text-center text-gray-500 text-sm">
+    <p class="typewriter">Powered by CoinMarketCap, Etherscan & TradingView</p>
   </footer>
   <script>
-    // Particle effect with stars and varied penguin emojis
+    // Particle effect
     const particleContainer = document.getElementById('particles');
-    const particleTypes = ['🐧', '🧊', '❄️'];
-    for (let i = 0; i < 120; i++) {
-      const isPenguin = Math.random() < 0.4; // 40% chance for penguin-related emoji
+    for (let i = 0; i < 50; i++) {
       const particle = document.createElement('div');
-      if (isPenguin) {
-        particle.className = 'penguin';
-        particle.textContent = particleTypes[Math.floor(Math.random() * particleTypes.length)];
-      } else {
-        particle.className = 'star';
-      }
+      particle.className = 'star';
       particle.style.left = `${Math.random() * 100}%`;
       particle.style.top = `${Math.random() * 100}%`;
-      particle.style.animationDelay = `${Math.random() * 12}s`;
+      particle.style.animationDelay = `${Math.random() * 15}s`;
       particleContainer.appendChild(particle);
     }
 
-    // Drag-and-drop functionality
+    // Snowflake effect
+    for (let i = 0; i < 50; i++) {
+      const snowflake = document.createElement('div');
+      snowflake.className = 'snowflake';
+      snowflake.textContent = '❄️';
+      snowflake.style.left = `${Math.random() * 100}%`;
+      snowflake.style.top = `${-10 + Math.random() * 10}vh`;
+      snowflake.style.animationDelay = `${Math.random() * 5}s`;
+      snowflake.style.animationDuration = `${10 + Math.random() * 5}s`;
+      snowflake.style.setProperty('--drift', `${-20 + Math.random() * 40}px`);
+      document.body.appendChild(snowflake);
+    }
+
+    // Drag-and-drop
     const moduleGrid = document.getElementById('module-grid');
     let draggedModule = null;
 
@@ -660,16 +605,16 @@
 
           module.addEventListener('dragenter', (e) => {
             e.preventDefault();
-            module.classList.add('hover-glow');
+            module.classList.add('hover-transition');
           });
 
           module.addEventListener('dragleave', () => {
-            module.classList.remove('hover-glow');
+            module.classList.remove('hover-transition');
           });
 
           module.addEventListener('drop', (e) => {
             e.preventDefault();
-            module.classList.remove('hover-glow');
+            module.classList.remove('hover-transition');
             if (draggedModule && draggedModule !== module) {
               const allModules = Array.from(moduleGrid.children);
               const draggedIndex = allModules.indexOf(draggedModule);
@@ -698,7 +643,7 @@
             const touch = e.touches[0];
             const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('#module-grid section');
             if (dropTarget && dropTarget !== draggedModule) {
-              dropTarget.classList.add('hover-glow');
+              dropTarget.classList.add('hover-transition');
             }
           });
 
@@ -721,17 +666,17 @@
               window.dispatchEvent(new Event('resize'));
             }
             draggedModule = null;
-            modules.forEach(m => m.classList.remove('hover-glow'));
+            modules.forEach(m => m.classList.remove('hover-transition'));
           });
         }
       });
     }
 
-    // Track indicator toggle state
+    // Indicator toggle
     let isIndicatorEnabledHeader = false;
     let isIndicatorEnabledModal = false;
 
-    // TradingView chart initialization
+    // TradingView chart
     function initializeChart(containerId, symbol, interval = 'D', retries = 2) {
       const container = document.getElementById(containerId);
       const chartTitle = document.getElementById(containerId === 'chart-container-header' ? 'chart-title-header' : 'chart-title-modal');
@@ -765,20 +710,20 @@
             theme: 'dark',
             style: '1',
             locale: 'en',
-            toolbar_bg: '#0a0f14',
+            toolbar_bg: '#1e2727',
             enable_publishing: false,
             hide_top_toolbar: false,
             hide_side_toolbar: false,
             allow_symbol_change: true,
             container_id: containerId,
             overrides: {
-              'paneProperties.background': '#0a0f14',
-              'paneProperties.vertGridProperties.color': 'rgba(0, 255, 0, 0.1)',
-              'paneProperties.horzGridProperties.color': 'rgba(0, 255, 0, 0.1)',
-              'mainSeriesProperties.candleStyle.upColor': '#00ff00',
-              'mainSeriesProperties.candleStyle.downColor': '#ff0000',
-              'mainSeriesProperties.candleStyle.borderUpColor': '#00ff00',
-              'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
+              'paneProperties.background': '#1e2727',
+              'paneProperties.vertGridProperties.color': 'rgba(0, 204, 0, 0.1)',
+              'paneProperties.horzGridProperties.color': 'rgba(0, 204, 0, 0.1)',
+              'mainSeriesProperties.candleStyle.upColor': '#00cc00',
+              'mainSeriesProperties.candleStyle.downColor': '#cc0000',
+              'mainSeriesProperties.candleStyle.borderUpColor': '#00cc00',
+              'mainSeriesProperties.candleStyle.borderDownColor': '#cc0000',
             },
             onChartReady: () => {
               console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
@@ -895,15 +840,15 @@
       const getColor = (intensity) => {
         if (intensity < 0.5) {
           const t = intensity * 2;
-          const r = Math.round(0 + t * (255 - 0));
-          const g = Math.round(255);
+          const r = Math.round(0 + t * (204 - 0));
+          const g = Math.round(204);
           const b = Math.round(0);
           return `rgb(${r}, ${g}, ${b})`;
         } else {
           const t = (intensity - 0.5) * 2;
-          const r = Math.round(255);
-          const g = Math.round(255 - t * (255 - 0));
-          const b = Math.round(0);
+          const r = Math.round(204);
+          const g = Math.round(204 - t * (204 - 187));
+          const b = Math.round(0 + t * (51 - 0));
           return `rgb(${r}, ${g}, ${b})`;
         }
       };
@@ -924,7 +869,7 @@
           if (gasHistory.length > maxHistory) gasHistory.shift();
 
           gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
-            <li class="p-1 rounded bg-black bg-opacity-50 glow-blue">
+            <li class="p-2 rounded bg-gray-900">
               <div>Block: ${data.lastBlock}</div>
               <div>Safe: ${data.safeGasPrice} Gwei</div>
               <div>Propose: ${data.proposeGasPrice} Gwei</div>
@@ -943,9 +888,9 @@
           gasHistory.forEach((data, i) => {
             const x = margin.left + (i * plotWidth / maxHistory);
             const prices = [
-              { value: data.safeGasPrice, color: '#00ff00' },
-              { value: data.proposeGasPrice, color: '#ffff00' },
-              { value: data.fastGasPrice, color: '#ff0000' }
+              { value: data.safeGasPrice, color: '#00cc00' },
+              { value: data.proposeGasPrice, color: '#ffbb33' },
+              { value: data.fastGasPrice, color: '#cc0000' }
             ];
 
             prices.forEach((price, j) => {
@@ -957,8 +902,8 @@
             });
           });
 
-          ctx.fillStyle = '#d1d5db';
-          ctx.font = '9px Fira Code';
+          ctx.fillStyle = '#e0f7fa';
+          ctx.font = '10px Fira Code';
           ctx.textAlign = 'right';
           ctx.textBaseline = 'middle';
           const yTicks = [0, Math.round(maxGas / 2), maxGas];
@@ -993,7 +938,7 @@
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
       if (isUsingMockData) {
         updateUI(mockTokens);
-        toggleDataSourceBtn.textContent = '[Real Data] ❄️';
+        toggleDataSourceBtn.textContent = 'Real Data';
         return;
       }
 
@@ -1011,16 +956,16 @@
           }
         }
         updateUI(data);
-        toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
+        toggleDataSourceBtn.textContent = 'Mock Data';
         renderGasHeatmap();
       } catch (error) {
         console.error('Failed to load real data:', error);
-        document.getElementById('live-price-header').textContent = `> Live Price: Error - ${error.message} ❄️`;
-        document.getElementById('chart-title-header').textContent = 'Error loading data';
-        document.getElementById('chart-title-modal').textContent = 'Error loading data';
+        document.getElementById('live-price-header').textContent = `> Live Price: Error - ${error.message}`;
+        document.getElementById('chart-title-header').textContent = 'Error';
+        document.getElementById('chart-title-modal').textContent = 'Error';
         document.getElementById('loader-tokens').textContent = `> ${error.message}. Try Mock Data.`;
         document.getElementById('loader-tokens').style.display = 'block';
-        toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
+        toggleDataSourceBtn.textContent = 'Mock Data';
         document.getElementById('loader-gas').textContent = '> Failed to load gas prices';
       }
     };
@@ -1044,9 +989,6 @@
             <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
             <div class="metric">Supply: ${token.circulating_supply.toLocaleString()}</div>
-            <div class="metric">24h High: $${token.high_24h?.toLocaleString() || 'N/A'}</div>
-            <div class="metric">24h Low: $${token.low_24h?.toLocaleString() || 'N/A'}</div>
-            <div class="metric">Market Cap: $${token.market_cap?.toLocaleString() || 'N/A'}</div>
             ${token.symbol === 'ETH' && token.gasPrice ? `<div class="metric">Gas: ${token.gasPrice} Gwei</div>` : ''}
           </li>
         `;
@@ -1057,43 +999,37 @@
       const topToken = sortedTokens[0];
       const bottomToken = sortedTokens[sortedTokens.length - 1];
       profitPairs.innerHTML = `
-        <li class="top-pair p-1 rounded bg-black bg-opacity-50">
+        <li class="top-pair p-2 rounded bg-gray-900">
           <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
-          <div class="metric">Supply: ${topToken.circulating_supply.toLocaleString()}</div>
-          <div class="metric">24h High: $${topToken.high_24h?.toLocaleString() || 'N/A'}</div>
-          <div class="metric">24h Low: $${topToken.low_24h?.toLocaleString() || 'N/A'}</div>
         </li>
-        <li class="bottom-pair p-1 rounded bg-black bg-opacity-50">
+        <li class="bottom-pair p-2 rounded bg-gray-900">
           <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
-          <div class="metric">Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
-          <div class="metric">24h High: $${bottomToken.high_24h?.toLocaleString() || 'N/A'}</div>
-          <div class="metric">24h Low: $${bottomToken.low_24h?.toLocaleString() || 'N/A'}</div>
         </li>
       `;
 
-      document.getElementById('live-price-header').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
-      document.getElementById('live-price-modal').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol}) 👑`;
+      document.getElementById('live-price-header').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol})`;
+      document.getElementById('live-price-modal').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol})`;
 
       const topPairs = document.getElementById('top-pairs');
       topPairs.innerHTML = tokens
         .filter(token => token.symbol && token.symbol !== 'USDT')
         .slice(0, 5)
-        .map(token => `<li class="gradient-bg p-1 rounded-md glow-blue">> 🧊 ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
+        .map(token => `<li class="p-1 rounded-md">${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
         .join('');
 
-      const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
+      const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out!';
       const marqueeContent = [
-        ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
-        `<span class="glow-purple">[${uniquePun}]</span>`
+        ...tokens.slice(0, 5).map(token => `<span>[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
+        `<span>${uniquePun}</span>`
       ].join('');
       document.getElementById('ticker-marquee-header').innerHTML = marqueeContent.repeat(3);
       document.getElementById('ticker-marquee-modal').innerHTML = marqueeContent.repeat(3);
-      document.getElementById('ticker-marquee-header').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
-      document.getElementById('ticker-marquee-modal').style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
+      document.getElementById('ticker-marquee-header').style.animationDuration = `${Math.max(80, tokens.length * 5)}s`;
+      document.getElementById('ticker-marquee-modal').style.animationDuration = `${Math.max(80, tokens.length * 5)}s`;
 
       const topSymbol = `BINANCE:${topToken.symbol}USDT`;
       initializeChart('chart-container-header', topSymbol, 'D');
@@ -1124,7 +1060,7 @@
 
       toggleIndicatorHeaderBtn.addEventListener('click', () => {
         isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
-        toggleIndicatorHeaderBtn.textContent = `[${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} ICE KING] 🧊`;
+        toggleIndicatorHeaderBtn.textContent = `${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} Indicator`;
         const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
         const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
         initializeChart('chart-container-header', symbol, interval);
@@ -1132,7 +1068,7 @@
 
       toggleIndicatorModalBtn.addEventListener('click', () => {
         isIndicatorEnabledModal = !isIndicatorEnabledModal;
-        toggleIndicatorModalBtn.textContent = `[${isIndicatorEnabledModal ? 'Disable' : 'Enable'} ICE KING] 🧊`;
+        toggleIndicatorModalBtn.textContent = `${isIndicatorEnabledModal ? 'Disable' : 'Enable'} Indicator`;
         const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
         const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
         initializeChart('chart-container-modal', symbol, interval);
@@ -1186,9 +1122,9 @@
       if (toggleStickyHeader) {
         toggleStickyHeader.addEventListener('click', () => {
           chartModal.classList.add('active');
-          toggleStickyHeader.textContent = 'Chart Docked 🔍';
+          toggleStickyHeader.textContent = 'Chart Docked';
           setTimeout(() => {
-            toggleStickyHeader.textContent = 'Dock Chart 🔍';
+            toggleStickyHeader.textContent = 'Dock Chart';
           }, 1000);
           const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
           const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
@@ -1198,9 +1134,9 @@
       if (toggleStickyModal) {
         toggleStickyModal.addEventListener('click', () => {
           chartModal.classList.remove('active');
-          toggleStickyModal.textContent = 'Chart Undocked 🔍';
+          toggleStickyModal.textContent = 'Chart Undocked';
           setTimeout(() => {
-            toggleStickyModal.textContent = 'Undock Chart 🔍';
+            toggleStickyModal.textContent = 'Undock Chart';
           }, 1000);
           const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
           const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
@@ -1210,7 +1146,7 @@
 
       toggleDebugBtn.addEventListener('click', () => {
         isDebugMode = !isDebugMode;
-        toggleDebugBtn.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
+        toggleDebugBtn.textContent = `${isDebugMode ? 'Disable' : 'Enable'} Debug`;
       });
     });
 
@@ -1221,27 +1157,23 @@
     ];
 
     const iceKingPuns = [
-      "Everything is Going to be okay! ❄️👑",
-      "Penguins are my royal guards! 🐧🧊",
-      "Time to freeze the market! ❄️😂",
-      "Ice to meet you, traders! 🧊🐧",
-      "I’m the coolest king around! 👑❄️",
-      "Penguin power activate! 🐧🧊😂",
-      "Snow way I’m missing this trade! ❄️📈",
-      "Freeze your doubts, let’s trade! 🧊💸",
-      "I’m skating through the market! ⛸️❄️",
-      "Cold cash, hot trades! 🥶💰",
-      "My portfolio’s cooler than ice! ❄️📊",
-      "Chill out, I’ve got this! 🧊😎",
-      "Ice King’s here to rule the charts! 👑📉",
-      "Let’s make it snow profits! ❄️💵",
-      "I’m frosting the competition! 🧊🏆",
-      "Cool trades, warm wins! ❄️🔥"
+      "Everything is Going to be okay!",
+      "Time to freeze the market!",
+      "Ice to meet you, traders!",
+      "I’m the coolest king around!",
+      "Snow way I’m missing this trade!",
+      "Freeze your doubts, let’s trade!",
+      "I’m skating through the market!",
+      "Cold cash, hot trades!",
+      "My portfolio’s cooler than ice!",
+      "Chill out!",
+      "Ice King’s here to rule the charts!",
+      "Let’s make it snow profits!",
+      "I’m frosting the competition!",
+      "Cool trades, warm wins!"
     ];
 
     let isDebugMode = false;
   </script>
-  <script src="script.js"></script>
-  <script src="live-logs.js"></script>
 </body>
 </html>
