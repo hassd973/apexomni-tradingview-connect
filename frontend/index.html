@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🧊 ICE KING DASHBOARD 👑</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Limelight&display=swap" rel="stylesheet">
   <script src="https://s3.tradingview.com/tv.js" async></script>
   <style>
     body {
@@ -63,10 +65,19 @@
       border-radius: 50%;
       animation: float 10s infinite linear;
     }
+    .penguin {
+      position: absolute;
+      font-size: 12px;
+      animation: float 12s infinite linear, rotate 5s infinite linear;
+    }
     @keyframes float {
       0% { transform: translate(0, 0); opacity: 0; }
       50% { opacity: 0.8; }
       100% { transform: translate(100px, -100px); opacity: 0; }
+    }
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
     header, footer {
       background: rgba(31, 41, 55, 0.3);
@@ -151,34 +162,35 @@
     }
     section {
       background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2));
-      border: 1px solid rgba(0, 255, 0, 0.1);
+      border: 1px solid rgba(0, 255, 0, 0.2);
       border-radius: 8px;
-      padding: 0.5rem;
+      padding: 0.75rem;
       min-width: 0;
       cursor: move;
       transition: transform 0.2s ease, opacity 0.2s ease;
+      box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
     }
     @media (max-width: 639px) {
       section {
-        touch-action: auto; /* Allow scrolling on mobile */
-        cursor: default; /* Remove move cursor */
+        touch-action: auto;
+        cursor: default;
       }
     }
     section.dragging {
       opacity: 0.7;
       transform: scale(0.98);
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
       z-index: 100;
     }
     section:hover {
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
     }
     ul {
       scrollbar-width: thin;
       scrollbar-color: #00ff00 #000;
       list-style: none;
       padding: 0;
-      touch-action: pan-y; /* Allow vertical scrolling */
+      touch-action: pan-y;
     }
     ul::-webkit-scrollbar {
       width: 6px;
@@ -211,11 +223,11 @@
     }
     #token-list li:hover {
       transform: translateX(5px);
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 12px rgba(0, 255, 0, 0.6);
     }
     #token-list li.selected-token {
-      border: 2px solid rgba(0, 255, 0, 0.8);
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+      border: 2px solid rgba(0, 255, 0, 0.9);
+      box-shadow: 0 0 18px rgba(0, 255, 0, 0.7);
     }
     #token-list .metric {
       font-size: 0.6875rem;
@@ -230,34 +242,44 @@
       color: #a0a0a0;
     }
     @keyframes glow-blue {
-      0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
-      50% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.8), 0 0 25px rgba(0, 255, 255, 0.5); }
-      100% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
+      0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.6), 0 0 10px rgba(0, 255, 255, 0.4); }
+      50% { text-shadow: 0 0 18px rgba(0, 255, 255, 0.9), 0 0 30px rgba(0, 255, 255, 0.6); }
+      100% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.6), 0 0 10px rgba(0, 255, 255, 0.4); }
     }
     @keyframes glow-green {
-      0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
-      50% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
-      100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+      0% { box-shadow: 0 0 6px rgba(0, 255, 0, 0.6), 0 0 12px rgba(0, 255, 0, 0.4); }
+      50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.9), 0 0 35px rgba(0, 255, 0, 0.6); }
+      100% { box-shadow: 0 0 6px rgba(0, 255, 0, 0.6), 0 0 12px rgba(0, 255, 0, 0.4); }
     }
     @keyframes glow-red {
-      0% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
-      50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); }
-      100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
+      0% { box-shadow: 0 0 6px rgba(255, 0, 0, 0.6), 0 0 12px rgba(255, 0, 0, 0.4); }
+      50% { box-shadow: 0 0 20px rgba(255, 0, 0, 0.9), 0 0 35px rgba(255, 0, 0, 0.6); }
+      100% { box-shadow: 0 0 6px rgba(255, 0, 0, 0.6), 0 0 12px rgba(255, 0, 0, 0.4); }
     }
     @keyframes glow-purple {
-      0% { text-shadow: 0 0 3px rgba(128, 0, 128, 0.5), 0 0 6px rgba(128, 0, 128, 0.3); }
-      50% { text-shadow: 0 0 8px rgba(128, 0, 128, 0.8), 0 0 12px rgba(128, 0, 128, 0.5); }
-      100% { text-shadow: 0 0 3px rgba(128, 0, 128, 0.5), 0 0 6px rgba(128, 0, 128, 0.3); }
+      0% { text-shadow: 0 0 4px rgba(128, 0, 128, 0.6), 0 0 8px rgba(128, 0, 128, 0.4); }
+      50% { text-shadow: 0 0 10px rgba(128, 0, 128, 0.9), 0 0 15px rgba(128, 0, 128, 0.6); }
+      100% { text-shadow: 0 0 4px rgba(128, 0, 128, 0.6), 0 0 8px rgba(128, 0, 128, 0.4); }
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    @keyframes color-shift {
+      0% { color: #00ff00; }
+      50% { color: #00ccff; }
+      100% { color: #00ff00; }
     }
     .glow-blue { animation: glow-blue 2s infinite; }
     .glow-green { animation: glow-green 2s infinite; }
     .glow-red { animation: glow-red 2s infinite; }
     .glow-purple { animation: glow-purple 2s infinite; }
     .fade-in { animation: fadeIn 0.5s ease-in; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
     .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2)); border: 1px solid rgba(0, 255, 0, 0.2); }
     .marquee-container {
@@ -279,7 +301,7 @@
     .marquee span {
       margin-right: 12px;
       font-size: 0.6875rem;
-      color: #00ff00;
+      animation: color-shift 5s infinite;
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.75rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
@@ -291,6 +313,7 @@
       font-size: 0.6875rem;
       border-radius: 4px;
       padding: 0.25rem 0.5rem;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
     @media (min-width: 640px) {
       #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
@@ -300,11 +323,11 @@
     }
     #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
       background-color: #00cc00;
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.9), 0 0 30px rgba(0, 255, 0, 0.7);
     }
     .timeframe-btn.active {
       background-color: #00cc00;
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.9), 0 0 30px rgba(0, 255, 0, 0.7);
     }
     #chat-input {
       background: rgba(0, 0, 0, 0.8);
@@ -322,7 +345,7 @@
     #chat-input:focus {
       outline: none;
       border-color: #00ff00;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 12px rgba(0, 255, 0, 0.6);
     }
     .loader {
       display: flex;
@@ -356,23 +379,23 @@
       50% { border-color: #00ff00; }
     }
     .title-box {
-      font-family: 'Fira Code', monospace;
+      font-family: 'Limelight', cursive;
       color: #00ff00;
       text-align: center;
       line-height: 1.4;
       margin-bottom: 0.5rem;
-      font-size: 0.6875rem;
+      font-size: 0.75rem;
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
       background: rgba(0, 0, 0, 0.8);
-      border: 1px solid #00ff00;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
-      padding: 0.25rem;
-      animation: glow-green 2s infinite;
+      border: 2px solid #00ff00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.6);
+      padding: 0.5rem;
+      animation: glow-green 2s infinite, pulse 3s infinite;
     }
     @media (min-width: 640px) {
-      .title-box { font-size: 0.875rem; padding: 0.5rem; }
+      .title-box { font-size: 1rem; padding: 0.75rem; }
     }
     #chart-title-header, #chart-title-modal {
       text-align: center;
@@ -398,11 +421,12 @@
       font-size: 10px;
       white-space: nowrap;
       z-index: 60;
+      box-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
     }
     #profit-pairs .top-pair { animation: glow-green 2s infinite; }
     #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
     .gas-heatmap-section {
-      padding-right: 1rem; /* Extra right padding for title */
+      padding-right: 1rem;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
@@ -411,20 +435,18 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      padding-right: 0.5rem; /* Space for glow */
+      padding-right: 0.5rem;
     }
     #gas-heatmap-canvas {
       width: 100%;
       max-width: 100%;
-      height: 20vh; /* Dynamic height for module */
+      height: 20vh;
       border: 1px solid rgba(0, 255, 0, 0.5);
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
     @media (min-width: 640px) {
-      #gas-heatmap-canvas {
-        height: 25vh; /* Slightly larger on sm: */
-      }
+      #gas-heatmap-canvas { height: 25vh; }
     }
     #gas-heatmap-legend {
       display: flex;
@@ -453,6 +475,7 @@
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-green-600">
+  <div class="grid-bg"></div>
   <div class="particles" id="particles"></div>
   <header class="w-full gradient-bg backdrop-blur-lg flex justify-center items-center overflow-x-hidden">
     <div class="text-center w-full max-w-[95vw] sm:max-w-[95vw] md:max-w-[95vw] lg:max-w-[95vw] mx-auto px-2">
@@ -464,17 +487,17 @@
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
-            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
-            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
-            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
+            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" data-tooltip="1-minute chart">1M</button>
+            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" data-tooltip="5-minute chart">5M</button>
+            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" data-tooltip="15-minute chart">15M</button>
+            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" data-tooltip="1-hour chart">1H</button>
+            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" data-tooltip="Daily chart">1D</button>
           </div>
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="toggle-indicator-header" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
-            <button id="toggle-sticky-header" class="text-black rounded" aria-label="Dock chart">Dock Chart 🔍</button>
-            <button id="toggle-data-source" class="text-black rounded" aria-label="Toggle data source">[Real Data] ❄️</button>
-            <button id="toggle-debug" class="text-black rounded" aria-label="Debug chart">[Enable Debug] 👑</button>
+            <button id="toggle-indicator-header" class="text-black rounded" data-tooltip="Toggle ICE KING indicator">[Enable ICE KING] 🧊</button>
+            <button id="toggle-sticky-header" class="text-black rounded" data-tooltip="Open chart in modal">Dock Chart 🔍</button>
+            <button id="toggle-data-source" class="text-black rounded" data-tooltip="Switch data source">[Real Data] ❄️</button>
+            <button id="toggle-debug" class="text-black rounded" data-tooltip="Toggle debug mode">[Enable Debug] 👑</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
@@ -504,15 +527,15 @@
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
+            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" data-tooltip="1-minute chart">1M</button>
+            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" data-tooltip="5-minute chart">5M</button>
+            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" data-tooltip="15-minute chart">15M</button>
+            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" data-tooltip="1-hour chart">1H</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" data-tooltip="Daily chart">1D</button>
           </div>
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="toggle-indicator-modal" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
-            <button id="toggle-sticky-modal" class="text-black rounded" aria-label="Undock chart">Undock Chart 🔍</button>
+            <button id="toggle-indicator-modal" class="text-black rounded" data-tooltip="Toggle ICE KING indicator">[Enable ICE KING] 🧊</button>
+            <button id="toggle-sticky-modal" class="text-black rounded" data-tooltip="Close chart modal">Undock Chart 🔍</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
@@ -537,7 +560,7 @@
       </div>
     </div>
   </div>
-  <main class="flex-1 p-2 w-full max-w-[95vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="module-grid">
+  <main class="flex-1 p-3 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4" id="module-grid">
     <section class="gradient-bg rounded-lg shadow-md" draggable="true">
       <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Crypto Tokens 🍀</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-xs">> Loading...</div>
@@ -580,8 +603,8 @@
         <!-- Chat messages will be dynamically added here -->
       </div>
       <div class="mt-2 flex flex-col sm:flex-row gap-2">
-        <textarea id="chat-input" rows="2" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input"></textarea>
-        <button id="chat-send" class="px-2 py-1 rounded" aria-label="Send chat message">Send</button>
+        <textarea id="chat-input" rows="2" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query for Grok"></textarea>
+        <button id="chat-send" class="px-2 py-1 rounded" aria-label="Send chat message" data-tooltip="Send message to Grok">Send</button>
       </div>
     </section>
   </main>
@@ -590,15 +613,22 @@
     <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API, Etherscan API</p>
   </footer>
   <script>
-    // Particle effect
+    // Particle effect with stars and varied penguin emojis
     const particleContainer = document.getElementById('particles');
-    for (let i = 0; i < 100; i++) {
-      const star = document.createElement('div');
-      star.className = 'star';
-      star.style.left = `${Math.random() * 100}%`;
-      star.style.top = `${Math.random() * 100}%`;
-      star.style.animationDelay = `${Math.random() * 10}s`;
-      particleContainer.appendChild(star);
+    const particleTypes = ['🐧', '🧊', '❄️'];
+    for (let i = 0; i < 120; i++) {
+      const isPenguin = Math.random() < 0.4; // 40% chance for penguin-related emoji
+      const particle = document.createElement('div');
+      if (isPenguin) {
+        particle.className = 'penguin';
+        particle.textContent = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+      } else {
+        particle.className = 'star';
+      }
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.top = `${Math.random() * 100}%`;
+      particle.style.animationDelay = `${Math.random() * 12}s`;
+      particleContainer.appendChild(particle);
     }
 
     // Drag-and-drop functionality
@@ -607,7 +637,7 @@
 
     function setupDragAndDrop() {
       const modules = document.querySelectorAll('#module-grid section');
-      const isMobile = window.innerWidth < 640; // Match Tailwind's sm: breakpoint
+      const isMobile = window.innerWidth < 640;
 
       modules.forEach(module => {
         if (!isMobile) {
@@ -616,7 +646,7 @@
           module.addEventListener('dragstart', (e) => {
             draggedModule = module;
             module.classList.add('dragging');
-            e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+            e.dataTransfer.setData('text/plain', '');
           });
 
           module.addEventListener('dragend', () => {
@@ -625,7 +655,7 @@
           });
 
           module.addEventListener('dragover', (e) => {
-            e.preventDefault(); // Allow drop
+            e.preventDefault();
           });
 
           module.addEventListener('dragenter', (e) => {
@@ -651,7 +681,6 @@
                 moduleGrid.insertBefore(draggedModule, module);
               }
 
-              // Trigger resize for canvas elements
               window.dispatchEvent(new Event('resize'));
             }
           });
@@ -664,7 +693,7 @@
           module.addEventListener('touchmove', (e) => {
             const target = e.target.closest('ul');
             if (!target || !target.matches('#token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list')) {
-              e.preventDefault(); // Only prevent default outside scrollable lists
+              e.preventDefault();
             }
             const touch = e.touches[0];
             const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('#module-grid section');
@@ -689,7 +718,6 @@
                 moduleGrid.insertBefore(draggedModule, dropTarget);
               }
 
-              // Trigger resize for canvas elements
               window.dispatchEvent(new Event('resize'));
             }
             draggedModule = null;
@@ -849,7 +877,7 @@
       }
 
       let gasHistory = [];
-      const maxHistory = 20; // Reduced for wider bars
+      const maxHistory = 20;
       const margin = { top: 20, right: 10, bottom: 20, left: 40 };
 
       const resizeCanvas = () => {
@@ -910,7 +938,7 @@
           const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
           const plotWidth = canvas.offsetWidth - margin.left - margin.right;
           const plotHeight = canvas.offsetHeight - margin.top - margin.bottom;
-          const barWidth = Math.max(plotWidth / maxHistory / 3, 2); // Minimum 2px bar width
+          const barWidth = Math.max(plotWidth / maxHistory / 3, 2);
 
           gasHistory.forEach((data, i) => {
             const x = margin.left + (i * plotWidth / maxHistory);
@@ -922,7 +950,7 @@
 
             prices.forEach((price, j) => {
               const intensity = price.value / maxGas;
-              const height = (price.value / maxGas) * plotHeight * 0.9; // Use 90% of plotHeight
+              const height = (price.value / maxGas) * plotHeight * 0.9;
               const y = margin.top + plotHeight - height;
               ctx.fillStyle = getColor(intensity);
               ctx.fillRect(x + j * barWidth, y, barWidth - 1, height);
@@ -1008,7 +1036,7 @@
         const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
         const symbol = `BINANCE:${token.symbol}USDT`;
         return `
-          <li class="${bgClass} ${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}">
+          <li class="${bgClass} ${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="flex justify-between">
               <span>${token.name} (${token.symbol})</span>
               <span class="performance ${textClass}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
@@ -1042,8 +1070,8 @@
           <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
           <div class="metric">Supply: ${bottomToken.circulating_supply.toLocaleString()}</div>
-          <div class="metric">24h High: $${topToken.high_24h?.toLocaleString() || 'N/A'}</div>
-          <div class="metric">24h Low: $${topToken.low_24h?.toLocaleString() || 'N/A'}</div>
+          <div class="metric">24h High: $${bottomToken.high_24h?.toLocaleString() || 'N/A'}</div>
+          <div class="metric">24h Low: $${bottomToken.low_24h?.toLocaleString() || 'N/A'}</div>
         </li>
       `;
 
@@ -1158,6 +1186,10 @@
       if (toggleStickyHeader) {
         toggleStickyHeader.addEventListener('click', () => {
           chartModal.classList.add('active');
+          toggleStickyHeader.textContent = 'Chart Docked 🔍';
+          setTimeout(() => {
+            toggleStickyHeader.textContent = 'Dock Chart 🔍';
+          }, 1000);
           const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
           const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-modal', symbol, interval);
@@ -1166,6 +1198,10 @@
       if (toggleStickyModal) {
         toggleStickyModal.addEventListener('click', () => {
           chartModal.classList.remove('active');
+          toggleStickyModal.textContent = 'Chart Undocked 🔍';
+          setTimeout(() => {
+            toggleStickyModal.textContent = 'Undock Chart 🔍';
+          }, 1000);
           const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
           const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-header', symbol, interval);
