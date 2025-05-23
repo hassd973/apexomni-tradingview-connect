@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🧊 ICE KING DASHBOARD 👑</title>
+  <title>❄️ ICE KING REPOSITORY 👑</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <script src="https://s3.tradingview.com/tv.js" async></script>
   <style>
     body {
@@ -25,23 +25,23 @@
       height: 100%;
       background: repeating-linear-gradient(
         0deg,
-        rgba(0, 255, 0, 0.05),
-        rgba(0, 255, 0, 0.05) 1px,
+        rgba(0, 191, 255, 0.05),
+        rgba(0, 191, 255, 0.05) 1px,
         transparent 1px,
         transparent 20px
       ),
       repeating-linear-gradient(
         90deg,
-        rgba(0, 255, 0, 0.05),
-        rgba(0, 255, 0, 0.05) 1px,
+        rgba(0, 191, 255, 0.05),
+        rgba(0, 191, 255, 0.05) 1px,
         transparent 1px,
         transparent 20px
       );
-      animation: glitch 4s infinite;
+      animation: frost-glitch 4s infinite;
       z-index: -1;
       opacity: 0.8;
     }
-    @keyframes glitch {
+    @keyframes frost-glitch {
       0%, 100% { transform: translate(0, 0); opacity: 0.7; }
       5% { transform: translate(2px, -2px); opacity: 0.5; }
       10% { transform: translate(-2px, 2px); opacity: 0.9; }
@@ -55,13 +55,20 @@
       pointer-events: none;
       z-index: -1;
     }
-    .star {
+    .star, .penguin {
       position: absolute;
-      width: 2px;
-      height: 2px;
-      background: rgba(0, 255, 0, 0.7);
       border-radius: 50%;
       animation: float 10s infinite linear;
+    }
+    .star {
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 191, 255, 0.7);
+    }
+    .penguin {
+      font-size: 12px;
+      line-height: 12px;
+      text-shadow: 0 0 5px rgba(0, 191, 255, 0.5);
     }
     @keyframes float {
       0% { transform: translate(0, 0); opacity: 0; }
@@ -72,11 +79,46 @@
       background: rgba(31, 41, 55, 0.3);
       backdrop-filter: blur(10px) saturate(1.2);
       padding: 0.5rem 1rem;
-      border-bottom: 1px solid rgba(0, 255, 0, 0.1);
+      border-bottom: 1px solid rgba(0, 191, 255, 0.1);
     }
     footer {
-      border-top: 1px solid rgba(0, 255, 0, 0.1);
+      border-top: 1px solid rgba(0, 191, 255, 0.1);
       padding: 0.5rem 1rem;
+    }
+    .ice-king-header {
+      background: linear-gradient(to right, #1e3a8a, #60a5fa);
+      border: 2px solid rgba(0, 191, 255, 0.5);
+      box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+      animation: ice-glow 2s infinite;
+      padding: 0.5rem;
+      border-radius: 8px;
+    }
+    @keyframes ice-glow {
+      0% { box-shadow: 0 0 5px rgba(0, 191, 255, 0.5), 0 0 10px rgba(0, 191, 255, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(0, 191, 255, 0.8), 0 0 25px rgba(0, 191, 255, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(0, 191, 255, 0.5), 0 0 10px rgba(0, 191, 255, 0.3); }
+    }
+    .ice-king-title {
+      font-family: 'Comic Neue', 'Fira Code', monospace;
+      color: #e0f7fa;
+      text-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+    @media (min-width: 640px) {
+      .ice-king-title { font-size: 1.25rem; }
+    }
+    @keyframes snowflake {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+      50% { opacity: 0.4; }
+      100% { transform: translateY(20px) rotate(360deg); opacity: 0; }
+    }
+    .snowflake {
+      position: absolute;
+      color: #e0f7fa;
+      font-size: 8px;
+      animation: snowflake 5s infinite linear;
+      pointer-events: none;
     }
     .chart-container {
       position: relative;
@@ -89,8 +131,8 @@
       position: absolute !important;
       width: 100% !important;
       height: 100% !important;
-      border: 1px solid rgba(0, 255, 0, 0.5);
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+      border: 1px solid rgba(0, 191, 255, 0.5);
+      box-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
     }
     .chart-loading {
       position: absolute;
@@ -103,7 +145,7 @@
       align-items: center;
       background: rgba(0, 15, 0, 0.7);
       z-index: 10;
-      color: #00ff00;
+      color: #00b7eb;
       font-size: 0.875rem;
     }
     #chart-container-modal {
@@ -136,13 +178,13 @@
     .chart-modal-content {
       background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7));
       padding: 0.5rem;
-      border: 2px solid rgba(0, 255, 0, 0.5);
+      border: 2px solid rgba(0, 191, 255, 0.5);
       border-radius: 5px;
       width: 95%;
       max-width: 1200px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 20px rgba(0, 191, 255, 0.5);
     }
     main {
       flex: 1;
@@ -151,7 +193,7 @@
     }
     section {
       background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2));
-      border: 1px solid rgba(0, 255, 0, 0.1);
+      border: 1px solid rgba(0, 191, 255, 0.1);
       border-radius: 8px;
       padding: 0.5rem;
       min-width: 0;
@@ -160,25 +202,25 @@
     }
     @media (max-width: 639px) {
       section {
-        touch-action: auto; /* Allow scrolling on mobile */
-        cursor: default; /* Remove move cursor */
+        touch-action: auto;
+        cursor: default;
       }
     }
     section.dragging {
       opacity: 0.7;
       transform: scale(0.98);
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
       z-index: 100;
     }
     section:hover {
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+      box-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
     }
     ul {
       scrollbar-width: thin;
-      scrollbar-color: #00ff00 #000;
+      scrollbar-color: #00b7eb #000;
       list-style: none;
       padding: 0;
-      touch-action: pan-y; /* Allow vertical scrolling */
+      touch-action: pan-y;
     }
     ul::-webkit-scrollbar {
       width: 6px;
@@ -187,7 +229,7 @@
       background: #000;
     }
     ul::-webkit-scrollbar-thumb {
-      background: #00ff00;
+      background: #00b7eb;
       border-radius: 4px;
     }
     #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
@@ -211,11 +253,11 @@
     }
     #token-list li:hover {
       transform: translateX(5px);
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
     }
     #token-list li.selected-token {
-      border: 2px solid rgba(0, 255, 0, 0.8);
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+      border: 2px solid rgba(0, 191, 255, 0.8);
+      box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
     }
     #token-list .metric {
       font-size: 0.6875rem;
@@ -230,9 +272,9 @@
       color: #a0a0a0;
     }
     @keyframes glow-blue {
-      0% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
-      50% { text-shadow: 0 0 15px rgba(0, 255, 255, 0.8), 0 0 25px rgba(0, 255, 255, 0.5); }
-      100% { text-shadow: 0 0 5px rgba(0, 255, 255, 0.5), 0 0 10px rgba(0, 255, 255, 0.3); }
+      0% { text-shadow: 0 0 5px rgba(0, 191, 255, 0.5), 0 0 10px rgba(0, 191, 255, 0.3); }
+      50% { text-shadow: 0 0 15px rgba(0, 191, 255, 0.8), 0 0 25px rgba(0, 191, 255, 0.5); }
+      100% { text-shadow: 0 0 5px rgba(0, 191, 255, 0.5), 0 0 10px rgba(0, 191, 255, 0.3); }
     }
     @keyframes glow-green {
       0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
@@ -259,10 +301,10 @@
     .glow-purple { animation: glow-purple 2s infinite; }
     .fade-in { animation: fadeIn 0.5s ease-in; }
     .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
-    .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2)); border: 1px solid rgba(0, 255, 0, 0.2); }
+    .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2)); border: 1px solid rgba(0, 191, 255, 0.2); }
     .marquee-container {
       background: rgba(0, 0, 0, 0.8);
-      border: 1px solid rgba(0, 255, 0, 0.3);
+      border: 1px solid rgba(0, 191, 255, 0.3);
       overflow: hidden;
       white-space: nowrap;
       padding: 4px 0;
@@ -279,7 +321,7 @@
     .marquee span {
       margin-right: 12px;
       font-size: 0.6875rem;
-      color: #00ff00;
+      color: #00b7eb;
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.75rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
@@ -308,8 +350,8 @@
     }
     #chat-input {
       background: rgba(0, 0, 0, 0.8);
-      border: 1px solid rgba(0, 255, 0, 0.3);
-      color: #00ff00;
+      border: 1px solid rgba(0, 191, 255, 0.3);
+      color: #00b7eb;
       resize: none;
       width: 100%;
       padding: 0.25rem;
@@ -321,8 +363,8 @@
     }
     #chat-input:focus {
       outline: none;
-      border-color: #00ff00;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      border-color: #00b7eb;
+      box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
     }
     .loader {
       display: flex;
@@ -334,7 +376,7 @@
       content: '';
       width: 16px;
       height: 16px;
-      border: 3px solid #00ff00;
+      border: 3px solid #00b7eb;
       border-top: 3px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -344,7 +386,7 @@
       display: inline-block;
       overflow: hidden;
       white-space: nowrap;
-      border-right: 2px solid #00ff00;
+      border-right: 2px solid #00b7eb;
       animation: typing 3s steps(30, end), blink-caret 0.75s step-end infinite;
     }
     @keyframes typing {
@@ -353,11 +395,11 @@
     }
     @keyframes blink-caret {
       from, to { border-color: transparent; }
-      50% { border-color: #00ff00; }
+      50% { border-color: #00b7eb; }
     }
     .title-box {
-      font-family: 'Fira Code', monospace;
-      color: #00ff00;
+      font-family: 'Comic Neue', 'Fira Code', monospace;
+      color: #e0f7fa;
       text-align: center;
       line-height: 1.4;
       margin-bottom: 0.5rem;
@@ -366,10 +408,11 @@
       text-overflow: ellipsis;
       overflow: hidden;
       background: rgba(0, 0, 0, 0.8);
-      border: 1px solid #00ff00;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      border: 1px solid #00b7eb;
+      box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
       padding: 0.25rem;
-      animation: glow-green 2s infinite;
+      animation: ice-glow 2s infinite;
+      position: relative;
     }
     @media (min-width: 640px) {
       .title-box { font-size: 0.875rem; padding: 0.5rem; }
@@ -391,7 +434,7 @@
       bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 255, 0, 0.9);
+      background: rgba(0, 191, 255, 0.9);
       color: #000;
       padding: 4px 8px;
       border-radius: 4px;
@@ -402,7 +445,7 @@
     #profit-pairs .top-pair { animation: glow-green 2s infinite; }
     #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
     .gas-heatmap-section {
-      padding-right: 1rem; /* Extra right padding for title */
+      padding-right: 1rem;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
@@ -411,19 +454,19 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      padding-right: 0.5rem; /* Space for glow */
+      padding-right: 0.5rem;
     }
     #gas-heatmap-canvas {
       width: 100%;
       max-width: 100%;
-      height: 20vh; /* Dynamic height for module */
-      border: 1px solid rgba(0, 255, 0, 0.5);
+      height: 20vh;
+      border: 1px solid rgba(0, 191, 255, 0.5);
       border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+      box-shadow: 0 0 10px rgba(0, 191, 255, 0.3);
     }
     @media (min-width: 640px) {
       #gas-heatmap-canvas {
-        height: 25vh; /* Slightly larger on sm: */
+        height: 25vh;
       }
     }
     #gas-heatmap-legend {
@@ -452,15 +495,15 @@
     }
   </style>
 </head>
-<body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-green-600">
+<body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
   <div class="particles" id="particles"></div>
-  <header class="w-full gradient-bg backdrop-blur-lg flex justify-center items-center overflow-x-hidden">
+  <header class="w-full ice-king-header backdrop-blur-lg flex justify-center items-center overflow-x-hidden relative">
     <div class="text-center w-full max-w-[95vw] sm:max-w-[95vw] md:max-w-[95vw] lg:max-w-[95vw] mx-auto px-2">
-      <div class="title-box glow-green">
-        <h1 class="text-xs sm:text-base md:text-lg">🧊 ICE KING DASHBOARD 👑</h1>
+      <div class="title-box">
+        <h1 class="ice-king-title">❄️ ICE KING REPOSITORY 👑🐧</h1>
       </div>
-      <p class="text-xs sm:text-sm mt-1 text-gray-300 typewriter">Live Crypto Market Analytics</p>
-      <p class="text-xs mt-1 text-green-500">Powered by CoinMarketCap & xAI</p>
+      <p class="text-xs sm:text-sm mt-1 text-blue-200 typewriter">Ice King's Crypto Realm</p>
+      <p class="text-xs mt-1 text-blue-400">Powered by CoinMarketCap & xAI</p>
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
           <div class="flex flex-wrap space-x-1 gap-2">
@@ -471,14 +514,14 @@
             <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="toggle-indicator-header" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
+            <button id="toggle-indicator-header" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] ❄️</button>
             <button id="toggle-sticky-header" class="text-black rounded" aria-label="Dock chart">Dock Chart 🔍</button>
-            <button id="toggle-data-source" class="text-black rounded" aria-label="Toggle data source">[Real Data] ❄️</button>
+            <button id="toggle-data-source" class="text-black rounded" aria-label="Toggle data source">[Real Data] 🐧</button>
             <button id="toggle-debug" class="text-black rounded" aria-label="Debug chart">[Enable Debug] 👑</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div id="live-price-header" class="text-xs sm:text-sm text-gray-300 glow-blue">> Live Price: Loading...</div>
+          <div id="live-price-header" class="text-xs sm:text-sm text-blue-200 glow-blue">> Live Price: Loading...</div>
         </div>
         <div id="chart-container-header" class="chart-container mt-2">
           <div class="chart-loading">
@@ -486,7 +529,7 @@
             <div class="ml-2">Loading top ranked chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-header" class="font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
+        <h3 id="chart-title-header" class="font-medium mt-2 text-blue-200 glow-blue">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -494,6 +537,7 @@
             <span>🚀 SOL: $145.67 (+5.67%)</span>
             <span>📉 XRP: $0.5678 (-0.45%)</span>
             <span>🌟 ADA: $0.4567 (+3.21%)</span>
+            <span>🐧 Gunter's Crypto Stash! ❄️</span>
           </div>
         </div>
       </div>
@@ -511,12 +555,12 @@
             <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="toggle-indicator-modal" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] 🧊</button>
+            <button id="toggle-indicator-modal" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] ❄️</button>
             <button id="toggle-sticky-modal" class="text-black rounded" aria-label="Undock chart">Undock Chart 🔍</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div id="live-price-modal" class="text-xs sm:text-sm text-gray-300 glow-blue">> Live Price: Loading...</div>
+          <div id="live-price-modal" class="text-xs sm:text-sm text-blue-200 glow-blue">> Live Price: Loading...</div>
         </div>
         <div id="chart-container-modal" class="chart-container mt-2">
           <div class="chart-loading">
@@ -524,7 +568,7 @@
             <div class="ml-2">Loading top ranked chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-modal" class="font-medium mt-2 text-gray-300 glow-blue">Loading...</h3>
+        <h3 id="chart-title-modal" class="font-medium mt-2 text-blue-200 glow-blue">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -532,6 +576,7 @@
             <span>🚀 SOL: $145.67 (+5.67%)</span>
             <span>📉 XRP: $0.5678 (-0.45%)</span>
             <span>🌟 ADA: $0.4567 (+3.21%)</span>
+            <span>🐧 Gunter's Crypto Stash! ❄️</span>
           </div>
         </div>
       </div>
@@ -571,13 +616,11 @@
       <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Grok Trading Bot 🤖</h2>
       <div class="mt-2">
         <h3 class="text-sm sm:text-base font-semibold mb-2 glow-green">📡 Live System Logs</h3>
-        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 p-2 bg-gray-900 rounded text-xs sm:text-sm">
-          <!-- Live logs will be dynamically added here -->
+        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 bg-gray-900 rounded text-xs sm:text-sm">
         </div>
       </div>
       <div id="loader-chat" class="loader text-center text-gray-500 text-xs">> Loading...</div>
-      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 text-xs sm:text-sm">
-        <!-- Chat messages will be dynamically added here -->
+      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-xs sm:text-sm">
       </div>
       <div class="mt-2 flex flex-col sm:flex-row gap-2">
         <textarea id="chat-input" rows="2" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input"></textarea>
@@ -590,15 +633,27 @@
     <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API, Etherscan API</p>
   </footer>
   <script>
-    // Particle effect
+    // Particle effect with stars and penguins
     const particleContainer = document.getElementById('particles');
     for (let i = 0; i < 100; i++) {
-      const star = document.createElement('div');
-      star.className = 'star';
-      star.style.left = `${Math.random() * 100}%`;
-      star.style.top = `${Math.random() * 100}%`;
-      star.style.animationDelay = `${Math.random() * 10}s`;
-      particleContainer.appendChild(star);
+      const isPenguin = Math.random() < 0.2; // 20% chance for penguin
+      const particle = document.createElement('div');
+      particle.className = isPenguin ? 'penguin' : 'star';
+      if (isPenguin) particle.textContent = '🐧';
+      particle.style.left = `${Math.random() * 100}%`;
+      particle.style.top = `${Math.random() * 100}%`;
+      particle.style.animationDelay = `${Math.random() * 10}s`;
+      particleContainer.appendChild(particle);
+    }
+    // Snowflake effect for header
+    const header = document.querySelector('header');
+    for (let i = 0; i < 20; i++) {
+      const snowflake = document.createElement('div');
+      snowflake.className = 'snowflake';
+      snowflake.textContent = '❄️';
+      snowflake.style.left = `${Math.random() * 100}%`;
+      snowflake.style.animationDelay = `${Math.random() * 5}s`;
+      header.appendChild(snowflake);
     }
 
     // Drag-and-drop functionality
@@ -607,7 +662,7 @@
 
     function setupDragAndDrop() {
       const modules = document.querySelectorAll('#module-grid section');
-      const isMobile = window.innerWidth < 640; // Match Tailwind's sm: breakpoint
+      const isMobile = window.innerWidth < 640;
 
       modules.forEach(module => {
         if (!isMobile) {
@@ -616,7 +671,7 @@
           module.addEventListener('dragstart', (e) => {
             draggedModule = module;
             module.classList.add('dragging');
-            e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+            e.dataTransfer.setData('text/plain', '');
           });
 
           module.addEventListener('dragend', () => {
@@ -625,7 +680,7 @@
           });
 
           module.addEventListener('dragover', (e) => {
-            e.preventDefault(); // Allow drop
+            e.preventDefault();
           });
 
           module.addEventListener('dragenter', (e) => {
@@ -651,7 +706,6 @@
                 moduleGrid.insertBefore(draggedModule, module);
               }
 
-              // Trigger resize for canvas elements
               window.dispatchEvent(new Event('resize'));
             }
           });
@@ -664,7 +718,7 @@
           module.addEventListener('touchmove', (e) => {
             const target = e.target.closest('ul');
             if (!target || !target.matches('#token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list')) {
-              e.preventDefault(); // Only prevent default outside scrollable lists
+              e.preventDefault();
             }
             const touch = e.touches[0];
             const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('#module-grid section');
@@ -689,7 +743,6 @@
                 moduleGrid.insertBefore(draggedModule, dropTarget);
               }
 
-              // Trigger resize for canvas elements
               window.dispatchEvent(new Event('resize'));
             }
             draggedModule = null;
@@ -745,8 +798,8 @@
             container_id: containerId,
             overrides: {
               'paneProperties.background': '#0a0f14',
-              'paneProperties.vertGridProperties.color': 'rgba(0, 255, 0, 0.1)',
-              'paneProperties.horzGridProperties.color': 'rgba(0, 255, 0, 0.1)',
+              'paneProperties.vertGridProperties.color': 'rgba(0, 191, 255, 0.1)',
+              'paneProperties.horzGridProperties.color': 'rgba(0, 191, 255, 0.1)',
               'mainSeriesProperties.candleStyle.upColor': '#00ff00',
               'mainSeriesProperties.candleStyle.downColor': '#ff0000',
               'mainSeriesProperties.candleStyle.borderUpColor': '#00ff00',
@@ -849,7 +902,7 @@
       }
 
       let gasHistory = [];
-      const maxHistory = 20; // Reduced for wider bars
+      const maxHistory = 20;
       const margin = { top: 20, right: 10, bottom: 20, left: 40 };
 
       const resizeCanvas = () => {
@@ -910,7 +963,7 @@
           const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
           const plotWidth = canvas.offsetWidth - margin.left - margin.right;
           const plotHeight = canvas.offsetHeight - margin.top - margin.bottom;
-          const barWidth = Math.max(plotWidth / maxHistory / 3, 2); // Minimum 2px bar width
+          const barWidth = Math.max(plotWidth / maxHistory / 3, 2);
 
           gasHistory.forEach((data, i) => {
             const x = margin.left + (i * plotWidth / maxHistory);
@@ -922,7 +975,7 @@
 
             prices.forEach((price, j) => {
               const intensity = price.value / maxGas;
-              const height = (price.value / maxGas) * plotHeight * 0.9; // Use 90% of plotHeight
+              const height = (price.value / maxGas) * plotHeight * 0.9;
               const y = margin.top + plotHeight - height;
               ctx.fillStyle = getColor(intensity);
               ctx.fillRect(x + j * barWidth, y, barWidth - 1, height);
@@ -965,7 +1018,7 @@
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
       if (isUsingMockData) {
         updateUI(mockTokens);
-        toggleDataSourceBtn.textContent = '[Real Data] ❄️';
+        toggleDataSourceBtn.textContent = '[Real Data] 🐧';
         return;
       }
 
@@ -983,7 +1036,7 @@
           }
         }
         updateUI(data);
-        toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
+        toggleDataSourceBtn.textContent = '[Mock Data] 🐧';
         renderGasHeatmap();
       } catch (error) {
         console.error('Failed to load real data:', error);
@@ -992,7 +1045,7 @@
         document.getElementById('chart-title-modal').textContent = 'Error loading data';
         document.getElementById('loader-tokens').textContent = `> ${error.message}. Try Mock Data.`;
         document.getElementById('loader-tokens').style.display = 'block';
-        toggleDataSourceBtn.textContent = '[Mock Data] ❄️';
+        toggleDataSourceBtn.textContent = '[Mock Data] 🐧';
         document.getElementById('loader-gas').textContent = '> Failed to load gas prices';
       }
     };
@@ -1054,12 +1107,12 @@
       topPairs.innerHTML = tokens
         .filter(token => token.symbol && token.symbol !== 'USDT')
         .slice(0, 5)
-        .map(token => `<li class="gradient-bg p-1 rounded-md glow-blue">> 🧊 ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
+        .map(token => `<li class="gradient-bg p-1 rounded-md glow-blue">> ❄️ ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
         .join('');
 
-      const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
+      const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! ❄️😎';
       const marqueeContent = [
-        ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
+        ...tokens.slice(0, 5).map(token => `<span class="glow-blue">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
         `<span class="glow-purple">[${uniquePun}]</span>`
       ].join('');
       document.getElementById('ticker-marquee-header').innerHTML = marqueeContent.repeat(3);
@@ -1096,7 +1149,7 @@
 
       toggleIndicatorHeaderBtn.addEventListener('click', () => {
         isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
-        toggleIndicatorHeaderBtn.textContent = `[${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} ICE KING] 🧊`;
+        toggleIndicatorHeaderBtn.textContent = `[${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} ICE KING] ❄️`;
         const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
         const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
         initializeChart('chart-container-header', symbol, interval);
@@ -1104,7 +1157,7 @@
 
       toggleIndicatorModalBtn.addEventListener('click', () => {
         isIndicatorEnabledModal = !isIndicatorEnabledModal;
-        toggleIndicatorModalBtn.textContent = `[${isIndicatorEnabledModal ? 'Disable' : 'Enable'} ICE KING] 🧊`;
+        toggleIndicatorModalBtn.textContent = `[${isIndicatorEnabledModal ? 'Disable' : 'Enable'} ICE KING] ❄️`;
         const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
         const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
         initializeChart('chart-container-modal', symbol, interval);
