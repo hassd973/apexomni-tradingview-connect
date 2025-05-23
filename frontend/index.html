@@ -79,7 +79,7 @@
       100% { transform: translate(50px, -50px); opacity: 0; }
     }
     header, footer {
-      background: rgba(30, 39, 39, 0.8);
+      background: rgba(35, 46, 46, 0.3);
       padding: 1rem;
       border-bottom: 1px solid rgba(0, 204, 0, 0.1);
     }
@@ -110,9 +110,9 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: rgba(30, 39, 39, 0.3);
+      background: rgba(35, 46, 46, 0.3);
       z-index: 10;
-      color: #00b7eb;
+      color: #00cc00;
       font-size: 0.875rem;
     }
     #chart-container-modal {
@@ -135,7 +135,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(30, 39, 39, 0.7);
+      background: rgba(35, 46, 46, 0.7);
       z-index: 50;
       justify-content: center;
       align-items: center;
@@ -181,7 +181,7 @@
     }
     ul {
       scrollbar-width: thin;
-      scrollbar-color: #00b7eb #232e2e;
+      scrollbar-color: #00cc00 rgba(35, 46, 46, 0.3);
       list-style: none;
       padding: 0;
     }
@@ -192,7 +192,7 @@
       background: rgba(35, 46, 46, 0.3);
     }
     ul::-webkit-scrollbar-thumb {
-      background: #00b7eb;
+      background: #00cc00;
       border-radius: 4px;
     }
     #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
@@ -205,7 +205,7 @@
         max-height: 60vh;
       }
     }
-    #token-list li {
+    #token-list li, #profit-pairs li, #gas-heatmap-list li {
       display: flex;
       flex-direction: column;
       padding: 0.75rem;
@@ -214,10 +214,10 @@
       transition: all 0.3s ease;
       cursor: pointer;
       font-size: 0.875rem;
-      background: rgba(30, 39, 39, 0.3);
+      background: rgba(35, 46, 46, 0.3);
     }
-    #token-list li:hover {
-      background: rgba(0, 204, 0, 0.1);
+    #token-list li:hover, #gas-heatmap-list li:hover {
+      background: rgba(255, 187, 51, 0.1);
       transform: translateX(2px);
       box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
     }
@@ -226,21 +226,16 @@
       background: rgba(255, 187, 51, 0.1);
       box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
     }
-    #token-list .metric {
+    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric {
       font-size: 0.75rem;
-      color: #a0a0a0;
+      color: #e0f7fa;
     }
-    #token-list .performance {
+    #token-list .performance, #profit-pairs .top-pair, #profit-pairs .bottom-pair {
       font-size: 0.875rem;
       font-weight: 700;
     }
-    #profit-pairs .metric {
-      font-size: 0.75rem;
-      color: #a0a0a0;
-    }
-    #profit-pairs li {
-      background: rgba(30, 39, 39, 0.3);
-    }
+    #profit-pairs .top-pair { color: #00cc00; }
+    #profit-pairs .bottom-pair { color: #ffbb33; }
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.02); }
@@ -252,9 +247,9 @@
     }
     .fade-in { animation: fadeIn 0.5s ease-in; }
     .hover-transition { transition: all 0.3s ease; }
-    .hover-transition:hover { background-color: rgba(255, 187, 51, 0.1); }
+    .hover-transition:hover { background: rgba(255, 187, 51, 0.1); }
     .marquee-container {
-      background: rgba(30, 39, 39, 0.3);
+      background: rgba(35, 46, 46, 0.3);
       border: 1px solid rgba(0, 204, 0, 0.2);
       overflow: hidden;
       white-space: nowrap;
@@ -277,9 +272,9 @@
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
     button, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
-      background-color: #00b7eb;
+      background-color: #00cc00;
       color: #1e2727;
-      border: 1px solid rgba(0, 183, 235, 0.3);
+      border: 1px solid rgba(0, 204, 0, 0.3);
       font-size: 0.875rem;
       border-radius: 6px;
       padding: 0.5rem 1rem;
@@ -294,7 +289,7 @@
       box-shadow: 0 0 6px rgba(0, 204, 0, 0.4);
     }
     #chat-input {
-      background: rgba(30, 39, 39, 0.3);
+      background: rgba(35, 46, 46, 0.3);
       border: 1px solid rgba(0, 204, 0, 0.2);
       color: #e0f7fa;
       width: 100%;
@@ -317,7 +312,7 @@
       content: '';
       width: 14px;
       height: 14px;
-      border: 2px solid #00b7eb;
+      border: 2px solid #00cc00;
       border-top: 2px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -327,7 +322,7 @@
       display: inline-block;
       overflow: hidden;
       white-space: nowrap;
-      border-right: 2px solid #00b7eb;
+      border-right: 2px solid #00cc00;
       animation: typing 4s steps(30, end), blink-caret 0.75s step-end infinite;
     }
     @keyframes typing {
@@ -336,14 +331,14 @@
     }
     @keyframes blink-caret {
       from, to { border-color: transparent; }
-      50% { border-color: #00b7eb; }
+      50% { border-color: #00cc00; }
     }
     .title-box {
       color: #e0f7fa;
       text-align: center;
       margin-bottom: 1rem;
       font-size: 1rem;
-      background: rgba(30, 39, 39, 0.3);
+      background: rgba(35, 46, 46, 0.3);
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
       padding: 0.75rem;
@@ -357,7 +352,7 @@
       text-align: center;
       padding: 0.5rem;
       border-radius: 6px;
-      background: rgba(30, 39, 39, 0.3);
+      background: rgba(35, 46, 46, 0.3);
       font-size: 0.875rem;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
@@ -371,7 +366,7 @@
       bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 183, 235, 0.8);
+      background: rgba(0, 204, 0, 0.8);
       color: #1e2727;
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
@@ -380,8 +375,6 @@
       z-index: 60;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
-    #profit-pairs .top-pair { color: #00cc00; }
-    #profit-pairs .bottom-pair { color: #cc0000; }
     .gas-heatmap-section {
       display: flex;
       flex-direction: column;
@@ -408,6 +401,9 @@
       gap: 1rem;
       margin-top: 0.5rem;
       font-size: 0.75rem;
+      background: rgba(35, 46, 46, 0.3);
+      padding: 0.5rem;
+      border-radius: 6px;
     }
     @media (min-width: 640px) {
       #gas-heatmap-legend { font-size: 0.875rem; }
@@ -422,11 +418,17 @@
       height: 10px;
       border-radius: 2px;
     }
-    #live-logs-container {
-      background: rgba(30, 39, 39, 0.3);
+    #live-logs-container, #chat-list {
+      background: rgba(35, 46, 46, 0.3);
     }
-    #chat-list {
-      background: rgba(30, 39, 39, 0.3);
+    .data-warning {
+      background: rgba(255, 187, 51, 0.3);
+      color: #ffbb33;
+      padding: 0.5rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      margin-bottom: 0.5rem;
+      text-align: center;
     }
   </style>
 </head>
@@ -469,11 +471,7 @@
         <h3 id="chart-title-header" class="mt-2">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
-            <span>BTC: $61,234.56 (+2.34%)</span>
-            <span>ETH: $3,456.78 (+1.23%)</span>
-            <span>SOL: $145.67 (+5.67%)</span>
-            <span>XRP: $0.5678 (-0.45%)</span>
-            <span>ADA: $0.4567 (+3.21%)</span>
+            <span>Loading market data...</span>
           </div>
         </div>
       </div>
@@ -507,11 +505,7 @@
         <h3 id="chart-title-modal" class="mt-2">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
-            <span>BTC: $61,234.56 (+2.34%)</span>
-            <span>ETH: $3,456.78 (+1.23%)</span>
-            <span>SOL: $145.67 (+5.67%)</span>
-            <span>XRP: $0.5678 (-0.45%)</span>
-            <span>ADA: $0.4567 (+3.21%)</span>
+            <span>Loading market data...</span>
           </div>
         </div>
       </div>
@@ -521,6 +515,7 @@
     <section class="rounded-lg" draggable="true">
       <h2 class="text-lg md:text-xl mb-3 typewriter">> Tokens</h2>
       <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+      <div id="token-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
       <ul id="token-list" class="space-y-2 text-sm"></ul>
       <div class="mt-4">
         <h3 class="text-base md:text-lg mb-2 typewriter">> Performers</h3>
@@ -534,11 +529,12 @@
     <section class="rounded-lg gas-heatmap-section" draggable="true">
       <h2 class="text-lg md:text-xl mb-3 gas-heatmap-title typewriter">> ETH Gas Heatmap</h2>
       <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+      <div id="gas-warning" class="data-warning" style="display: none;">> Using mock gas data due to API failure</div>
       <canvas id="gas-heatmap-canvas"></canvas>
       <div id="gas-heatmap-legend">
         <div class="legend-item"><div class="legend-color" style="background: #00cc00"></div><span>Safe</span></div>
         <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
-        <div class="legend-item"><div class="legend-color" style="background: #cc0000"></div><span>Fast</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: rgba(255, 187, 51, 0.7)"></div><span>Fast</span></div>
       </div>
       <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
     </section>
@@ -725,20 +721,20 @@
             theme: 'dark',
             style: '1',
             locale: 'en',
-            toolbar_bg: '#1e2727',
+            toolbar_bg: 'rgba(35, 46, 46, 0.3)',
             enable_publishing: false,
             hide_top_toolbar: false,
             hide_side_toolbar: false,
             allow_symbol_change: true,
             container_id: containerId,
             overrides: {
-              'paneProperties.background': '#1e2727',
+              'paneProperties.background': 'rgba(35, 46, 46, 0.3)',
               'paneProperties.vertGridProperties.color': 'rgba(0, 204, 0, 0.1)',
               'paneProperties.horzGridProperties.color': 'rgba(0, 204, 0, 0.1)',
               'mainSeriesProperties.candleStyle.upColor': '#00cc00',
-              'mainSeriesProperties.candleStyle.downColor': '#cc0000',
+              'mainSeriesProperties.candleStyle.downColor': '#ffbb33',
               'mainSeriesProperties.candleStyle.borderUpColor': '#00cc00',
-              'mainSeriesProperties.candleStyle.borderDownColor': '#cc0000',
+              'mainSeriesProperties.candleStyle.borderDownColor': '#ffbb33',
             },
             onChartReady: () => {
               console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
@@ -772,7 +768,7 @@
     }
 
     // Fetch with retry
-    async function fetchWithRetry(url, retries = 2, delay = 1000) {
+    async function fetchWithRetry(url, retries = 3, delay = 1000) {
       for (let i = 0; i <= retries; i++) {
         try {
           const response = await fetch(url, {
@@ -789,8 +785,9 @@
             console.error(`Failed to fetch ${url} after ${retries + 1} attempts:`, error);
             throw error;
           }
-          console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${delay}ms: ${error.message}`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          const backoff = delay * Math.pow(2, i);
+          console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${backoff}ms: ${error.message}`);
+          await new Promise(resolve => setTimeout(resolve, backoff));
         }
       }
     }
@@ -814,7 +811,7 @@
         }
       } catch (error) {
         console.error('Failed to fetch gas prices:', error);
-        return null;
+        return { safeGasPrice: 10, proposeGasPrice: 15, fastGasPrice: 20, lastBlock: 'N/A', timestamp: Date.now() };
       }
     }
 
@@ -823,8 +820,9 @@
       const canvas = document.getElementById('gas-heatmap-canvas');
       const gasList = document.getElementById('gas-heatmap-list');
       const loader = document.getElementById('loader-gas');
-      if (!canvas || !gasList || !loader) {
-        console.error('[ERROR] Gas heatmap elements not found:', { canvas, gasList, loader });
+      const gasWarning = document.getElementById('gas-warning');
+      if (!canvas || !gasList || !loader || !gasWarning) {
+        console.error('[ERROR] Gas heatmap elements not found:', { canvas, gasList, loader, gasWarning });
         return;
       }
 
@@ -855,16 +853,16 @@
       const getColor = (intensity) => {
         if (intensity < 0.5) {
           const t = intensity * 2;
-          const r = Math.round(0 + t * (204 - 0));
+          const r = Math.round(0 + t * (0));
           const g = Math.round(204);
           const b = Math.round(0);
           return `rgb(${r}, ${g}, ${b})`;
         } else {
           const t = (intensity - 0.5) * 2;
-          const r = Math.round(204);
-          const g = Math.round(204 - t * (204 - 187));
-          const b = Math.round(0 + t * (51 - 0));
-          return `rgb(${r}, ${g}, ${b})`;
+          const r = Math.round(255);
+          const g = Math.round(187);
+          const b = Math.round(51);
+          return `rgba(${r}, ${g}, ${b}, ${0.7 + t * 0.3})`;
         }
       };
 
@@ -872,19 +870,19 @@
         try {
           loader.style.display = 'block';
           gasList.innerHTML = '';
+          gasWarning.style.display = 'none';
 
           const gasData = await fetchGasPrices();
-          if (!gasData) {
-            loader.textContent = '> Failed to load gas prices';
-            loader.style.display = 'block';
-            return;
+          const isMockGas = gasData.lastBlock === 'N/A' && gasData.safeGasPrice === 10;
+          if (isMockGas) {
+            gasWarning.style.display = 'block';
           }
 
           gasHistory.push(gasData);
           if (gasHistory.length > maxHistory) gasHistory.shift();
 
           gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
-            <li class="p-2 rounded bg-gray-900">
+            <li class="p-2 rounded">
               <div>Block: ${data.lastBlock}</div>
               <div>Safe: ${data.safeGasPrice} Gwei</div>
               <div>Propose: ${data.proposeGasPrice} Gwei</div>
@@ -905,7 +903,7 @@
             const prices = [
               { value: data.safeGasPrice, color: '#00cc00' },
               { value: data.proposeGasPrice, color: '#ffbb33' },
-              { value: data.fastGasPrice, color: '#cc0000' }
+              { value: data.fastGasPrice, color: 'rgba(255, 187, 51, 0.7)' }
             ];
 
             prices.forEach((price, j) => {
@@ -933,11 +931,12 @@
           ctx.fillText(latestTime.toLocaleTimeString(), margin.left + plotWidth, margin.top + plotHeight + 5);
 
           loader.style.display = 'none';
-          console.log('[DEBUG] Gas heatmap updated:', { gasHistoryLength: gasHistory.length, latestGasData: gasData });
+          console.log('[DEBUG] Gas heatmap updated:', { gasHistoryLength: gasHistory.length, latestGasData: gasData, isMockGas });
         } catch (error) {
           console.error('[ERROR] Failed to update gas heatmap:', error);
           loader.textContent = '> Error loading gas heatmap';
           loader.style.display = 'block';
+          gasWarning.style.display = 'block';
         }
       };
 
@@ -951,9 +950,14 @@
     const loadData = async () => {
       const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
+      const tokenWarning = document.getElementById('token-warning');
+
       if (isUsingMockData) {
         updateUI(mockTokens);
         toggleDataSourceBtn.textContent = 'Real Data';
+        tokenWarning.style.display = 'block';
+        tokenWarning.textContent = '> Using mock data';
+        renderGasHeatmap();
         return;
       }
 
@@ -966,40 +970,45 @@
         const ethData = data.find(token => token.symbol === 'ETH');
         if (ethData) {
           const gasData = await fetchGasPrices();
-          if (gasData) {
-            ethData.gasPrice = gasData.proposeGasPrice;
-          }
+          ethData.gasPrice = gasData.proposeGasPrice;
         }
         updateUI(data);
         toggleDataSourceBtn.textContent = 'Mock Data';
+        tokenWarning.style.display = 'none';
         renderGasHeatmap();
       } catch (error) {
         console.error('Failed to load real data:', error);
-        document.getElementById('live-price-header').textContent = `> Live Price: Error - ${error.message}`;
-        document.getElementById('chart-title-header').textContent = 'Error';
-        document.getElementById('chart-title-modal').textContent = 'Error';
-        document.getElementById('loader-tokens').textContent = `> ${error.message}. Try Mock Data.`;
-        document.getElementById('loader-tokens').style.display = 'block';
-        toggleDataSourceBtn.textContent = 'Mock Data';
-        document.getElementById('loader-gas').textContent = '> Failed to load gas prices';
+        isUsingMockData = true;
+        updateUI(mockTokens);
+        toggleDataSourceBtn.textContent = 'Real Data';
+        tokenWarning.style.display = 'block';
+        tokenWarning.textContent = '> Using mock data due to API failure';
+        document.getElementById('live-price-header').textContent = `> Live Price: Using mock data`;
+        document.getElementById('chart-title-header').textContent = 'Mock Data';
+        document.getElementById('chart-title-modal').textContent = 'Mock Data';
+        document.getElementById('loader-tokens').style.display = 'none';
+        renderGasHeatmap();
       }
     };
 
     function updateUI(tokens) {
+      if (!tokens || tokens.length === 0) {
+        console.error('No tokens provided to updateUI');
+        document.getElementById('loader-tokens').textContent = '> No data available';
+        return;
+      }
+
       document.getElementById('loader-tokens').style.display = 'none';
 
       const tokenList = document.getElementById('token-list');
       tokenList.innerHTML = tokens.map((token, index) => {
         const isPositive = token.price_change_percentage_24h >= 0;
-        const rankFactor = index / (tokens.length - 1);
-        const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
-        const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
         const symbol = `BINANCE:${token.symbol}USDT`;
         return `
-          <li class="${bgClass} ${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
+          <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="flex justify-between">
               <span>${token.name} (${token.symbol})</span>
-              <span class="performance ${textClass}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
+              <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
             </div>
             <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
@@ -1011,8 +1020,8 @@
 
       const profitPairs = document.getElementById('profit-pairs');
       const sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-      const topToken = sortedTokens[0];
-      const bottomToken = sortedTokens[sortedTokens.length - 1];
+      const topToken = sortedTokens[0] || mockTokens[0];
+      const bottomToken = sortedTokens[sortedTokens.length - 1] || mockTokens[1];
       profitPairs.innerHTML = `
         <li class="top-pair p-2 rounded">
           <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
@@ -1167,7 +1176,7 @@
 
     const mockTokens = [
       { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
-      { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 30 },
+      { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 15 },
       { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
     ];
 
