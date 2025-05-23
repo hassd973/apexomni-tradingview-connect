@@ -3,24 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>❄️ ICE KING'S CRYPTO REALM 👑</title>
+  <title>❄️ ICE KING REPOSITORY 👑</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Adventure+Time:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Comic+Neue:wght@700&display=swap" rel="stylesheet">
   <script src="https://s3.tradingview.com/tv.js" async></script>
   <style>
-    @font-face {
-      font-family: 'Adventure Time';
-      src: url('https://fonts.cdnfonts.com/css/adventure-time');
-    }
     body {
       font-family: 'Fira Code', monospace;
-      background: linear-gradient(180deg, #0f172a, #134e4a);
-      color: #f0f9ff;
+      background: linear-gradient(180deg, rgba(10, 15, 20, 0.95), rgba(10, 15, 20, 1));
+      color: #d1d5db;
       margin: 0;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      overflow-x: hidden;
+    }
+    .penguin-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('path/to/penguins.png') repeat; /* Replace with actual penguin image from Adventure Time */
+      opacity: 0.1;
+      z-index: -2;
     }
     .grid-bg {
       position: fixed;
@@ -28,28 +33,28 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: url('https://via.placeholder.com/1920x1080/0f172a/134e4a?text=Ice+Kingdom') no-repeat center/cover,
-        repeating-linear-gradient(
-          0deg,
-          rgba(34, 211, 238, 0.1),
-          rgba(34, 211, 238, 0.1) 1px,
-          transparent 1px,
-          transparent 20px
-        ),
-        repeating-linear-gradient(
-          90deg,
-          rgba(34, 211, 238, 0.1),
-          rgba(34, 211, 238, 0.1) 1px,
-          transparent 1px,
-          transparent 20px
-        );
-      animation: snow-drift 10s infinite ease-in-out;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 255, 0, 0.05),
+        rgba(0, 255, 0, 0.05) 1px,
+        transparent 1px,
+        transparent 20px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(0, 255, 0, 0.05),
+        rgba(0, 255, 0, 0.05) 1px,
+        transparent 1px,
+        transparent 20px
+      );
+      animation: frost-glitch 4s infinite;
       z-index: -1;
-      opacity: 0.4;
+      opacity: 0.8;
     }
-    @keyframes snow-drift {
-      0%, 100% { background-position: center, 0 0, 0 0; opacity: 0.4; }
-      50% { background-position: center 10px, 5px 5px, 5px 5px; opacity: 0.5; }
+    @keyframes frost-glitch {
+      0%, 100% { transform: translate(0, 0); opacity: 0.7; }
+      5% { transform: translate(2px, -2px); opacity: 0.5; }
+      10% { transform: translate(-2px, 2px); opacity: 0.9; }
     }
     .particles {
       position: fixed;
@@ -60,84 +65,81 @@
       pointer-events: none;
       z-index: -1;
     }
-    .ice-king, .gunter, .magic-hat {
+    .star, .penguin {
       position: absolute;
-      font-size: 18px;
-      line-height: 18px;
-      text-shadow: 0 0 8px rgba(34, 211, 238, 0.8);
-      animation: float 6s infinite ease-in-out;
+      border-radius: 50%;
+      animation: float 10s infinite linear;
     }
-    .ice-king { content: '👑'; }
-    .gunter { content: '🐧'; }
-    .magic-hat { content: '🎩'; }
+    .star {
+      width: 2px;
+      height: 2px;
+      background: rgba(0, 255, 0, 0.7);
+    }
+    .penguin {
+      font-size: 12px;
+      line-height: 12px;
+      text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+    }
     @keyframes float {
-      0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
-      50% { transform: translate(60px, -60px) rotate(10deg); opacity: 0.8; }
-      100% { transform: translate(120px, -120px) rotate(20deg); opacity: 0; }
+      0% { transform: translate(0, 0); opacity: 0; }
+      50% { opacity: 0.8; }
+      100% { transform: translate(100px, -100px); opacity: 0; }
+    }
+    header, footer {
+      background: rgba(31, 41, 55, 0.3);
+      backdrop-filter: blur(10px) saturate(1.2);
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid rgba(0, 255, 0, 0.1);
+    }
+    footer {
+      border-top: 1px solid rgba(0, 255, 0, 0.1);
+      padding: 0.5rem 1rem;
+    }
+    .ice-king-header {
+      background: linear-gradient(to right, #004d00, #00cc00);
+      border: 2px solid rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+      animation: glow-green 2s infinite;
+      padding: 0.5rem;
+      border-radius: 8px;
+    }
+    @keyframes glow-green {
+      0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+    }
+    .ice-king-title {
+      font-family: 'Comic Neue', 'Fira Code', monospace;
+      color: #e0ffe0;
+      text-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+      font-size: 0.875rem;
+      line-height: 1.4;
+    }
+    @media (min-width: 640px) {
+      .ice-king-title { font-size: 1.25rem; }
+    }
+    .ice-king-img {
+      width: 50px;
+      height: 50px;
+      margin-right: 10px;
+    }
+    @media (min-width: 640px) {
+      .ice-king-img {
+        width: 70px;
+        height: 70px;
+      }
+    }
+    @keyframes snowflake {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+      50% { opacity: 0.4; }
+      100% { transform: translateY(20px) rotate(360deg); opacity: 0; }
     }
     .snowflake {
       position: absolute;
-      color: #f0f9ff;
-      font-size: 10px;
-      animation: snowfall 7s infinite linear;
+      color: #e0ffe0;
+      font-size: 8px;
+      animation: snowflake 5s infinite linear;
       pointer-events: none;
-    }
-    @keyframes snowfall {
-      0% { transform: translateY(-10vh) rotate(0deg); opacity: 0.9; }
-      100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
-    }
-    header, footer {
-      background: rgba(15, 23, 42, 0.5);
-      backdrop-filter: blur(12px) saturate(1.5);
-      padding: 1rem;
-      border-bottom: 2px solid rgba(34, 211, 238, 0.3);
-    }
-    footer {
-      border-top: 2px solid rgba(34, 211, 238, 0.3);
-      padding: 0.5rem;
-    }
-    .ice-king-header {
-      background: linear-gradient(to right, #1e3a8a, #22d3ee);
-      border: 3px solid rgba(34, 211, 238, 0.8);
-      box-shadow: 0 0 20px rgba(34, 211, 238, 0.8);
-      animation: magic-glow 3s infinite;
-      padding: 1rem;
-      border-radius: 12px;
-      position: relative;
-      overflow: hidden;
-    }
-    .ice-king-header::before {
-      content: '👑';
-      position: absolute;
-      top: -10px;
-      left: -10px;
-      font-size: 50px;
-      opacity: 0.2;
-      transform: rotate(-20deg);
-    }
-    .ice-king-header::after {
-      content: '🐧';
-      position: absolute;
-      bottom: -10px;
-      right: -10px;
-      font-size: 50px;
-      opacity: 0.2;
-      transform: rotate(20deg);
-    }
-    @keyframes magic-glow {
-      0% { box-shadow: 0 0 10px rgba(34, 211, 238, 0.8), 0 0 20px rgba(107, 33, 168, 0.5); }
-      50% { box-shadow: 0 0 20px rgba(34, 211, 238, 1), 0 0 30px rgba(107, 33, 168, 0.7); }
-      100% { box-shadow: 0 0 10px rgba(34, 211, 238, 0.8), 0 0 20px rgba(107, 33, 168, 0.5); }
-    }
-    .ice-king-title {
-      font-family: 'Adventure Time', 'Fira Code', monospace;
-      color: #f0f9ff;
-      text-shadow: 0 0 12px rgba(34, 211, 238, 1), 0 0 8px rgba(107, 33, 168, 0.7);
-      font-size: 1rem;
-      line-height: 1.5;
-    }
-    @media (min-width: 640px) {
-      .ice-king-title { font-size: 1.5rem; }
     }
     .chart-container {
       position: relative;
@@ -145,14 +147,13 @@
       height: calc(100vh - 300px);
       min-height: 250px;
       max-height: 700px;
-      border: 2px solid rgba(34, 211, 238, 0.5);
-      border-radius: 8px;
-      box-shadow: 0 0 15px rgba(34, 211, 238, 0.5);
     }
     .tradingview-widget-container {
       position: absolute !important;
       width: 100% !important;
       height: 100% !important;
+      border: 1px solid rgba(0, 255, 0, 0.5);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
     .chart-loading {
       position: absolute;
@@ -163,9 +164,9 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: rgba(15, 23, 42, 0.9);
+      background: rgba(0, 15, 0, 0.7);
       z-index: 10;
-      color: #22d3ee;
+      color: #00ff00;
       font-size: 0.875rem;
     }
     #chart-container-modal {
@@ -188,7 +189,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(0, 0, 0, 0.7);
       z-index: 50;
       justify-content: center;
       align-items: center;
@@ -196,15 +197,15 @@
     }
     .chart-modal.active { display: flex; }
     .chart-modal-content {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(19, 78, 74, 0.7));
-      padding: 1rem;
-      border: 3px solid rgba(34, 211, 238, 0.8);
-      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(0, 15, 0, 0.9), rgba(0, 30, 0, 0.7));
+      padding: 0.5rem;
+      border: 2px solid rgba(0, 255, 0, 0.5);
+      border-radius: 5px;
       width: 95%;
       max-width: 1200px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 0 25px rgba(34, 211, 238, 0.8);
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
     }
     main {
       flex: 1;
@@ -212,10 +213,10 @@
       overflow-y: auto;
     }
     section {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.5), rgba(19, 78, 74, 0.3));
-      border: 2px solid rgba(34, 211, 238, 0.3);
-      border-radius: 10px;
-      padding: 1rem;
+      background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2));
+      border: 1px solid rgba(0, 255, 0, 0.1);
+      border-radius: 8px;
+      padding: 0.5rem;
       min-width: 0;
       cursor: move;
       transition: transform 0.2s ease, opacity 0.2s ease;
@@ -229,15 +230,15 @@
     section.dragging {
       opacity: 0.7;
       transform: scale(0.98);
-      box-shadow: 0 0 20px rgba(34, 211, 238, 0.8);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
       z-index: 100;
     }
     section:hover {
-      box-shadow: 0 0 15px rgba(34, 211, 238, 0.5);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
     ul {
       scrollbar-width: thin;
-      scrollbar-color: #22d3ee #0f172a;
+      scrollbar-color: #00ff00 #000;
       list-style: none;
       padding: 0;
       touch-action: pan-y;
@@ -246,10 +247,10 @@
       width: 6px;
     }
     ul::-webkit-scrollbar-track {
-      background: #0f172a;
+      background: #000;
     }
     ul::-webkit-scrollbar-thumb {
-      background: #22d3ee;
+      background: #00ff00;
       border-radius: 4px;
     }
     #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
@@ -273,15 +274,15 @@
     }
     #token-list li:hover {
       transform: translateX(5px);
-      box-shadow: 0 0 15px rgba(34, 211, 238, 0.8);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
     }
     #token-list li.selected-token {
-      border: 2px solid rgba(34, 211, 238, 1);
-      box-shadow: 0 0 20px rgba(34, 211, 238, 0.8);
+      border: 2px solid rgba(0, 255, 0, 0.8);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
     }
     #token-list .metric {
       font-size: 0.6875rem;
-      color: #94a3b8;
+      color: #a0a0a0;
     }
     #token-list .performance {
       font-size: 0.75rem;
@@ -289,37 +290,42 @@
     }
     #profit-pairs .metric {
       font-size: 0.6875rem;
-      color: #94a3b8;
+      color: #a0a0a0;
     }
-    @keyframes glow-cyan {
-      0% { text-shadow: 0 0 5px rgba(34, 211, 238, 0.8), 0 0 10px rgba(34, 211, 238, 0.5); }
-      50% { text-shadow: 0 0 15px rgba(34, 211, 238, 1), 0 0 25px rgba(34, 211, 238, 0.7); }
-      100% { text-shadow: 0 0 5px rgba(34, 211, 238, 0.8), 0 0 10px rgba(34, 211, 238, 0.5); }
+    @keyframes glow-green-text {
+      0% { text-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+      50% { text-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
+      100% { text-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+    }
+    @keyframes glow-green {
+      0% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); }
+    }
+    @keyframes glow-red {
+      0% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
+      50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); }
+      100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
     }
     @keyframes glow-purple {
-      0% { text-shadow: 0 0 5px rgba(107, 33, 168, 0.8), 0 0 10px rgba(107, 33, 168, 0.5); }
-      50% { text-shadow: 0 0 15px rgba(107, 33, 168, 1), 0 0 25px rgba(107, 33, 168, 0.7); }
-      100% { text-shadow: 0 0 5px rgba(107, 33, 168, 0.8), 0 0 10px rgba(107, 33, 168, 0.5); }
+      0% { text-shadow: 0 0 3px rgba(128, 0, 128, 0.5), 0 0 6px rgba(128, 0, 128, 0.3); }
+      50% { text-shadow: 0 0 8px rgba(128, 0, 128, 0.8), 0 0 12px rgba(128, 0, 128, 0.5); }
+      100% { text-shadow: 0 0 3px rgba(128, 0, 128, 0.5), 0 0 6px rgba(128, 0, 128, 0.3); }
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .glow-cyan { animation: glow-cyan 2s infinite; }
+    .glow-green-text { animation: glow-green-text 2s infinite; }
+    .glow-green { animation: glow-green 2s infinite; }
+    .glow-red { animation: glow-red 2s infinite; }
     .glow-purple { animation: glow-purple 2s infinite; }
     .fade-in { animation: fadeIn 0.5s ease-in; }
-    .hover-glow:hover {
-      transform: scale(1.02);
-      transition: all 0.3s ease;
-      box-shadow: 0 0 15px rgba(34, 211, 238, 0.8);
-    }
-    .gradient-bg {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.5), rgba(19, 78, 74, 0.3));
-      border: 2px solid rgba(34, 211, 238, 0.3);
-    }
+    .hover-glow:hover { transform: scale(1.02); transition: all 0.3s ease; }
+    .gradient-bg { background: linear-gradient(135deg, rgba(0, 15, 0, 0.4), rgba(0, 30, 0, 0.2)); border: 1px solid rgba(0, 255, 0, 0.2); }
     .marquee-container {
-      background: rgba(15, 23, 42, 0.8);
-      border: 2px solid rgba(34, 211, 238, 0.4);
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(0, 255, 0, 0.3);
       overflow: hidden;
       white-space: nowrap;
       padding: 4px 0;
@@ -336,52 +342,50 @@
     .marquee span {
       margin-right: 12px;
       font-size: 0.6875rem;
-      color: #22d3ee;
+      color: #00ff00;
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.75rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
     #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
-      animation: magic-glow 3s infinite;
-      background: linear-gradient(45deg, #1e3a8a, #22d3ee);
-      color: #f0f9ff;
-      border: 2px solid #22d3ee;
+      animation: glow-green 2s infinite;
+      background-color: #00ff00;
+      color: #000;
+      border: 1px solid #00ff00;
       font-size: 0.6875rem;
-      border-radius: 6px;
-      padding: 0.5rem 1rem;
-      transition: all 0.3s ease;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
     }
     @media (min-width: 640px) {
       #toggle-sticky-header, #toggle-sticky-modal, .timeframe-btn, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
         font-size: 0.75rem;
-        padding: 0.75rem 1.5rem;
+        padding: 0.5rem 1rem;
       }
     }
-    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header(disabled), #toggle-indicator-modal:hover {
-      background: linear-gradient(45deg, #22d3ee, #6b21a8);
-      box-shadow: 0 0 20px rgba(34, 211, 238, 1), 0 0 30px rgba(107, 33, 168, 0.7);
-      transform: scale(1.05);
+    #toggle-sticky-header:hover, #toggle-sticky-modal:hover, .timeframe-btn:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
+      background-color: #00cc00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
     }
     .timeframe-btn.active {
-      background: linear-gradient(45deg, #22d3ee, #6b21a8);
-      box-shadow: 0 0 20px rgba(34, 211, 238, 1), 0 0 30px rgba(107, 33, 168, 0.7);
+      background-color: #00cc00;
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.8), 0 0 25px rgba(0, 255, 0, 0.5);
     }
     #chat-input {
-      background: rgba(15, 23, 42, 0.8);
-      border: 2px solid rgba(34, 211, 238, 0.4);
-      color: #22d3ee;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(0, 255, 0, 0.3);
+      color: #00ff00;
       resize: none;
       width: 100%;
-      padding: 0.5rem;
-      border-radius: 6px;
+      padding: 0.25rem;
+      border-radius: 4px;
       font-size: 0.75rem;
     }
     @media (min-width: 640px) {
-      #chat-input { padding: 0.75rem; font-size: 0.875rem; }
+      #chat-input { padding: 0.5rem; font-size: 0.875rem; }
     }
     #chat-input:focus {
       outline: none;
-      border-color: #22d3ee;
-      box-shadow: 0 0 15px rgba(34, 211, 238, 0.8);
+      border-color: #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
     }
     .loader {
       display: flex;
@@ -393,7 +397,7 @@
       content: '';
       width: 16px;
       height: 16px;
-      border: 3px solid #22d3ee;
+      border: 3px solid #00ff00;
       border-top: 3px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -403,7 +407,7 @@
       display: inline-block;
       overflow: hidden;
       white-space: nowrap;
-      border-right: 2px solid #22d3ee;
+      border-right: 2px solid #00ff00;
       animation: typing 3s steps(30, end), blink-caret 0.75s step-end infinite;
     }
     @keyframes typing {
@@ -412,37 +416,37 @@
     }
     @keyframes blink-caret {
       from, to { border-color: transparent; }
-      50% { border-color: #22d3ee; }
+      50% { border-color: #00ff00; }
     }
     .title-box {
-      font-family: 'Adventure Time', 'Fira Code', monospace;
-      color: #f0f9ff;
+      font-family: 'Comic Neue', 'Fira Code', monospace;
+      color: #e0ffe0;
       text-align: center;
-      line-height: 1.5;
+      line-height: 1.4;
       margin-bottom: 0.5rem;
       font-size: 0.6875rem;
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
-      background: rgba(15, 23, 42, 0.8);
-      border: 2px solid #22d3ee;
-      box-shadow: 0 0 15px rgba(34, 211, 238, 0.8);
-      padding: 0.5rem;
-      animation: magic-glow 3s infinite;
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid #00ff00;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      padding: 0.25rem;
+      animation: glow-green 2s infinite;
       position: relative;
     }
     @media (min-width: 640px) {
-      .title-box { font-size: 0.875rem; padding: 0.75rem; }
+      .title-box { font-size: 0.875rem; padding: 0.5rem; }
     }
     #chart-title-header, #chart-title-modal {
       text-align: center;
-      padding: 0.5rem;
-      border-radius: 6px;
-      background: rgba(15, 23, 42, 0.8);
+      padding: 0.25rem;
+      border-radius: 4px;
+      background: rgba(0, 0, 0, 0.8);
       font-size: 0.75rem;
     }
     @media (min-width: 640px) {
-      #chart-title-header, #chart-title-modal { font-size: 0.875rem; padding: 0.75rem; }
+      #chart-title-header, #chart-title-modal { font-size: 0.875rem; padding: 0.5rem; }
     }
     [data-tooltip] { position: relative; }
     [data-tooltip]:hover::after {
@@ -451,16 +455,16 @@
       bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(34, 211, 238, 0.9);
-      color: #0f172a;
+      background: rgba(0, 255, 0, 0.9);
+      color: #000;
       padding: 4px 8px;
       border-radius: 4px;
       font-size: 10px;
       white-space: nowrap;
       z-index: 60;
     }
-    #profit-pairs .top-pair { animation: glow-cyan 2s infinite; }
-    #profit-pairs .bottom-pair { animation: glow-purple 2s infinite; }
+    #profit-pairs .top-pair { animation: glow-green 2s infinite; }
+    #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
     .gas-heatmap-section {
       padding-right: 1rem;
       display: flex;
@@ -477,9 +481,9 @@
       width: 100%;
       max-width: 100%;
       height: 20vh;
-      border: 2px solid rgba(34, 211, 238, 0.7);
+      border: 1px solid rgba(0, 255, 0, 0.5);
       border-radius: 8px;
-      box-shadow: 0 0 15px rgba(34, 211, 238, 0.5);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
     @media (min-width: 640px) {
       #gas-heatmap-canvas {
@@ -492,7 +496,7 @@
       gap: 0.5rem;
       margin-top: 0.25rem;
       font-size: 0.6875rem;
-      color: #f0f9ff;
+      color: #d1d5db;
     }
     @media (min-width: 640px) {
       #gas-heatmap-legend { gap: 1rem; font-size: 0.75rem; margin-top: 0.5rem; }
@@ -512,35 +516,37 @@
     }
   </style>
 </head>
-<body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-cyan-500">
-  <div class="grid-bg"></div>
+<body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-green-600">
+  <div class="penguin-bg"></div> <!-- Background with penguins from Adventure Time -->
   <div class="particles" id="particles"></div>
   <header class="w-full ice-king-header backdrop-blur-lg flex justify-center items-center overflow-x-hidden relative">
     <div class="text-center w-full max-w-[95vw] sm:max-w-[95vw] md:max-w-[95vw] lg:max-w-[95vw] mx-auto px-2">
-      <div class="title-box">
-        <h1 class="ice-king-title">❄️ ICE KING'S CRYPTO REALM 👑🐧</h1>
+      <div class="flex items-center justify-center">
+        <img src="path/to/ice-king.png" alt="Ice King" class="ice-king-img"> <!-- Replace with actual Ice King image from Adventure Time -->
+        <div class="title-box">
+          <h1 class="ice-king-title">❄️ ICE KING REPOSITORY 👑🐧</h1>
+        </div>
       </div>
-      <p class="text-xs sm:text-sm mt-1 text-cyan-200 typewriter">Magic Man's Market Mayhem</p>
-      <p class="text-xs mt-1 text-cyan-400">Powered by CoinMarketCap & xAI</p>
+      <p class="text-xs sm:text-sm mt-1 text-green-200 typewriter">Ice King's Crypto Realm</p>
+      <p class="text-xs mt-1 text-green-400">Powered by CoinMarketCap & xAI</p>
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
-            <button id="header-timeframe-5min" class="timeframe-btn rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
-            <button id="header-timeframe-15min" class="timeframe-btn rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
-            <button id="header-timeframe-1d" class="timeframe-btn rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
+            <button id="header-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
+            <button id="header-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
+            <button id="header-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
+            <button id="header-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
+            <button id="header-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="toggle-indicator-header" class="rounded" aria-label="Toggle indicator">[Enable ICE KING] ❄️</button>
-            <button id="toggle-sticky-header" class="rounded" aria-label="Dock chart">Dock Chart 🔍</button>
-            <button id="toggle-data-source" class="rounded" aria-label="Toggle data source">[Real Data] 🐧</button>
-            <button id="toggle-debug" class="rounded" aria-label="Debug chart">[Enable Debug] 👑</button>
-            <button id="toggle-sounds" class="rounded" aria-label="Toggle sounds">[Enable Sounds] 🎶</button>
+            <button id="toggle-indicator-header" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] ❄️</button>
+            <button id="toggle-sticky-header" class="text-black rounded" aria-label="Dock chart">Dock Chart 🔍</button>
+            <button id="toggle-data-source" class="text-black rounded" aria-label="Toggle data source">[Real Data] 🐧</button>
+            <button id="toggle-debug" class="text-black rounded" aria-label="Debug chart">[Enable Debug] 👑</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div id="live-price-header" class="text-xs sm:text-sm text-cyan-200 glow-cyan">> Live Price: Loading...</div>
+          <div id="live-price-header" class="text-xs sm:text-sm text-green-200 glow-green-text">> Live Price: Loading...</div>
         </div>
         <div id="chart-container-header" class="chart-container mt-2">
           <div class="chart-loading">
@@ -548,7 +554,7 @@
             <div class="ml-2">Loading top ranked chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-header" class="font-medium mt-2 text-cyan-200 glow-cyan">Loading...</h3>
+        <h3 id="chart-title-header" class="font-medium mt-2 text-green-200 glow-green-text">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-header">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -567,19 +573,19 @@
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-2 gap-2">
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
+            <button id="modal-timeframe-1min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="1" aria-label="1 minute timeframe">1M</button>
+            <button id="modal-timeframe-5min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="5" aria-label="5 minute timeframe">5M</button>
+            <button id="modal-timeframe-15min" class="timeframe-btn bg-green-900 text-black rounded" data-interval="15" aria-label="15 minute timeframe">15M</button>
+            <button id="modal-timeframe-1hr" class="timeframe-btn bg-green-900 text-black rounded" data-interval="60" aria-label="1 hour timeframe">1H</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn bg-green-900 text-black rounded active" data-interval="D" aria-label="1 day timeframe">1D</button>
           </div>
           <div class="flex flex-wrap space-x-1 gap-2">
-            <button id="toggle-indicator-modal" class="rounded" aria-label="Toggle indicator">[Enable ICE KING] ❄️</button>
-            <button id="toggle-sticky-modal" class="rounded" aria-label="Undock chart">Undock Chart 🔍</button>
+            <button id="toggle-indicator-modal" class="text-black rounded" aria-label="Toggle indicator">[Enable ICE KING] ❄️</button>
+            <button id="toggle-sticky-modal" class="text-black rounded" aria-label="Undock chart">Undock Chart 🔍</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-          <div id="live-price-modal" class="text-xs sm:text-sm text-cyan-200 glow-cyan">> Live Price: Loading...</div>
+          <div id="live-price-modal" class="text-xs sm:text-sm text-green-200 glow-green-text">> Live Price: Loading...</div>
         </div>
         <div id="chart-container-modal" class="chart-container mt-2">
           <div class="chart-loading">
@@ -587,7 +593,7 @@
             <div class="ml-2">Loading top ranked chart...</div>
           </div>
         </div>
-        <h3 id="chart-title-modal" class="font-medium mt-2 text-cyan-200 glow-cyan">Loading...</h3>
+        <h3 id="chart-title-modal" class="font-medium mt-2 text-green-200 glow-green-text">Loading...</h3>
         <div class="marquee-container">
           <div class="marquee" id="ticker-marquee-modal">
             <span>💰 BTC: $61,234.56 (+2.34%)</span>
@@ -620,9 +626,9 @@
       <div id="loader-gas" class="loader text-center text-gray-500 text-xs">> Loading Gas Heatmap...</div>
       <canvas id="gas-heatmap-canvas"></canvas>
       <div id="gas-heatmap-legend">
-        <div class="legend-item"><div class="legend-color" style="background: #22d3ee"></div>Safe</div>
-        <div class="legend-item"><div class="legend-color" style="background: #f0f9ff"></div>Propose</div>
-        <div class="legend-item"><div class="legend-color" style="background: #6b21a8"></div>Fast</div>
+        <div class="legend-item"><div class="legend-color" style="background: #00ff00"></div>Safe</div>
+        <div class="legend-item"><div class="legend-color" style="background: #ffff00"></div>Propose</div>
+        <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div>Fast</div>
       </div>
       <ul id="gas-heatmap-list" class="space-y-2 text-xs sm:text-sm mt-2"></ul>
     </section>
@@ -634,12 +640,12 @@
     <section class="gradient-bg rounded-lg shadow-md" draggable="true">
       <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> Grok Trading Bot 🤖</h2>
       <div class="mt-2">
-        <h3 class="text-sm sm:text-base font-semibold mb-2 glow-cyan">📡 Live System Logs</h3>
-        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-cyan-500 p-2 bg-gray-900 rounded text-xs sm:text-sm">
+        <h3 class="text-sm sm:text-base font-semibold mb-2 glow-green">📡 Live System Logs</h3>
+        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 p-2 bg-gray-900 rounded text-xs sm:text-sm">
         </div>
       </div>
       <div id="loader-chat" class="loader text-center text-gray-500 text-xs">> Loading...</div>
-      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-cyan-500 text-xs sm:text-sm">
+      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-600 text-xs sm:text-sm">
       </div>
       <div class="mt-2 flex flex-col sm:flex-row gap-2">
         <textarea id="chat-input" rows="2" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input"></textarea>
@@ -652,37 +658,28 @@
     <p class="typewriter">> Data Sources: CoinMarketCap (via /api/crypto), Binance API, Etherscan API</p>
   </footer>
   <script>
-    // Particle effect with Ice King, Gunter, and Magic Hat
+    // Particle effect with stars and penguins
     const particleContainer = document.getElementById('particles');
-    const particleTypes = ['ice-king', 'gunter', 'magic-hat'];
-    for (let i = 0; i < 120; i++) {
-      const type = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+    for (let i = 0; i < 100; i++) {
+      const isPenguin = Math.random() < 0.2; // 20% chance for penguin
       const particle = document.createElement('div');
-      particle.className = type;
-      particle.textContent = type === 'ice-king' ? '👑' : type === 'gunter' ? '🐧' : '🎩';
+      particle.className = isPenguin ? 'penguin' : 'star';
+      if (isPenguin) particle.textContent = '🐧';
       particle.style.left = `${Math.random() * 100}%`;
       particle.style.top = `${Math.random() * 100}%`;
-      particle.style.animationDelay = `${Math.random() * 6}s`;
-      particle.style.animationDuration = `${4 + Math.random() * 4}s`;
+      particle.style.animationDelay = `${Math.random() * 10}s`;
       particleContainer.appendChild(particle);
     }
-    // Snowflake effect across the page
-    for (let i = 0; i < 50; i++) {
+    // Snowflake effect for header
+    const header = document.querySelector('header');
+    for (let i = 0; i < 20; i++) {
       const snowflake = document.createElement('div');
       snowflake.className = 'snowflake';
       snowflake.textContent = '❄️';
       snowflake.style.left = `${Math.random() * 100}%`;
-      snowflake.style.animationDelay = `${Math.random() * 7}s`;
-      snowflake.style.animationDuration = `${5 + Math.random() * 5}s`;
-      document.body.appendChild(snowflake);
+      snowflake.style.animationDelay = `${Math.random() * 5}s`;
+      header.appendChild(snowflake);
     }
-
-    // Sound effects (placeholder, replace with actual audio files)
-    let soundsEnabled = false;
-    const soundEffects = {
-      click: new Audio('https://via.placeholder.com/audio/click.mp3'), // Replace with Ice King's laugh or similar
-      hover: new Audio('https://via.placeholder.com/audio/hover.mp3')  // Replace with magical chime
-    };
 
     // Drag-and-drop functionality
     const moduleGrid = document.getElementById('module-grid');
@@ -700,7 +697,6 @@
             draggedModule = module;
             module.classList.add('dragging');
             e.dataTransfer.setData('text/plain', '');
-            if (soundsEnabled) soundEffects.click.play();
           });
 
           module.addEventListener('dragend', () => {
@@ -715,7 +711,6 @@
           module.addEventListener('dragenter', (e) => {
             e.preventDefault();
             module.classList.add('hover-glow');
-            if (soundsEnabled) soundEffects.hover.play();
           });
 
           module.addEventListener('dragleave', () => {
@@ -743,7 +738,6 @@
           module.addEventListener('touchstart', (e) => {
             draggedModule = module;
             module.classList.add('dragging');
-            if (soundsEnabled) soundEffects.click.play();
           });
 
           module.addEventListener('touchmove', (e) => {
@@ -821,20 +815,20 @@
             theme: 'dark',
             style: '1',
             locale: 'en',
-            toolbar_bg: '#0f172a',
+            toolbar_bg: '#0a0f14',
             enable_publishing: false,
             hide_top_toolbar: false,
             hide_side_toolbar: false,
             allow_symbol_change: true,
             container_id: containerId,
             overrides: {
-              'paneProperties.background': '#0f172a',
-              'paneProperties.vertGridProperties.color': 'rgba(34, 211, 238, 0.2)',
-              'paneProperties.horzGridProperties.color': 'rgba(34, 211, 238, 0.2)',
-              'mainSeriesProperties.candleStyle.upColor': '#22d3ee',
-              'mainSeriesProperties.candleStyle.downColor': '#6b21a8',
-              'mainSeriesProperties.candleStyle.borderUpColor': '#22d3ee',
-              'mainSeriesProperties.candleStyle.borderDownColor': '#6b21a8',
+              'paneProperties.background': '#0a0f14',
+              'paneProperties.vertGridProperties.color': 'rgba(0, 255, 0, 0.1)',
+              'paneProperties.horzGridProperties.color': 'rgba(0, 255, 0, 0.1)',
+              'mainSeriesProperties.candleStyle.upColor': '#00ff00',
+              'mainSeriesProperties.candleStyle.downColor': '#ff0000',
+              'mainSeriesProperties.candleStyle.borderUpColor': '#00ff00',
+              'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
             },
             onChartReady: () => {
               console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
@@ -893,7 +887,7 @@
 
     // Fetch ETH gas prices
     async function fetchGasPrices() {
-      const apiKey = 'K3I98GFINF6KFigYRQNZCZD6KIIQ3BAAQ5T';
+      const apiKey = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
       const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
       try {
         const data = await fetchWithRetry(url);
@@ -951,15 +945,15 @@
       const getColor = (intensity) => {
         if (intensity < 0.5) {
           const t = intensity * 2;
-          const r = Math.round(34 + t * (240 - 34));
-          const g = Math.round(211 + t * (249 - 211));
-          const b = Math.round(238 + t * (255 - 238));
+          const r = Math.round(0 + t * (255 - 0));
+          const g = Math.round(255);
+          const b = Math.round(0);
           return `rgb(${r}, ${g}, ${b})`;
         } else {
           const t = (intensity - 0.5) * 2;
-          const r = Math.round(240 + t * (107 - 240));
-          const g = Math.round(249 + t * (33 - 249));
-          const b = Math.round(255 + t * (168 - 255));
+          const r = Math.round(255);
+          const g = Math.round(255 - t * (255 - 0));
+          const b = Math.round(0);
           return `rgb(${r}, ${g}, ${b})`;
         }
       };
@@ -980,7 +974,7 @@
           if (gasHistory.length > maxHistory) gasHistory.shift();
 
           gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
-            <li class="p-1 rounded bg-black bg-opacity-50 glow-cyan">
+            <li class="p-1 rounded bg-black bg-opacity-50 glow-green">
               <div>Block: ${data.lastBlock}</div>
               <div>Safe: ${data.safeGasPrice} Gwei</div>
               <div>Propose: ${data.proposeGasPrice} Gwei</div>
@@ -999,9 +993,9 @@
           gasHistory.forEach((data, i) => {
             const x = margin.left + (i * plotWidth / maxHistory);
             const prices = [
-              { value: data.safeGasPrice, color: '#22d3ee' },
-              { value: data.proposeGasPrice, color: '#f0f9ff' },
-              { value: data.fastGasPrice, color: '#6b21a8' }
+              { value: data.safeGasPrice, color: '#00ff00' },
+              { value: data.proposeGasPrice, color: '#ffff00' },
+              { value: data.fastGasPrice, color: '#ff0000' }
             ];
 
             prices.forEach((price, j) => {
@@ -1013,7 +1007,7 @@
             });
           });
 
-          ctx.fillStyle = '#f0f9ff';
+          ctx.fillStyle = '#d1d5db';
           ctx.font = '9px Fira Code';
           ctx.textAlign = 'right';
           ctx.textBaseline = 'middle';
@@ -1088,8 +1082,8 @@
       tokenList.innerHTML = tokens.map((token, index) => {
         const isPositive = token.price_change_percentage_24h >= 0;
         const rankFactor = index / (tokens.length - 1);
-        const bgClass = isPositive ? `bg-cyan-${900 - Math.floor(rankFactor * 300)}` : `bg-purple-${600 + Math.floor(rankFactor * 300)}`;
-        const textClass = isPositive ? `text-cyan-${400 + Math.floor(rankFactor * 300)}` : `text-purple-${500 + Math.floor(rankFactor * 300)}`;
+        const bgClass = isPositive ? `bg-green-${900 - Math.floor(rankFactor * 300)}` : `bg-red-${600 + Math.floor(rankFactor * 300)}`;
+        const textClass = isPositive ? `text-green-${400 + Math.floor(rankFactor * 300)}` : `text-red-${500 + Math.floor(rankFactor * 300)}`;
         const symbol = `BINANCE:${token.symbol}USDT`;
         return `
           <li class="${bgClass} ${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}">
@@ -1138,12 +1132,12 @@
       topPairs.innerHTML = tokens
         .filter(token => token.symbol && token.symbol !== 'USDT')
         .slice(0, 5)
-        .map(token => `<li class="gradient-bg p-1 rounded-md glow-cyan">> ❄️ ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
+        .map(token => `<li class="gradient-bg p-1 rounded-md glow-green">> ❄️ ${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
         .join('');
 
       const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! ❄️😎';
       const marqueeContent = [
-        ...tokens.slice(0, 5).map(token => `<span class="glow-cyan">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
+        ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
         `<span class="glow-purple">[${uniquePun}]</span>`
       ].join('');
       document.getElementById('ticker-marquee-header').innerHTML = marqueeContent.repeat(3);
@@ -1168,7 +1162,6 @@
       const toggleStickyModal = document.getElementById('toggle-sticky-modal');
       const chartModal = document.getElementById('chart-modal');
       const toggleDebugBtn = document.getElementById('toggle-debug');
-      const toggleSoundsBtn = document.getElementById('toggle-sounds');
       const tokenList = document.getElementById('token-list');
 
       setupDragAndDrop();
@@ -1177,7 +1170,6 @@
       toggleDataSourceBtn.addEventListener('click', () => {
         isUsingMockData = !isUsingMockData;
         loadData();
-        if (soundsEnabled) soundEffects.click.play();
       });
 
       toggleIndicatorHeaderBtn.addEventListener('click', () => {
@@ -1186,7 +1178,6 @@
         const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
         const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
         initializeChart('chart-container-header', symbol, interval);
-        if (soundsEnabled) soundEffects.click.play();
       });
 
       toggleIndicatorModalBtn.addEventListener('click', () => {
@@ -1195,7 +1186,6 @@
         const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
         const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
         initializeChart('chart-container-modal', symbol, interval);
-        if (soundsEnabled) soundEffects.click.play();
       });
 
       const timeframes = ['1min', '5min', '15min', '1hr', '1d'];
@@ -1210,7 +1200,6 @@
             headerBtn.classList.add('active');
             const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
             initializeChart('chart-container-header', symbol, interval);
-            if (soundsEnabled) soundEffects.click.play();
           });
         }
         if (modalBtn) {
@@ -1219,7 +1208,6 @@
             modalBtn.classList.add('active');
             const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
             initializeChart('chart-container-modal', symbol, interval);
-            if (soundsEnabled) soundEffects.click.play();
           });
         }
       });
@@ -1241,7 +1229,6 @@
             tokenListItems.forEach(item => item.classList.remove('selected-token'));
             li.classList.add('selected-token');
             console.log(`Switched to token: ${symbol}`);
-            if (soundsEnabled) soundEffects.click.play();
           }
         });
       }
@@ -1252,7 +1239,6 @@
           const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
           const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-modal', symbol, interval);
-          if (soundsEnabled) soundEffects.click.play();
         });
       }
       if (toggleStickyModal) {
@@ -1261,20 +1247,12 @@
           const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
           const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-header', symbol, interval);
-          if (soundsEnabled) soundEffects.click.play();
         });
       }
 
       toggleDebugBtn.addEventListener('click', () => {
         isDebugMode = !isDebugMode;
         toggleDebugBtn.textContent = `[${isDebugMode ? 'Disable' : 'Enable'} Debug] 👑`;
-        if (soundsEnabled) soundEffects.click.play();
-      });
-
-      toggleSoundsBtn.addEventListener('click', () => {
-        soundsEnabled = !soundsEnabled;
-        toggleSoundsBtn.textContent = `[${soundsEnabled ? 'Disable' : 'Enable'} Sounds] 🎶`;
-        if (soundsEnabled) soundEffects.click.play();
       });
     });
 
@@ -1285,22 +1263,22 @@
     ];
 
     const iceKingPuns = [
-      "Freeze the market, rule the charts! ❄️👑",
-      "Gunter, fetch me some profits! 🐧💸",
-      "Magic Man’s hat, guide my trades! 🎩✨",
-      "Snow way I’m losing this trade! ❄️📈",
-      "I’m the coolest trader in Ooo! 👑🧊",
-      "Chill vibes, hot gains! ❄️🔥",
-      "Ice to see you, crypto riches! 🧊💰",
-      "Penguin power, market shower! 🐧📊",
-      "My portfolio’s frosty fresh! ❄️😎",
-      "Skating through the charts like a pro! ⛸️📉",
-      "Freeze your fears, trade with cheer! ❄️🎉",
-      "I’m chilling with my crypto crown! 👑🧊",
-      "Snowflakes and profits, that’s my style! ❄️💵",
-      "Magic trades, icy raids! 🎩❄️",
-      "Cool cash, colder crashes! 🥶📈",
-      "Ice King’s crypto kingdom reigns! 👑📊"
+      "Everything is Going to be okay! ❄️👑",
+      "Penguins are my royal guards! 🐧🧊",
+      "Time to freeze the market! ❄️😂",
+      "Ice to meet you, traders! 🧊🐧",
+      "I’m the coolest king around! 👑❄️",
+      "Penguin power activate! 🐧🧊😂",
+      "Snow way I’m missing this trade! ❄️📈",
+      "Freeze your doubts, let’s trade! 🧊💸",
+      "I’m skating through the market! ⛸️❄️",
+      "Cold cash, hot trades! 🥶💰",
+      "My portfolio’s cooler than ice! ❄️📊",
+      "Chill out, I’ve got this! 🧊😎",
+      "Ice King’s here to rule the charts! 👑📉",
+      "Let’s make it snow profits! ❄️💵",
+      "I’m frosting the competition! 🧊🏆",
+      "Cool trades, warm wins! ❄️🔥"
     ];
 
     let isDebugMode = false;
