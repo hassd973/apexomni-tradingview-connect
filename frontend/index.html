@@ -28,7 +28,7 @@
     h1, h2, h3 {
       font-family: 'Limelight', cursive;
       color: #e0f7fa;
-      text-shadow: 0 0 8px rgba(0, 204, 0, 0.3);
+      text-shadow: 0 0 8px rgba(0, 204, 0, 0.5), 0 0 12px rgba(255, 187, 51, 0.3);
     }
     .spline-bg {
       position: fixed;
@@ -94,6 +94,7 @@
       max-height: 600px;
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
+      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
     .tradingview-widget-container {
       position: absolute !important;
@@ -109,7 +110,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: rgba(30, 39, 39, 0.5);
+      background: rgba(30, 39, 39, 0.3);
       z-index: 10;
       color: #00b7eb;
       font-size: 0.875rem;
@@ -142,7 +143,7 @@
     }
     .chart-modal.active { display: flex; }
     .chart-modal-content {
-      background: #232e2e;
+      background: rgba(35, 46, 46, 0.3);
       padding: 1rem;
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
@@ -150,21 +151,21 @@
       max-width: 1200px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
     main {
       flex: 1;
       padding: 1rem;
     }
     section {
-      background: #232e2e;
+      background: rgba(35, 46, 46, 0.3);
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
       padding: 1rem;
       min-width: 0;
       cursor: move;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
     @media (max-width: 639px) {
       section { cursor: default; }
@@ -176,7 +177,7 @@
       z-index: 100;
     }
     section:hover {
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
     }
     ul {
       scrollbar-width: thin;
@@ -188,7 +189,7 @@
       width: 6px;
     }
     ul::-webkit-scrollbar-track {
-      background: #232e2e;
+      background: rgba(35, 46, 46, 0.3);
     }
     ul::-webkit-scrollbar-thumb {
       background: #00b7eb;
@@ -213,15 +214,17 @@
       transition: all 0.3s ease;
       cursor: pointer;
       font-size: 0.875rem;
-      background: rgba(30, 39, 39, 0.5);
+      background: rgba(30, 39, 39, 0.3);
     }
     #token-list li:hover {
       background: rgba(0, 204, 0, 0.1);
       transform: translateX(2px);
+      box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
     }
     #token-list li.selected-token {
       border: 1px solid #ffbb33;
       background: rgba(255, 187, 51, 0.1);
+      box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
     }
     #token-list .metric {
       font-size: 0.75rem;
@@ -234,6 +237,9 @@
     #profit-pairs .metric {
       font-size: 0.75rem;
       color: #a0a0a0;
+    }
+    #profit-pairs li {
+      background: rgba(30, 39, 39, 0.3);
     }
     @keyframes pulse {
       0% { transform: scale(1); }
@@ -248,13 +254,14 @@
     .hover-transition { transition: all 0.3s ease; }
     .hover-transition:hover { background-color: rgba(255, 187, 51, 0.1); }
     .marquee-container {
-      background: rgba(30, 39, 39, 0.5);
+      background: rgba(30, 39, 39, 0.3);
       border: 1px solid rgba(0, 204, 0, 0.2);
       overflow: hidden;
       white-space: nowrap;
       padding: 0.5rem 0;
       margin-top: 0.5rem;
       border-radius: 6px;
+      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
     .marquee {
       display: inline-block;
@@ -280,14 +287,14 @@
     }
     button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
       background-color: #ffbb33;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
     }
     .timeframe-btn.active {
       background-color: #ffbb33;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 6px rgba(0, 204, 0, 0.4);
     }
     #chat-input {
-      background: rgba(30, 39, 39, 0.5);
+      background: rgba(30, 39, 39, 0.3);
       border: 1px solid rgba(0, 204, 0, 0.2);
       color: #e0f7fa;
       width: 100%;
@@ -298,7 +305,7 @@
     #chat-input:focus {
       outline: none;
       border-color: #ffbb33;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
     }
     .loader {
       display: flex;
@@ -336,11 +343,12 @@
       text-align: center;
       margin-bottom: 1rem;
       font-size: 1rem;
-      background: rgba(30, 39, 39, 0.5);
+      background: rgba(30, 39, 39, 0.3);
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
       padding: 0.75rem;
       animation: pulse 4s infinite;
+      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
     @media (min-width: 640px) {
       .title-box { font-size: 1.25rem; }
@@ -349,8 +357,9 @@
       text-align: center;
       padding: 0.5rem;
       border-radius: 6px;
-      background: rgba(30, 39, 39, 0.5);
+      background: rgba(30, 39, 39, 0.3);
       font-size: 0.875rem;
+      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
     @media (min-width: 640px) {
       #chart-title-header, #chart-title-modal { font-size: 1rem; }
@@ -369,7 +378,7 @@
       font-size: 0.75rem;
       white-space: nowrap;
       z-index: 60;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
     #profit-pairs .top-pair { color: #00cc00; }
     #profit-pairs .bottom-pair { color: #cc0000; }
@@ -388,7 +397,7 @@
       height: 20vh;
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
     @media (min-width: 640px) {
       #gas-heatmap-canvas { height: 25vh; }
@@ -413,6 +422,12 @@
       height: 10px;
       border-radius: 2px;
     }
+    #live-logs-container {
+      background: rgba(30, 39, 39, 0.3);
+    }
+    #chat-list {
+      background: rgba(30, 39, 39, 0.3);
+    }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
@@ -423,7 +438,7 @@
   <header class="w-full flex justify-center items-center">
     <div class="w-full max-w-[98vw] mx-auto px-4">
       <div class="title-box">
-        <h1 class="text-lg md:text-xl">❄️ ICE KING DASHBOARD</h1>
+        <h1 class="text-lg md:text-xl">❄️ ICE KING 🌎🤑 DASHBOARD 👑</h1>
       </div>
       <p class="text-sm text-center typewriter">Live Crypto Analytics</p>
       <div class="chart-wrapper w-full">
@@ -536,7 +551,7 @@
       <h2 class="text-lg md:text-xl mb-3 typewriter">> Trading Bot</h2>
       <div class="mt-4">
         <h3 class="text-base md:text-lg mb-2">System Logs</h3>
-        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 bg-gray-900 rounded text-sm">
+        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm">
         </div>
       </div>
       <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
@@ -999,12 +1014,12 @@
       const topToken = sortedTokens[0];
       const bottomToken = sortedTokens[sortedTokens.length - 1];
       profitPairs.innerHTML = `
-        <li class="top-pair p-2 rounded bg-gray-900">
+        <li class="top-pair p-2 rounded">
           <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
         </li>
-        <li class="bottom-pair p-2 rounded bg-gray-900">
+        <li class="bottom-pair p-2 rounded">
           <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
