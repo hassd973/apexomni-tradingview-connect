@@ -157,7 +157,12 @@
       min-width: 0;
       cursor: move;
       transition: transform 0.2s ease, opacity 0.2s ease;
-      touch-action: none; /* Prevents default touch scrolling during drag */
+    }
+    @media (max-width: 639px) {
+      section {
+        touch-action: auto; /* Allow scrolling on mobile */
+        cursor: default; /* Remove move cursor */
+      }
     }
     section.dragging {
       opacity: 0.7;
@@ -173,6 +178,7 @@
       scrollbar-color: #00ff00 #000;
       list-style: none;
       padding: 0;
+      touch-action: pan-y; /* Allow vertical scrolling */
     }
     ul::-webkit-scrollbar {
       width: 6px;
@@ -238,14 +244,14 @@
       50% { box-shadow: 0 0 15px rgba(255, 0, 0, 0.8), 0 0 25px rgba(255, 0, 0, 0.5); }
       100% { box-shadow: 0 0 5px rgba(255, 0, 0, 0.5), 0 0 10px rgba(255, 0, 0, 0.3); }
     }
+    @keyframes glow-purple {
+      0% { text-shadow: 0 0 3px rgba(128, 0, 128, 0.5), 0 0 6px rgba(128, 0, 128, 0.3); }
+      50% { text-shadow: 0 0 8px rgba(128, 0, 128, 0.8), 0 0 12px rgba(128, 0, 128, 0.5); }
+      100% { text-shadow: 0 0 3px rgba(128, 0, 128, 0.5), 0 0 6px rgba(128, 0, 128, 0.3); }
+    }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes glow-purple {
-      0% { text-shadow: 0 0 5px rgba(128, 0, 128, 0.5), 0 0 10px rgba(128, 0, 128, 0.3); }
-      50% { text-shadow: 0 0 15px rgba(128, 0, 128, 0.8), 0 0 25px rgba(128, 0, 128, 0.5); }
-      100% { text-shadow: 0 0 5px rgba(128, 0, 128, 0.5), 0 0 10px rgba(128, 0, 128, 0.3); }
     }
     .glow-blue { animation: glow-blue 2s infinite; }
     .glow-green { animation: glow-green 2s infinite; }
@@ -430,6 +436,15 @@
     @media (min-width: 640px) {
       .legend-color { width: 12px; height: 12px; }
     }
+    .gas-heatmap-section {
+      padding-right: 1rem; /* Extra right padding for title */
+    }
+    .gas-heatmap-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: 0.5rem; /* Space for glow */
+    }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-green-600">
@@ -531,8 +546,8 @@
         <ul id="top-pairs" class="text-xs text-gray-500 flex flex-wrap gap-2"></ul>
       </div>
     </section>
-    <section class="gradient-bg rounded-lg shadow-md" draggable="true">
-      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple typewriter">> ETH Gas Fee Heatmap ⛽</h2>
+    <section class="gradient-bg rounded-lg shadow-md gas-heatmap-section" draggable="true">
+      <h2 class="text-base sm:text-lg md:text-xl font-bold mb-2 glow-purple gas-heatmap-title"><span class="typewriter">> ETH Gas Fee Heatmap</span> ⛽</h2>
       <div id="loader-gas" class="loader text-center text-gray-500 text-xs">> Loading Gas Heatmap...</div>
       <canvas id="gas-heatmap-canvas"></canvas>
       <div id="gas-heatmap-legend">
@@ -587,91 +602,95 @@
 
     function setupDragAndDrop() {
       const modules = document.querySelectorAll('#module-grid section');
+      const isMobile = window.innerWidth < 640; // Match Tailwind's sm: breakpoint
 
       modules.forEach(module => {
-        module.setAttribute('draggable', 'true');
+        if (!isMobile) {
+          module.setAttribute('draggable', 'true');
 
-        module.addEventListener('dragstart', (e) => {
-          draggedModule = module;
-          module.classList.add('dragging');
-          e.dataTransfer.setData('text/plain', ''); // Required for Firefox
-        });
+          module.addEventListener('dragstart', (e) => {
+            draggedModule = module;
+            module.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', ''); // Required for Firefox
+          });
 
-        module.addEventListener('dragend', () => {
-          module.classList.remove('dragging');
-          draggedModule = null;
-        });
+          module.addEventListener('dragend', () => {
+            module.classList.remove('dragging');
+            draggedModule = null;
+          });
 
-        module.addEventListener('dragover', (e) => {
-          e.preventDefault(); // Allow drop
-        });
+          module.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Allow drop
+          });
 
-        module.addEventListener('dragenter', (e) => {
-          e.preventDefault();
-          module.classList.add('hover-glow');
-        });
+          module.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            module.classList.add('hover-glow');
+          });
 
-        module.addEventListener('dragleave', () => {
-          module.classList.remove('hover-glow');
-        });
+          module.addEventListener('dragleave', () => {
+            module.classList.remove('hover-glow');
+          });
 
-        module.addEventListener('drop', (e) => {
-          e.preventDefault();
-          module.classList.remove('hover-glow');
-          if (draggedModule && draggedModule !== module) {
-            const allModules = Array.from(moduleGrid.children);
-            const draggedIndex = allModules.indexOf(draggedModule);
-            const targetIndex = allModules.indexOf(module);
+          module.addEventListener('drop', (e) => {
+            e.preventDefault();
+            module.classList.remove('hover-glow');
+            if (draggedModule && draggedModule !== module) {
+              const allModules = Array.from(moduleGrid.children);
+              const draggedIndex = allModules.indexOf(draggedModule);
+              const targetIndex = allModules.indexOf(module);
 
-            if (draggedIndex < targetIndex) {
-              moduleGrid.insertBefore(draggedModule, module.nextSibling);
-            } else {
-              moduleGrid.insertBefore(draggedModule, module);
+              if (draggedIndex < targetIndex) {
+                moduleGrid.insertBefore(draggedModule, module.nextSibling);
+              } else {
+                moduleGrid.insertBefore(draggedModule, module);
+              }
+
+              // Trigger resize for canvas elements
+              window.dispatchEvent(new Event('resize'));
             }
+          });
 
-            // Trigger resize for canvas elements
-            window.dispatchEvent(new Event('resize'));
-          }
-        });
+          module.addEventListener('touchstart', (e) => {
+            draggedModule = module;
+            module.classList.add('dragging');
+          });
 
-        // Basic touch support
-        module.addEventListener('touchstart', (e) => {
-          draggedModule = module;
-          module.classList.add('dragging');
-        });
-
-        module.addEventListener('touchmove', (e) => {
-          e.preventDefault();
-          const touch = e.touches[0];
-          const target = document.elementFromPoint(touch.clientX, touch.clientY);
-          const dropTarget = target?.closest('#module-grid section');
-          if (dropTarget && dropTarget !== draggedModule) {
-            dropTarget.classList.add('hover-glow');
-          }
-        });
-
-        module.addEventListener('touchend', (e) => {
-          module.classList.remove('dragging');
-          const touch = e.changedTouches[0];
-          const target = document.elementFromPoint(touch.clientX, touch.clientY);
-          const dropTarget = target?.closest('#module-grid section');
-          if (dropTarget && dropTarget !== draggedModule) {
-            const allModules = Array.from(moduleGrid.children);
-            const draggedIndex = allModules.indexOf(draggedModule);
-            const targetIndex = allModules.indexOf(dropTarget);
-
-            if (draggedIndex < targetIndex) {
-              moduleGrid.insertBefore(draggedModule, dropTarget.nextSibling);
-            } else {
-              moduleGrid.insertBefore(draggedModule, dropTarget);
+          module.addEventListener('touchmove', (e) => {
+            const target = e.target.closest('ul');
+            if (!target || !target.matches('#token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list')) {
+              e.preventDefault(); // Only prevent default outside scrollable lists
             }
+            const touch = e.touches[0];
+            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('#module-grid section');
+            if (dropTarget && dropTarget !== draggedModule) {
+              dropTarget.classList.add('hover-glow');
+            }
+          });
 
-            // Trigger resize for canvas elements
-            window.dispatchEvent(new Event('resize'));
-          }
-          draggedModule = null;
-          modules.forEach(m => m.classList.remove('hover-glow'));
-        });
+          module.addEventListener('touchend', (e) => {
+            module.classList.remove('dragging');
+            const touch = e.changedTouches[0];
+            const target = document.elementFromPoint(touch.clientX, touch.clientY);
+            const dropTarget = target?.closest('#module-grid section');
+            if (dropTarget && dropTarget !== draggedModule) {
+              const allModules = Array.from(moduleGrid.children);
+              const draggedIndex = allModules.indexOf(draggedModule);
+              const targetIndex = allModules.indexOf(dropTarget);
+
+              if (draggedIndex < targetIndex) {
+                moduleGrid.insertBefore(draggedModule, dropTarget.nextSibling);
+              } else {
+                moduleGrid.insertBefore(draggedModule, dropTarget);
+              }
+
+              // Trigger resize for canvas elements
+              window.dispatchEvent(new Event('resize'));
+            }
+            draggedModule = null;
+            modules.forEach(m => m.classList.remove('hover-glow'));
+          });
+        }
       });
     }
 
