@@ -401,16 +401,30 @@
     }
     #profit-pairs .top-pair { animation: glow-green 2s infinite; }
     #profit-pairs .bottom-pair { animation: glow-red 2s infinite; }
+    .gas-heatmap-section {
+      padding-right: 1rem; /* Extra right padding for title */
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .gas-heatmap-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: 0.5rem; /* Space for glow */
+    }
     #gas-heatmap-canvas {
       width: 100%;
       max-width: 100%;
-      height: 48rem;
+      height: 20vh; /* Dynamic height for module */
       border: 1px solid rgba(0, 255, 0, 0.5);
       border-radius: 8px;
       box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
     }
     @media (min-width: 640px) {
-      #gas-heatmap-canvas { height: 64rem; }
+      #gas-heatmap-canvas {
+        height: 25vh; /* Slightly larger on sm: */
+      }
     }
     #gas-heatmap-legend {
       display: flex;
@@ -435,15 +449,6 @@
     }
     @media (min-width: 640px) {
       .legend-color { width: 12px; height: 12px; }
-    }
-    .gas-heatmap-section {
-      padding-right: 1rem; /* Extra right padding for title */
-    }
-    .gas-heatmap-title {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      padding-right: 0.5rem; /* Space for glow */
     }
   </style>
 </head>
@@ -844,16 +849,15 @@
       }
 
       let gasHistory = [];
-      const maxHistory = 50;
-      const canvasHeight = canvas.offsetHeight;
+      const maxHistory = 20; // Reduced for wider bars
       const margin = { top: 20, right: 10, bottom: 20, left: 40 };
 
       const resizeCanvas = () => {
         const dpr = window.devicePixelRatio || 1;
         canvas.width = canvas.offsetWidth * dpr;
-        canvas.height = canvasHeight * dpr;
+        canvas.height = canvas.offsetHeight * dpr;
         canvas.style.width = `${canvas.offsetWidth}px`;
-        canvas.style.height = `${canvasHeight}px`;
+        canvas.style.height = `${canvas.offsetHeight}px`;
         ctx.scale(dpr, dpr);
       };
 
@@ -905,8 +909,8 @@
 
           const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
           const plotWidth = canvas.offsetWidth - margin.left - margin.right;
-          const plotHeight = canvasHeight - margin.top - margin.bottom;
-          const barWidth = plotWidth / maxHistory / 3;
+          const plotHeight = canvas.offsetHeight - margin.top - margin.bottom;
+          const barWidth = Math.max(plotWidth / maxHistory / 3, 2); // Minimum 2px bar width
 
           gasHistory.forEach((data, i) => {
             const x = margin.left + (i * plotWidth / maxHistory);
@@ -918,7 +922,7 @@
 
             prices.forEach((price, j) => {
               const intensity = price.value / maxGas;
-              const height = (price.value / maxGas) * plotHeight;
+              const height = (price.value / maxGas) * plotHeight * 0.9; // Use 90% of plotHeight
               const y = margin.top + plotHeight - height;
               ctx.fillStyle = getColor(intensity);
               ctx.fillRect(x + j * barWidth, y, barWidth - 1, height);
