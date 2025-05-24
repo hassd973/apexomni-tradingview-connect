@@ -36,9 +36,8 @@
       left: 0;
       width: 100%;
       height: 100%;
-      opacity: 0.3;
-      z-index: -2;
-      pointer-events: none;
+      z-index: -1;
+      pointer-events: all;
     }
     spline-viewer {
       width: 100%;
@@ -79,12 +78,25 @@
       100% { transform: translate(50px, -50px); opacity: 0; }
     }
     header, footer {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       padding: 1rem;
       border-bottom: 1px solid rgba(0, 204, 0, 0.1);
     }
     footer {
       border-top: 1px solid rgba(0, 204, 0, 0.1);
+    }
+    main {
+      flex: 1;
+      padding: 1rem;
+      position: relative;
+      z-index: 5;
+      transition: transform 0.5s ease;
+    }
+    main.modules-hidden-left {
+      transform: translateX(-100vw);
+    }
+    main.modules-hidden-right {
+      transform: translateX(100vw);
     }
     .chart-container {
       position: relative;
@@ -153,12 +165,44 @@
       overflow-y: auto;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
     }
-    main {
-      flex: 1;
-      padding: 1rem;
+    .spline-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(35, 46, 46, 0.6);
+      z-index: 50;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+    }
+    .spline-modal.active { display: flex; }
+    .spline-modal-content {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      pointer-events: all;
+    }
+    .spline-modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background-color: #00cc00;
+      color: #1e2727;
+      border: 1px solid rgba(0, 204, 0, 0.3);
+      font-size: 0.875rem;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    .spline-modal-close:hover {
+      background-color: #ffbb33;
+      box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
     }
     section {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
       padding: 1rem;
@@ -178,6 +222,27 @@
     }
     section:hover {
       box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
+    }
+    .module-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .toggle-module-btn {
+      background: none;
+      border: none;
+      color: #00cc00;
+      font-size: 0.875rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      transition: color 0.3s ease;
+    }
+    .toggle-module-btn:hover {
+      color: #ffbb33;
+    }
+    .module-content.hidden {
+      display: none;
     }
     ul {
       scrollbar-width: thin;
@@ -200,9 +265,15 @@
       overflow-y: auto;
       padding-right: 4px;
     }
+    #gas-heatmap-list {
+      max-height: 20vh;
+    }
     @media (min-width: 640px) {
       #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
         max-height: 60vh;
+      }
+      #gas-heatmap-list {
+        max-height: 20vh;
       }
     }
     #token-list li, #profit-pairs li, #gas-heatmap-list li {
@@ -215,6 +286,12 @@
       cursor: pointer;
       font-size: 0.875rem;
       background: rgba(35, 46, 46, 0.2);
+    }
+    #gas-heatmap-list li {
+      font-size: 0.75rem;
+      padding: 0.5rem;
+      overflow-x: auto;
+      white-space: nowrap;
     }
     #token-list li:hover, #gas-heatmap-list li:hover {
       background: rgba(255, 187, 51, 0.1);
@@ -229,6 +306,9 @@
     #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric {
       font-size: 0.75rem;
       color: #e0f7fa;
+    }
+    #gas-heatmap-list .metric {
+      word-break: break-all;
     }
     #token-list .performance, #profit-pairs .top-pair, #profit-pairs .bottom-pair {
       font-size: 0.875rem;
@@ -271,7 +351,7 @@
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
-    button, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal {
+    button, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal, #toggle-spline-modal, #toggle-modules, #toggle-background {
       background-color: #00cc00;
       color: #1e2727;
       border: 1px solid rgba(0, 204, 0, 0.3);
@@ -280,13 +360,14 @@
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
-    button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
+    button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-spline-modal:hover, #toggle-modules:hover, #toggle-background:hover {
       background-color: #ffbb33;
       box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
     }
     .timeframe-btn.active {
-      background-color: #ffbb33;
-      box-shadow: 0 0 6px rgba(0, 204, 0, 0.4);
+      background-color: #00cc00;
+      box-shadow: 0 0 8px #00cc00, 0 0 12px rgba(255, 187, 51, 0.6);
+      border: 1px solid #ffbb33;
     }
     #chat-input {
       background: rgba(35, 46, 46, 0.2);
@@ -457,6 +538,7 @@
             <button id="toggle-sticky-header" data-tooltip="Open chart in modal">Dock Chart</button>
             <button id="toggle-data-source" data-tooltip="Switch data source">Real Data</button>
             <button id="toggle-debug" data-tooltip="Toggle debug mode">Debug</button>
+            <button id="toggle-modules" data-tooltip="Hide modules for background interaction">Hide Modules</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
@@ -511,51 +593,88 @@
       </div>
     </div>
   </div>
-  <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="module-grid">
+  <div class="spline-modal" id="spline-modal">
+    <div class="spline-modal-content">
+      <button class="spline-modal-close" id="spline-modal-close">Close</button>
+      <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode"></spline-viewer>
+    </div>
+  </div>
+  <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
     <section class="rounded-lg" draggable="true">
-      <h2 class="text-lg md:text-xl mb-3 typewriter">> Tokens</h2>
-      <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <div id="token-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
-      <ul id="token-list" class="space-y-2 text-sm"></ul>
-      <div class="mt-4">
-        <h3 class="text-base md:text-lg mb-2 typewriter">> Performers</h3>
-        <ul id="profit-pairs" class="space-y-2 text-sm"></ul>
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl typewriter">> Tokens</h2>
+        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
-      <div class="mt-4">
-        <h3 class="text-base md:text-lg mb-2 typewriter">> Top USDT Pairs</h3>
-        <ul id="top-pairs" class="text-sm text-gray-500 flex flex-wrap gap-2"></ul>
+      <div class="module-content">
+        <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="token-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
+        <ul id="token-list" class="space-y-2 text-sm"></ul>
+        <div class="mt-4">
+          <h3 class="text-base md:text-lg mb-2 typewriter">> Performers</h3>
+          <ul id="profit-pairs" class="space-y-2 text-sm"></ul>
+        </div>
+        <div class="mt-4">
+          <h3 class="text-base md:text-lg mb-2 typewriter">> Top USDT Pairs</h3>
+          <ul id="top-pairs" class="text-sm text-gray-500 flex flex-wrap gap-2"></ul>
+        </div>
       </div>
     </section>
     <section class="rounded-lg gas-heatmap-section" draggable="true">
-      <h2 class="text-lg md:text-xl mb-3 gas-heatmap-title typewriter">> ETH Gas Heatmap</h2>
-      <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <div id="gas-warning" class="data-warning" style="display: none;">> Using mock gas data due to API failure</div>
-      <canvas id="gas-heatmap-canvas"></canvas>
-      <div id="gas-heatmap-legend">
-        <div class="legend-item"><div class="legend-color" style="background: #00cc00"></div><span>Safe</span></div>
-        <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
-        <div class="legend-item"><div class="legend-color" style="background: rgba(255, 187, 51, 0.7)"></div><span>Fast</span></div>
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">> ETH Gas Heatmap</h2>
+        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
-      <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
+      <div class="module-content">
+        <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="gas-warning" class="data-warning" style="display: none;">> Using mock gas data due to API failure</div>
+        <canvas id="gas-heatmap-canvas"></canvas>
+        <div id="gas-heatmap-legend">
+          <div class="legend-item"><div class="legend-color" style="background: #00cc00"></div><span>Safe</span></div>
+          <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
+          <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div><span>Fast</span></div>
+        </div>
+        <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
+      </div>
     </section>
     <section class="rounded-lg" draggable="true">
-      <h2 class="text-lg md:text-xl mb-3 typewriter">> Live Logs</h2>
-      <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="log-list" class="space-y-2 text-sm"></ul>
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl typewriter">> Live Logs</h2>
+        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
+      </div>
+      <div class="module-content">
+        <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <ul id="log-list" class="space-y-2 text-sm"></ul>
+      </div>
     </section>
     <section class="rounded-lg" draggable="true">
-      <h2 class="text-lg md:text-xl mb-3 typewriter">> Trading Bot</h2>
-      <div class="mt-4">
-        <h3 class="text-base md:text-lg mb-2">System Logs</h3>
-        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm">
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl typewriter">> Trading Bot</h2>
+        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
+      </div>
+      <div class="module-content">
+        <div class="mt-4">
+          <h3 class="text-base md:text-lg mb-2">System Logs</h3>
+          <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm"></div>
+        </div>
+        <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm"></div>
+        <div class="mt-4 flex flex-col sm:flex-row gap-2">
+          <input id="chat-input" type="text" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
+          <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message" data-tooltip="Send message">Send</button>
         </div>
       </div>
-      <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm">
+    </section>
+    <section class="rounded-lg" draggable="true">
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl typewriter">> Background Control</h2>
+        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
-      <div class="mt-4 flex flex-col sm:flex-row gap-2">
-        <input id="chat-input" type="text" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
-        <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message" data-tooltip="Send message">Send</button>
+      <div class="module-content">
+        <div class="mt-4 flex flex-col gap-2">
+          <button id="toggle-background" data-tooltip="Toggle background visibility">Hide Background</button>
+          <button id="toggle-spline-modal" data-tooltip="Open fullscreen background">Open Fullscreen</button>
+          <div id="background-status" class="text-sm text-gray-500">Background: Visible</div>
+        </div>
       </div>
     </section>
   </main>
@@ -648,7 +767,7 @@
 
           module.addEventListener('touchmove', (e) => {
             const target = e.target.closest('ul');
-            if (!target || !target.matches('#token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list')) {
+            if (!target || !target.match('#token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list')) {
               e.preventDefault();
             }
             const touch = e.touches[0];
@@ -680,6 +799,45 @@
             modules.forEach(m => m.classList.remove('hover-transition'));
           });
         }
+      });
+    }
+
+    // Module and background toggle
+    let areModulesHidden = false;
+    let isBackgroundVisible = true;
+
+    function setupModuleToggles() {
+      const toggleModulesBtn = document.getElementById('toggle-modules');
+      const toggleBackgroundBtn = document.getElementById('toggle-background');
+      const backgroundStatus = document.getElementById('background-status');
+      const splineBg = document.querySelector('.spline-bg');
+      const moduleGrid = document.getElementById('module-grid');
+      const toggleModuleButtons = document.querySelectorAll('.toggle-module-btn');
+
+      toggleModulesBtn.addEventListener('click', () => {
+        areModulesHidden = !areModulesHidden;
+        const isLeftEdge = window.innerWidth / 2 > window.innerWidth / 3;
+        moduleGrid.classList.toggle('modules-hidden-left', areModulesHidden && isLeftEdge);
+        moduleGrid.classList.toggle('modules-hidden-right', areModulesHidden && !isLeftEdge);
+        toggleModulesBtn.textContent = areModulesHidden ? 'Show Modules' : 'Hide Modules';
+        toggleModulesBtn.setAttribute('data-tooltip', areModulesHidden ? 'Show modules' : 'Hide modules for background interaction');
+      });
+
+      toggleBackgroundBtn.addEventListener('click', () => {
+        isBackgroundVisible = !isBackgroundVisible;
+        splineBg.style.display = isBackgroundVisible ? 'block' : 'none';
+        toggleBackgroundBtn.textContent = isBackgroundVisible ? 'Hide Background' : 'Show Background';
+        backgroundStatus.textContent = `Background: ${isBackgroundVisible ? 'Visible' : 'Hidden'}`;
+        toggleBackgroundBtn.setAttribute('data-tooltip', isBackgroundVisible ? 'Hide background' : 'Show background');
+      });
+
+      toggleModuleButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const moduleContent = btn.closest('section').querySelector('.module-content');
+          const isHidden = moduleContent.classList.toggle('hidden');
+          btn.textContent = isHidden ? '▶' : '▼';
+          btn.setAttribute('data-tooltip', isHidden ? 'Show module content' : 'Hide module content');
+        });
       });
     }
 
@@ -731,10 +889,12 @@
               'paneProperties.background': 'rgba(35, 46, 46, 0.2)',
               'paneProperties.vertGridProperties.color': 'rgba(0, 204, 0, 0.1)',
               'paneProperties.horzGridProperties.color': 'rgba(0, 204, 0, 0.1)',
-              'mainSeriesProperties.candleStyle.upColor': '#00cc00',
+              'mainSeriesProperties.candleStyle.upColor': '#ffbb33',
               'mainSeriesProperties.candleStyle.downColor': '#ffbb33',
-              'mainSeriesProperties.candleStyle.borderUpColor': '#00cc00',
+              'mainSeriesProperties.candleStyle.borderUpColor': '#ffbb33',
               'mainSeriesProperties.candleStyle.borderDownColor': '#ffbb33',
+              'mainSeriesProperties.candleStyle.wickUpColor': '#ffbb33',
+              'mainSeriesProperties.candleStyle.wickDownColor': '#ffbb33'
             },
             onChartReady: () => {
               console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
@@ -850,19 +1010,13 @@
       resizeCanvas();
       window.addEventListener('resize', resizeCanvas);
 
-      const getColor = (intensity) => {
-        if (intensity < 0.5) {
-          const t = intensity * 2;
-          const r = Math.round(0 + t * (0));
-          const g = Math.round(204);
-          const b = Math.round(0);
-          return `rgb(${r}, ${g}, ${b})`;
+      const getColor = (type, intensity) => {
+        if (type === 'safe') {
+          return '#00cc00';
+        } else if (type === 'propose') {
+          return '#ffbb33';
         } else {
-          const t = (intensity - 0.5) * 2;
-          const r = Math.round(255);
-          const g = Math.round(187);
-          const b = Math.round(51);
-          return `rgba(${r}, ${g}, ${b}, ${0.7 + t * 0.3})`;
+          return '#ff0000';
         }
       };
 
@@ -896,22 +1050,22 @@
           const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
           const plotWidth = canvas.offsetWidth - margin.left - margin.right;
           const plotHeight = canvas.offsetHeight - margin.top - margin.bottom;
-          const barWidth = Math.max(plotWidth / maxHistory / 3, 2);
+          const barWidth = Math.max(plotWidth / maxHistory / 3.5, 2);
 
           gasHistory.forEach((data, i) => {
             const x = margin.left + (i * plotWidth / maxHistory);
             const prices = [
-              { value: data.safeGasPrice, color: '#00cc00' },
-              { value: data.proposeGasPrice, color: '#ffbb33' },
-              { value: data.fastGasPrice, color: 'rgba(255, 187, 51, 0.7)' }
+              { value: data.safeGasPrice, type: 'safe' },
+              { value: data.proposeGasPrice, type: 'propose' },
+              { value: data.fastGasPrice, type: 'fast' }
             ];
 
             prices.forEach((price, j) => {
               const intensity = price.value / maxGas;
               const height = (price.value / maxGas) * plotHeight * 0.9;
               const y = margin.top + plotHeight - height;
-              ctx.fillStyle = getColor(intensity);
-              ctx.fillRect(x + j * barWidth, y, barWidth - 1, height);
+              ctx.fillStyle = getColor(price.type, intensity);
+              ctx.fillRect(x + j * (barWidth + 1), y, barWidth - 1, height);
             });
           });
 
@@ -1073,8 +1227,12 @@
       const chartModal = document.getElementById('chart-modal');
       const toggleDebugBtn = document.getElementById('toggle-debug');
       const tokenList = document.getElementById('token-list');
+      const toggleSplineModalBtn = document.getElementById('toggle-spline-modal');
+      const splineModal = document.getElementById('spline-modal');
+      const splineModalCloseBtn = document.getElementById('spline-modal-close');
 
       setupDragAndDrop();
+      setupModuleToggles();
       loadData();
 
       toggleDataSourceBtn.addEventListener('click', () => {
@@ -1165,6 +1323,23 @@
           const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
           const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-header', symbol, interval);
+        });
+      }
+
+      if (toggleSplineModalBtn) {
+        toggleSplineModalBtn.addEventListener('click', () => {
+          splineModal.classList.add('active');
+          toggleSplineModalBtn.textContent = 'Opened';
+          setTimeout(() => {
+            toggleSplineModalBtn.textContent = 'Open Fullscreen';
+          }, 1000);
+          const splineViewer = document.getElementById('spline-viewer-modal');
+          splineViewer.setAttribute('url', 'https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode');
+        });
+      }
+      if (splineModalCloseBtn) {
+        splineModalCloseBtn.addEventListener('click', () => {
+          splineModal.classList.remove('active');
         });
       }
 
