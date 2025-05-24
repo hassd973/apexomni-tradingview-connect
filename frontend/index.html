@@ -38,6 +38,21 @@
       height: 100%;
       z-index: -1;
       pointer-events: all;
+      transition: opacity 0.3s ease;
+    }
+    .spline-bg.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .spline-bg.chart-space {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      opacity: 1;
+      pointer-events: all;
     }
     spline-viewer {
       width: 100%;
@@ -98,6 +113,9 @@
     main.modules-hidden-right {
       transform: translateX(100vw);
     }
+    .chart-wrapper {
+      position: relative;
+    }
     .chart-container {
       position: relative;
       width: 100%;
@@ -107,6 +125,9 @@
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+    }
+    .chart-container.hidden {
+      display: none;
     }
     .tradingview-widget-container {
       position: absolute !important;
@@ -351,7 +372,7 @@
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
-    button, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal, #toggle-spline-modal, #toggle-modules, #toggle-logs-data {
+    button, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal, #toggle-modules, #toggle-logs-data, #toggle-background, #toggle-background-dock {
       background-color: #00cc00;
       color: #1e2727;
       border: 1px solid rgba(0, 204, 0, 0.3);
@@ -360,7 +381,7 @@
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
-    button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-spline-modal:hover, #toggle-modules:hover, #toggle-logs-data:hover {
+    button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-modules:hover, #toggle-logs-data:hover, #toggle-background:hover, #toggle-background-dock:hover {
       background-color: #ffbb33;
       box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
     }
@@ -511,10 +532,20 @@
       margin-bottom: 0.5rem;
       text-align: center;
     }
+    .chat-logs-container {
+      background: rgba(35, 46, 46, 0.1);
+      border: 1px solid rgba(0, 204, 0, 0.2);
+      border-radius: 6px;
+      padding: 1rem;
+      margin: 1rem auto;
+      width: 98vw;
+      max-width: 1200px;
+      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+    }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
-  <div class="spline-bg">
+  <div class="spline-bg" id="spline-bg">
     <spline-viewer url="https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode"></spline-viewer>
   </div>
   <div class="particles" id="particles"></div>
@@ -539,6 +570,8 @@
             <button id="toggle-data-source" data-tooltip="Switch data source">Real Data</button>
             <button id="toggle-debug" data-tooltip="Toggle debug mode">Debug</button>
             <button id="toggle-modules" data-tooltip="Hide modules for background interaction">Hide Modules</button>
+            <button id="toggle-background" data-tooltip="Toggle chart/background">Toggle Background</button>
+            <button id="toggle-background-dock" data-tooltip="Dock background in modal">Dock Background</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
@@ -549,6 +582,9 @@
             <div class="loader"></div>
             <div class="ml-2">Loading chart...</div>
           </div>
+        </div>
+        <div id="spline-bg-chart" class="spline-bg hidden">
+          <spline-viewer url="https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode"></spline-viewer>
         </div>
         <h3 id="chart-title-header" class="mt-2">Loading...</h3>
         <div class="marquee-container">
@@ -595,7 +631,7 @@
   </div>
   <div class="spline-modal" id="spline-modal">
     <div class="spline-modal-content">
-      <button class="spline-modal-close" id="spline-modal-close">Close</button>
+      <button class="spline-modal-close" id="spline-modal-close">Undock</button>
       <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode"></spline-viewer>
     </div>
   </div>
@@ -650,36 +686,32 @@
         <ul id="log-list" class="space-y-2 text-sm"></ul>
       </div>
     </section>
-    <section class="rounded-lg" draggable="true">
-      <div class="module-header">
-        <h2 class="text-lg md:text-xl typewriter">> Trading Bot</h2>
-        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
-      </div>
-      <div class="module-content">
-        <div class="mt-4">
-          <h3 class="text-base md:text-lg mb-2">System Logs</h3>
-          <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm"></div>
-        </div>
-        <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-        <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm"></div>
-        <div class="mt-4 flex flex-col sm:flex-row gap-2">
-          <input id="chat-input" type="text" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
-          <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message" data-tooltip="Send message">Send</button>
-        </div>
-      </div>
-    </section>
-    <section class="rounded-lg" draggable="true">
-      <div class="module-header">
-        <h2 class="text-lg md:text-xl typewriter">> Background Control</h2>
-        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
-      </div>
-      <div class="module-content">
-        <div class="mt-4 flex flex-col gap-2">
-          <button id="toggle-spline-modal" data-tooltip="Open fullscreen background">Open Fullscreen</button>
-        </div>
-      </div>
-    </section>
   </main>
+  <div class="chat-logs-container">
+    <div class="module-header">
+      <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
+      <button class="toggle-module-btn" data-tooltip="Toggle visibility">▼</button>
+    </div>
+    <div class="module-content">
+      <div class="mt-4">
+        <h3 class="text-base md:text-lg mb-2">System Logs</h3>
+        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm">
+          <ul id="system-logs-list" class="space-y-2">
+            <li class="p-2 rounded"><div>System initialized successfully</div><div class="metric">Time: 13:14:01</div></li>
+            <li class="p-2 rounded"><div>API connection established</div><div class="metric">Time: 13:14:05</div></li>
+            <li class="p-2 rounded"><div>Data feed active: CoinMarketCap</div><div class="metric">Time: 13:14:10</div></li>
+            <li class="p-2 rounded"><div>TradingView widget loaded</div><div class="metric">Time: 13:14:15</div></li>
+          </ul>
+        </div>
+      </div>
+      <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm"></div>
+      <div class="mt-4 flex flex-col sm:flex-row gap-2">
+        <input id="chat-input" type="text" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
+        <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message" data-tooltip="Send message">Send</button>
+      </div>
+    </div>
+  </div>
   <footer class="text-center text-gray-500 text-sm">
     <p class="typewriter">Powered by CoinMarketCap, Etherscan & TradingView</p>
   </footer>
@@ -823,7 +855,7 @@
 
       toggleModuleButtons.forEach(btn => {
         btn.addEventListener('click', () => {
-          const moduleContent = btn.closest('section').querySelector('.module-content');
+          const moduleContent = btn.closest('.chat-logs-container, section').querySelector('.module-content');
           const isHidden = moduleContent.classList.toggle('hidden');
           btn.textContent = isHidden ? '▶' : '▼';
           btn.setAttribute('data-tooltip', isHidden ? 'Show module content' : 'Hide module content');
@@ -1100,7 +1132,6 @@
     ];
 
     async function fetchLogs() {
-      // Placeholder for real log fetching (currently mocked due to connection issues)
       try {
         throw new Error('Connection issue: Logs API not available');
       } catch (error) {
@@ -1279,9 +1310,14 @@
       const chartModal = document.getElementById('chart-modal');
       const toggleDebugBtn = document.getElementById('toggle-debug');
       const tokenList = document.getElementById('token-list');
-      const toggleSplineModalBtn = document.getElementById('toggle-spline-modal');
+      const toggleBackgroundBtn = document.getElementById('toggle-background');
+      const toggleBackgroundDockBtn = document.getElementById('toggle-background-dock');
       const splineModal = document.getElementById('spline-modal');
       const splineModalCloseBtn = document.getElementById('spline-modal-close');
+      const splineBg = document.getElementById('spline-bg');
+      const splineBgChart = document.getElementById('spline-bg-chart');
+      const chartContainerHeader = document.getElementById('chart-container-header');
+      let isChartVisible = true;
 
       setupDragAndDrop();
       setupModuleToggles();
@@ -1356,6 +1392,7 @@
       if (toggleStickyHeader) {
         toggleStickyHeader.addEventListener('click', () => {
           chartModal.classList.add('active');
+          splineModal.classList.add('active');
           toggleStickyHeader.textContent = 'Chart Docked';
           setTimeout(() => {
             toggleStickyHeader.textContent = 'Dock Chart';
@@ -1363,11 +1400,14 @@
           const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
           const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-modal', symbol, interval);
+          const splineViewer = document.getElementById('spline-viewer-modal');
+          splineViewer.setAttribute('url', 'https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode');
         });
       }
       if (toggleStickyModal) {
         toggleStickyModal.addEventListener('click', () => {
           chartModal.classList.remove('active');
+          splineModal.classList.remove('active');
           toggleStickyModal.textContent = 'Chart Undocked';
           setTimeout(() => {
             toggleStickyModal.textContent = 'Undock Chart';
@@ -1378,17 +1418,30 @@
         });
       }
 
-      if (toggleSplineModalBtn) {
-        toggleSplineModalBtn.addEventListener('click', () => {
+      if (toggleBackgroundBtn) {
+        toggleBackgroundBtn.addEventListener('click', () => {
+          isChartVisible = !isChartVisible;
+          chartContainerHeader.classList.toggle('hidden', !isChartVisible);
+          splineBgChart.classList.toggle('chart-space', !isChartVisible);
+          splineBgChart.classList.toggle('hidden', isChartVisible);
+          splineBg.classList.toggle('hidden', !isChartVisible);
+          toggleBackgroundBtn.textContent = isChartVisible ? 'Show Background' : 'Show Chart';
+          toggleBackgroundBtn.setAttribute('data-tooltip', isChartVisible ? 'Show background in chart space' : 'Show chart');
+        });
+      }
+
+      if (toggleBackgroundDockBtn) {
+        toggleBackgroundDockBtn.addEventListener('click', () => {
           splineModal.classList.add('active');
-          toggleSplineModalBtn.textContent = 'Opened';
+          toggleBackgroundDockBtn.textContent = 'Docked';
           setTimeout(() => {
-            toggleSplineModalBtn.textContent = 'Open Fullscreen';
+            toggleBackgroundDockBtn.textContent = 'Dock Background';
           }, 1000);
           const splineViewer = document.getElementById('spline-viewer-modal');
           splineViewer.setAttribute('url', 'https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode');
         });
       }
+
       if (splineModalCloseBtn) {
         splineModalCloseBtn.addEventListener('click', () => {
           splineModal.classList.remove('active');
