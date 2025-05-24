@@ -38,11 +38,20 @@
       height: 100%;
       opacity: 0.3;
       z-index: -2;
-      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .spline-bg:hover {
+      opacity: 0.4;
+      box-shadow: 0 0 10px rgba(0, 204, 0, 0.5);
+    }
+    .spline-bg.clicked {
+      opacity: 0.5;
+      box-shadow: 0 0 15px rgba(0, 204, 0, 0.7);
     }
     spline-viewer {
       width: 100%;
       height: 100%;
+      pointer-events: auto;
     }
     .snowflake {
       position: absolute;
@@ -79,9 +88,10 @@
       100% { transform: translate(50px, -50px); opacity: 0; }
     }
     header, footer {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       padding: 1rem;
       border-bottom: 1px solid rgba(0, 204, 0, 0.1);
+      z-index: 10;
     }
     footer {
       border-top: 1px solid rgba(0, 204, 0, 0.1);
@@ -95,6 +105,7 @@
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      z-index: 10;
     }
     .tradingview-widget-container {
       position: absolute !important;
@@ -110,7 +121,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       z-index: 10;
       color: #00cc00;
       font-size: 0.875rem;
@@ -143,7 +154,7 @@
     }
     .chart-modal.active { display: flex; }
     .chart-modal-content {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       padding: 1rem;
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
@@ -152,13 +163,17 @@
       max-height: 90vh;
       overflow-y: auto;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      z-index: 60;
     }
     main {
       flex: 1;
       padding: 1rem;
+      position: relative;
+      z-index: 5;
+      pointer-events: none; /* Allow Spline interaction through main */
     }
     section {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
       padding: 1rem;
@@ -166,6 +181,11 @@
       cursor: move;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      z-index: 20;
+      pointer-events: none; /* Allow Spline interaction through sections */
+    }
+    section > * {
+      pointer-events: auto; /* Restore interactivity for section contents */
     }
     @media (max-width: 639px) {
       section { cursor: default; }
@@ -179,9 +199,18 @@
     section:hover {
       box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
     }
+    .gas-heatmap-section, .live-logs-section {
+      max-height: 400px;
+      overflow: hidden; /* Prevent overflow outside section */
+    }
+    @media (min-width: 640px) {
+      .gas-heatmap-section, .live-logs-section {
+        max-height: 350px;
+      }
+    }
     ul {
       scrollbar-width: thin;
-      scrollbar-color: #00cc00 rgba(35, 46, 46, 0.2);
+      scrollbar-color: #00cc00 rgba(35, 46, 46, 0.1);
       list-style: none;
       padding: 0;
     }
@@ -189,49 +218,50 @@
       width: 6px;
     }
     ul::-webkit-scrollbar-track {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
     }
     ul::-webkit-scrollbar-thumb {
       background: #00cc00;
       border-radius: 4px;
     }
     #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
-      max-height: 50vh;
+      max-height: 150px; /* Constrain height for scrollable lists */
       overflow-y: auto;
       padding-right: 4px;
     }
     @media (min-width: 640px) {
       #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
-        max-height: 60vh;
+        max-height: 120px;
       }
     }
-    #token-list li, #profit-pairs li, #gas-heatmap-list li {
+    #token-list li, #profit-pairs li, #gas-heatmap-list li, #log-list li {
       display: flex;
       flex-direction: column;
-      padding: 0.75rem;
+      padding: 0.5rem;
       border-radius: 6px;
       margin-bottom: 0.5rem;
       transition: all 0.3s ease;
       cursor: pointer;
-      font-size: 0.875rem;
-      background: rgba(35, 46, 46, 0.2);
+      font-size: 0.75rem;
+      background: rgba(35, 46, 46, 0.1);
+      z-index: 30;
     }
-    #token-list li:hover, #gas-heatmap-list li:hover {
+    #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover {
       background: rgba(255, 187, 51, 0.1);
       transform: translateX(2px);
       box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
     }
     #token-list li.selected-token {
       border: 1px solid #ffbb33;
-      background: rgba(255, 187, 51, 0.1);
+      background misunderstanding: rgba(255, 187, 51, 0.1);
       box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
     }
-    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric {
-      font-size: 0.75rem;
+    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric {
+      font-size: 0.65rem;
       color: #e0f7fa;
     }
     #token-list .performance, #profit-pairs .top-pair, #profit-pairs .bottom-pair {
-      font-size: 0.875rem;
+      font-size: 0.75rem;
       font-weight: 700;
     }
     #profit-pairs .top-pair { color: #00cc00; }
@@ -249,7 +279,7 @@
     .hover-transition { transition: all 0.3s ease; }
     .hover-transition:hover { background: rgba(255, 187, 51, 0.1); }
     .marquee-container {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       border: 1px solid rgba(0, 204, 0, 0.2);
       overflow: hidden;
       white-space: nowrap;
@@ -257,6 +287,7 @@
       margin-top: 0.5rem;
       border-radius: 6px;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      z-index: 10;
     }
     .marquee {
       display: inline-block;
@@ -279,6 +310,7 @@
       border-radius: 6px;
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      z-index: 30;
     }
     button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover {
       background-color: #ffbb33;
@@ -289,13 +321,14 @@
       box-shadow: 0 0 6px rgba(0, 204, 0, 0.4);
     }
     #chat-input {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       border: 1px solid rgba(0, 204, 0, 0.2);
       color: #e0f7fa;
       width: 100%;
       padding: 0.5rem;
       border-radius: 6px;
       font-size: 0.875rem;
+      z-index: 30;
     }
     #chat-input:focus {
       outline: none;
@@ -307,6 +340,7 @@
       justify-content: center;
       align-items: center;
       padding: 0.5rem;
+      z-index: 10;
     }
     .loader::after {
       content: '';
@@ -338,12 +372,13 @@
       text-align: center;
       margin-bottom: 1rem;
       font-size: 1rem;
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
       padding: 0.75rem;
       animation: pulse 4s infinite;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      z-index: 10;
     }
     @media (min-width: 640px) {
       .title-box { font-size: 1.25rem; }
@@ -352,9 +387,10 @@
       text-align: center;
       padding: 0.5rem;
       border-radius: 6px;
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       font-size: 0.875rem;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      z-index: 10;
     }
     @media (min-width: 640px) {
       #chart-title-header, #chart-title-modal { font-size: 1rem; }
@@ -381,9 +417,9 @@
       gap: 0.75rem;
     }
     .gas-heatmap-title {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      line-height: 1.2;
+      font-size: 1rem;
+      padding: 0.5rem 0;
     }
     #gas-heatmap-canvas {
       width: 100%;
@@ -391,9 +427,10 @@
       border: 1px solid rgba(0, 204, 0, 0.2);
       border-radius: 6px;
       box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      z-index: 10;
     }
     @media (min-width: 640px) {
-      #gas-heatmap-canvas { height: 25vh; }
+      #gas-heatmap-canvas { height: 15vh; }
     }
     #gas-heatmap-legend {
       display: flex;
@@ -401,9 +438,11 @@
       gap: 1rem;
       margin-top: 0.5rem;
       font-size: 0.75rem;
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(35, 46, 46, 0.1);
       padding: 0.5rem;
       border-radius: 6px;
+      z-index: 10;
+      flex-wrap: wrap;
     }
     @media (min-width: 640px) {
       #gas-heatmap-legend { font-size: 0.875rem; }
@@ -418,22 +457,66 @@
       height: 10px;
       border-radius: 2px;
     }
-    #live-logs-container, #chat-list {
-      background: rgba(35, 46, 46, 0.2);
-    }
     .data-warning {
-      background: rgba(255, 187, 51, 0.2);
+      background: rgba(255, 187, 51, 0.1);
       color: #ffbb33;
       padding: 0.5rem;
       border-radius: 6px;
       font-size: 0.75rem;
       margin-bottom: 0.5rem;
       text-align: center;
+      z-index: 10;
+    }
+    .spline-interact-area {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100px;
+      background: linear-gradient(135deg, rgba(0, 204, 0, 0.1), rgba(255, 187, 51, 0.1));
+      border-top: 2px solid rgba(0, 204, 0, 0.4);
+      border-radius: 6px 6px 0 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #e0f7fa;
+      font-size: 1rem;
+      z-index: 15;
+      pointer-events: auto;
+      transition: all 0.3s ease;
+      animation: pulse-interact 2s infinite;
+    }
+    .spline-interact-area:hover {
+      background: linear-gradient(135deg, rgba(0, 204, 0, 0.2), rgba(255, 187, 51, 0.2));
+      box-shadow: 0 -2px 10px rgba(0, 204, 0, 0.5);
+      transform: translateY(-2px);
+    }
+    .spline-interact-area.clicked::after {
+      content: '';
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: rgba(0, 204, 0, 0.3);
+      border-radius: 50%;
+      animation: ripple 0.6s ease-out;
+      pointer-events: none;
+    }
+    @keyframes pulse-interact {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.01); }
+      100% { transform: scale(1); }
+    }
+    @keyframes ripple {
+      0% { transform: scale(0); opacity: 1; }
+      100% { transform: scale(4); opacity: 0; }
+    }
+    @media (max-height: 600px) {
+      .spline-interact-area { height: 60px; font-size: 0.875rem; }
     }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
-  <div class="spline-bg">
+  <div class="spline-bg" id="spline-bg">
     <spline-viewer url="https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode"></spline-viewer>
   </div>
   <div class="particles" id="particles"></div>
@@ -511,54 +594,59 @@
       </div>
     </div>
   </div>
-  <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="module-grid">
-    <section class="rounded-lg" draggable="true">
-      <h2 class="text-lg md:text-xl mb-3 typewriter">> Tokens</h2>
-      <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <div id="token-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
-      <ul id="token-list" class="space-y-2 text-sm"></ul>
-      <div class="mt-4">
-        <h3 class="text-base md:text-lg mb-2 typewriter">> Performers</h3>
-        <ul id="profit-pairs" class="space-y-2 text-sm"></ul>
-      </div>
-      <div class="mt-4">
-        <h3 class="text-base md:text-lg mb-2 typewriter">> Top USDT Pairs</h3>
-        <ul id="top-pairs" class="text-sm text-gray-500 flex flex-wrap gap-2"></ul>
-      </div>
-    </section>
-    <section class="rounded-lg gas-heatmap-section" draggable="true">
-      <h2 class="text-lg md:text-xl mb-3 gas-heatmap-title typewriter">> ETH Gas Heatmap</h2>
-      <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <div id="gas-warning" class="data-warning" style="display: none;">> Using mock gas data due to API failure</div>
-      <canvas id="gas-heatmap-canvas"></canvas>
-      <div id="gas-heatmap-legend">
-        <div class="legend-item"><div class="legend-color" style="background: #00cc00"></div><span>Safe</span></div>
-        <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
-        <div class="legend-item"><div class="legend-color" style="background: rgba(255, 187, 51, 0.7)"></div><span>Fast</span></div>
-      </div>
-      <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
-    </section>
-    <section class="rounded-lg" draggable="true">
-      <h2 class="text-lg md:text-xl mb-3 typewriter">> Live Logs</h2>
-      <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="log-list" class="space-y-2 text-sm"></ul>
-    </section>
-    <section class="rounded-lg" draggable="true">
-      <h2 class="text-lg md:text-xl mb-3 typewriter">> Trading Bot</h2>
-      <div class="mt-4">
-        <h3 class="text-base md:text-lg mb-2">System Logs</h3>
-        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm">
+  <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="module-grid">
+      <section class="rounded-lg" draggable="true">
+        <h2 class="text-lg md:text-xl mb-3 typewriter">> Tokens</h2>
+        <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="token-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
+        <ul id="token-list" class="space-y-2 text-sm"></ul>
+        <div class="mt-4">
+          <h3 class="text-base md:text-lg mb-2 typewriter">> Performers</h3>
+          <ul id="profit-pairs" class="space-y-2 text-sm"></ul>
         </div>
-      </div>
-      <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm">
-      </div>
-      <div class="mt-4 flex flex-col sm:flex-row gap-2">
-        <input id="chat-input" type="text" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
-        <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message" data-tooltip="Send message">Send</button>
-      </div>
-    </section>
+        <div class="mt-4">
+          <h3 class="text-base md:text-lg mb-2 typewriter">> Top USDT Pairs</h3>
+          <ul id="top-pairs" class="text-sm text-gray-500 flex flex-wrap gap-2"></ul>
+        </div>
+      </section>
+      <section class="rounded-lg gas-heatmap-section" draggable="true">
+        <h2 class="text-lg md:text-xl mb-3 gas-heatmap-title typewriter">> ETH Gas Heatmap</h2>
+        <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="gas-warning" class="data-warning" style="display: none;">> Using mock gas data due to API failure</div>
+        <canvas id="gas-heatmap-canvas"></canvas>
+        <div id="gas-heatmap-legend">
+          <div class="legend-item"><div class="legend-color" style="background: #00cc00"></div><span>Safe</span></div>
+          <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
+          <div class="legend-item"><div class="legend-color" style="background: rgba(255, 187, 51, 0.7)"></div><span>Fast</span></div>
+        </div>
+        <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
+      </section>
+      <section class="rounded-lg live-logs-section" draggable="true">
+        <h2 class="text-lg md:text-xl mb-3 typewriter">> Live Logs</h2>
+        <div id="loader-logs" class="loader text-center text-gray-500 text-sm" style="display: none;">> Loading...</div>
+        <ul id="log-list" class="space-y-2 text-sm"></ul>
+      </section>
+      <section class="rounded-lg" draggable="true">
+        <h2 class="text-lg md:text-xl mb-3 typewriter">> Trading Bot</h2>
+        <div class="mt-4">
+          <h3 class="text-base md:text-lg mb-2">System Logs</h3>
+          <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm">
+          </div>
+        </div>
+        <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm">
+        </div>
+        <div class="mt-4 flex flex-col sm:flex-row gap-2">
+          <input id="chat-input" type="text" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
+          <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message" data-tooltip="Send message">Send</button>
+        </div>
+      </section>
+    </div>
   </main>
+  <div class="spline-interact-area" id="spline-interact-area" data-tooltip="Interact with the 3D background">
+    <span class="animate-pulse">Explore the Spline 3D Scene! Click or Hover</span>
+  </div>
   <footer class="text-center text-gray-500 text-sm">
     <p class="typewriter">Powered by CoinMarketCap, Etherscan & TradingView</p>
   </footer>
@@ -587,6 +675,38 @@
       document.body.appendChild(snowflake);
     }
 
+    // Spline background interaction
+    const splineBg = document.getElementById('spline-bg');
+    const splineViewer = splineBg.querySelector('spline-viewer');
+    const splineInteractArea = document.getElementById('spline-interact-area');
+
+    splineBg.addEventListener('mouseenter', () => {
+      splineBg.classList.add('hover');
+      if (isDebugMode) console.log('[DEBUG] Spline background hovered');
+    });
+
+    splineBg.addEventListener('mouseleave', () => {
+      splineBg.classList.remove('hover');
+      if (isDebugMode) console.log('[DEBUG] Spline background hover ended');
+    });
+
+    splineBg.addEventListener('click', (e) => {
+      if (e.target.closest('button, input, li, header, footer, .chart-modal')) return;
+      splineBg.classList.add('clicked');
+      setTimeout(() => splineBg.classList.remove('clicked'), 300);
+      if (isDebugMode) console.log('[DEBUG] Spline background clicked');
+      console.log('Spline background clicked at:', { x: e.clientX, y: e.clientY });
+    });
+
+    splineInteractArea.addEventListener('click', (e) => {
+      splineInteractArea.classList.add('clicked');
+      setTimeout(() => splineInteractArea.classList.remove('clicked'), 600);
+      splineBg.classList.add('clicked');
+      setTimeout(() => splineBg.classList.remove('clicked'), 300);
+      if (isDebugMode) console.log('[DEBUG] Spline interact area clicked');
+      console.log('Spline interact area clicked at:', { x: e.clientX, y: e.clientY });
+    });
+
     // Drag-and-drop
     const moduleGrid = document.getElementById('module-grid');
     let draggedModule = null;
@@ -603,11 +723,13 @@
             draggedModule = module;
             module.classList.add('dragging');
             e.dataTransfer.setData('text/plain', '');
+            if (isDebugMode) console.log('[DEBUG] Drag started on module:', module);
           });
 
           module.addEventListener('dragend', () => {
             module.classList.remove('dragging');
             draggedModule = null;
+            if (isDebugMode) console.log('[DEBUG] Drag ended');
           });
 
           module.addEventListener('dragover', (e) => {
@@ -638,12 +760,14 @@
               }
 
               window.dispatchEvent(new Event('resize'));
+              if (isDebugMode) console.log('[DEBUG] Module dropped:', { draggedModule, targetModule: module });
             }
           });
 
           module.addEventListener('touchstart', (e) => {
             draggedModule = module;
             module.classList.add('dragging');
+            if (isDebugMode) console.log('[DEBUG] Touch drag started on module:', module);
           });
 
           module.addEventListener('touchmove', (e) => {
@@ -675,6 +799,7 @@
               }
 
               window.dispatchEvent(new Event('resize'));
+              if (isDebugMode) console.log('[DEBUG] Touch drop on module:', { draggedModule, dropTarget });
             }
             draggedModule = null;
             modules.forEach(m => m.classList.remove('hover-transition'));
@@ -721,14 +846,14 @@
             theme: 'dark',
             style: '1',
             locale: 'en',
-            toolbar_bg: 'rgba(35, 46, 46, 0.2)',
+            toolbar_bg: 'rgba(35, 46, 46, 0.1)',
             enable_publishing: false,
             hide_top_toolbar: false,
             hide_side_toolbar: false,
             allow_symbol_change: true,
             container_id: containerId,
             overrides: {
-              'paneProperties.background': 'rgba(35, 46, 46, 0.2)',
+              'paneProperties.background': 'rgba(35, 46, 46, 0.1)',
               'paneProperties.vertGridProperties.color': 'rgba(0, 204, 0, 0.1)',
               'paneProperties.horzGridProperties.color': 'rgba(0, 204, 0, 0.1)',
               'mainSeriesProperties.candleStyle.upColor': '#00cc00',
@@ -882,7 +1007,7 @@
           if (gasHistory.length > maxHistory) gasHistory.shift();
 
           gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
-            <li class="p-2 rounded">
+            <li class="p-2 rounded fade-in">
               <div>Block: ${data.lastBlock}</div>
               <div>Safe: ${data.safeGasPrice} Gwei</div>
               <div>Propose: ${data.proposeGasPrice} Gwei</div>
@@ -944,6 +1069,34 @@
       setInterval(updateHeatmap, 60000);
     }
 
+    // Render mock live logs
+    function renderMockLiveLogs() {
+      const logList = document.getElementById('log-list');
+      const loaderLogs = document.getElementById('loader-logs');
+      if (!logList || !loaderLogs) {
+        console.error('[ERROR] Live logs elements not found:', { logList, loaderLogs });
+        return;
+      }
+
+      const mockLogs = [
+        { timestamp: new Date(Date.now() - 5 * 60 * 1000).toLocaleTimeString(), message: 'Transaction confirmed: 0x1234...5678 (ETH -> USDT)' },
+        { timestamp: new Date(Date.now() - 4 * 60 * 1000).toLocaleTimeString(), message: 'Price alert: BTC crossed $60,000' },
+        { timestamp: new Date(Date.now() - 3 * 60 * 1000).toLocaleTimeString(), message: 'Gas price updated: 15 Gwei' },
+        { timestamp: new Date(Date.now() - 2 * 60 * 1000).toLocaleTimeString(), message: 'New pair added: ETH/USDT' },
+        { timestamp: new Date(Date.now() - 1 * 60 * 1000).toLocaleTimeString(), message: 'System: Connected to Etherscan API' }
+      ];
+
+      logList.innerHTML = mockLogs.map(log => `
+        <li class="p-2 rounded fade-in">
+          <div>${log.message}</div>
+          <div class="metric">Time: ${log.timestamp}</div>
+        </li>
+      `).join('');
+
+      loaderLogs.style.display = 'none';
+      console.log('[DEBUG] Mock live logs rendered:', { logCount: mockLogs.length });
+    }
+
     // Main logic
     let isUsingMockData = false;
 
@@ -958,6 +1111,7 @@
         tokenWarning.style.display = 'block';
         tokenWarning.textContent = '> Using mock data';
         renderGasHeatmap();
+        renderMockLiveLogs();
         return;
       }
 
@@ -976,6 +1130,7 @@
         toggleDataSourceBtn.textContent = 'Mock Data';
         tokenWarning.style.display = 'none';
         renderGasHeatmap();
+        renderMockLiveLogs();
       } catch (error) {
         console.error('Failed to load real data:', error);
         isUsingMockData = true;
@@ -988,6 +1143,7 @@
         document.getElementById('chart-title-modal').textContent = 'Mock Data';
         document.getElementById('loader-tokens').style.display = 'none';
         renderGasHeatmap();
+        renderMockLiveLogs();
       }
     };
 
@@ -1126,6 +1282,7 @@
         tokenList.addEventListener('click', (e) => {
           const li = e.target.closest('li');
           if (li && li.dataset.symbol) {
+            e.stopPropagation();
             const symbol = li.dataset.symbol;
             const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
             initializeChart('chart-container-header', symbol, interval);
