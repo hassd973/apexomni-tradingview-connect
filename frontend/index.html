@@ -276,7 +276,7 @@
         max-height: 20vh;
       }
     }
-    #token-list li, #profit-pairs li, #gas-heatmap-list li {
+    #token-list li, #profit-pairs li, #gas-heatmap-list li, #log-list li {
       display: flex;
       flex-direction: column;
       padding: 0.75rem;
@@ -287,13 +287,13 @@
       font-size: 0.875rem;
       background: rgba(35, 46, 46, 0.2);
     }
-    #gas-heatmap-list li {
+    #gas-heatmap-list li, #log-list li {
       font-size: 0.75rem;
       padding: 0.5rem;
       overflow-x: auto;
       white-space: nowrap;
     }
-    #token-list li:hover, #gas-heatmap-list li:hover {
+    #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover {
       background: rgba(255, 187, 51, 0.1);
       transform: translateX(2px);
       box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
@@ -303,11 +303,11 @@
       background: rgba(255, 187, 51, 0.1);
       box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
     }
-    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric {
+    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric {
       font-size: 0.75rem;
       color: #e0f7fa;
     }
-    #gas-heatmap-list .metric {
+    #gas-heatmap-list .metric, #log-list .metric {
       word-break: break-all;
     }
     #token-list .performance, #profit-pairs .top-pair, #profit-pairs .bottom-pair {
@@ -351,7 +351,7 @@
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
-    button, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal, #toggle-spline-modal, #toggle-modules, #toggle-background {
+    button, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal, #toggle-spline-modal, #toggle-modules, #toggle-logs-data {
       background-color: #00cc00;
       color: #1e2727;
       border: 1px solid rgba(0, 204, 0, 0.3);
@@ -360,7 +360,7 @@
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
-    button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-spline-modal:hover, #toggle-modules:hover, #toggle-background:hover {
+    button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-spline-modal:hover, #toggle-modules:hover, #toggle-logs-data:hover {
       background-color: #ffbb33;
       box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
     }
@@ -642,7 +642,11 @@
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
-        <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div class="flex justify-between items-center mb-2">
+          <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+          <button id="toggle-logs-data" data-tooltip="Switch log data source">Real Logs</button>
+        </div>
+        <div id="logs-warning" class="data-warning" style="display: none;">> Using mock logs due to connection issue</div>
         <ul id="log-list" class="space-y-2 text-sm"></ul>
       </div>
     </section>
@@ -671,9 +675,7 @@
       </div>
       <div class="module-content">
         <div class="mt-4 flex flex-col gap-2">
-          <button id="toggle-background" data-tooltip="Toggle background visibility">Hide Background</button>
           <button id="toggle-spline-modal" data-tooltip="Open fullscreen background">Open Fullscreen</button>
-          <div id="background-status" class="text-sm text-gray-500">Background: Visible</div>
         </div>
       </div>
     </section>
@@ -802,15 +804,11 @@
       });
     }
 
-    // Module and background toggle
+    // Module toggle
     let areModulesHidden = false;
-    let isBackgroundVisible = true;
 
     function setupModuleToggles() {
       const toggleModulesBtn = document.getElementById('toggle-modules');
-      const toggleBackgroundBtn = document.getElementById('toggle-background');
-      const backgroundStatus = document.getElementById('background-status');
-      const splineBg = document.querySelector('.spline-bg');
       const moduleGrid = document.getElementById('module-grid');
       const toggleModuleButtons = document.querySelectorAll('.toggle-module-btn');
 
@@ -821,14 +819,6 @@
         moduleGrid.classList.toggle('modules-hidden-right', areModulesHidden && !isLeftEdge);
         toggleModulesBtn.textContent = areModulesHidden ? 'Show Modules' : 'Hide Modules';
         toggleModulesBtn.setAttribute('data-tooltip', areModulesHidden ? 'Show modules' : 'Hide modules for background interaction');
-      });
-
-      toggleBackgroundBtn.addEventListener('click', () => {
-        isBackgroundVisible = !isBackgroundVisible;
-        splineBg.style.display = isBackgroundVisible ? 'block' : 'none';
-        toggleBackgroundBtn.textContent = isBackgroundVisible ? 'Hide Background' : 'Show Background';
-        backgroundStatus.textContent = `Background: ${isBackgroundVisible ? 'Visible' : 'Hidden'}`;
-        toggleBackgroundBtn.setAttribute('data-tooltip', isBackgroundVisible ? 'Hide background' : 'Show background');
       });
 
       toggleModuleButtons.forEach(btn => {
@@ -887,14 +877,16 @@
             container_id: containerId,
             overrides: {
               'paneProperties.background': 'rgba(35, 46, 46, 0.2)',
-              'paneProperties.vertGridProperties.color': 'rgba(0, 204, 0, 0.1)',
-              'paneProperties.horzGridProperties.color': 'rgba(0, 204, 0, 0.1)',
-              'mainSeriesProperties.candleStyle.upColor': '#ffbb33',
-              'mainSeriesProperties.candleStyle.downColor': '#ffbb33',
-              'mainSeriesProperties.candleStyle.borderUpColor': '#ffbb33',
-              'mainSeriesProperties.candleStyle.borderDownColor': '#ffbb33',
-              'mainSeriesProperties.candleStyle.wickUpColor': '#ffbb33',
-              'mainSeriesProperties.candleStyle.wickDownColor': '#ffbb33'
+              'paneProperties.vertGridProperties.color': '#ffbb33',
+              'paneProperties.horzGridProperties.color': '#ffbb33',
+              'scalesProperties.textColor': '#ffbb33',
+              'scalesProperties.lineColor': '#ffbb33',
+              'mainSeriesProperties.candleStyle.upColor': '#00cc00',
+              'mainSeriesProperties.candleStyle.downColor': '#ff0000',
+              'mainSeriesProperties.candleStyle.borderUpColor': '#00cc00',
+              'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
+              'mainSeriesProperties.candleStyle.wickUpColor': '#00cc00',
+              'mainSeriesProperties.candleStyle.wickDownColor': '#ff0000'
             },
             onChartReady: () => {
               console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
@@ -1098,13 +1090,63 @@
       setInterval(updateHeatmap, 60000);
     }
 
+    // Render logs
+    let isUsingMockLogs = true;
+
+    const mockLogs = [
+      { id: 1, message: 'Trade executed: BTC/USDT at $60,000', timestamp: new Date(Date.now() - 60000).toLocaleTimeString(), type: 'trade' },
+      { id: 2, message: 'Price alert: ETH crossed $4,000', timestamp: new Date(Date.now() - 120000).toLocaleTimeString(), type: 'alert' },
+      { id: 3, message: 'System: API connection stable', timestamp: new Date(Date.now() - 180000).toLocaleTimeString(), type: 'system' }
+    ];
+
+    async function fetchLogs() {
+      // Placeholder for real log fetching (currently mocked due to connection issues)
+      try {
+        throw new Error('Connection issue: Logs API not available');
+      } catch (error) {
+        console.error('Failed to fetch logs:', error);
+        return mockLogs;
+      }
+    }
+
+    async function renderLogs() {
+      const logList = document.getElementById('log-list');
+      const loader = document.getElementById('loader-logs');
+      const logsWarning = document.getElementById('logs-warning');
+      if (!logList || !loader || !logsWarning) {
+        console.error('[ERROR] Log elements not found');
+        return;
+      }
+
+      try {
+        loader.style.display = 'block';
+        logsWarning.style.display = isUsingMockLogs ? 'block' : 'none';
+        const logs = isUsingMockLogs ? mockLogs : await fetchLogs();
+        logList.innerHTML = logs.map(log => `
+          <li class="p-2 rounded">
+            <div>${log.message}</div>
+            <div class="metric">Type: ${log.type}</div>
+            <div class="metric">Time: ${log.timestamp}</div>
+          </li>
+        `).join('');
+        loader.style.display = 'none';
+      } catch (error) {
+        console.error('[ERROR] Failed to render logs:', error);
+        loader.textContent = '> Error loading logs';
+        loader.style.display = 'block';
+        logsWarning.style.display = 'block';
+      }
+    }
+
     // Main logic
     let isUsingMockData = false;
 
     const loadData = async () => {
       const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
+      const toggleLogsDataBtn = document.getElementById('toggle-logs-data');
       const tokenWarning = document.getElementById('token-warning');
+      const logsWarning = document.getElementById('logs-warning');
 
       if (isUsingMockData) {
         updateUI(mockTokens);
@@ -1112,6 +1154,7 @@
         tokenWarning.style.display = 'block';
         tokenWarning.textContent = '> Using mock data';
         renderGasHeatmap();
+        renderLogs();
         return;
       }
 
@@ -1130,6 +1173,7 @@
         toggleDataSourceBtn.textContent = 'Mock Data';
         tokenWarning.style.display = 'none';
         renderGasHeatmap();
+        renderLogs();
       } catch (error) {
         console.error('Failed to load real data:', error);
         isUsingMockData = true;
@@ -1142,7 +1186,15 @@
         document.getElementById('chart-title-modal').textContent = 'Mock Data';
         document.getElementById('loader-tokens').style.display = 'none';
         renderGasHeatmap();
+        renderLogs();
       }
+
+      toggleLogsDataBtn.addEventListener('click', () => {
+        isUsingMockLogs = !isUsingMockLogs;
+        toggleLogsDataBtn.textContent = isUsingMockLogs ? 'Real Logs' : 'Mock Logs';
+        logsWarning.style.display = isUsingMockLogs ? 'block' : 'none';
+        renderLogs();
+      });
     };
 
     function updateUI(tokens) {
