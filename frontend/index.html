@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Limelight&display=swap" rel="stylesheet">
-  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.96/build/spline-viewer.js"></script>
+  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js"></script>
   <script src="https://s3.tradingview.com/tv.js" async></script>
   <style>
     body {
@@ -686,6 +686,27 @@
         <ul id="log-list" class="space-y-2 text-sm"></ul>
       </div>
     </section>
+    <section class="rounded-lg" draggable="true">
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl typewriter">> Fees</h2>
+        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
+      </div>
+      <div class="module-content">
+        <div id="loader-fees" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="fees-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
+        <ul id="fees-list" class="space-y-2 text-sm">
+          <li class="p-2 rounded">
+            <div>Transfer Fee (ETH): <span id="transfer-fee">Loading...</span> USD</div>
+          </li>
+          <li class="p-2 rounded">
+            <div>Withdraw Fee: <span id="withdraw-fee">Loading...</span> USD</div>
+          </li>
+          <li class="p-2 rounded">
+            <div>Bridge Fee: <span id="bridge-fee">Loading...</span> USD</div>
+          </li>
+        </ul>
+      </div>
+    </section>
   </main>
   <div class="chat-logs-container">
     <div class="module-header">
@@ -999,7 +1020,9 @@
       }
     }
 
-    // Render ETH gas fee heatmap
+    // Render ETH gas fee heatmap and update fees
+    let currentEthPrice = 0;
+
     async function renderGasHeatmap() {
       const canvas = document.getElementById('gas-heatmap-canvas');
       const gasList = document.getElementById('gas-heatmap-list');
@@ -1108,6 +1131,13 @@
           const latestTime = new Date(gasHistory[gasHistory.length - 1]?.timestamp);
           ctx.fillText(latestTime.toLocaleTimeString(), margin.left + plotWidth, margin.top + plotHeight + 5);
 
+          // Update fees
+          if (currentEthPrice > 0) {
+            updateFees(gasData.proposeGasPrice, currentEthPrice);
+          } else {
+            updateFees(gasData.proposeGasPrice, 4000); // Default ETH price
+          }
+
           loader.style.display = 'none';
           console.log('[DEBUG] Gas heatmap updated:', { gasHistoryLength: gasHistory.length, latestGasData: gasData, isMockGas });
         } catch (error) {
@@ -1120,6 +1150,23 @@
 
       updateHeatmap();
       setInterval(updateHeatmap, 60000);
+    }
+
+    // Update fees function
+    function updateFees(gasPrice, ethPrice) {
+      const transferFeeEth = (gasPrice * 21000) / 1e9; // Standard transfer uses 21000 gas
+      const transferFeeUsd = transferFeeEth * ethPrice;
+      document.getElementById('transfer-fee').textContent = transferFeeUsd.toFixed(2);
+
+      const withdrawFeeEth = 0.001; // Assumed fixed fee
+      const withdrawFeeUsd = withdrawFeeEth * ethPrice;
+      document.getElementById('withdraw-fee').textContent = withdrawFeeUsd.toFixed(2);
+
+      const bridgeFeeEth = 0.005; // Assumed fixed fee
+      const bridgeFeeUsd = bridgeFeeEth * ethPrice;
+      document.getElementById('bridge-fee').textContent = bridgeFeeUsd.toFixed(2);
+
+      document.getElementById('loader-fees').style.display = 'none';
     }
 
     // Render logs
@@ -1206,7 +1253,7 @@
         renderGasHeatmap();
         renderLogs();
       } catch (error) {
-        console.error('Failed to load real data:', error);
+        console.error('FailedÜ to load real data:', error);
         isUsingMockData = true;
         updateUI(mockTokens);
         toggleDataSourceBtn.textContent = 'Real Data';
@@ -1299,6 +1346,17 @@
       document.getElementById('chart-title-header').textContent = topSymbol;
       document.getElementById('chart-title-modal').setAttribute('data-symbol', topSymbol);
       document.getElementById('chart-title-modal').textContent = topSymbol;
+
+      // Update fees
+      const ethToken = tokens.find(token => token.symbol === 'ETH');
+      if (ethToken) {
+        currentEthPrice = ethToken.current_price;
+        const gasPrice = ethToken.gasPrice || 15; // Default to 15 if not available
+        updateFees(gasPrice, currentEthPrice);
+      } else {
+        updateFees(15, 4000); // Default values
+      }
+      document.getElementById('fees-warning').style.display = isUsingMockData ? 'block' : 'none';
     }
 
     document.addEventListener('DOMContentLoaded', () => {
