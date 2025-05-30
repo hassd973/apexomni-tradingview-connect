@@ -17,7 +17,7 @@
   <style>
     body {
       font-family: 'Inconsolata', monospace;
-      background: #1e1e1e; /* Replace with exact color from screenshot */
+      background: #1e2727;
       color: #e0f7fa;
       margin: 0;
       min-height: 100vh;
@@ -25,21 +25,10 @@
       flex-direction: column;
       line-height: 1.6;
     }
-    h1 {
-      font-family: 'Limelight', cursive;
-      font-size: 2.5rem; /* Adjust based on screenshot */
-      color: #e0f7fa;
-      text-shadow: 0 0 8px rgba(0, 204, 0, 0.5), 0 0 12px rgba(255, 187, 51, 0.3);
-    }
-    h2, h3 {
+    h1, h2, h3 {
       font-family: 'Limelight', cursive;
       color: #e0f7fa;
-      text-shadow: 0 0 8px rgba(0, 204, 0, 0.5), 0 0 12px rgba(255, 187, 51, 0.3);
-    }
-    main, .chat-logs-container {
-      max-width: 1200px; /* Replace with exact width from screenshot */
-      margin-left: auto;
-      margin-right: auto;
+      text-shadow: 0 0 8px rgba(224, 247, 250, 0.5), 0 0 12px rgba(224, 247, 250, 0.3);
     }
     #loading-screen {
       position: fixed;
@@ -47,7 +36,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: #1e1e1e; /* Match body background */
+      background: #1e2727;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -69,7 +58,7 @@
       width: 100%;
       height: 100%;
       z-index: -1;
-      pointer-events: all;
+      pointer-events: none;
       transition: opacity 0.3s ease;
     }
     .spline-bg.hidden {
@@ -105,7 +94,7 @@
       position: absolute;
       width: 1px;
       height: 1px;
-      background: rgba(0, 204, 0, 0.3);
+      background: rgba(224, 247, 250, 0.3);
       border-radius: 50%;
       animation: float 15s infinite linear;
     }
@@ -115,12 +104,12 @@
       100% { transform: translate(50px, -50px); opacity: 0; }
     }
     header, footer {
-      background: rgba(35, 46, 46, 0.1);
+      background: rgba(30, 39, 39, 0.8);
       padding: 1rem;
-      border-bottom: 1px solid rgba(0, 204, 0, 0.1);
+      border-bottom: 1px solid rgba(224, 247, 250, 0.2);
     }
     footer {
-      border-top: 1px solid rgba(0, 204, 0, 0.1);
+      border-top: 1px solid rgba(224, 247, 250, 0.2);
     }
     main {
       flex: 1;
@@ -144,9 +133,9 @@
       height: calc(100vh - 320px);
       min-height: 250px;
       max-height: 600px;
-      border: 1px solid rgba(0, 204, 0, 0.2);
+      border: 1px solid rgba(224, 247, 250, 0.2);
       border-radius: 6px;
-      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      box-shadow: 0 0 4px rgba(224, 247, 250, 0.3);
     }
     .chart-container.hidden {
       display: none;
@@ -165,9 +154,9 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(30, 39, 39, 0.8);
       z-index: 10;
-      color: #00cc00;
+      color: #e0f7fa;
       font-size: 0.875rem;
     }
     #chart-container-modal {
@@ -190,7 +179,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(35, 46, 46, 0.6);
+      background: rgba(30, 39, 39, 0.8);
       z-index: 50;
       justify-content: center;
       align-items: center;
@@ -198,15 +187,15 @@
     }
     .chart-modal.active { display: flex; }
     .chart-modal-content {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(30, 39, 39, 0.8);
       padding: 1rem;
-      border: 1px solid rgba(0, 204, 0, 0.2);
+      border: 1px solid rgba(224, 247, 250, 0.2);
       border-radius: 6px;
       width: 95%;
       max-width: 1200px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      box-shadow: 0 0 8px rgba(224, 247, 250, 0.3);
     }
     .spline-modal {
       display: none;
@@ -215,7 +204,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(35, 46, 46, 0.6);
+      background: #1e2727;
       z-index: 50;
       justify-content: center;
       align-items: center;
@@ -232,27 +221,27 @@
       position: absolute;
       top: 1rem;
       right: 1rem;
-      background-color: #00cc00;
+      background-color: #e0f7fa;
       color: #1e2727;
-      border: 1px solid rgba(0, 204, 0, 0.3);
+      border: 1px solid rgba(224, 247, 250, 0.3);
       font-size: 0.875rem;
       border-radius: 6px;
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
     .spline-modal-close:hover {
-      background-color: #ffbb33;
-      box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
+      background-color: #b0bec5;
+      box-shadow: 0 0 8px rgba(224, 247, 250, 0.5);
     }
     section {
-      background: rgba(35, 46, 46, 0.1);
-      border: 1px solid rgba(0, 204, 0, 0.2);
+      background: rgba(30, 39, 39, 0.8);
+      border: 1px solid rgba(224, 247, 250, 0.2);
       border-radius: 6px;
       padding: 1rem;
       min-width: 0;
       cursor: move;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      box-shadow: 0 0 4px rgba(224, 247, 250, 0.3);
     }
     @media (max-width: 639px) {
       section { cursor: default; }
@@ -264,7 +253,7 @@
       z-index: 100;
     }
     section:hover {
-      box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
+      box-shadow: 0 0 8px rgba(224, 247, 250, 0.5);
     }
     .module-header {
       display: flex;
@@ -275,21 +264,21 @@
     .toggle-module-btn {
       background: none;
       border: none;
-      color: #00cc00;
+      color: #e0f7fa;
       font-size: 0.875rem;
       cursor: pointer;
       padding: 0.25rem;
       transition: color 0.3s ease;
     }
     .toggle-module-btn:hover {
-      color: #ffbb33;
+      color: #b0bec5;
     }
     .module-content.hidden {
       display: none;
     }
     ul {
       scrollbar-width: thin;
-      scrollbar-color: #00cc00 rgba(35, 46, 46, 0.2);
+      scrollbar-color: #e0f7fa rgba(30, 39, 39, 0.8);
       list-style: none;
       padding: 0;
     }
@@ -297,10 +286,10 @@
       width: 6px;
     }
     ul::-webkit-scrollbar-track {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(30, 39, 39, 0.8);
     }
     ul::-webkit-scrollbar-thumb {
-      background: #00cc00;
+      background: #e0f7fa;
       border-radius: 4px;
     }
     #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
@@ -328,7 +317,7 @@
       transition: all 0.3s ease;
       cursor: pointer;
       font-size: 0.875rem;
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(30, 39, 39, 0.8);
     }
     #gas-heatmap-list li, #log-list li {
       font-size: 0.75rem;
@@ -337,14 +326,14 @@
       white-space: nowrap;
     }
     #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover {
-      background: rgba(255, 187, 51, 0.1);
+      background: rgba(176, 190, 197, 0.2);
       transform: translateX(2px);
-      box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
+      box-shadow: 0 0 6px rgba(176, 190, 197, 0.4);
     }
     #token-list li.selected-token {
-      border: 1px solid #ffbb33;
-      background: rgba(255, 187, 51, 0.1);
-      box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
+      border: 1px solid #b0bec5;
+      background: rgba(176, 190, 197, 0.2);
+      box-shadow: 0 0 6px rgba(176, 190, 197, 0.4);
     }
     #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric {
       font-size: 0.75rem;
@@ -357,8 +346,8 @@
       font-size: 0.875rem;
       font-weight: 700;
     }
-    #profit-pairs .top-pair { color: #00cc00; }
-    #profit-pairs .bottom-pair { color: #ffbb33; }
+    #profit-pairs .top-pair { color: #e0f7fa; }
+    #profit-pairs .bottom-pair { color: #b0bec5; }
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.02); }
@@ -370,16 +359,16 @@
     }
     .fade-in { animation: fadeIn 0.5s ease-in; }
     .hover-transition { transition: all 0.3s ease; }
-    .hover-transition:hover { background: rgba(255, 187, 51, 0.1); }
+    .hover-transition:hover { background: rgba(176, 190, 197, 0.2); }
     .marquee-container {
-      background: rgba(35, 46, 46, 0.2);
-      border: 1px solid rgba(0, 204, 0, 0.2);
+      background: rgba(30, 39, 39, 0.8);
+      border: 1px solid rgba(224, 247, 250, 0.2);
       overflow: hidden;
       white-space: nowrap;
       padding: 0.5rem 0;
       margin-top: 0.5rem;
       border-radius: 6px;
-      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      box-shadow: 0 0 4px rgba(224, 247, 250, 0.3);
     }
     .marquee {
       display: inline-block;
@@ -395,26 +384,26 @@
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
     button, #chat-send, #toggle-data-source, #toggle-debug, #toggle-indicator-header, #toggle-indicator-modal, #toggle-modules, #toggle-logs-data, #toggle-background, #toggle-background-dock {
-      background-color: #00cc00;
+      background-color: #e0f7fa;
       color: #1e2727;
-      border: 1px solid rgba(0, 204, 0, 0.3);
+      border: 1px solid rgba(224, 247, 250, 0.3);
       font-size: 0.875rem;
       border-radius: 6px;
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
     button:hover, #chat-send:hover, #toggle-data-source:hover, #toggle-debug:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-modules:hover, #toggle-logs-data:hover, #toggle-background:hover, #toggle-background-dock:hover {
-      background-color: #ffbb33;
-      box-shadow: 0 0 8px rgba(0, 204, 0, 0.5);
+      background-color: #b0bec5;
+      box-shadow: 0 0 8px rgba(224, 247, 250, 0.5);
     }
     .timeframe-btn.active {
-      background-color: #00cc00;
-      box-shadow: 0 0 8px #00cc00, 0 0 12px rgba(255, 187, 51, 0.6);
-      border: 1px solid #ffbb33;
+      background-color: #e0f7fa;
+      box-shadow: 0 0 8px #e0f7fa, 0 0 12px rgba(176, 190, 197, 0.6);
+      border: 1px solid #b0bec5;
     }
     #chat-input {
-      background: rgba(35, 46, 46, 0.2);
-      border: 1px solid rgba(0, 204, 0, 0.2);
+      background: rgba(30, 39, 39, 0.8);
+      border: 1px solid rgba(224, 247, 250, 0.2);
       color: #e0f7fa;
       width: 100%;
       padding: 0.5rem;
@@ -423,8 +412,8 @@
     }
     #chat-input:focus {
       outline: none;
-      border-color: #ffbb33;
-      box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
+      border-color: #b0bec5;
+      box-shadow: 0 0 6px rgba(176, 190, 197, 0.4);
     }
     .loader {
       display: flex;
@@ -436,7 +425,7 @@
       content: '';
       width: 14px;
       height: 14px;
-      border: 2px solid #00cc00;
+      border: 2px solid #e0f7fa;
       border-top: 2px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -446,7 +435,7 @@
       display: inline-block;
       overflow: hidden;
       white-space: nowrap;
-      border-right: 2px solid #00cc00;
+      border-right: 2px solid #e0f7fa;
       animation: typing 4s steps(30, end), blink-caret 0.75s step-end infinite;
     }
     @keyframes typing {
@@ -455,30 +444,30 @@
     }
     @keyframes blink-caret {
       from, to { border-color: transparent; }
-      50% { border-color: #00cc00; }
+      50% { border-color: #e0f7fa; }
     }
     .title-box {
       color: #e0f7fa;
       text-align: center;
       margin-bottom: 1rem;
-      font-size: 1rem;
-      background: rgba(35, 46, 46, 0.2);
-      border: 1px solid rgba(0, 204, 0, 0.2);
+      font-size: 1.25rem;
+      background: rgba(30, 39, 39, 0.8);
+      border: 1px solid rgba(224, 247, 250, 0.2);
       border-radius: 6px;
       padding: 0.75rem;
       animation: pulse 4s infinite;
-      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      box-shadow: 0 0 4px rgba(224, 247, 250, 0.3);
     }
     @media (min-width: 640px) {
-      .title-box { font-size: 1.25rem; }
+      .title-box { font-size: 1.5rem; }
     }
     #chart-title-header, #chart-title-modal {
       text-align: center;
       padding: 0.5rem;
       border-radius: 6px;
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(30, 39, 39, 0.8);
       font-size: 0.875rem;
-      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      box-shadow: 0 0 4px rgba(224, 247, 250, 0.3);
     }
     @media (min-width: 640px) {
       #chart-title-header, #chart-title-modal { font-size: 1rem; }
@@ -490,14 +479,14 @@
       bottom: 100%;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 204, 0, 0.8);
+      background: rgba(224, 247, 250, 0.8);
       color: #1e2727;
       padding: 0.25rem 0.5rem;
       border-radius: 4px;
       font-size: 0.75rem;
       white-space: nowrap;
       z-index: 60;
-      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      box-shadow: 0 0 4px rgba(224, 247, 250, 0.3);
     }
     .gas-heatmap-section {
       display: flex;
@@ -512,9 +501,9 @@
     #gas-heatmap-canvas {
       width: 100%;
       height: 20vh;
-      border: 1px solid rgba(0, 204, 0, 0.2);
+      border: 1px solid rgba(224, 247, 250, 0.2);
       border-radius: 6px;
-      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      box-shadow: 0 0 4px rgba(224, 247, 250, 0.3);
     }
     @media (min-width: 640px) {
       #gas-heatmap-canvas { height: 25vh; }
@@ -525,7 +514,7 @@
       gap: 1rem;
       margin-top: 0.5rem;
       font-size: 0.75rem;
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(30, 39, 39, 0.8);
       padding: 0.5rem;
       border-radius: 6px;
     }
@@ -543,11 +532,11 @@
       border-radius: 2px;
     }
     #live-logs-container, #chat-list {
-      background: rgba(35, 46, 46, 0.2);
+      background: rgba(30, 39, 39, 0.8);
     }
     .data-warning {
-      background: rgba(255, 187, 51, 0.2);
-      color: #ffbb33;
+      background: rgba(176, 190, 197, 0.2);
+      color: #b0bec5;
       padding: 0.5rem;
       border-radius: 6px;
       font-size: 0.75rem;
@@ -555,20 +544,21 @@
       text-align: center;
     }
     .chat-logs-container {
-      background: rgba(35, 46, 46, 0.1);
-      border: 1px solid rgba(0, 204, 0, 0.2);
+      background: rgba(30, 39, 39, 0.8);
+      border: 1px solid rgba(224, 247, 250, 0.2);
       border-radius: 6px;
       padding: 1rem;
       margin: 1rem auto;
       width: 98vw;
-      box-shadow: 0 0 4px rgba(0, 204, 0, 0.3);
+      max-width: 1200px;
+      box-shadow: 0 0 4px rgba(224, 247, 250, 0.3);
     }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
   <div id="loading-screen">
     <div class="title-box">
-      <h1>⚛️ QUANTUMI 🌌💰 DASHBOARD 🌟</h1>
+      <h1 class="text-[1.25rem] md:text-[1.5rem]">⚛️ QUANTUMI 🌌💰 DASHBOARD 🌟</h1>
     </div>
     <div class="chart-loading">
       <div class="loader"></div>
@@ -582,7 +572,7 @@
   <header class="w-full flex justify-center items-center">
     <div class="w-full max-w-[98vw] mx-auto px-4">
       <div class="title-box">
-        <h1>⚛️ QUANTUMI 🌌💰 DASHBOARD 🌟</h1>
+        <h1 class="text-[1.25rem] md:text-[1.5rem]">⚛️ QUANTUMI 🌌💰 DASHBOARD 🌟</h1>
       </div>
       <p class="text-sm text-center typewriter">Live Crypto Analytics</p>
       <div class="chart-wrapper w-full">
@@ -658,14 +648,14 @@
   </div>
   <div class="spline-modal" id="spline-modal">
     <div class="spline-modal-content">
-      <button class="spline-modal-close" id="spline-modal-close">Undock</button>
+      <button class="spline-modal-close" id="spline-modal-close">Exit to Chart</button>
       <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode"></spline-viewer>
     </div>
   </div>
-  <main class="flex-1 p-4 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
+  <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
     <section class="rounded-lg" draggable="true">
       <div class="module-header">
-        <h2 class="text-lg md:text-xl typewriter">> Tokens</h2>
+        <h2 class="text-[1.25rem] md:text-[1.5rem] typewriter">> Tokens</h2>
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
@@ -684,7 +674,7 @@
     </section>
     <section class="rounded-lg gas-heatmap-section" draggable="true">
       <div class="module-header">
-        <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">> ETH Gas Heatmap</h2>
+        <h2 class="text-[1.25rem] md:text-[1.5rem] gas-heatmap-title typewriter">> ETH Gas Heatmap</h2>
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
@@ -692,16 +682,16 @@
         <div id="gas-warning" class="data-warning" style="display: none;">> Using mock gas data due to API failure</div>
         <canvas id="gas-heatmap-canvas"></canvas>
         <div id="gas-heatmap-legend">
-          <div class="legend-item"><div class="legend-color" style="background: #00cc00"></div><span>Safe</span></div>
-          <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
-          <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div><span>Fast</span></div>
+          <div class="legend-item"><div class="legend-color" style="background: #e0f7fa"></div><span>Safe</span></div>
+          <div class="legend-item"><div class="legend-color" style="background: #b0bec5"></div><span>Propose</span></div>
+          <div class="legend-item"><div class="legend-color" style="background: #78909c"></div><span>Fast</span></div>
         </div>
         <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
       </div>
     </section>
     <section class="rounded-lg" draggable="true">
       <div class="module-header">
-        <h2 class="text-lg md:text-xl typewriter">> Live Logs</h2>
+        <h2 class="text-[1.25rem] md:text-[1.5rem] typewriter">> Live Logs</h2>
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
@@ -715,7 +705,7 @@
     </section>
     <section class="rounded-lg" draggable="true">
       <div class="module-header">
-        <h2 class="text-lg md:text-xl typewriter">> Fees</h2>
+        <h2 class="text-[1.25rem] md:text-[1.5rem] typewriter">> Fees</h2>
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
@@ -737,7 +727,7 @@
   </main>
   <div class="chat-logs-container">
     <div class="module-header">
-      <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
+      <h2 class="text-[1.25rem] md:text-[1.5rem] typewriter">> Trading Bot & System Logs</h2>
       <button class="toggle-module-btn" data-tooltip="Toggle visibility">▼</button>
     </div>
     <div class="module-content">
@@ -869,34 +859,11 @@
               e.preventDefault();
             }
             const touch = e.touches[0];
-            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('#module-grid section');
-            if (dropTarget && dropTarget !== draggedModule) {
-              dropTarget.classList.add('hover-transition');
-            }
-          });
-
-          module.addEventListener('touchend', (e) => {
-            module.classList.remove('dragging');
-            const touch = e.changedTouches[0];
-            const target = document.elementFromPoint(touch.clientX, touch.clientY);
-            const dropTarget = target?.closest('#module-grid section');
-            if (dropTarget && dropTarget !== draggedModule) {
-              const allModules = Array.from(moduleGrid.children);
-              const draggedIndex = allModules.indexOf(draggedModule);
-              const targetIndex = allModules.indexOf(dropTarget);
-
-              if (draggedIndex < targetIndex) {
-                moduleGrid.insertBefore(draggedModule, dropTarget.nextSibling);
-              } else {
-                moduleGrid.insertBefore(draggedModule, dropTarget);
-              }
-
-              window.dispatchEvent(new Event('resize'));
-            }
-            draggedModule = null;
-            modules.forEach(m => m.classList.remove('hover-transition'));
-          });
-        }
+            const dropTarget = document.elementFromPoint(t=> {
+              draggedModule = null;
+              modules.forEach(m => m.classList.remove('hover-transition'));
+            });
+        });
       });
     }
 
@@ -965,24 +932,24 @@
             theme: 'dark',
             style: '1',
             locale: 'en',
-            toolbar_bg: 'rgba(35, 46, 46, 0.2)',
+            toolbar_bg: 'rgba(30, 39, 39, 0.8)',
             enable_publishing: false,
             hide_top_toolbar: false,
             hide_side_toolbar: false,
             allow_symbol_change: true,
             container_id: containerId,
             overrides: {
-              'paneProperties.background': 'rgba(35, 46, 46, 0.2)',
-              'paneProperties.vertGridProperties.color': '#ffbb33',
-              'paneProperties.horzGridProperties.color': '#ffbb33',
-              'scalesProperties.textColor': '#ffbb33',
-              'scalesProperties.lineColor': '#ffbb33',
-              'mainSeriesProperties.candleStyle.upColor': '#00cc00',
-              'mainSeriesProperties.candleStyle.downColor': '#ff0000',
-              'mainSeriesProperties.candleStyle.borderUpColor': '#00cc00',
-              'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
-              'mainSeriesProperties.candleStyle.wickUpColor': '#00cc00',
-              'mainSeriesProperties.candleStyle.wickDownColor': '#ff0000'
+              'paneProperties.background': 'rgba(30, 39, 39, 0.8)',
+              'paneProperties.vertGridProperties.color': '#b0bec5',
+              'paneProperties.horzGridProperties.color': '#b0bec5',
+              'scalesProperties.textColor': '#b0bec5',
+              'scalesProperties.lineColor': '#b0bec5',
+              'mainSeriesProperties.candleStyle.upColor': '#e0f7fa',
+              'mainSeriesProperties.candleStyle.downColor': '#78909c',
+              'mainSeriesProperties.candleStyle.borderUpColor': '#e0f7fa',
+              'mainSeriesProperties.candleStyle.borderDownColor': '#78909c',
+              'mainSeriesProperties.candleStyle.wickUpColor': '#e0f7fa',
+              'mainSeriesProperties.candleStyle.wickDownColor': '#78909c'
             },
             onChartReady: () => {
               console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
@@ -1102,11 +1069,11 @@
 
       const getColor = (type, intensity) => {
         if (type === 'safe') {
-          return '#00cc00';
+          return '#e0f7fa';
         } else if (type === 'propose') {
-          return '#ffbb33';
+          return '#b0bec5';
         } else {
-          return '#ff0000';
+          return '#78909c';
         }
       };
 
@@ -1169,255 +1136,7 @@
             ctx.fillText(`${tick} Gwei`, margin.left - 5, y);
           });
 
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'top';
-          const latestTime = new Date(gasHistory[gasHistory.length - 1]?.timestamp);
-          ctx.fillText(latestTime.toLocaleTimeString(), margin.left + plotWidth, margin.top + plotHeight + 5);
-
-          if (currentEthPrice > 0) {
-            updateFees(gasData.proposeGasPrice, currentEthPrice);
-          } else {
-            updateFees(gasData.proposeGasPrice, 4000);
-          }
-
-          loader.style.display = 'none';
-          console.log('[DEBUG] Gas heatmap updated:', { gasHistoryLength: gasHistory.length, latestGasData: gasData, isMockGas });
-        } catch (error) {
-          console.error('[ERROR] Failed to update gas heatmap:', error);
-          loader.textContent = '> Error loading gas heatmap';
-          loader.style.display = 'block';
-          gasWarning.style.display = 'block';
-        }
-      };
-
-      updateHeatmap();
-      setInterval(updateHeatmap, 60000);
-    }
-
-    // Update fees function
-    function updateFees(gasPrice, ethPrice) {
-      const transferFeeEth = (gasPrice * 21000) / 1e9;
-      const transferFeeUsd = transferFeeEth * ethPrice;
-      document.getElementById('transfer-fee').textContent = transferFeeUsd.toFixed(2);
-
-      const withdrawFeeEth = 0.001;
-      const withdrawFeeUsd = withdrawFeeEth * ethPrice;
-      document.getElementById('withdraw-fee').textContent = withdrawFeeUsd.toFixed(2);
-
-      const bridgeFeeEth = 0.005;
-      const bridgeFeeUsd = bridgeFeeEth * ethPrice;
-      document.getElementById('bridge-fee').textContent = bridgeFeeUsd.toFixed(2);
-
-      document.getElementById('loader-fees').style.display = 'none';
-    }
-
-    // Render logs
-    let isUsingMockLogs = true;
-
-    const mockLogs = [
-      { id: 1, message: 'Trade executed: BTC/USDT at $60,000', timestamp: new Date(Date.now() - 60000).toLocaleTimeString(), type: 'trade' },
-      { id: 2, message: 'Price alert: ETH crossed $4,000', timestamp: new Date(Date.now() - 120000).toLocaleTimeString(), type: 'alert' },
-      { id: 3, message: 'System: API connection stable', timestamp: new Date(Date.now() - 180000).toLocaleTimeString(), type: 'system' }
-    ];
-
-    async function fetchLogs() {
-      try {
-        throw new Error('Connection issue: Logs API not available');
-      } catch (error) {
-        console.error('Failed to fetch logs:', error);
-        return mockLogs;
-      }
-    }
-
-    async function renderLogs() {
-      const logList = document.getElementById('log-list');
-      const loader = document.getElementById('loader-logs');
-      const logsWarning = document.getElementById('logs-warning');
-      if (!logList || !loader || !logsWarning) {
-        console.error('[ERROR] Log elements not found');
-        return;
-      }
-
-      try {
-        loader.style.display = 'block';
-        logsWarning.style.display = isUsingMockLogs ? 'block' : 'none';
-        const logs = isUsingMockLogs ? mockLogs : await fetchLogs();
-        logList.innerHTML = logs.map(log => `
-          <li class="p-2 rounded">
-            <div>${log.message}</div>
-            <div class="metric">Type: ${log.type}</div>
-            <div class="metric">Time: ${log.timestamp}</div>
-          </li>
-        `).join('');
-        loader.style.display = 'none';
-      } catch (error) {
-        console.error('[ERROR] Failed to render logs:', error);
-        loader.textContent = '> Error loading logs';
-        loader.style.display = 'block';
-        logsWarning.style.display = 'block';
-      }
-    }
-
-    // Main logic
-    let isUsingMockData = false;
-
-    const quantumPuns = [
-      "Entangled in profits!",
-      "Quantum leaps in trading!",
-      "Superposition your trades!",
-      "Uncertainty in the market, certainty in gains!",
-      "Wave function collapse to profits!",
-      "Quantum tunneling through resistance!",
-      "Spooky action at a distance: instant trades!",
-      "Heisenberg's uncertainty: but your profits are certain!",
-      "Quantum computing your next move!",
-      "Entanglement: your portfolio and success!",
-      "Quantum supremacy in trading!",
-      "Decoherence? Not in my portfolio!",
-      "Quantum bits, quantum profits!",
-      "Riding the quantum wave to success!"
-    ];
-
-    const loadData = async () => {
-      const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
-      const toggleDataSourceBtn = document.getElementById('toggle-data-source');
-      const toggleLogsDataBtn = document.getElementById('toggle-logs-data');
-      const tokenWarning = document.getElementById('token-warning');
-      const logsWarning = document.getElementById('logs-warning');
-
-      if (isUsingMockData) {
-        updateUI(mockTokens);
-        toggleDataSourceBtn.textContent = 'Real Data';
-        tokenWarning.style.display = 'block';
-        tokenWarning.textContent = '> Using mock data';
-        renderGasHeatmap();
-        renderLogs();
-        return;
-      }
-
-      try {
-        const data = await fetchWithRetry(backendApiUrl);
-        console.log('Raw backend response:', data);
-        if (!Array.isArray(data) || data.length === 0) {
-          throw new Error('Invalid or empty response from backend');
-        }
-        const ethData = data.find(token => token.symbol === 'ETH');
-        if (ethData) {
-          const gasData = await fetchGasPrices();
-          ethData.gasPrice = gasData.proposeGasPrice;
-        }
-        updateUI(data);
-        toggleDataSourceBtn.textContent = 'Mock Data';
-        tokenWarning.style.display = 'none';
-        renderGasHeatmap();
-        renderLogs();
-      } catch (error) {
-        console.error('Failed to load real data:', error);
-        isUsingMockData = true;
-        updateUI(mockTokens);
-        toggleDataSourceBtn.textContent = 'Real Data';
-        tokenWarning.style.display = 'block';
-        tokenWarning.textContent = '> Using mock data due to API failure';
-        document.getElementById('live-price-header').textContent = `> Live Price: Using mock data`;
-        document.getElementById('chart-title-header').textContent = 'Mock Data';
-        document.getElementById('chart-title-modal').textContent = 'Mock Data';
-        document.getElementById('loader-tokens').style.display = 'none';
-        renderGasHeatmap();
-        renderLogs();
-      }
-
-      toggleLogsDataBtn.addEventListener('click', () => {
-        isUsingMockLogs = !isUsingMockLogs;
-        toggleLogsDataBtn.textContent = isUsingMockLogs ? 'Real Logs' : 'Mock Logs';
-        logsWarning.style.display = isUsingMockLogs ? 'block' : 'none';
-        renderLogs();
-      });
-    };
-
-    function updateUI(tokens) {
-      if (!tokens || tokens.length === 0) {
-        console.error('No tokens provided to updateUI');
-        document.getElementById('loader-tokens').textContent = '> No data available';
-        return;
-      }
-
-      document.getElementById('loader-tokens').style.display = 'none';
-
-      const tokenList = document.getElementById('token-list');
-      tokenList.innerHTML = tokens.map((token, index) => {
-        const isPositive = token.price_change_percentage_24h >= 0;
-        const symbol = `BINANCE:${token.symbol}USDT`;
-        return `
-          <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
-            <div class="flex justify-between">
-              <span>${token.name} (${token.symbol})</span>
-              <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
-            </div>
-            <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
-            <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
-            <div class="metric">Supply: ${token.circulating_supply.toLocaleString()}</div>
-            ${token.symbol === 'ETH' && token.gasPrice ? `<div class="metric">Gas: ${token.gasPrice} Gwei</div>` : ''}
-          </li>
-        `;
-      }).join('');
-
-      const profitPairs = document.getElementById('profit-pairs');
-      const sortedTokens = [...tokens].sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-      const topToken = sortedTokens[0] || mockTokens[0];
-      const bottomToken = sortedTokens[sortedTokens.length - 1] || mockTokens[1];
-      profitPairs.innerHTML = `
-        <li class="top-pair p-2 rounded">
-          <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
-          <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
-          <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
-        </li>
-        <li class="bottom-pair p-2 rounded">
-          <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
-          <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
-          <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
-        </li>
-      `;
-
-      document.getElementById('live-price-header').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol})`;
-      document.getElementById('live-price-modal').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol})`;
-
-      const topPairs = document.getElementById('top-pairs');
-      topPairs.innerHTML = tokens
-        .filter(token => token.symbol && token.symbol !== 'USDT')
-        .slice(0, 5)
-        .map(token => `<li class="p-1 rounded-md">${token.symbol}/USDT (#${token.market_cap_rank})</li>`)
-        .join('');
-
-      const uniquePun = quantumPuns[Math.floor(Math.random() * quantumPuns.length)] || 'Quantum leap to profits!';
-      const marqueeContent = [
-        ...tokens.slice(0, 5).map(token => `<span>[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
-        `<span>${uniquePun}</span>`
-      ].join('');
-      document.getElementById('ticker-marquee-header').innerHTML = marqueeContent.repeat(3);
-      document.getElementById('ticker-marquee-modal').innerHTML = marqueeContent.repeat(3);
-      document.getElementById('ticker-marquee-header').style.animationDuration = `${Math.max(80, tokens.length * 5)}s`;
-      document.getElementById('ticker-marquee-modal').style.animationDuration = `${Math.max(80, tokens.length * 5)}s`;
-
-      const topSymbol = `BINANCE:${topToken.symbol}USDT`;
-      initializeChart('chart-container-header', topSymbol, 'D');
-      initializeChart('chart-container-modal', topSymbol, 'D');
-      document.getElementById('chart-title-header').setAttribute('data-symbol', topSymbol);
-      document.getElementById('chart-title-header').textContent = topSymbol;
-      document.getElementById('chart-title-modal').setAttribute('data-symbol', topSymbol);
-      document.getElementById('chart-title-modal').textContent = topSymbol;
-
-      const ethToken = tokens.find(token => token.symbol === 'ETH');
-      if (ethToken) {
-        currentEthPrice = ethToken.current_price;
-        const gasPrice = ethToken.gasPrice || 15;
-        updateFees(gasPrice, currentEthPrice);
-      } else {
-        updateFees(15, 4000);
-      }
-      document.getElementById('fees-warning').style.display = isUsingMockData ? 'block' : 'none';
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
+          CPA.addEventListener('DOMContentLoaded', () => {
       const toggleDataSourceBtn = document.getElementById('toggle-data-source');
       const toggleIndicatorHeaderBtn = document.getElementById('toggle-indicator-header');
       const toggleIndicatorModalBtn = document.getElementById('toggle-indicator-modal');
