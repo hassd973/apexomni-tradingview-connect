@@ -6,7 +6,7 @@
   <meta name="description" content="QuantumI Dashboard: Live crypto market analytics powered by CoinMarketCap, Etherscan, and TradingView.">
   <meta name="keywords" content="crypto, dashboard, QuantumI, trading, analytics">
   <meta name="author" content="xAI">
-  <title>⚛️ QUANTUMI 🌌💰 DASHBOARD 🌟</title>
+  <title>⚛️ QUANTUMI 🌌</title>
   <link rel="icon" type="image/png" href="https://i.imgur.com/7YkZ3Xh.png">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -567,7 +567,7 @@
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
   <div id="loading-screen">
     <div class="title-box">
-      <h1 class="text-lg md:text-xl">⚛️ QUANTUMI 🌌💰 DASHBOARD 🌟</h1>
+      <h1 class="text-lg md:text-xl">⚛️ QUANTUMI 🌌</h1>
     </div>
     <div class="chart-loading">
       <div class="loader"></div>
@@ -575,13 +575,13 @@
     </div>
   </div>
   <div class="spline-bg" id="spline-bg">
-    <spline-viewer url="https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode"></spline-viewer>
+    <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
   </div>
   <div class="particles" id="particles"></div>
   <header class="w-full flex justify-center items-center">
     <div class="w-full max-w-[98vw] mx-auto px-4">
       <div class="title-box">
-        <h1 class="text-lg md:text-xl">⚛️ QUANTUMI 🌌💰 DASHBOARD 🌟</h1>
+        <h1 class="text-lg md:text-xl">⚛️ QUANTUMI 🌌</h1>
       </div>
       <p class="text-sm text-center typewriter">Live Crypto Analytics</p>
       <div class="chart-wrapper w-full">
@@ -656,7 +656,7 @@
     <div class="spline-modal-content">
       <button class="spline-fullscreen-btn" id="spline-fullscreen-btn">Fullscreen</button>
       <button class="spline-modal-close" id="spline-modal-close">Undock</button>
-      <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode"></spline-viewer>
+      <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
     </div>
   </div>
   <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
@@ -681,19 +681,38 @@
     </section>
     <section class="rounded-lg gas-heatmap-section" draggable="true">
       <div class="module-header">
-        <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">> ETH Gas Heatmap</h2>
+        <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">> ETH Gas & Fees</h2>
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
-        <div id="loader-gas" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-        <div id="gas-warning" class="data-warning" style="display: none;">> Using mock gas data due to API failure</div>
-        <canvas id="gas-heatmap-canvas"></canvas>
-        <div id="gas-heatmap-legend">
-          <div class="legend-item"><div class="legend-color" style="background: #00cc00"></div><span>Safe</span></div>
-          <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
-          <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div><span>Fast</span></div>
+        <div id="loader-gas-fees" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="gas-fees-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
+        <div class="flex flex-col gap-4">
+          <div>
+            <h3 class="text-base md:text-lg mb-2">ETH Gas Heatmap</h3>
+            <canvas id="gas-heatmap-canvas"></canvas>
+            <div id="gas-heatmap-legend">
+              <div class="legend-item"><div class="legend-color" style="background: #00cc00"></div><span>Safe</span></div>
+              <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
+              <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div><span>Fast</span></div>
+            </div>
+            <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
+          </div>
+          <div>
+            <h3 class="text-base md:text-lg mb-2">Fees</h3>
+            <ul id="fees-list" class="space-y-2 text-sm">
+              <li class="p-2 rounded">
+                <div>Transfer Fee (ETH): <span id="transfer-fee">Loading...</span> USD</div>
+              </li>
+              <li class="p-2 rounded">
+                <div>Withdraw Fee: <span id="withdraw-fee">Loading...</span> USD</div>
+              </li>
+              <li class="p-2 rounded">
+                <div>Bridge Fee: <span id="bridge-fee">Loading...</span> USD</div>
+              </li>
+            </ul>
+          </div>
         </div>
-        <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
       </div>
     </section>
     <section class="rounded-lg" draggable="true">
@@ -708,27 +727,6 @@
         </div>
         <div id="logs-warning" class="data-warning" style="display: none;">> Using mock logs due to connection issue</div>
         <ul id="log-list" class="space-y-2 text-sm"></ul>
-      </div>
-    </section>
-    <section class="rounded-lg" draggable="true">
-      <div class="module-header">
-        <h2 class="text-lg md:text-xl typewriter">> Fees</h2>
-        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
-      </div>
-      <div class="module-content">
-        <div id="loader-fees" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-        <div id="fees-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
-        <ul id="fees-list" class="space-y-2 text-sm">
-          <li class="p-2 rounded">
-            <div>Transfer Fee (ETH): <span id="transfer-fee">Loading...</span> USD</div>
-          </li>
-          <li class="p-2 rounded">
-            <div>Withdraw Fee: <span id="withdraw-fee">Loading...</span> USD</div>
-          </li>
-          <li class="p-2 rounded">
-            <div>Bridge Fee: <span id="bridge-fee">Loading...</span> USD</div>
-          </li>
-        </ul>
       </div>
     </section>
   </main>
@@ -1050,13 +1048,13 @@
     // Render ETH gas fee heatmap and update fees
     let currentEthPrice = 0;
 
-    async function renderGasHeatmap() {
+    async function renderGasHeatmapAndFees() {
       const canvas = document.getElementById('gas-heatmap-canvas');
       const gasList = document.getElementById('gas-heatmap-list');
-      const loader = document.getElementById('loader-gas');
-      const gasWarning = document.getElementById('gas-warning');
-      if (!canvas || !gasList || !loader || !gasWarning) {
-        console.error('[ERROR] Gas heatmap elements not found:', { canvas, gasList, loader, gasWarning });
+      const loader = document.getElementById('loader-gas-fees');
+      const gasFeesWarning = document.getElementById('gas-fees-warning');
+      if (!canvas || !gasList || !loader || !gasFeesWarning) {
+        console.error('[ERROR] Gas heatmap or fees elements not found');
         return;
       }
 
@@ -1094,16 +1092,16 @@
         }
       };
 
-      const updateHeatmap = async () => {
+      const updateHeatmapAndFees = async () => {
         try {
           loader.style.display = 'block';
           gasList.innerHTML = '';
-          gasWarning.style.display = 'none';
+          gasFeesWarning.style.display = 'none';
 
           const gasData = await fetchGasPrices();
           const isMockGas = gasData.lastBlock === 'N/A' && gasData.safeGasPrice === 10;
           if (isMockGas) {
-            gasWarning.style.display = 'block';
+            gasFeesWarning.style.display = 'block';
           }
 
           gasHistory.push(gasData);
@@ -1165,17 +1163,17 @@
           }
 
           loader.style.display = 'none';
-          console.log('[DEBUG] Gas heatmap updated:', { gasHistoryLength: gasHistory.length, latestGasData: gasData, isMockGas });
+          console.log('[DEBUG] Gas heatmap and fees updated:', { gasHistoryLength: gasHistory.length, latestGasData: gasData, isMockGas });
         } catch (error) {
-          console.error('[ERROR] Failed to update gas heatmap:', error);
-          loader.textContent = '> Error loading gas heatmap';
+          console.error('[ERROR] Failed to update gas heatmap and fees:', error);
+          loader.textContent = '> Error loading gas heatmap and fees';
           loader.style.display = 'block';
-          gasWarning.style.display = 'block';
+          gasFeesWarning.style.display = 'block';
         }
       };
 
-      updateHeatmap();
-      setInterval(updateHeatmap, 60000);
+      updateHeatmapAndFees();
+      setInterval(updateHeatmapAndFees, 60000);
     }
 
     // Update fees function
@@ -1192,7 +1190,7 @@
       const bridgeFeeUsd = bridgeFeeEth * ethPrice;
       document.getElementById('bridge-fee').textContent = bridgeFeeUsd.toFixed(2);
 
-      document.getElementById('loader-fees').style.display = 'none';
+      document.getElementById('loader-gas-fees').style.display = 'none';
     }
 
     // Render logs
@@ -1264,6 +1262,7 @@
       const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
       const tokenWarning = document.getElementById('token-warning');
       const logsWarning = document.getElementById('logs-warning');
+      const gasFeesWarning = document.getElementById('gas-fees-warning');
 
       try {
         const data = await fetchWithRetry(backendApiUrl);
@@ -1278,7 +1277,7 @@
         }
         updateUI(data);
         tokenWarning.style.display = 'none';
-        renderGasHeatmap();
+        renderGasHeatmapAndFees();
         renderLogs();
       } catch (error) {
         console.error('Failed to load real data:', error);
@@ -1289,7 +1288,7 @@
         document.getElementById('chart-title-header').textContent = 'Mock Data';
         document.getElementById('chart-title-modal').textContent = 'Mock Data';
         document.getElementById('loader-tokens').style.display = 'none';
-        renderGasHeatmap();
+        renderGasHeatmapAndFees();
         renderLogs();
       }
 
@@ -1382,7 +1381,7 @@
       } else {
         updateFees(15, 4000);
       }
-      document.getElementById('fees-warning').style.display = 'none';
+      document.getElementById('gas-fees-warning').style.display = 'none';
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1509,7 +1508,7 @@
             toggleBackgroundDockBtn.textContent = 'Dock Background';
           }, 1000);
           const splineViewer = document.getElementById('spline-viewer-modal');
-          splineViewer.setAttribute('url', 'https://prod.spline.design/uQ3gwQojoWDY4Abr/scene.splinecode');
+          splineViewer.setAttribute('url', 'https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode');
         });
       }
 
