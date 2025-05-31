@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="QuantumI Dashboard: Live crypto market analytics powered by CoinMarketCap, Etherscan, and TradingView.">
+  <meta name="description" content="QuantumI Dashboard: Live crypto market analytics powered by CoinGecko, Etherscan, and TradingView.">
   <meta name="keywords" content="crypto, dashboard, QuantumI, trading, analytics">
   <meta name="author" content="xAI">
   <title>⚛️ QUANTUMI 🌌</title>
@@ -15,6 +15,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet">
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js"></script>
   <script src="https://s3.tradingview.com/tv.js" async></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
     body {
       font-family: 'Inconsolata', monospace;
@@ -449,7 +452,7 @@
       overflow: hidden;
       white-space: nowrap;
       border-right: 2px solid #87CEEB;
-      animation: typing 4s steps(30, end), blink-caret 0.75s step-end infinite;
+      animation: typing 4s steps(30нивер, end), blink-caret 0.75s step-end infinite;
     }
     @keyframes typing {
       from { width: 0; }
@@ -518,7 +521,7 @@
       box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
     }
     @media (min-width: 640px) {
-      #gas-heatmap-canvas { height: 25vh; }
+      #gas ​​#gas-heatmap-canvas { height: 25vh; }
     }
     #gas-heatmap-legend {
       display: flex;
@@ -643,7 +646,7 @@
     <div class="nav-menu-content">
       <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-16 h-16 mb-4">
       <h2 class="text-xl mb-2">QuantumI Dashboard</h2>
-      <p>Real-time crypto analytics with CoinMarketCap, Etherscan, and TradingView integration.</p>
+      <p>Real-time crypto analytics with CoinGecko, Etherscan, and TradingView integration.</p>
     </div>
   </div>
   <div id="loading-screen">
@@ -664,7 +667,7 @@
       <div class="title-box">
         <h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
       </div>
-      <p class="text-base text-center">Real-time cryptocurrency market data and analytics powered by CoinMarketCap, Etherscan, and TradingView.</p>
+      <p class="text-base text-center">Real-time cryptocurrency market data and analytics powered by CoinGecko, Etherscan, and TradingView.</p>
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
           <div class="flex flex-wrap space-x-2 gap-2">
@@ -818,13 +821,13 @@
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
-        <svg id="btc-hash-canvas" class="btc-hash-svg" width="100%" height="50vh"></svg>
+        <div id="btc-hash-canvas" class="btc-hash-svg" style="width: 100%; height: 50vh;"></div>
         <div id="btc-legend">
           <span id="btc-price">Price: Loading...</span>
           <span id="btc-hash">Hash: Loading...</span>
           <span id="btc-time">Time: Loading...</span>
         </div>
-        <button id="snapshot-btn" class="mt-4">Snapshot to FBX</button>
+        <button id="snapshot-btn" class="mt-4">Snapshot to OBJ</button>
       </div>
     </section>
   </div>
@@ -840,7 +843,7 @@
           <ul id="system-logs-list" class="space-y-2">
             <li class="p-2 rounded"><div>System initialized successfully</div><div class="metric">Time: 13:14:01</div></li>
             <li class="p-2 rounded"><div>API connection established</div><div class="metric">Time: 13:14:05</div></li>
-            <li class="p-2 rounded"><div>Data feed active: CoinMarketCap</div><div class="metric">Time: 13:14:10</div></li>
+            <li class="p-2 rounded"><div>Data feed active: CoinGecko</div><div class="metric">Time: 13:14:10</div></li>
             <li class="p-2 rounded"><div>TradingView widget loaded</div><div class="metric">Time: 13:14:15</div></li>
           </ul>
         </div>
@@ -854,7 +857,7 @@
     </div>
   </div>
   <footer class="text-center text-gray-500 text-sm">
-    <p class="typewriter">Powered by CoinMarketCap, Etherscan & TradingView</p>
+    <p class="typewriter">Powered by CoinGecko, Etherscan & TradingView</p>
   </footer>
   <script>
     const navMenuToggle = document.getElementById('nav-menu-toggle');
@@ -1055,15 +1058,11 @@
       setTimeout(initWidget, 300);
     }
 
-    async function fetchWithRetry(url, options = {}) {
-      const { retries = 3, delay = 1000, ...fetchOptions } = options;
+    async function fetchWithRetry(url, retries = 3, delay = 1000) {
       for (let i = 0; i <= retries; i++) {
         try {
-          const response = await fetch(url, fetchOptions);
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status}, Text: ${errorText}`);
-          }
+          const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit', headers: { 'Accept': 'application/json' } });
+          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}, Text: ${response.statusText}`);
           return await response.json();
         } catch (error) {
           if (i === retries) throw error;
@@ -1074,13 +1073,27 @@
       }
     }
 
+    async function fetchBTCPrice() {
+      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd';
+      try {
+        const data = await fetchWithRetry(url);
+        const price = data.bitcoin.usd;
+        document.getElementById('live-price-header').textContent = `> Live Price: $${price.toLocaleString()} (BTC)`;
+        document.getElementById('live-price-modal').textContent = `> Live Price: $${price.toLocaleString()} (BTC)`;
+        return price;
+      } catch (error) {
+        console.error('Failed to fetch BTC price from CoinGecko:', error);
+        document.getElementById('live-price-header').textContent = `> Live Price: $60,000 (BTC, Mock)`;
+        document.getElementById('live-price-modal').textContent = `> Live Price: $60,000 (BTC, Mock)`;
+        return 60000; // Mock price
+      }
+    }
+
     async function fetchGasPrices() {
-      const apiKey = 'VZFDUWB3YGQ1YCDKTCU1D6DDSS'; // Etherscan API key (assumed valid)
+      const apiKey = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T'; // Verify this key is valid
       const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
       try {
-        const data = await fetchWithRetry(url, {
-          headers: { 'Accept': 'application/json' }
-        });
+        const data = await fetchWithRetry(url);
         if (data.status === '1' && data.result) {
           return {
             safeGasPrice: parseInt(data.result.SafeGasPrice) || 10,
@@ -1261,35 +1274,61 @@
       }
     }
 
-    const btcCanvas = document.getElementById('btc-hash-canvas');
+    let scene, camera, renderer, tube, controls;
+    let points = [];
     let btcPriceHistory = [];
-    let hashStack = [];
 
-    async function fetchBTCPrice() {
-      const apiKey = 'YOUR_VALID_CMC_API_KEY'; // Replace with a valid CoinMarketCap API key
-      const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC&convert=USD&CMC_PRO_API_KEY=${apiKey}`;
-      try {
-        const data = await fetchWithRetry(url, {
-          headers: { 'Accept': 'application/json' }
-        });
-        return data.data.BTC.quote.USD.price;
-      } catch (error) {
-        console.error('Failed to fetch BTC price from CoinMarketCap:', error);
-        // Alternative: Use CoinGecko API (free tier) if CoinMarketCap key is unavailable
-        /*
-        const coingeckoUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd';
-        try {
-          const cgData = await fetchWithRetry(coingeckoUrl, {
-            headers: { 'Accept': 'application/json' }
-          });
-          return cgData.bitcoin.usd;
-        } catch (cgError) {
-          console.error('Failed to fetch BTC price from CoinGecko:', cgError);
-          return 60000; // Fallback to mock data
-        }
-        */
-        return 60000; // Fallback to mock data
+    function init3D() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      const container = document.getElementById('btc-hash-canvas');
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+      camera.position.set(0, 0, 30);
+      camera.lookAt(0, 0, 0);
+      const axesHelper = new THREE.AxesHelper(10);
+      scene.add(axesHelper);
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+
+      window.addEventListener('resize', () => {
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        camera.aspect = container.clientWidth / container.clientHeight;
+        camera.updateProjectionMatrix();
+        renderer.render(scene, camera);
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
       }
+      animate();
+    }
+
+    function hashToPoints(hash, numPoints = 10) {
+      const points = [];
+      for (let i = 0; i < numPoints; i++) {
+        const offset = i * 6 % hash.length;
+        const x = (parseInt(hash.substr(offset, 2), 16) / 255) * 20 - 10;
+        const y = (parseInt(hash.substr((offset + 2) % hash.length, 2), 16) / 255) * 20 - 10;
+        const z = (parseInt(hash.substr((offset + 4) % hash.length, 2), 16) / 255) * 20 - 10;
+        points.push(new THREE.Vector3(x, y, z));
+      }
+      return points;
+    }
+
+    function update3DShape() {
+      if (points.length < 2) return;
+      if (tube) scene.remove(tube);
+      const curve = new THREE.CatmullRomCurve3(points);
+      const geometry = new THREE.TubeGeometry(curve, 64, 0.5, 8, false);
+      const material = new THREE.MeshBasicMaterial({ color: 0x87CEEB });
+      tube = new THREE.Mesh(geometry, material);
+      scene.add(tube);
+      renderer.render(scene, camera);
     }
 
     function generateHashFromPrice(price) {
@@ -1301,83 +1340,37 @@
       return hash;
     }
 
-    function drawBTCHash(hash, opacity = 1, price, timestamp) {
-      const width = btcCanvas.clientWidth;
-      const height = btcCanvas.clientHeight;
-      const colors = ['#87CEEB', '#ffbb33', '#ff0000'];
-
-      for (let i = 0; i < hash.length; i += 4) {
-        const xVal = parseInt(hash[i] + hash[i+1], 16);
-        const yVal = parseInt(hash[i+2] + hash[i+3], 16);
-        const x = (xVal / 255) * width;
-        const y = (yVal / 255) * height;
-        const z = Math.sin(i / hash.length * Math.PI) * 20 + 10;
-
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', x);
-        circle.setAttribute('cy', y);
-        circle.setAttribute('r', z);
-        circle.setAttribute('fill', colors[i % colors.length]);
-        circle.setAttribute('opacity', opacity);
-        circle.setAttribute('data-tooltip', `Price: $${price.toLocaleString()}\nX: ${x.toFixed(2)}, Y: ${y.toFixed(2)}, Z: ${z.toFixed(2)}\nTime: ${new Date(timestamp).toLocaleTimeString()}`);
-        btcCanvas.appendChild(circle);
-      }
+    async function updateBTCHash() {
+      const price = await fetchBTCPrice();
+      const timestamp = Date.now();
+      btcPriceHistory.push(price);
+      if (btcPriceHistory.length > 10) btcPriceHistory.shift();
+      const avgPrice = btcPriceHistory.reduce((a, b) => a + b, 0) / btcPriceHistory.length;
+      const hash = generateHashFromPrice(avgPrice);
+      const newPoints = hashToPoints(hash);
+      points = points.concat(newPoints);
+      if (points.length > 1000) points = points.slice(-1000);
+      update3DShape();
 
       document.getElementById('btc-price').textContent = `Price: $${price.toLocaleString()}`;
       document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
       document.getElementById('btc-time').textContent = `Time: ${new Date(timestamp).toLocaleTimeString()}`;
     }
 
-    async function updateBTCHash() {
-      const price = await fetchBTCPrice();
-      const timestamp = Date.now();
-      btcPriceHistory.push(price);
-      if (btcPriceHistory.length > 10) btcPriceHistory.shift();
-
-      const avgPrice = btcPriceHistory.reduce((a, b) => a + b, 0) / btcPriceHistory.length;
-      const hash = generateHashFromPrice(avgPrice);
-      hashStack.push({ hash, price: avgPrice, timestamp });
-      if (hashStack.length > 5) hashStack.shift();
-
-      btcCanvas.innerHTML = '';
-      hashStack.forEach((item, index) => {
-        const opacity = 1 - (index * 0.2);
-        drawBTCHash(item.hash, opacity, item.price, item.timestamp);
-      });
-    }
-
-    function snapshotToFBX() {
-      let fbxData = 'o\n';
-      hashStack.forEach((item, index) => {
-        const opacity = 1 - (index * 0.2);
-        const hash = item.hash;
-        const price = item.price;
-        const timestamp = item.timestamp;
-        const colors = ['#87CEEB', '#ffbb33', '#ff0000'];
-        for (let i = 0; i < hash.length; i += 4) {
-          const xVal = parseInt(hash[i] + hash[i+1], 16);
-          const yVal = parseInt(hash[i+2] + hash[i+3], 16);
-          const x = (xVal / 255) * 100 - 50;
-          const y = (yVal / 255) * 100 - 50;
-          const z = Math.sin(i / hash.length * Math.PI) * 20 + 10 - index * 5;
-          const color = colors[i % colors.length];
-          fbxData += `v ${x} ${y} ${z}\n`;
-          fbxData += `c ${color} ${opacity}\n`;
-        }
-      });
-      const blob = new Blob([fbxData], { type: 'application/octet-stream' });
+    function snapshotToOBJ() {
+      if (!tube) return;
+      const exporter = new THREE.OBJExporter();
+      const result = exporter.parse(tube);
+      const blob = new Blob([result], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'btc_hash_visualization.fbx';
+      a.download = 'btc_3d_visualization.obj';
       a.click();
       URL.revokeObjectURL(url);
     }
 
-    document.getElementById('snapshot-btn').addEventListener('click', snapshotToFBX);
-    drawBTCHash('a3f29c97b4e8c1d65e2f13a79d0b45ef1122a998ee8833b57f91de3357bbcab1', 1, 60000, Date.now());
-    window.addEventListener('resize', () => updateBTCHash());
-    setInterval(updateBTCHash, 60000);
+    document.getElementById('snapshot-btn').addEventListener('click', snapshotToOBJ);
 
     const quantumPuns = [
       "Entangled in profits!", "Quantum leaps in trading!", "Superposition your trades!",
@@ -1396,14 +1389,13 @@
       const gasFeesWarning = document.getElementById('gas-fees-warning');
 
       try {
-        const data = await fetchWithRetry(backendApiUrl, {
-          headers: { 'Accept': 'application/json' }
-        });
+        const data = await fetchWithRetry(backendApiUrl);
         if (!Array.isArray(data) || data.length === 0) throw new Error('Invalid or empty response from backend');
         const ethData = data.find(token => token.symbol === 'ETH');
         if (ethData) {
           const gasData = await fetchGasPrices();
           ethData.gasPrice = gasData.proposeGasPrice;
+          currentEthPrice = ethData.current_price;
         }
         updateUI(data);
         tokenWarning.style.display = 'none';
@@ -1473,9 +1465,6 @@
         </li>
       `;
 
-      document.getElementById('live-price-header').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol})`;
-      document.getElementById('live-price-modal').textContent = `> Live Price: $${topToken.current_price.toLocaleString()} (${topToken.symbol})`;
-
       const topPairs = document.getElementById('top-pairs');
       topPairs.innerHTML = tokens
         .filter(token => token.symbol && token.symbol !== 'USDT')
@@ -1526,6 +1515,8 @@
       setupDragAndDrop();
       setupModuleToggles();
       loadData();
+      init3D();
+      updateBTCHash();
 
       toggleIndicatorHeaderBtn.addEventListener('click', () => {
         isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
@@ -1656,6 +1647,8 @@
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
         document.addEventListener('msfullscreenchange', handleFullscreenChange);
       }
+
+      setInterval(updateBTCHash, 300000); // Update every 5 minutes
     });
 
     const mockTokens = [
