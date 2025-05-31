@@ -963,7 +963,7 @@
             if (dropTarget && dropTarget !== draggedModule) {
               const allModules = Array.from(moduleGrid.children);
               const draggedIndex = allModules.indexOf(draggedModule);
-              const targetIndex = allModules.indexOf(dropTarget);
+              const targetIndex =AllModules.indexOf(dropTarget);
               if (draggedIndex < targetIndex) {
                 moduleGrid.insertBefore(draggedModule, dropTarget.nextSibling);
               } else {
@@ -1071,7 +1071,7 @@
     }
 
     async function fetchGasPrices() {
-      const apiKey = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
+      const apiKey = 'VZFDUWB3YGQ1YCDKTCU1D6DDSS'; // Updated Etherscan API key
       const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
       try {
         const data = await fetchWithRetry(url);
@@ -1086,6 +1086,7 @@
         } else throw new Error('Invalid gas price data');
       } catch (error) {
         console.error('Failed to fetch gas prices:', error);
+        document.getElementById('gas-fees-warning').style.display = 'block';
         return { safeGasPrice: 10, proposeGasPrice: 15, fastGasPrice: 20, lastBlock: 'N/A', timestamp: Date.now() };
       }
     }
@@ -1260,14 +1261,19 @@
     let hashStack = [];
 
     async function fetchBTCPrice() {
-      const apiKey = 'bef090eb-323d-4ae8-86dd-266236262f19';
+      const apiKey = 'YOUR_VALID_CMC_API_KEY'; // Replace with a valid CoinMarketCap API key
       const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC&convert=USD&CMC_PRO_API_KEY=${apiKey}`;
       try {
         const data = await fetchWithRetry(url);
-        return data.data.BTC.quote.USD.price;
+        const price = data.data.BTC.quote.USD.price;
+        document.getElementById('live-price-header').textContent = `> Live Price: $${price.toLocaleString()} (BTC) - Updated: ${new Date().toLocaleTimeString()}`;
+        document.getElementById('live-price-modal').textContent = `> Live Price: $${price.toLocaleString()} (BTC) - Updated: ${new Date().toLocaleTimeString()}`;
+        return price;
       } catch (error) {
         console.error('Failed to fetch BTC price:', error);
-        return 60000;
+        document.getElementById('live-price-header').textContent = `> Live Price: Error fetching data`;
+        document.getElementById('live-price-modal').textContent = `> Live Price: Error fetching data`;
+        return 60000; // Mock fallback
       }
     }
 
