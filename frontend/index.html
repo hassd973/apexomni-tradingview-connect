@@ -228,10 +228,11 @@
       border-radius: 6px;
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 0 5px #87CEEB;
     }
     .spline-modal-close:hover {
       background-color: #ffbb33;
-      box-shadow: 0 0 8px #00BFFF;
+      box-shadow: 0 0 5px #ffbb33, 0 0 10px #ffbb33, 0 0 15px #ffbb33;
     }
     .spline-fullscreen-btn {
       position: absolute;
@@ -244,10 +245,11 @@
       border-radius: 6px;
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 0 5px #87CEEB;
     }
     .spline-fullscreen-btn:hover {
       background-color: #ffbb33;
-      box-shadow: 0 0 8px #00BFFF;
+      box-shadow: 0 0 5px #ffbb33, 0 0 10px #ffbb33, 0 0 15px #ffbb33;
     }
     section {
       background: rgba(35, 46, 46, 0.1);
@@ -399,7 +401,7 @@
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
-    button, #chat-send, #toggle-indicator-header, #toggle-indicator-modal, #toggle-background, #toggle-background-dock {
+    .glow-button {
       background-color: #87CEEB;
       color: #1e2727;
       border: 1px solid rgba(135, 206, 235, 0.3);
@@ -407,14 +409,29 @@
       border-radius: 6px;
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 0 5px #87CEEB;
     }
-    button:hover, #chat-send:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-background:hover, #toggle-background-dock:hover {
+    .glow-button:hover {
       background-color: #ffbb33;
-      box-shadow: 0 0 8px #ffbb33;
+      box-shadow: 0 0 5px #ffbb33, 0 0 10px #ffbb33, 0 0 15px #ffbb33;
+    }
+    .timeframe-btn {
+      background-color: #87CEEB;
+      color: #1e2727;
+      border: 1px solid rgba(135, 206, 235, 0.3);
+      font-size: 0.875rem;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 0 5px #87CEEB;
+    }
+    .timeframe-btn:hover {
+      background-color: #ffbb33;
+      box-shadow: 0 0 5px #ffbb33, 0 0 10px #ffbb33, 0 0 15px #ffbb33;
     }
     .timeframe-btn.active {
       background-color: #ffbb33;
-      box-shadow: 0 0 8px #ffbb33, 0 0 12px rgba(255, 187, 51, 0.6);
+      box-shadow: 0 0 10px #ffbb33, 0 0 15px #ffbb33, 0 0 20px #ffbb33;
       border: 1px solid #ffbb33;
     }
     #chat-input {
@@ -521,7 +538,7 @@
       box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
     }
     @media (min-width: 640px) {
-      #gas #gas-heatmap-canvas { height: 25vh; }
+      #gas-heatmap-canvas { height: 25vh; }
     }
     #gas-heatmap-legend {
       display: flex;
@@ -584,7 +601,7 @@
       #chat-input {
         font-size: 0.75rem;
       }
-      #chat-send {
+      .glow-button {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
       }
@@ -617,6 +634,11 @@
       padding: 0.5rem;
       cursor: pointer;
       z-index: 101;
+      box-shadow: 0 0 5px #87CEEB;
+    }
+    .nav-menu-toggle:hover {
+      background-color: #ffbb33;
+      box-shadow: 0 0 5px #ffbb33, 0 0 10px #ffbb33, 0 0 15px #ffbb33;
     }
     .nav-menu-close {
       position: absolute;
@@ -640,13 +662,21 @@
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
-  <button class="nav-menu-toggle" id="nav-menu-toggle">☰</button>
+  <button class="nav-menu-toggle glow-button" id="nav-menu-toggle">☰</button>
   <div class="nav-menu" id="nav-menu">
     <button class="nav-menu-close" id="nav-menu-close">×</button>
     <div class="nav-menu-content">
       <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-16 h-16 mb-4">
       <h2 class="text-xl mb-2">QuantumI Dashboard</h2>
       <p>Real-time crypto analytics with CoinGecko, Etherscan, and TradingView integration.</p>
+      <ul class="mt-4">
+        <li><a href="#chart-section" class="text-blue-300 hover:text-yellow-300">Chart</a></li>
+        <li><a href="#tokens-section" class="text-blue-300 hover:text-yellow-300">Tokens</a></li>
+        <li><a href="#gas-fees-section" class="text-blue-300 hover:text-yellow-300">Gas & Fees</a></li>
+        <li><a href="#logs-section" class="text-blue-300 hover:text-yellow-300">Live Logs</a></li>
+        <li><a href="#btc-hash-section" class="text-blue-300 hover:text-yellow-300">BTC Hash</a></li>
+        <li><a href="#chat-logs-section" class="text-blue-300 hover:text-yellow-300">System Logs</a></li>
+      </ul>
     </div>
   </div>
   <div id="loading-screen">
@@ -662,7 +692,7 @@
     <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
   </div>
   <div class="particles" id="particles"></div>
-  <header class="w-full flex justify-center items-center">
+  <header id="chart-section" class="w-full flex justify-center items-center">
     <div class="w-full max-w-[98vw] mx-auto px-4">
       <div class="title-box">
         <h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
@@ -671,17 +701,17 @@
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
           <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn" data-interval="1" data-tooltip="1-minute chart">1M</button>
-            <button id="header-timeframe-5min" class="timeframe-btn" data-interval="5" data-tooltip="5-minute chart">5M</button>
-            <button id="header-timeframe-15min" class="timeframe-btn" data-interval="15" data-tooltip="15-minute chart">15M</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn" data-interval="60" data-tooltip="1-hour chart">1H</button>
-            <button id="header-timeframe-1d" class="timeframe-btn active" data-interval="D" data-tooltip="Daily chart">1D</button>
+            <button class="timeframe-btn" id="header-timeframe-1min" data-interval="1" data-tooltip="1-minute chart">1M</button>
+            <button class="timeframe-btn" id="header-timeframe-5min" data-interval="5" data-tooltip="5-minute chart">5M</button>
+            <button class="timeframe-btn" id="header-timeframe-15min" data-interval="15" data-tooltip="15-minute chart">15M</button>
+            <button class="timeframe-btn" id="header-timeframe-1hr" data-interval="60" data-tooltip="1-hour chart">1H</button>
+            <button class="timeframe-btn active" id="header-timeframe-1d" data-interval="D" data-tooltip="Daily chart">1D</button>
           </div>
           <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="toggle-indicator-header" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
-            <button id="toggle-sticky-header" data-tooltip="Open chart in modal">Dock Chart</button>
-            <button id="toggle-background" data-tooltip="Show background in full screen">Show Background</button>
-            <button id="toggle-background-dock" data-tooltip="Dock background in modal">Dock Background</button>
+            <button class="glow-button" id="toggle-indicator-header" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
+            <button class="glow-button" id="toggle-sticky-header" data-tooltip="Open chart in modal">Dock Chart</button>
+            <button class="glow-button" id="toggle-background" data-tooltip="Show background in full screen">Show Background</button>
+            <button class="glow-button" id="toggle-background-dock" data-tooltip="Dock background in modal">Dock Background</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
@@ -707,15 +737,15 @@
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
           <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn" data-interval="1" data-tooltip="1-minute chart">1M</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn" data-interval="5" data-tooltip="5-minute chart">5M</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn" data-interval="15" data-tooltip="15-minute chart">15M</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn" data-interval="60" data-tooltip="1-hour chart">1H</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn active" data-interval="D" data-tooltip="Daily chart">1D</button>
+            <button class="timeframe-btn" id="modal-timeframe-1min" data-interval="1" data-tooltip="1-minute chart">1M</button>
+            <button class="timeframe-btn" id="modal-timeframe-5min" data-interval="5" data-tooltip="5-minute chart">5M</button>
+            <button class="timeframe-btn" id="modal-timeframe-15min" data-interval="15" data-tooltip="15-minute chart">15M</button>
+            <button class="timeframe-btn" id="modal-timeframe-1hr" data-interval="60" data-tooltip="1-hour chart">1H</button>
+            <button class="timeframe-btn active" id="modal-timeframe-1d" data-interval="D" data-tooltip="Daily chart">1D</button>
           </div>
           <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="toggle-indicator-modal" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
-            <button id="toggle-sticky-modal" data-tooltip="Close chart modal">Undock Chart</button>
+            <button class="glow-button" id="toggle-indicator-modal" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
+            <button class="glow-button" id="toggle-sticky-modal" data-tooltip="Close chart modal">Undock Chart</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
@@ -744,7 +774,7 @@
     </div>
   </div>
   <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
-    <section class="rounded-lg" draggable="true">
+    <section id="tokens-section" class="rounded-lg" draggable="true">
       <div class="module-header">
         <h2 class="text-lg md:text-xl typewriter">> Tokens</h2>
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
@@ -763,7 +793,7 @@
         </div>
       </div>
     </section>
-    <section class="rounded-lg gas-heatmap-section" draggable="true">
+    <section id="gas-fees-section" class="rounded-lg gas-heatmap-section" draggable="true">
       <div class="module-header">
         <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">> ETH Gas & Fees</h2>
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
@@ -799,7 +829,7 @@
         </div>
       </div>
     </section>
-    <section class="rounded-lg" draggable="true">
+    <section id="logs-section" class="rounded-lg" draggable="true">
       <div class="module-header">
         <h2 class="text-lg md:text-xl typewriter">> Live Logs</h2>
         <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
@@ -807,14 +837,14 @@
       <div class="module-content">
         <div class="flex justify-between items-center mb-2">
           <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-          <button id="toggle-logs-data" data-tooltip="Switch log data source">Real Logs</button>
+          <button class="glow-button" id="toggle-logs-data" data-tooltip="Switch log data source">Real Logs</button>
         </div>
         <div id="logs-warning" class="data-warning" style="display: none;">> Using mock logs due to connection issue</div>
         <ul id="log-list" class="space-y-2 text-sm"></ul>
       </div>
     </section>
   </main>
-  <div class="btc-hash-container">
+  <div class="btc-hash-container" id="btc-hash-section">
     <section class="rounded-lg">
       <div class="module-header">
         <h2 class="text-lg md:text-xl sixtyfour-font">> BTC Hash Visualization</h2>
@@ -827,12 +857,12 @@
           <span id="btc-hash">Hash: Loading...</span>
           <span id="btc-time">Time: Loading...</span>
         </div>
-        <button id="toggle-events" class="mt-2">Show Events</button>
-        <button id="snapshot-btn" class="mt-2">Snapshot to OBJ</button>
+        <button class="glow-button mt-2" id="toggle-events">Show Events</button>
+        <button class="glow-button mt-2" id="snapshot-btn">Snapshot to OBJ</button>
       </div>
     </section>
   </div>
-  <div class="chat-logs-container">
+  <div class="chat-logs-container" id="chat-logs-section">
     <div class="module-header">
       <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
       <button class="toggle-module-btn" data-tooltip="Toggle visibility">▼</button>
@@ -853,7 +883,7 @@
       <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm"></div>
       <div class="mt-4 flex flex-col sm:flex-row gap-2">
         <input id="chat-input" type="text" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
-        <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message" data-tooltip="Send message">Send</button>
+        <button class="glow-button" id="chat-send" aria-label="Send chat message" data-tooltip="Send message">Send</button>
       </div>
     </div>
   </div>
@@ -1290,6 +1320,16 @@
       if (logList.children.length > 10) logList.removeChild(logList.lastChild);
     }
 
+    function getColorFromHash(hash) {
+      let hashValue = 0;
+      for (let i = 0; i < hash.length; i++) {
+        hashValue = (hashValue << 5) - hashValue + hash.charCodeAt(i);
+        hashValue |= 0;
+      }
+      const hue = Math.abs(hashValue) % 360;
+      return new THREE.Color(`hsl(${hue}, 100%, 50%)`);
+    }
+
     function init3D() {
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -1305,12 +1345,18 @@
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
 
-      // Initialize with mock data
+      const ambientLight = new THREE.AmbientLight(0x404040);
+      scene.add(ambientLight);
+      const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+      pointLight.position.set(10, 10, 10);
+      scene.add(pointLight);
+
       const mockPrice = 60000;
       const mockHash = generateHashFromPrice(mockPrice);
+      const initialColor = getColorFromHash(mockHash);
       const initialPoints = hashToPoints(mockHash);
       points = initialPoints;
-      update3DShape();
+      update3DShape(initialColor);
       addSystemLog('Initialized BTC Hash with mock data');
 
       window.addEventListener('resize', () => {
@@ -1340,12 +1386,18 @@
       return points;
     }
 
-    function update3DShape() {
+    function update3DShape(color) {
       if (points.length < 2) return;
       if (tube) scene.remove(tube);
       const curve = new THREE.CatmullRomCurve3(points);
       const geometry = new THREE.TubeGeometry(curve, 64, 0.5, 8, false);
-      const material = new THREE.MeshBasicMaterial({ color: 0x87CEEB });
+      const material = new THREE.MeshPhongMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.8,
+        emissive: color,
+        emissiveIntensity: 0.2
+      });
       tube = new THREE.Mesh(geometry, material);
       scene.add(tube);
       renderer.render(scene, camera);
@@ -1379,6 +1431,7 @@
       if (btcPriceHistory.length > 10) btcPriceHistory.shift();
       const avgPrice = btcPriceHistory.reduce((a, b) => a + b, 0) / btcPriceHistory.length;
       const hash = generateHashFromPrice(avgPrice);
+      const color = getColorFromHash(hash);
       const newPoints = hashToPoints(hash);
       points = points.concat(newPoints);
       if (points.length > 1000) points = points.slice(-1000);
@@ -1388,7 +1441,7 @@
         scene.add(marker);
         markers.push(marker);
       }
-      update3DShape();
+      update3DShape(color);
 
       document.getElementById('btc-price').textContent = `Price: $${price.toLocaleString()}`;
       document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
