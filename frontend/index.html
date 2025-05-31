@@ -7,7 +7,7 @@
   <meta name="keywords" content="crypto, dashboard, QuantumI, trading, analytics">
   <meta name="author" content="xAI">
   <title>⚛️ QUANTUMI 🌌</title>
-  <link rel="icon" type="image/png" href="https://example.com/q-logo.png">
+  <link rel="icon" type="image/png" href="https://i.postimg.cc/R6HKW38z/q-logo.png">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -407,11 +407,11 @@
     }
     button:hover, #chat-send:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-background:hover, #toggle-background-dock:hover {
       background-color: #ffbb33;
-      box-shadow: 0 0 8px #00BFFF;
+      box-shadow: 0 0 8px #ffbb33;
     }
     .timeframe-btn.active {
-      background-color: #87CEEB;
-      box-shadow: 0 0 8px #00BFFF, 0 0 12px rgba(0, 191, 255, 0.6);
+      background-color: #ffbb33;
+      box-shadow: 0 0 8px #ffbb33, 0 0 12px rgba(255, 187, 51, 0.6);
       border: 1px solid #ffbb33;
     }
     #chat-input {
@@ -586,9 +586,66 @@
         padding: 0.25rem 0.5rem;
       }
     }
+    .nav-menu {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 250px;
+      height: 100%;
+      background: rgba(35, 46, 46, 0.9);
+      z-index: 100;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    .nav-menu.active {
+      transform: translateX(0);
+    }
+    .nav-menu-content {
+      padding: 2rem;
+      color: #e0f7fa;
+    }
+    .nav-menu-toggle {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      background: #87CEEB;
+      color: #1e2727;
+      border: none;
+      padding: 0.5rem;
+      cursor: pointer;
+      z-index: 101;
+    }
+    .nav-menu-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: none;
+      border: none;
+      color: #e0f7fa;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    #btc-legend {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      background: rgba(35, 46, 46, 0.2);
+      padding: 0.5rem;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
+  <button class="nav-menu-toggle" id="nav-menu-toggle">☰</button>
+  <div class="nav-menu" id="nav-menu">
+    <button class="nav-menu-close" id="nav-menu-close">×</button>
+    <div class="nav-menu-content">
+      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-16 h-16 mb-4">
+      <h2 class="text-xl mb-2">QuantumI Dashboard</h2>
+      <p>Real-time crypto analytics with CoinMarketCap, Etherscan, and TradingView integration.</p>
+    </div>
+  </div>
   <div id="loading-screen">
     <div class="title-box">
       <h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
@@ -762,6 +819,12 @@
       </div>
       <div class="module-content">
         <svg id="btc-hash-canvas" class="btc-hash-svg" width="100%" height="50vh"></svg>
+        <div id="btc-legend">
+          <span id="btc-price">Price: Loading...</span>
+          <span id="btc-hash">Hash: Loading...</span>
+          <span id="btc-time">Time: Loading...</span>
+        </div>
+        <button id="snapshot-btn" class="mt-4">Snapshot to FBX</button>
       </div>
     </section>
   </div>
@@ -794,23 +857,27 @@
     <p class="typewriter">Powered by CoinMarketCap, Etherscan & TradingView</p>
   </footer>
   <script>
-    // Loading screen logic
+    const navMenuToggle = document.getElementById('nav-menu-toggle');
+    const navMenuClose = document.getElementById('nav-menu-close');
+    const navMenu = document.getElementById('nav-menu');
+
+    navMenuToggle.addEventListener('click', () => navMenu.classList.add('active'));
+    navMenuClose.addEventListener('click', () => navMenu.classList.remove('active'));
+
     window.onload = function() {
       const loadingScreen = document.getElementById('loading-screen');
       loadingScreen.style.opacity = '0';
       setTimeout(() => {
         loadingScreen.style.display = 'none';
-        setTimeout(() => { document.querySelector('header').style.opacity = '1'; }, 100);
-        setTimeout(() => { document.querySelector('main').style.opacity = '1'; }, 300);
-        setTimeout(() => { document.querySelector('footer').style.opacity = '1'; }, 500);
-        const sections = document.querySelectorAll('#module-grid section');
-        sections.forEach((section, index) => {
-          setTimeout(() => { section.style.opacity = '1'; }, 700 + index * 200);
+        document.querySelector('header').style.opacity = '1';
+        setTimeout(() => document.querySelector('main').style.opacity = '1', 300);
+        setTimeout(() => document.querySelector('footer').style.opacity = '1', 500);
+        document.querySelectorAll('#module-grid section').forEach((section, index) => {
+          setTimeout(() => section.style.opacity = '1', 700 + index * 200);
         });
       }, 500);
     };
 
-    // Particle effect
     const particleContainer = document.getElementById('particles');
     for (let i = 0; i < 50; i++) {
       const particle = document.createElement('div');
@@ -821,7 +888,6 @@
       particleContainer.appendChild(particle);
     }
 
-    // Snowflake effect
     for (let i = 0; i < 50; i++) {
       const snowflake = document.createElement('div');
       snowflake.className = 'snowflake';
@@ -834,7 +900,6 @@
       document.body.appendChild(snowflake);
     }
 
-    // Drag-and-drop
     const moduleGrid = document.getElementById('module-grid');
     let draggedModule = null;
 
@@ -845,31 +910,21 @@
       modules.forEach(module => {
         if (!isMobile) {
           module.setAttribute('draggable', 'true');
-
           module.addEventListener('dragstart', (e) => {
             draggedModule = module;
             module.classList.add('dragging');
             e.dataTransfer.setData('text/plain', '');
           });
-
           module.addEventListener('dragend', () => {
             module.classList.remove('dragging');
             draggedModule = null;
           });
-
-          module.addEventListener('dragover', (e) => {
-            e.preventDefault();
-          });
-
+          module.addEventListener('dragover', (e) => e.preventDefault());
           module.addEventListener('dragenter', (e) => {
             e.preventDefault();
             module.classList.add('hover-transition');
           });
-
-          module.addEventListener('dragleave', () => {
-            module.classList.remove('hover-transition');
-          });
-
+          module.addEventListener('dragleave', () => module.classList.remove('hover-transition'));
           module.addEventListener('drop', (e) => {
             e.preventDefault();
             module.classList.remove('hover-transition');
@@ -877,22 +932,18 @@
               const allModules = Array.from(moduleGrid.children);
               const draggedIndex = allModules.indexOf(draggedModule);
               const targetIndex = allModules.indexOf(module);
-
               if (draggedIndex < targetIndex) {
                 moduleGrid.insertBefore(draggedModule, module.nextSibling);
               } else {
                 moduleGrid.insertBefore(draggedModule, module);
               }
-
               window.dispatchEvent(new Event('resize'));
             }
           });
-
           module.addEventListener('touchstart', (e) => {
             draggedModule = module;
             module.classList.add('dragging');
           });
-
           module.addEventListener('touchmove', (e) => {
             const target = e.target.closest('ul');
             if (!target || !target.match('#token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list')) {
@@ -904,7 +955,6 @@
               dropTarget.classList.add('hover-transition');
             }
           });
-
           module.addEventListener('touchend', (e) => {
             module.classList.remove('dragging');
             const touch = e.changedTouches[0];
@@ -914,13 +964,11 @@
               const allModules = Array.from(moduleGrid.children);
               const draggedIndex = allModules.indexOf(draggedModule);
               const targetIndex = allModules.indexOf(dropTarget);
-
               if (draggedIndex < targetIndex) {
                 moduleGrid.insertBefore(draggedModule, dropTarget.nextSibling);
               } else {
                 moduleGrid.insertBefore(draggedModule, dropTarget);
               }
-
               window.dispatchEvent(new Event('resize'));
             }
             draggedModule = null;
@@ -930,11 +978,8 @@
       });
     }
 
-    // Module toggle
     function setupModuleToggles() {
-      const toggleModuleButtons = document.querySelectorAll('.toggle-module-btn');
-
-      toggleModuleButtons.forEach(btn => {
+      document.querySelectorAll('.toggle-module-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const moduleContent = btn.closest('.chat-logs-container, section').querySelector('.module-content');
           const isHidden = moduleContent.classList.toggle('hidden');
@@ -944,29 +989,19 @@
       });
     }
 
-    // Indicator toggle
     let isIndicatorEnabledHeader = false;
     let isIndicatorEnabledModal = false;
 
-    // TradingView chart
     function initializeChart(containerId, symbol, interval = 'D', retries = 2) {
       const container = document.getElementById(containerId);
       const chartTitle = document.getElementById(containerId === 'chart-container-header' ? 'chart-title-header' : 'chart-title-modal');
-      if (!container || !chartTitle) {
-        console.error(`Container or chart title not found for ${containerId}`);
-        return;
-      }
+      if (!container || !chartTitle) return console.error(`Container or chart title not found for ${containerId}`);
 
-      while (container.firstChild) {
-        container.removeChild(container.firstChild);
-      }
+      while (container.firstChild) container.removeChild(container.firstChild);
 
       const loadingDiv = document.createElement('div');
       loadingDiv.className = 'chart-loading';
-      loadingDiv.innerHTML = `
-        <div class="loader"></div>
-        <div class="ml-2">Loading ${symbol.replace('BINANCE:', '')} chart...</div>
-      `;
+      loadingDiv.innerHTML = `<div class="loader"></div><div class="ml-2">Loading ${symbol.replace('BINANCE:', '')} chart...</div>`;
       container.appendChild(loadingDiv);
 
       const isHeader = containerId === 'chart-container-header';
@@ -974,7 +1009,7 @@
 
       const initWidget = () => {
         try {
-          const widgetConfig = {
+          const widget = new TradingView.widget({
             autosize: true,
             symbol: symbol,
             interval: interval,
@@ -1003,53 +1038,31 @@
             },
             onChartReady: () => {
               console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
-              if (isIndicatorEnabled) {
-                alert('Please manually add the "QuantumI Indicator":\n1. Click Indicators (f(x)).\n2. Search "QuantumI Indicator".\n3. Apply.');
-              }
+              if (isIndicatorEnabled) alert('Please manually add the "QuantumI Indicator":\n1. Click Indicators (f(x)).\n2. Search "QuantumI Indicator".\n3. Apply.');
             },
             onError: (error) => {
-              console.error(`Chart error for ${containerId} with symbol ${symbol}:`, error);
-              if (retries > 0) {
-                console.log(`Retrying (${retries} attempts left)...`);
-                setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
-              } else {
-                loadingDiv.textContent = `Failed to load ${symbol.replace('BINANCE:', '')} chart.`;
-              }
+              console.error(`Chart error for ${containerId}:`, error);
+              if (retries > 0) setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
+              else loadingDiv.textContent = `Failed to load ${symbol.replace('BINANCE:', '')} chart.`;
             }
-          };
-
-          const widget = new TradingView.widget(widgetConfig);
+          });
         } catch (error) {
           console.error(`Critical error initializing chart for ${containerId}:`, error);
-          if (retries > 0) {
-            setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
-          } else {
-            loadingDiv.textContent = `Critical failure loading ${symbol.replace('BINANCE:', '')} chart.`;
-          }
+          if (retries > 0) setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
+          else loadingDiv.textContent = `Critical failure loading ${symbol.replace('BINANCE:', '')} chart.`;
         }
       };
-
       setTimeout(initWidget, 300);
     }
 
-    // Fetch with retry
     async function fetchWithRetry(url, retries = 3, delay = 1000) {
       for (let i = 0; i <= retries; i++) {
         try {
-          const response = await fetch(url, {
-            method: 'GET',
-            mode: 'cors',
-            credentials: 'omit',
-          });
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}, Text: ${response.statusText}`);
-          }
+          const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit' });
+          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}, Text: ${response.statusText}`);
           return await response.json();
         } catch (error) {
-          if (i === retries) {
-            console.error(`Failed to fetch ${url} after ${retries + 1} attempts:`, error);
-            throw error;
-          }
+          if (i === retries) throw error;
           const backoff = delay * Math.pow(2, i);
           console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${backoff}ms: ${error.message}`);
           await new Promise(resolve => setTimeout(resolve, backoff));
@@ -1057,7 +1070,6 @@
       }
     }
 
-    // Fetch ETH gas prices
     async function fetchGasPrices() {
       const apiKey = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
       const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
@@ -1071,16 +1083,13 @@
             lastBlock: data.result.LastBlock || 'N/A',
             timestamp: new Date().getTime()
           };
-        } else {
-          throw new Error('Invalid gas price data');
-        }
+        } else throw new Error('Invalid gas price data');
       } catch (error) {
         console.error('Failed to fetch gas prices:', error);
         return { safeGasPrice: 10, proposeGasPrice: 15, fastGasPrice: 20, lastBlock: 'N/A', timestamp: Date.now() };
       }
     }
 
-    // Render ETH gas fee heatmap and update fees
     let currentEthPrice = 0;
 
     async function renderGasHeatmapAndFees() {
@@ -1088,17 +1097,13 @@
       const gasList = document.getElementById('gas-heatmap-list');
       const loader = document.getElementById('loader-gas-fees');
       const gasFeesWarning = document.getElementById('gas-fees-warning');
-      if (!canvas || !gasList || !loader || !gasFeesWarning) {
-        console.error('[ERROR] Gas heatmap or fees elements not found');
-        return;
-      }
+      if (!canvas || !gasList || !loader || !gasFeesWarning) return console.error('[ERROR] Gas heatmap or fees elements not found');
 
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        console.error('[ERROR] Failed to get 2D context for gas heatmap canvas');
         loader.textContent = '> Failed to initialize canvas';
         loader.style.display = 'block';
-        return;
+        return console.error('[ERROR] Failed to get 2D context for gas heatmap canvas');
       }
 
       let gasHistory = [];
@@ -1117,14 +1122,8 @@
       resizeCanvas();
       window.addEventListener('resize', resizeCanvas);
 
-      const getColor = (type, intensity) => {
-        if (type === 'safe') {
-          return '#87CEEB';
-        } else if (type === 'propose') {
-          return '#ffbb33';
-        } else {
-          return '#ff0000';
-        }
+      const getColor = (type) => {
+        return type === 'safe' ? '#87CEEB' : type === 'propose' ? '#ffbb33' : '#ff0000';
       };
 
       const updateHeatmapAndFees = async () => {
@@ -1135,9 +1134,7 @@
 
           const gasData = await fetchGasPrices();
           const isMockGas = gasData.lastBlock === 'N/A' && gasData.safeGasPrice === 10;
-          if (isMockGas) {
-            gasFeesWarning.style.display = 'block';
-          }
+          if (isMockGas) gasFeesWarning.style.display = 'block';
 
           gasHistory.push(gasData);
           if (gasHistory.length > maxHistory) gasHistory.shift();
@@ -1153,7 +1150,6 @@
           `).join('');
 
           ctx.clearRect(0, 0, canvas.width, canvas.height);
-
           const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
           const plotWidth = canvas.offsetWidth - margin.left - margin.right;
           const plotHeight = canvas.offsetHeight - margin.top - margin.bottom;
@@ -1166,12 +1162,10 @@
               { value: data.proposeGasPrice, type: 'propose' },
               { value: data.fastGasPrice, type: 'fast' }
             ];
-
             prices.forEach((price, j) => {
-              const intensity = price.value / maxGas;
               const height = (price.value / maxGas) * plotHeight * 0.9;
               const y = margin.top + plotHeight - height;
-              ctx.fillStyle = getColor(price.type, intensity);
+              ctx.fillStyle = getColor(price.type);
               ctx.fillRect(x + j * (barWidth + 1), y, barWidth - 1, height);
             });
           });
@@ -1191,12 +1185,7 @@
           const latestTime = new Date(gasHistory[gasHistory.length - 1]?.timestamp);
           ctx.fillText(latestTime.toLocaleTimeString(), margin.left + plotWidth, margin.top + plotHeight + 5);
 
-          if (currentEthPrice > 0) {
-            updateFees(gasData.proposeGasPrice, currentEthPrice);
-          } else {
-            updateFees(gasData.proposeGasPrice, 4000);
-          }
-
+          updateFees(gasData.proposeGasPrice, currentEthPrice > 0 ? currentEthPrice : 4000);
           loader.style.display = 'none';
           console.log('[DEBUG] Gas heatmap and fees updated:', { gasHistoryLength: gasHistory.length, latestGasData: gasData, isMockGas });
         } catch (error) {
@@ -1211,26 +1200,20 @@
       setInterval(updateHeatmapAndFees, 60000);
     }
 
-    // Update fees function
     function updateFees(gasPrice, ethPrice) {
       const transferFeeEth = (gasPrice * 21000) / 1e9;
       const transferFeeUsd = transferFeeEth * ethPrice;
       document.getElementById('transfer-fee').textContent = transferFeeUsd.toFixed(2);
-
       const withdrawFeeEth = 0.001;
       const withdrawFeeUsd = withdrawFeeEth * ethPrice;
       document.getElementById('withdraw-fee').textContent = withdrawFeeUsd.toFixed(2);
-
       const bridgeFeeEth = 0.005;
       const bridgeFeeUsd = bridgeFeeEth * ethPrice;
       document.getElementById('bridge-fee').textContent = bridgeFeeUsd.toFixed(2);
-
       document.getElementById('loader-gas-fees').style.display = 'none';
     }
 
-    // Render logs
     let isUsingMockLogs = true;
-
     const mockLogs = [
       { id: 1, message: 'Trade executed: BTC/USDT at $60,000', timestamp: new Date(Date.now() - 60000).toLocaleTimeString(), type: 'trade' },
       { id: 2, message: 'Price alert: ETH crossed $4,000', timestamp: new Date(Date.now() - 120000).toLocaleTimeString(), type: 'alert' },
@@ -1250,10 +1233,7 @@
       const logList = document.getElementById('log-list');
       const loader = document.getElementById('loader-logs');
       const logsWarning = document.getElementById('logs-warning');
-      if (!logList || !loader || !logsWarning) {
-        console.error('[ERROR] Log elements not found');
-        return;
-      }
+      if (!logList || !loader || !logsWarning) return console.error('[ERROR] Log elements not found');
 
       try {
         loader.style.display = 'block';
@@ -1275,20 +1255,19 @@
       }
     }
 
-    // BTC Hash Visualization
     const btcCanvas = document.getElementById('btc-hash-canvas');
     let btcPriceHistory = [];
+    let hashStack = [];
 
     async function fetchBTCPrice() {
-      const apiKey = 'bef090eb-323d-4ae8-86dd-266236262f19'; // Replace with your actual API key
+      const apiKey = 'bef090eb-323d-4ae8-86dd-266236262f19';
       const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC&convert=USD&CMC_PRO_API_KEY=${apiKey}`;
       try {
         const data = await fetchWithRetry(url);
-        const price = data.data.BTC.quote.USD.price;
-        return price;
+        return data.data.BTC.quote.USD.price;
       } catch (error) {
         console.error('Failed to fetch BTC price:', error);
-        return 60000; // Mock price
+        return 60000;
       }
     }
 
@@ -1301,10 +1280,10 @@
       return hash;
     }
 
-    function drawBTCHash(hash) {
-      btcCanvas.innerHTML = '';
+    function drawBTCHash(hash, opacity = 1, price, timestamp) {
       const width = btcCanvas.clientWidth;
       const height = btcCanvas.clientHeight;
+      const colors = ['#87CEEB', '#ffbb33', '#ff0000'];
 
       for (let i = 0; i < hash.length; i += 4) {
         const xVal = parseInt(hash[i] + hash[i+1], 16);
@@ -1317,41 +1296,75 @@
         circle.setAttribute('cx', x);
         circle.setAttribute('cy', y);
         circle.setAttribute('r', z);
-        circle.setAttribute('fill', `hsl(${(i / hash.length) * 360}, 100%, 60%)`);
-        circle.setAttribute('opacity', 0.8);
+        circle.setAttribute('fill', colors[i % colors.length]);
+        circle.setAttribute('opacity', opacity);
+        circle.setAttribute('data-tooltip', `Price: $${price.toLocaleString()}\nX: ${x.toFixed(2)}, Y: ${y.toFixed(2)}, Z: ${z.toFixed(2)}\nTime: ${new Date(timestamp).toLocaleTimeString()}`);
         btcCanvas.appendChild(circle);
       }
+
+      document.getElementById('btc-price').textContent = `Price: $${price.toLocaleString()}`;
+      document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
+      document.getElementById('btc-time').textContent = `Time: ${new Date(timestamp).toLocaleTimeString()}`;
     }
 
     async function updateBTCHash() {
       const price = await fetchBTCPrice();
+      const timestamp = Date.now();
       btcPriceHistory.push(price);
       if (btcPriceHistory.length > 10) btcPriceHistory.shift();
 
       const avgPrice = btcPriceHistory.reduce((a, b) => a + b, 0) / btcPriceHistory.length;
       const hash = generateHashFromPrice(avgPrice);
-      drawBTCHash(hash);
+      hashStack.push({ hash, price: avgPrice, timestamp });
+      if (hashStack.length > 5) hashStack.shift();
+
+      btcCanvas.innerHTML = '';
+      hashStack.forEach((item, index) => {
+        const opacity = 1 - (index * 0.2);
+        drawBTCHash(item.hash, opacity, item.price, item.timestamp);
+      });
     }
 
-    drawBTCHash('a3f29c97b4e8c1d65e2f13a79d0b45ef1122a998ee8833b57f91de3357bbcab1');
-    window.addEventListener('resize', () => drawBTCHash(generateHashFromPrice(btcPriceHistory[btcPriceHistory.length - 1] || 60000)));
+    function snapshotToFBX() {
+      let fbxData = 'o\n';
+      hashStack.forEach((item, index) => {
+        const opacity = 1 - (index * 0.2);
+        const hash = item.hash;
+        const price = item.price;
+        const timestamp = item.timestamp;
+        const colors = ['#87CEEB', '#ffbb33', '#ff0000'];
+        for (let i = 0; i < hash.length; i += 4) {
+          const xVal = parseInt(hash[i] + hash[i+1], 16);
+          const yVal = parseInt(hash[i+2] + hash[i+3], 16);
+          const x = (xVal / 255) * 100 - 50;
+          const y = (yVal / 255) * 100 - 50;
+          const z = Math.sin(i / hash.length * Math.PI) * 20 + 10 - index * 5;
+          const color = colors[i % colors.length];
+          fbxData += `v ${x} ${y} ${z}\n`;
+          fbxData += `c ${color} ${opacity}\n`;
+        }
+      });
+      const blob = new Blob([fbxData], { type: 'application/octet-stream' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'btc_hash_visualization.fbx';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById('snapshot-btn').addEventListener('click', snapshotToFBX);
+    drawBTCHash('a3f29c97b4e8c1d65e2f13a79d0b45ef1122a998ee8833b57f91de3357bbcab1', 1, 60000, Date.now());
+    window.addEventListener('resize', () => updateBTCHash());
     setInterval(updateBTCHash, 60000);
 
-    // Main logic
     const quantumPuns = [
-      "Entangled in profits!",
-      "Quantum leaps in trading!",
-      "Superposition your trades!",
-      "Uncertainty in the market, certainty in gains!",
-      "Wave function collapse to profits!",
-      "Quantum tunneling through resistance!",
-      "Spooky action at a distance: instant trades!",
-      "Heisenberg's uncertainty: but your profits are certain!",
-      "Quantum computing your next move!",
-      "Entanglement: your portfolio and success!",
-      "Quantum supremacy in trading!",
-      "Decoherence? Not in my portfolio!",
-      "Quantum bits, quantum profits!",
+      "Entangled in profits!", "Quantum leaps in trading!", "Superposition your trades!",
+      "Uncertainty in the market, certainty in gains!", "Wave function collapse to profits!",
+      "Quantum tunneling through resistance!", "Spooky action at a distance: instant trades!",
+      "Heisenberg's uncertainty: but your profits are certain!", "Quantum computing your next move!",
+      "Entanglement: your portfolio and success!", "Quantum supremacy in trading!",
+      "Decoherence? Not in my portfolio!", "Quantum bits, quantum profits!",
       "Riding the quantum wave to success!"
     ];
 
@@ -1363,10 +1376,7 @@
 
       try {
         const data = await fetchWithRetry(backendApiUrl);
-        console.log('Raw backend response:', data);
-        if (!Array.isArray(data) || data.length === 0) {
-          throw new Error('Invalid or empty response from backend');
-        }
+        if (!Array.isArray(data) || data.length === 0) throw new Error('Invalid or empty response from backend');
         const ethData = data.find(token => token.symbol === 'ETH');
         if (ethData) {
           const gasData = await fetchGasPrices();
@@ -1389,10 +1399,9 @@
         renderLogs();
       }
 
-      const toggleLogsDataBtn = document.getElementById('toggle-logs-data');
-      toggleLogsDataBtn.addEventListener('click', () => {
+      document.getElementById('toggle-logs-data').addEventListener('click', () => {
         isUsingMockLogs = !isUsingMockLogs;
-        toggleLogsDataBtn.textContent = isUsingMockLogs ? 'Real Logs' : 'Mock Logs';
+        document.getElementById('toggle-logs-data').textContent = isUsingMockLogs ? 'Real Logs' : 'Mock Logs';
         logsWarning.style.display = isUsingMockLogs ? 'block' : 'none';
         renderLogs();
       });
@@ -1406,7 +1415,6 @@
       }
 
       document.getElementById('loader-tokens').style.display = 'none';
-
       const tokenList = document.getElementById('token-list');
       tokenList.innerHTML = tokens.map((token, index) => {
         const isPositive = token.price_change_percentage_24h >= 0;
@@ -1475,9 +1483,7 @@
         currentEthPrice = ethToken.current_price;
         const gasPrice = ethToken.gasPrice || 15;
         updateFees(gasPrice, currentEthPrice);
-      } else {
-        updateFees(15, 4000);
-      }
+      } else updateFees(15, 4000);
       document.getElementById('gas-fees-warning').style.display = 'none';
     }
 
@@ -1550,9 +1556,7 @@
             document.getElementById('chart-title-header').textContent = symbol;
             document.getElementById('chart-title-modal').setAttribute('data-symbol', symbol);
             document.getElementById('chart-title-modal').textContent = symbol;
-
-            const tokenListItems = document.querySelectorAll('#token-list li');
-            tokenListItems.forEach(item => item.classList.remove('selected-token'));
+            document.querySelectorAll('#token-list li').forEach(item => item.classList.remove('selected-token'));
             li.classList.add('selected-token');
             console.log(`Switched to token: ${symbol}`);
           }
@@ -1563,9 +1567,7 @@
         toggleStickyHeader.addEventListener('click', () => {
           chartModal.classList.add('active');
           toggleStickyHeader.textContent = 'Chart Docked';
-          setTimeout(() => {
-            toggleStickyHeader.textContent = 'Dock Chart';
-          }, 1000);
+          setTimeout(() => toggleStickyHeader.textContent = 'Dock Chart', 1000);
           const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
           const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-modal', symbol, interval);
@@ -1575,9 +1577,7 @@
         toggleStickyModal.addEventListener('click', () => {
           chartModal.classList.remove('active');
           toggleStickyModal.textContent = 'Chart Undocked';
-          setTimeout(() => {
-            toggleStickyModal.textContent = 'Undock Chart';
-          }, 1000);
+          setTimeout(() => toggleStickyModal.textContent = 'Undock Chart', 1000);
           const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
           const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-header', symbol, interval);
@@ -1587,13 +1587,8 @@
       if (toggleBackgroundBtn) {
         toggleBackgroundBtn.addEventListener('click', () => {
           splineModal.classList.toggle('active');
-          if (splineModal.classList.contains('active')) {
-            toggleBackgroundBtn.textContent = 'Show Chart';
-            toggleBackgroundBtn.setAttribute('data-tooltip', 'Exit to chart');
-          } else {
-            toggleBackgroundBtn.textContent = 'Show Background';
-            toggleBackgroundBtn.setAttribute('data-tooltip', 'Show background in full screen');
-          }
+          toggleBackgroundBtn.textContent = splineModal.classList.contains('active') ? 'Show Chart' : 'Show Background';
+          toggleBackgroundBtn.setAttribute('data-tooltip', splineModal.classList.contains('active') ? 'Exit to chart' : 'Show background in full screen');
         });
       }
 
@@ -1601,11 +1596,8 @@
         toggleBackgroundDockBtn.addEventListener('click', () => {
           splineModal.classList.add('active');
           toggleBackgroundDockBtn.textContent = 'Docked';
-          setTimeout(() => {
-            toggleBackgroundDockBtn.textContent = 'Dock Background';
-          }, 1000);
-          const splineViewer = document.getElementById('spline-viewer-modal');
-          splineViewer.setAttribute('url', 'https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode');
+          setTimeout(() => toggleBackgroundDockBtn.textContent = 'Dock Background', 1000);
+          document.getElementById('spline-viewer-modal').setAttribute('url', 'https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode');
         });
       }
 
@@ -1621,36 +1613,21 @@
         splineFullscreenBtn.addEventListener('click', () => {
           const splineModalContent = document.querySelector('.spline-modal-content');
           if (!document.fullscreenElement) {
-            if (splineModalContent.requestFullscreen) {
-              splineModalContent.requestFullscreen();
-            } else if (splineModalContent.mozRequestFullScreen) {
-              splineModalContent.mozRequestFullScreen();
-            } else if (splineModalContent.webkitRequestFullscreen) {
-              splineModalContent.webkitRequestFullscreen();
-            } else if (splineModalContent.msRequestFullscreen) {
-              splineModalContent.msRequestFullscreen();
-            }
+            if (splineModalContent.requestFullscreen) splineModalContent.requestFullscreen();
+            else if (splineModalContent.mozRequestFullScreen) splineModalContent.mozRequestFullScreen();
+            else if (splineModalContent.webkitRequestFullscreen) splineModalContent.webkitRequestFullscreen();
+            else if (splineModalContent.msRequestFullscreen) splineModalContent.msRequestFullscreen();
           } else {
-            if (document.exitFullscreen) {
-              document.exitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-              document.mozCancelFullScreen();
-            } else if (document.webkitExitFullscreen) {
-              document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) {
-              document.msExitFullscreen();
-            }
+            if (document.exitFullscreen) document.exitFullscreen();
+            else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+            else if (document.msExitFullscreen) document.msExitFullscreen();
           }
         });
 
         const handleFullscreenChange = () => {
-          if (document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement) {
-            splineFullscreenBtn.textContent = 'Exit Fullscreen';
-          } else {
-            splineFullscreenBtn.textContent = 'Fullscreen';
-          }
+          splineFullscreenBtn.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
         };
-
         document.addEventListener('fullscreenchange', handleFullscreenChange);
         document.addEventListener('mozfullscreenchange', handleFullscreenChange);
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
