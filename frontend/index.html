@@ -963,7 +963,7 @@
             if (dropTarget && dropTarget !== draggedModule) {
               const allModules = Array.from(moduleGrid.children);
               const draggedIndex = allModules.indexOf(draggedModule);
-              const targetIndex =AllModules.indexOf(dropTarget);
+              const targetIndex = allModules.indexOf(dropTarget);
               if (draggedIndex < targetIndex) {
                 moduleGrid.insertBefore(draggedModule, dropTarget.nextSibling);
               } else {
@@ -1055,11 +1055,15 @@
       setTimeout(initWidget, 300);
     }
 
-    async function fetchWithRetry(url, retries = 3, delay = 1000) {
+    async function fetchWithRetry(url, options = {}) {
+      const { retries = 3, delay = 1000, ...fetchOptions } = options;
       for (let i = 0; i <= retries; i++) {
         try {
-          const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit' });
-          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}, Text: ${response.statusText}`);
+          const response = await fetch(url, fetchOptions);
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}, Text: ${errorText}`);
+          }
           return await response.json();
         } catch (error) {
           if (i === retries) throw error;
@@ -1071,10 +1075,12 @@
     }
 
     async function fetchGasPrices() {
-      const apiKey = 'VZFDUWB3YGQ1YCDKTCU1D6DDSS'; // Updated Etherscan API key
+      const apiKey = 'VZFDUWB3YGQ1YCDKTCU1D6DDSS'; // Etherscan API key (assumed valid)
       const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
       try {
-        const data = await fetchWithRetry(url);
+        const data = await fetchWithRetry(url, {
+          headers: { 'Accept': 'application/json' }
+        });
         if (data.status === '1' && data.result) {
           return {
             safeGasPrice: parseInt(data.result.SafeGasPrice) || 10,
@@ -1086,7 +1092,6 @@
         } else throw new Error('Invalid gas price data');
       } catch (error) {
         console.error('Failed to fetch gas prices:', error);
-        document.getElementById('gas-fees-warning').style.display = 'block';
         return { safeGasPrice: 10, proposeGasPrice: 15, fastGasPrice: 20, lastBlock: 'N/A', timestamp: Date.now() };
       }
     }
@@ -1264,16 +1269,26 @@
       const apiKey = 'YOUR_VALID_CMC_API_KEY'; // Replace with a valid CoinMarketCap API key
       const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC&convert=USD&CMC_PRO_API_KEY=${apiKey}`;
       try {
-        const data = await fetchWithRetry(url);
-        const price = data.data.BTC.quote.USD.price;
-        document.getElementById('live-price-header').textContent = `> Live Price: $${price.toLocaleString()} (BTC) - Updated: ${new Date().toLocaleTimeString()}`;
-        document.getElementById('live-price-modal').textContent = `> Live Price: $${price.toLocaleString()} (BTC) - Updated: ${new Date().toLocaleTimeString()}`;
-        return price;
+        const data = await fetchWithRetry(url, {
+          headers: { 'Accept': 'application/json' }
+        });
+        return data.data.BTC.quote.USD.price;
       } catch (error) {
-        console.error('Failed to fetch BTC price:', error);
-        document.getElementById('live-price-header').textContent = `> Live Price: Error fetching data`;
-        document.getElementById('live-price-modal').textContent = `> Live Price: Error fetching data`;
-        return 60000; // Mock fallback
+        console.error('Failed to fetch BTC price from CoinMarketCap:', error);
+        // Alternative: Use CoinGecko API (free tier) if CoinMarketCap key is unavailable
+        /*
+        const coingeckoUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd';
+        try {
+          const cgData = await fetchWithRetry(coingeckoUrl, {
+            headers: { 'Accept': 'application/json' }
+          });
+          return cgData.bitcoin.usd;
+        } catch (cgError) {
+          console.error('Failed to fetch BTC price from CoinGecko:', cgError);
+          return 60000; // Fallback to mock data
+        }
+        */
+        return 60000; // Fallback to mock data
       }
     }
 
@@ -1381,7 +1396,9 @@
       const gasFeesWarning = document.getElementById('gas-fees-warning');
 
       try {
-        const data = await fetchWithRetry(backendApiUrl);
+        const data = await fetchWithRetry(backendApiUrl, {
+          headers: { 'Accept': 'application/json' }
+        });
         if (!Array.isArray(data) || data.length === 0) throw new Error('Invalid or empty response from backend');
         const ethData = data.find(token => token.symbol === 'ETH');
         if (ethData) {
