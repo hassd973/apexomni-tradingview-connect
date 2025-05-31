@@ -7,14 +7,12 @@
   <meta name="keywords" content="crypto, dashboard, QuantumI, trading, analytics">
   <meta name="author" content="xAI">
   <title>⚛️ QUANTUMI 🌌</title>
-  <!-- Updated favicon to a "Q" logo in Pixelify Sans (replace with actual image URL) -->
-  <link rel="icon" type="image/png" href="https://postimg.cc/R6HKW38z">
+  <link rel="icon" type="image/png" href="https://example.com/q-logo.png">
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Limelight&display=swap" rel="stylesheet">
-  <!-- Added Pixelify Sans font for the title -->
-  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet">
   <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js"></script>
   <script src="https://s3.tradingview.com/tv.js" async></script>
   <style>
@@ -33,9 +31,8 @@
       color: #e0f7fa;
       text-shadow: 0 0 8px rgba(135, 206, 235, 0.5), 0 0 12px rgba(255, 187, 51, 0.3);
     }
-    /* Specific style for the main title to use Pixelify Sans */
-    .main-title {
-      font-family: 'Pixelify Sans', cursive;
+    .main-title, .sixtyfour-font {
+      font-family: 'Sixtyfour', sans-serif;
     }
     #loading-screen {
       position: fixed;
@@ -231,7 +228,7 @@
     }
     .spline-modal-close:hover {
       background-color: #ffbb33;
-      box-shadow: 0 0 8px rgba(135, 206, 235, 0.5);
+      box-shadow: 0 0 8px #00BFFF;
     }
     .spline-fullscreen-btn {
       position: absolute;
@@ -247,7 +244,7 @@
     }
     .spline-fullscreen-btn:hover {
       background-color: #ffbb33;
-      box-shadow: 0 0 8px rgba(135, 206, 235, 0.5);
+      box-shadow: 0 0 8px #00BFFF;
     }
     section {
       background: rgba(35, 46, 46, 0.1);
@@ -410,11 +407,11 @@
     }
     button:hover, #chat-send:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-background:hover, #toggle-background-dock:hover {
       background-color: #ffbb33;
-      box-shadow: 0 0 8px rgba(135, 206, 235, 0.5);
+      box-shadow: 0 0 8px #00BFFF;
     }
     .timeframe-btn.active {
       background-color: #87CEEB;
-      box-shadow: 0 0 8px #87CEEB, 0 0 12px rgba(255, 187, 51, 0.6);
+      box-shadow: 0 0 8px #00BFFF, 0 0 12px rgba(0, 191, 255, 0.6);
       border: 1px solid #ffbb33;
     }
     #chat-input {
@@ -558,7 +555,7 @@
       margin-bottom: 0.5rem;
       text-align: center;
     }
-    .chat-logs-container {
+    .chat-logs-container, .btc-hash-container {
       background: rgba(35, 46, 46, 0.1);
       border: 1px solid rgba(135, 206, 235, 0.2);
       border-radius: 6px;
@@ -568,11 +565,17 @@
       max-width: 1200px;
       box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
     }
+    .btc-hash-svg {
+      background: rgba(35, 46, 46, 0.2);
+      border: 1px solid rgba(135, 206, 235, 0.2);
+      border-radius: 6px;
+      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+    }
     @media (max-width: 640px) {
       #chat-list {
         max-height: 30vh;
       }
-      .chat-logs-container {
+      .chat-logs-container, .btc-hash-container {
         padding: 0.5rem;
       }
       #chat-input {
@@ -604,7 +607,6 @@
       <div class="title-box">
         <h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
       </div>
-      <!-- Updated description without typewriter effect -->
       <p class="text-base text-center">Real-time cryptocurrency market data and analytics powered by CoinMarketCap, Etherscan, and TradingView.</p>
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
@@ -752,6 +754,17 @@
       </div>
     </section>
   </main>
+  <div class="btc-hash-container">
+    <section class="rounded-lg">
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl sixtyfour-font">> BTC Hash Visualization</h2>
+        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
+      </div>
+      <div class="module-content">
+        <svg id="btc-hash-canvas" class="btc-hash-svg" width="100%" height="50vh"></svg>
+      </div>
+    </section>
+  </div>
   <div class="chat-logs-container">
     <div class="module-header">
       <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
@@ -1261,6 +1274,68 @@
         logsWarning.style.display = 'block';
       }
     }
+
+    // BTC Hash Visualization
+    const btcCanvas = document.getElementById('btc-hash-canvas');
+    let btcPriceHistory = [];
+
+    async function fetchBTCPrice() {
+      const apiKey = 'bef090eb-323d-4ae8-86dd-266236262f19'; // Replace with your actual API key
+      const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=BTC&convert=USD&CMC_PRO_API_KEY=${apiKey}`;
+      try {
+        const data = await fetchWithRetry(url);
+        const price = data.data.BTC.quote.USD.price;
+        return price;
+      } catch (error) {
+        console.error('Failed to fetch BTC price:', error);
+        return 60000; // Mock price
+      }
+    }
+
+    function generateHashFromPrice(price) {
+      const priceStr = price.toString();
+      let hash = '';
+      for (let i = 0; i < 64; i++) {
+        hash += (priceStr.charCodeAt(i % priceStr.length) % 16).toString(16);
+      }
+      return hash;
+    }
+
+    function drawBTCHash(hash) {
+      btcCanvas.innerHTML = '';
+      const width = btcCanvas.clientWidth;
+      const height = btcCanvas.clientHeight;
+
+      for (let i = 0; i < hash.length; i += 4) {
+        const xVal = parseInt(hash[i] + hash[i+1], 16);
+        const yVal = parseInt(hash[i+2] + hash[i+3], 16);
+        const x = (xVal / 255) * width;
+        const y = (yVal / 255) * height;
+        const z = Math.sin(i / hash.length * Math.PI) * 20 + 10;
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', z);
+        circle.setAttribute('fill', `hsl(${(i / hash.length) * 360}, 100%, 60%)`);
+        circle.setAttribute('opacity', 0.8);
+        btcCanvas.appendChild(circle);
+      }
+    }
+
+    async function updateBTCHash() {
+      const price = await fetchBTCPrice();
+      btcPriceHistory.push(price);
+      if (btcPriceHistory.length > 10) btcPriceHistory.shift();
+
+      const avgPrice = btcPriceHistory.reduce((a, b) => a + b, 0) / btcPriceHistory.length;
+      const hash = generateHashFromPrice(avgPrice);
+      drawBTCHash(hash);
+    }
+
+    drawBTCHash('a3f29c97b4e8c1d65e2f13a79d0b45ef1122a998ee8833b57f91de3357bbcab1');
+    window.addEventListener('resize', () => drawBTCHash(generateHashFromPrice(btcPriceHistory[btcPriceHistory.length - 1] || 60000)));
+    setInterval(updateBTCHash, 60000);
 
     // Main logic
     const quantumPuns = [
