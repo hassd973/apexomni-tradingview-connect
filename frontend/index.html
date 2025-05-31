@@ -452,7 +452,7 @@
       overflow: hidden;
       white-space: nowrap;
       border-right: 2px solid #87CEEB;
-      animation: typing 4s steps(30нивер, end), blink-caret 0.75s step-end infinite;
+      animation: typing 4s steps(30, end), blink-caret 0.75s step-end infinite;
     }
     @keyframes typing {
       from { width: 0; }
@@ -521,7 +521,7 @@
       box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
     }
     @media (min-width: 640px) {
-      #gas ​​#gas-heatmap-canvas { height: 25vh; }
+      #gas #gas-heatmap-canvas { height: 25vh; }
     }
     #gas-heatmap-legend {
       display: flex;
@@ -827,7 +827,8 @@
           <span id="btc-hash">Hash: Loading...</span>
           <span id="btc-time">Time: Loading...</span>
         </div>
-        <button id="snapshot-btn" class="mt-4">Snapshot to OBJ</button>
+        <button id="toggle-events" class="mt-2">Show Events</button>
+        <button id="snapshot-btn" class="mt-2">Snapshot to OBJ</button>
       </div>
     </section>
   </div>
@@ -1277,6 +1278,17 @@
     let scene, camera, renderer, tube, controls;
     let points = [];
     let btcPriceHistory = [];
+    let markers = [];
+    let showEvents = false;
+
+    function addSystemLog(message) {
+      const logList = document.getElementById('system-logs-list');
+      const li = document.createElement('li');
+      li.className = 'p-2 rounded';
+      li.innerHTML = `<div>${message}</div><div class="metric">Time: ${new Date().toLocaleTimeString()}</div>`;
+      logList.prepend(li);
+      if (logList.children.length > 10) logList.removeChild(logList.lastChild);
+    }
 
     function init3D() {
       scene = new THREE.Scene();
@@ -1292,6 +1304,14 @@
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
+
+      // Initialize with mock data
+      const mockPrice = 60000;
+      const mockHash = generateHashFromPrice(mockPrice);
+      const initialPoints = hashToPoints(mockHash);
+      points = initialPoints;
+      update3DShape();
+      addSystemLog('Initialized BTC Hash with mock data');
 
       window.addEventListener('resize', () => {
         renderer.setSize(container.clientWidth, container.clientHeight);
@@ -1340,6 +1360,18 @@
       return hash;
     }
 
+    function createMarker(position) {
+      const geometry = new THREE.SphereGeometry(0.5, 8, 8);
+      const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      const sphere = new THREE.Mesh(geometry, material);
+      sphere.position.copy(position);
+      return sphere;
+    }
+
+    function toggleMarkers() {
+      markers.forEach(marker => marker.visible = showEvents);
+    }
+
     async function updateBTCHash() {
       const price = await fetchBTCPrice();
       const timestamp = Date.now();
@@ -1350,11 +1382,18 @@
       const newPoints = hashToPoints(hash);
       points = points.concat(newPoints);
       if (points.length > 1000) points = points.slice(-1000);
+
+      if (showEvents && newPoints.length > 0) {
+        const marker = createMarker(newPoints[0]);
+        scene.add(marker);
+        markers.push(marker);
+      }
       update3DShape();
 
       document.getElementById('btc-price').textContent = `Price: $${price.toLocaleString()}`;
       document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
       document.getElementById('btc-time').textContent = `Time: ${new Date(timestamp).toLocaleTimeString()}`;
+      addSystemLog('BTC Hash updated');
     }
 
     function snapshotToOBJ() {
@@ -1518,6 +1557,15 @@
       init3D();
       updateBTCHash();
 
+      setInterval(updateBTCHash, 60000); // Update every minute for testing
+
+      document.getElementById('toggle-events').addEventListener('click', () => {
+        showEvents = !showEvents;
+        document.getElementById('toggle-events').textContent = showEvents ? 'Hide Events' : 'Show Events';
+        toggleMarkers();
+        addSystemLog(`Event markers visibility ${showEvents ? 'enabled' : 'disabled'}`);
+      });
+
       toggleIndicatorHeaderBtn.addEventListener('click', () => {
         isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
         toggleIndicatorHeaderBtn.textContent = `${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} Indicator`;
@@ -1647,8 +1695,6 @@
         document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
         document.addEventListener('msfullscreenchange', handleFullscreenChange);
       }
-
-      setInterval(updateBTCHash, 300000); // Update every 5 minutes
     });
 
     const mockTokens = [
