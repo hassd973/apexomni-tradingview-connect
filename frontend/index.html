@@ -27,13 +27,6 @@
       --secondary-color: #ffbb33;
       --shadow-color: rgba(135, 206, 235, 0.3);
     }
-    [data-theme="light"] {
-      --bg-color: #f0f0f0;
-      --text-color: #1e2727;
-      --primary-color: #00BFFF;
-      --secondary-color: #ff8800;
-      --shadow-color: rgba(0, 191, 255, 0.3);
-    }
     body {
       font-family: 'Inconsolata', monospace;
       background: var(--bg-color);
@@ -43,7 +36,6 @@
       display: flex;
       flex-direction: column;
       line-height: 1.6;
-      transition: background 0.3s, color 0.3s;
     }
     h1, h2, h3 {
       font-family: 'Limelight', cursive;
@@ -573,6 +565,13 @@
       border: none;
       background: transparent;
     }
+    .chat-logs-container {
+      width: 100vw;
+      margin-left: calc(-50vw + 50%);
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
     .btc-hash-container section {
       border: none;
       box-shadow: none;
@@ -584,7 +583,7 @@
       opacity: 0.8;
     }
     .btc-hash-svg {
-      background: rgba(35, 46, 46, 0.2);
+      background: #000000;
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
@@ -697,7 +696,6 @@
             <button id="toggle-sticky-header" role="button" aria-label="Open chart in modal" data-tooltip="Open chart in modal">Dock Chart</button>
             <button id="toggle-background" role="button" aria-label="Show background in full screen" data-tooltip="Show background in full screen">Show Background</button>
             <button id="toggle-background-dock" role="button" aria-label="Dock background in modal" data-tooltip="Dock background in modal">Dock Background</button>
-            <button id="toggle-theme" role="button" aria-label="Toggle dark/light theme" data-tooltip="Toggle dark/light theme">Toggle Theme</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
@@ -901,7 +899,6 @@
       splineModal: document.getElementById('spline-modal'),
       splineModalCloseBtn: document.getElementById('spline-modal-close'),
       splineFullscreenBtn: document.getElementById('spline-fullscreen-btn'),
-      toggleThemeBtn: document.getElementById('toggle-theme'),
       chatSendBtn: document.getElementById('chat-send'),
       chatInput: document.getElementById('chat-input'),
       chatList: document.getElementById('chat-list'),
@@ -915,7 +912,7 @@
     let isIndicatorEnabledHeader = false;
     let isIndicatorEnabledModal = false;
     const chartCache = {};
-    let scene, camera, renderer, controls, btcLine, positions = [], colors = [], btcPriceHistory = [], markers = [];
+    let scene, camera, renderer, controls, btcLine, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeMarkers = [];
     let showEvents = false;
     let colorIndex = 0;
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
@@ -1166,19 +1163,20 @@
     }
 
     async function fetchBTCPrice() {
-      const url = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd';
+      const url = 'https://api.coingecko.com/api/v3/coins/bitcoin';
       try {
         const data = await fetchWithRetry(url);
-        const price = data.bitcoin.usd;
+        const price = data.market_data.current_price.usd;
+        const volume = data.market_data.total_volume.usd;
         document.getElementById('live-price-header').textContent = `> Live Price: $${price.toLocaleString()} (BTC)`;
         document.getElementById('live-price-modal').textContent = `> Live Price: $${price.toLocaleString()} (BTC)`;
         if (price > 61000) notifyUser(`BTC price spiked to $${price.toLocaleString()}!`);
-        return price;
+        return { price, volume };
       } catch (error) {
-        console.error('Failed to fetch BTC price from CoinGecko:', error);
+        console.error('Failed to fetch BTC data from CoinGecko:', error);
         document.getElementById('live-price-header').textContent = `> Live Price: $60,000 (BTC, Mock)`;
         document.getElementById('live-price-modal').textContent = `> Live Price: $60,000 (BTC, Mock)`;
-        return 60000;
+        return { price: 60000, volume: 4500000 };
       }
     }
 
@@ -1208,8 +1206,161 @@
         return response;
       } catch (error) {
         console.error('Failed to fetch BTC hash:', error);
-        return generateHashFromPrice(await fetchBTCPrice());
+        return generateHashFromPrice(await fetchBTCPrice().then(res => res.price));
       }
+    }
+
+    function createVolumeSphere(position, volume) {
+      const radius = 0.1 + (volume / 100000000) * 0.9; // maxVolume = 100M
+      const geometry = new THREE.SphereGeometry(radius, 8, 8);
+      const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      const sphere = new THREE.Mesh(geometry, material);
+      sphere.position.copy(position);
+      return sphere;
+    }
+
+    function init3D() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setClearColor(0x000000, 1); // Set background to black
+      const container = document.getElementById('btc-hash-canvas');
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+      camera.position.set(0, 0, 30);
+      camera.lookAt(0, 0, 0);
+      const axesHelper = new THREE.AxesHelper(10);
+      scene.add(axesHelper);
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+
+      const mockPrice = 60000;
+      const mockHash = generateHashFromPrice(mockPrice);
+      const initialPoints = hashToPoints(mockHash);
+      const initialColor = new THREE.Color(siteColors[colorIndex]);
+      initialPoints.forEach(point => {
+        positions.push(point.x, point.y, point.z);
+        colors.push(initialColor.r, initialColor.g, initialColor.b);
+      });
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      const material = new THREE.LineBasicMaterial({ vertexColors: true });
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+      btcLine = line;
+
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString() });
+      updateColorLegend();
+      addSystemLog('Initialized BTC Hash with mock data');
+
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          renderer.setSize(container.clientWidth, container.clientHeight);
+          camera.aspect = container.clientWidth / container.clientHeight;
+          camera.updateProjectionMatrix();
+          renderer.render(scene, camera);
+        }, 100);
+      });
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      let tooltipTimeout;
+
+      container.addEventListener('mousemove', (event) => {
+        const rect = container.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(markers);
+
+        clearTimeout(tooltipTimeout);
+        const existingTooltip = document.getElementById('tooltip');
+        if (existingTooltip) existingTooltip.remove();
+
+        if (intersects.length > 0) {
+          const intersect = intersects[0];
+          const marker = intersect.object;
+          const index = markers.indexOf(marker);
+          const price = btcPriceHistory[index % btcPriceHistory.length];
+          const time = colorLegend[index % colorLegend.length].time;
+
+          const tooltip = document.createElement('div');
+          tooltip.id = 'tooltip';
+          tooltip.style.position = 'absolute';
+          tooltip.style.left = `${event.clientX + 10}px`;
+          tooltip.style.top = `${event.clientY + 10}px`;
+          tooltip.style.background = 'rgba(135, 206, 235, 0.8)';
+          tooltip.style.color = '#1e2727';
+          tooltip.style.padding = '0.25rem 0.5rem';
+          tooltip.style.borderRadius = '4px';
+          tooltip.style.fontSize = '0.75rem';
+          tooltip.style.zIndex = '60';
+          tooltip.innerHTML = `Price: $${price.toLocaleString()}<br>Time: ${time}`;
+          document.body.appendChild(tooltip);
+
+          tooltipTimeout = setTimeout(() => tooltip.remove(), 2000);
+        }
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+    }
+
+    async function updateBTCHash() {
+      const { price, volume } = await fetchBTCPrice();
+      const timestamp = Date.now();
+      const hash = await fetchBTCHash();
+      btcPriceHistory.push(price);
+      if (btcPriceHistory.length > 10) btcPriceHistory.shift();
+      colorIndex = (colorIndex + 1) % siteColors.length;
+      const newColor = new THREE.Color(siteColors[colorIndex]);
+      const newPoints = hashToPoints(hash);
+
+      newPoints.forEach(point => {
+        positions.push(point.x, point.y, point.z);
+        colors.push(newColor.r, newColor.g, newColor.b);
+        const sphere = createVolumeSphere(point, volume);
+        scene.add(sphere);
+        volumeMarkers.push(sphere);
+      });
+
+      if (positions.length / 3 > 1000) {
+        const removeCount = positions.length / 3 - 1000;
+        positions = positions.slice(removeCount * 3);
+        colors = colors.slice(removeCount * 3);
+        const removedSpheres = volumeMarkers.splice(0, removeCount);
+        removedSpheres.forEach(sphere => scene.remove(sphere));
+      }
+
+      btcLine.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      btcLine.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      btcLine.geometry.attributes.position.needsUpdate = true;
+      btcLine.geometry.attributes.color.needsUpdate = true;
+
+      if (showEvents && newPoints.length > 0) {
+        const marker = createMarker(newPoints[0]);
+        scene.add(marker);
+        markers.push(marker);
+      }
+
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString() });
+      if (colorLegend.length > 5) colorLegend.shift();
+      updateColorLegend();
+
+      document.getElementById('btc-price').textContent = `Price: $${price.toLocaleString()}`;
+      document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
+      document.getElementById('btc-time').textContent = `Time: ${new Date(timestamp).toLocaleTimeString()}`;
+      addSystemLog('BTC Hash updated');
     }
 
     async function renderGasHeatmapAndFees() {
@@ -1281,7 +1432,7 @@
           gasHistory.forEach((data, i) => {
             const x = margin.left + (i * plotWidth / maxHistory);
             const prices = [
-              { value: data.safeGenderPrice, type: 'safe' },
+              { value: data.safeGasPrice, type: 'safe' },
               { value: data.proposeGasPrice, type: 'propose' },
               { value: data.fastGasPrice, type: 'fast' }
             ];
@@ -1379,102 +1530,6 @@
       if (logList.children.length > 10) logList.removeChild(logList.lastChild);
     }
 
-    function init3D() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      const container = document.getElementById('btc-hash-canvas');
-      renderer.setSize(container.clientWidth, container.clientHeight);
-      container.appendChild(renderer.domElement);
-      camera.position.set(0, 0, 30);
-      camera.lookAt(0, 0, 0);
-      const axesHelper = new THREE.AxesHelper(10);
-      scene.add(axesHelper);
-      controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
-
-      const mockPrice = 60000;
-      const mockHash = generateHashFromPrice(mockPrice);
-      const initialPoints = hashToPoints(mockHash);
-      const initialColor = new THREE.Color(siteColors[colorIndex]);
-      initialPoints.forEach(point => {
-        positions.push(point.x, point.y, point.z);
-        colors.push(initialColor.r, initialColor.g, initialColor.b);
-      });
-
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-      const material = new THREE.LineBasicMaterial({ vertexColors: true });
-      const line = new THREE.Line(geometry, material);
-      scene.add(line);
-      btcLine = line;
-
-      colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString() });
-      updateColorLegend();
-      addSystemLog('Initialized BTC Hash with mock data');
-
-      let resizeTimeout;
-      window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          renderer.setSize(container.clientWidth, container.clientHeight);
-          camera.aspect = container.clientWidth / container.clientHeight;
-          camera.updateProjectionMatrix();
-          renderer.render(scene, camera);
-        }, 100);
-      });
-
-      const raycaster = new THREE.Raycaster();
-      const mouse = new THREE.Vector2();
-      let tooltipTimeout;
-
-      container.addEventListener('mousemove', (event) => {
-        const rect = container.getBoundingClientRect();
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(markers);
-
-        clearTimeout(tooltipTimeout);
-        const existingTooltip = document.getElementById('tooltip');
-        if (existingTooltip) existingTooltip.remove();
-
-        if (intersects.length > 0) {
-          const intersect = intersects[0];
-          const marker = intersect.object;
-          const index = markers.indexOf(marker);
-          const price = btcPriceHistory[index % btcPriceHistory.length];
-          const time = colorLegend[index % colorLegend.length].time;
-
-          const tooltip = document.createElement('div');
-          tooltip.id = 'tooltip';
-          tooltip.style.position = 'absolute';
-          tooltip.style.left = `${event.clientX + 10}px`;
-          tooltip.style.top = `${event.clientY + 10}px`;
-          tooltip.style.background = 'rgba(135, 206, 235, 0.8)';
-          tooltip.style.color = '#1e2727';
-          tooltip.style.padding = '0.25rem 0.5rem';
-          tooltip.style.borderRadius = '4px';
-          tooltip.style.fontSize = '0.75rem';
-          tooltip.style.zIndex = '60';
-          tooltip.innerHTML = `Price: $${price.toLocaleString()}<br>Time: ${time}`;
-          document.body.appendChild(tooltip);
-
-          tooltipTimeout = setTimeout(() => tooltip.remove(), 2000);
-        }
-      });
-
-      function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-      }
-      animate();
-    }
-
     function updateColorLegend() {
       document.getElementById('btc-color-legend').innerHTML = colorLegend.slice(-5).map(item => `
         <div class="legend-item" data-tooltip="${item.time}">
@@ -1514,47 +1569,6 @@
 
     function toggleMarkers() {
       markers.forEach(marker => marker.visible = showEvents);
-    }
-
-    async function updateBTCHash() {
-      const price = await fetchBTCPrice();
-      const timestamp = Date.now();
-      const hash = await fetchBTCHash();
-      btcPriceHistory.push(price);
-      if (btcPriceHistory.length > 10) btcPriceHistory.shift();
-      colorIndex = (colorIndex + 1) % siteColors.length;
-      const newColor = new THREE.Color(siteColors[colorIndex]);
-      const newPoints = hashToPoints(hash);
-
-      newPoints.forEach(point => {
-        positions.push(point.x, point.y, point.z);
-        colors.push(newColor.r, newColor.g, newColor.b);
-      });
-
-      if (positions.length / 3 > 1000) {
-        positions = positions.slice(-1000 * 3);
-        colors = colors.slice(-1000 * 3);
-      }
-
-      btcLine.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      btcLine.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-      btcLine.geometry.attributes.position.needsUpdate = true;
-      btcLine.geometry.attributes.color.needsUpdate = true;
-
-      if (showEvents && newPoints.length > 0) {
-        const marker = createMarker(newPoints[0]);
-        scene.add(marker);
-        markers.push(marker);
-      }
-
-      colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString() });
-      if (colorLegend.length > 5) colorLegend.shift();
-      updateColorLegend();
-
-      document.getElementById('btc-price').textContent = `Price: $${price.toLocaleString()}`;
-      document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
-      document.getElementById('btc-time').textContent = `Time: ${new Date(timestamp).toLocaleTimeString()}`;
-      addSystemLog('BTC Hash updated');
     }
 
     function renderTokenPerformanceChart(tokens) {
@@ -1866,11 +1880,6 @@
       document.addEventListener('mozfullscreenchange', handleFullscreenChange);
       document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.addEventListener('msfullscreenchange', handleFullscreenChange);
-
-      DOM.toggleThemeBtn.addEventListener('click', () => {
-        document.body.dataset.theme = document.body.dataset.theme === 'light' ? 'dark' : 'light';
-        DOM.toggleThemeBtn.textContent = document.body.dataset.theme === 'light' ? 'Dark Mode' : 'Light Mode';
-      });
 
       DOM.chatSendBtn.addEventListener('click', async () => {
         const input = sanitizeInput(DOM.chatInput.value);
