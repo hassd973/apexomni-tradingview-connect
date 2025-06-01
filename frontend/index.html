@@ -36,7 +36,6 @@
       display: flex;
       flex-direction: column;
       line-height: 1.6;
-      scroll-behavior: smooth;
     }
     h1, h2, h3 {
       font-family: 'Limelight', cursive;
@@ -555,32 +554,23 @@
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center; /* Centering content */
     }
     .btc-hash-container section {
       border: none;
       box-shadow: none;
       padding: 0;
-      width: 100%;
-      max-width: 100%;
     }
     #btc-hash-canvas {
       width: 100% !important;
       height: 50vh !important;
       opacity: 0.8;
-      margin: 0 auto;
-      display: block;
     }
     .btc-hash-svg {
       background: #000000;
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
-      display: flex;
-      justify-content: center;
-      align-items: center;
     }
     @media (max-width: 640px) {
       #chat-list {
@@ -644,25 +634,16 @@
       border-radius: 6px;
       display: flex;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      width: 100%;
     }
-    .nav-menu ul {
-      list-style: none;
-      padding: 0;
-      margin-top: 1rem;
-    }
-    .nav-menu li {
-      margin-bottom: 0.5rem;
-    }
-    .nav-menu a {
+    .nav-link {
+      display: block;
+      padding: 0.5rem 0;
       color: var(--text-color);
       text-decoration: none;
       transition: color 0.3s ease;
     }
-    .nav-menu a:hover {
-      color: var(--primary-color);
+    .nav-link:hover {
+      color: var(--secondary-color);
     }
   </style>
 </head>
@@ -674,13 +655,13 @@
       <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-16 h-16 mb-4">
       <h2 class="text-xl mb-2">QuantumI Dashboard</h2>
       <p>Real-time crypto analytics with CoinGecko, Etherscan, and TradingView integration.</p>
-      <ul class="mt-4 space-y-2">
-        <li><a href="#tokens-module">Tokens</a></li>
-        <li><a href="#gas-module">Gas & Fees</a></li>
-        <li><a href="#logs-module">Live Logs</a></li>
-        <li><a href="#btc-hash-module">BTC Hash Visualization</a></li>
-        <li><a href="#chat-logs-container">Trading Bot & System Logs</a></li>
-      </ul>
+      <nav>
+        <a href="#tokens-module" class="nav-link">Tokens</a>
+        <a href="#gas-module" class="nav-link">Gas & Fees</a>
+        <a href="#logs-module" class="nav-link">Logs</a>
+        <a href="#btc-hash-module" class="nav-link">BTC Hash</a>
+        <a href="#chat-logs-container" class="nav-link">Chat & Logs</a>
+      </nav>
     </div>
   </div>
   <div id="loading-screen">
@@ -854,7 +835,7 @@
       </div>
     </section>
   </main>
-  <div class="btc-hash-container w-full max-w-[98vw] mx-auto">
+  <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
     <section class="rounded-lg" draggable="true" id="btc-hash-module">
       <div class="module-header">
         <h2 class="text-lg md:text-xl sixtyfour-font">> BTC Hash Visualization</h2>
@@ -866,15 +847,13 @@
           <span id="btc-price">Price: Loading...</span>
           <span id="btc-hash">Hash: Loading...</span>
           <span id="btc-time">Time: Loading...</span>
-          <span>Color: Time period</span>
-          <span>Thickness: Trading volume</span>
         </div>
         <div id="btc-color-legend" class="mt-2 flex justify-center gap-2"></div>
         <button id="toggle-events" role="button" aria-label="Toggle event markers" data-tooltip="Toggle event markers">Show Events</button>
       </div>
     </section>
   </div>
-  <div class="chat-logs-container w-full max-w-[98vw] mx-auto" id="chat-logs-container">
+  <div class="chat-logs-container w-full max-w-[98vw] mx-auto text-center">
     <div class="module-header">
       <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
       <button class="toggle-module-btn" role="button" aria-label="Toggle visibility" data-tooltip="Toggle visibility">▼</button>
@@ -934,8 +913,7 @@
     let isIndicatorEnabledHeader = false;
     let isIndicatorEnabledModal = false;
     const chartCache = {};
-    let scene, camera, renderer, controls, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeMarkers = [], volumes = [];
-    let tube;
+    let scene, camera, renderer, controls, btcLine, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeTubes = [];
     let showEvents = false;
     let colorIndex = 0;
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
@@ -1233,20 +1211,20 @@
       }
     }
 
-    function createVolumeSphere(position, volume) {
-      const radius = 0.1 + (volume / 100000000) * 0.9;
-      const geometry = new THREE.SphereGeometry(radius, 8, 8);
+    function createVolumeTube(start, end, volume) {
+      const path = new THREE.LineCurve3(start, end);
+      const radius = 0.1 + (volume / 100000000) * 0.9; // Scale radius based on volume
+      const geometry = new THREE.TubeGeometry(path, 20, radius, 8, false);
       const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-      const sphere = new THREE.Mesh(geometry, material);
-      sphere.position.copy(position);
-      return sphere;
+      const tube = new THREE.Mesh(geometry, material);
+      return tube;
     }
 
     function init3D() {
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setClearColor(0x000000, 1);
+      renderer.setClearColor(0x000000, 1); // Set background to black
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
@@ -1259,22 +1237,23 @@
       controls.dampingFactor = 0.05;
 
       const mockPrice = 60000;
-      const mockVolume = 4500000;
       const mockHash = generateHashFromPrice(mockPrice);
       const initialPoints = hashToPoints(mockHash);
       const initialColor = new THREE.Color(siteColors[colorIndex]);
       initialPoints.forEach(point => {
         positions.push(point.x, point.y, point.z);
         colors.push(initialColor.r, initialColor.g, initialColor.b);
-        volumes.push(mockVolume);
-        const sphere = createVolumeSphere(point, mockVolume);
-        scene.add(sphere);
-        volumeMarkers.push(sphere);
       });
 
-      updateTube();
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      const material = new THREE.LineBasicMaterial({ vertexColors: true });
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+      btcLine = line;
 
-      colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString() });
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString(), volume: 4500000 });
       updateColorLegend();
       addSystemLog('Initialized BTC Hash with mock data');
 
@@ -1299,7 +1278,7 @@
         mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(markers.concat(volumeMarkers));
+        const intersects = raycaster.intersectObjects(markers);
 
         clearTimeout(tooltipTimeout);
         const existingTooltip = document.getElementById('tooltip');
@@ -1307,10 +1286,11 @@
 
         if (intersects.length > 0) {
           const intersect = intersects[0];
-          const object = intersect.object;
-          const index = volumeMarkers.indexOf(object) !== -1 ? volumeMarkers.indexOf(object) : markers.indexOf(object);
-          const price = btcPriceHistory[Math.floor(index / 10)];
-          const time = colorLegend[Math.floor(index / 10)].time;
+          const marker = intersect.object;
+          const index = markers.indexOf(marker);
+          const price = btcPriceHistory[index % btcPriceHistory.length];
+          const time = colorLegend[index % colorLegend.length].time;
+          const volume = colorLegend[index % colorLegend.length].volume;
 
           const tooltip = document.createElement('div');
           tooltip.id = 'tooltip';
@@ -1323,7 +1303,7 @@
           tooltip.style.borderRadius = '4px';
           tooltip.style.fontSize = '0.75rem';
           tooltip.style.zIndex = '60';
-          tooltip.innerHTML = `Price: $${price.toLocaleString()}<br>Time: ${time}`;
+          tooltip.innerHTML = `Price: $${price.toLocaleString()}<br>Volume: ${volume.toLocaleString()}<br>Time: ${time}`;
           document.body.appendChild(tooltip);
 
           tooltipTimeout = setTimeout(() => tooltip.remove(), 2000);
@@ -1338,26 +1318,6 @@
       animate();
     }
 
-    function updateTube() {
-      if (tube) scene.remove(tube);
-      tube = new THREE.Group();
-      const points = [];
-      for (let i = 0; i < positions.length; i += 3) {
-        points.push(new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]));
-      }
-      for (let i = 0; i < points.length - 1; i++) {
-        const p1 = points[i];
-        const p2 = points[i + 1];
-        const segmentPath = new THREE.LineCurve3(p1, p2);
-        const radius = 0.1 + (volumes[i] / 100000000) * 0.9;
-        const geometry = new THREE.TubeGeometry(segmentPath, 1, radius, 8, false);
-        const material = new THREE.MeshBasicMaterial({ color: new THREE.Color(colors[i * 3], colors[i * 3 + 1], colors[i * 3 + 2]) });
-        const segmentTube = new THREE.Mesh(geometry, material);
-        tube.add(segmentTube);
-      }
-      scene.add(tube);
-    }
-
     async function updateBTCHash() {
       const { price, volume } = await fetchBTCPrice();
       const timestamp = Date.now();
@@ -1368,25 +1328,30 @@
       const newColor = new THREE.Color(siteColors[colorIndex]);
       const newPoints = hashToPoints(hash);
 
-      newPoints.forEach(point => {
+      newPoints.forEach((point, index) => {
         positions.push(point.x, point.y, point.z);
         colors.push(newColor.r, newColor.g, newColor.b);
-        volumes.push(volume);
-        const sphere = createVolumeSphere(point, volume);
-        scene.add(sphere);
-        volumeMarkers.push(sphere);
+        if (index > 0) {
+          const start = newPoints[index - 1];
+          const end = point;
+          const tube = createVolumeTube(start, end, volume);
+          scene.add(tube);
+          volumeTubes.push(tube);
+        }
       });
 
       if (positions.length / 3 > 1000) {
         const removeCount = positions.length / 3 - 1000;
         positions = positions.slice(removeCount * 3);
         colors = colors.slice(removeCount * 3);
-        volumes = volumes.slice(removeCount);
-        const removedSpheres = volumeMarkers.splice(0, removeCount);
-        removedSpheres.forEach(sphere => scene.remove(sphere));
+        const removedTubes = volumeTubes.splice(0, removeCount);
+        removedTubes.forEach(tube => scene.remove(tube));
       }
 
-      updateTube();
+      btcLine.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      btcLine.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      btcLine.geometry.attributes.position.needsUpdate = true;
+      btcLine.geometry.attributes.color.needsUpdate = true;
 
       if (showEvents && newPoints.length > 0) {
         const marker = createMarker(newPoints[0]);
@@ -1394,7 +1359,7 @@
         markers.push(marker);
       }
 
-      colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString() });
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString(), volume });
       if (colorLegend.length > 5) colorLegend.shift();
       updateColorLegend();
 
@@ -1454,7 +1419,7 @@
           gasHistory.push(gasData);
           if (gasHistory.length > maxHistory) gasHistory.shift();
 
-          gasList.innerHTML = gas运营.slice(-5).reverse().map(data => `
+          gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
             <li class="p-2 rounded">
               <div>Block: ${data.lastBlock}</div>
               <div>Safe: ${data.safeGasPrice} Gwei</div>
@@ -1573,7 +1538,7 @@
 
     function updateColorLegend() {
       document.getElementById('btc-color-legend').innerHTML = colorLegend.slice(-5).map(item => `
-        <div class="legend-item" data-tooltip="${item.time}">
+        <div class="legend-item" data-tooltip="Time: ${item.time}\nVolume: ${item.volume.toLocaleString()}">
           <div class="legend-color" style="background: ${item.color}"></div>
         </div>
       `).join('');
@@ -1788,12 +1753,6 @@
     document.addEventListener('DOMContentLoaded', () => {
       DOM.navMenuToggle.addEventListener('click', () => DOM.navMenu.classList.add('active'));
       DOM.navMenuClose.addEventListener('click', () => DOM.navMenu.classList.remove('active'));
-
-      document.querySelectorAll('.nav-menu a').forEach(link => {
-        link.addEventListener('click', () => {
-          DOM.navMenu.classList.remove('active');
-        });
-      });
 
       setupDragAndDrop();
       loadModuleOrder();
