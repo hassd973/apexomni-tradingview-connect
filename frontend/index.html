@@ -827,8 +827,8 @@
           <span id="btc-hash">Hash: Loading...</span>
           <span id="btc-time">Time: Loading...</span>
         </div>
+        <div id="btc-color-legend" class="mt-2 flex justify-center gap-2"></div>
         <button id="toggle-events" class="mt-2">Show Events</button>
-        <button id="snapshot-btn" class="mt-2">Snapshot to OBJ</button>
       </div>
     </section>
   </div>
@@ -1275,11 +1275,16 @@
       }
     }
 
-    let scene, camera, renderer, tube, controls;
-    let points = [];
+    let scene, camera, renderer, controls;
+    let btcLine;
+    let positions = [];
+    let colors = [];
     let btcPriceHistory = [];
     let markers = [];
     let showEvents = false;
+    let colorIndex = 0;
+    const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
+    let colorLegend = [];
 
     function addSystemLog(message) {
       const logList = document.getElementById('system-logs-list');
@@ -1305,12 +1310,25 @@
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
 
-      // Initialize with mock data
       const mockPrice = 60000;
       const mockHash = generateHashFromPrice(mockPrice);
       const initialPoints = hashToPoints(mockHash);
-      points = initialPoints;
-      update3DShape();
+      const initialColor = new THREE.Color(siteColors[colorIndex]);
+      initialPoints.forEach(point => {
+        positions.push(point.x, point.y, point.z);
+        colors.push(initialColor.r, initialColor.g, initialColor.b);
+      });
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      const material = new THREE.LineBasicMaterial({ vertexColors: true });
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+      btcLine = line;
+
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString() });
+      updateColorLegend();
       addSystemLog('Initialized BTC Hash with mock data');
 
       window.addEventListener('resize', () => {
@@ -1328,6 +1346,14 @@
       animate();
     }
 
+    function updateColorLegend() {
+      document.getElementById('btc-color-legend').innerHTML = colorLegend.slice(-5).map(item => `
+        <div class="legend-item" data-tooltip="${item.time}">
+          <div class="legend-color" style="background: ${item.color}"></div>
+        </div>
+      `).join('');
+    }
+
     function hashToPoints(hash, numPoints = 10) {
       const points = [];
       for (let i = 0; i < numPoints; i++) {
@@ -1338,17 +1364,6 @@
         points.push(new THREE.Vector3(x, y, z));
       }
       return points;
-    }
-
-    function update3DShape() {
-      if (points.length < 2) return;
-      if (tube) scene.remove(tube);
-      const curve = new THREE.CatmullRomCurve3(points);
-      const geometry = new THREE.TubeGeometry(curve, 64, 0.5, 8, false);
-      const material = new THREE.MeshBasicMaterial({ color: 0x87CEEB });
-      tube = new THREE.Mesh(geometry, material);
-      scene.add(tube);
-      renderer.render(scene, camera);
     }
 
     function generateHashFromPrice(price) {
@@ -1379,37 +1394,40 @@
       if (btcPriceHistory.length > 10) btcPriceHistory.shift();
       const avgPrice = btcPriceHistory.reduce((a, b) => a + b, 0) / btcPriceHistory.length;
       const hash = generateHashFromPrice(avgPrice);
+      colorIndex = (colorIndex + 1) % siteColors.length;
+      const newColor = new THREE.Color(siteColors[colorIndex]);
       const newPoints = hashToPoints(hash);
-      points = points.concat(newPoints);
-      if (points.length > 1000) points = points.slice(-1000);
+
+      newPoints.forEach(point => {
+        positions.push(point.x, point.y, point.z);
+        colors.push(newColor.r, newColor.g, newColor.b);
+      });
+
+      if (positions.length / 3 > 1000) {
+        positions = positions.slice(-1000 * 3);
+        colors = colors.slice(-1000 * 3);
+      }
+
+      btcLine.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      btcLine.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      btcLine.geometry.attributes.position.needsUpdate = true;
+      btcLine.geometry.attributes.color.needsUpdate = true;
 
       if (showEvents && newPoints.length > 0) {
         const marker = createMarker(newPoints[0]);
         scene.add(marker);
         markers.push(marker);
       }
-      update3DShape();
+
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString() });
+      if (colorLegend.length > 5) colorLegend.shift();
+      updateColorLegend();
 
       document.getElementById('btc-price').textContent = `Price: $${price.toLocaleString()}`;
       document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
       document.getElementById('btc-time').textContent = `Time: ${new Date(timestamp).toLocaleTimeString()}`;
       addSystemLog('BTC Hash updated');
     }
-
-    function snapshotToOBJ() {
-      if (!tube) return;
-      const exporter = new THREE.OBJExporter();
-      const result = exporter.parse(tube);
-      const blob = new Blob([result], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'btc_3d_visualization.obj';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    document.getElementById('snapshot-btn').addEventListener('click', snapshotToOBJ);
 
     const quantumPuns = [
       "Entangled in profits!", "Quantum leaps in trading!", "Superposition your trades!",
