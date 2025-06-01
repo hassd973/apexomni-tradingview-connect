@@ -255,7 +255,7 @@
       padding: 1rem;
       min-width: 0;
       cursor: move;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2 perspective: all 0.2s ease;
       box-shadow: 0 0 4px var(--shadow-color);
     }
     @media (max-width: 639px) {
@@ -264,7 +264,7 @@
     section.dragging {
       opacity: 0.8;
       transform: scale(0.98);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0as: all 0.2s ease);
       z-index: 100;
     }
     section:hover {
@@ -554,7 +554,9 @@
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
-      text-align: center; /* Centering content */
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     .btc-hash-container section {
       border: none;
@@ -635,15 +637,8 @@
       display: flex;
       justify-content: space-between;
     }
-    .nav-link {
-      display: block;
-      padding: 0.5rem 0;
-      color: var(--text-color);
-      text-decoration: none;
-      transition: color 0.3s ease;
-    }
-    .nav-link:hover {
-      color: var(--secondary-color);
+    html {
+      scroll-behavior: smooth;
     }
   </style>
 </head>
@@ -655,13 +650,13 @@
       <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-16 h-16 mb-4">
       <h2 class="text-xl mb-2">QuantumI Dashboard</h2>
       <p>Real-time crypto analytics with CoinGecko, Etherscan, and TradingView integration.</p>
-      <nav>
-        <a href="#tokens-module" class="nav-link">Tokens</a>
-        <a href="#gas-module" class="nav-link">Gas & Fees</a>
-        <a href="#logs-module" class="nav-link">Logs</a>
-        <a href="#btc-hash-module" class="nav-link">BTC Hash</a>
-        <a href="#chat-logs-container" class="nav-link">Chat & Logs</a>
-      </nav>
+      <ul class="mt-4 space-y-2">
+        <li><a href="#tokens-module" class="hover:text-blue-400">Tokens</a></li>
+        <li><a href="#gas-module" class="hover:text-blue-400">ETH Gas & Fees</a></li>
+        <li><a href="#logs-module" class="hover:text-blue-400">Live Logs</a></li>
+        <li><a href="#btc-hash-module" class="hover:text-blue-400">BTC Hash Visualization</a></li>
+        <li><a href="#chat-list" class="hover:text-blue-400">Trading Bot & System Logs</a></li>
+      </ul>
     </div>
   </div>
   <div id="loading-screen">
@@ -697,6 +692,7 @@
             <button id="toggle-sticky-header" role="button" aria-label="Open chart in modal" data-tooltip="Open chart in modal">Dock Chart</button>
             <button id="toggle-background" role="button" aria-label="Show background in full screen" data-tooltip="Show background in full screen">Show Background</button>
             <button id="toggle-background-dock" role="button" aria-label="Dock background in modal" data-tooltip="Dock background in modal">Dock Background</button>
+            <button id="undock-background" role="button" aria-label="Undock background" data-tooltip="Undock background">Undock Background</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
@@ -753,7 +749,7 @@
   </div>
   <div class="spline-modal" id="spline-modal">
     <div class="spline-modal-content">
-      <button class="spline-fullscreen-btn" id="spline-fullscreen-btn" role="button" aria-label="Toggle fullscreen">Fullscreen</button>
+      <button class="spline-fullscreen-btn" id="spline-fullscreen-btn"03:00:00 AMerica/Chicago" role="button" aria-label="Toggle fullscreen">Fullscreen</button>
       <button class="spline-modal-close" id="spline-modal-close" role="button" aria-label="Close spline modal">Undock</button>
       <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
     </div>
@@ -835,7 +831,7 @@
       </div>
     </section>
   </main>
-  <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
+  <div class="btc-hash-container w-full max-w-[98vw] mx-auto">
     <section class="rounded-lg" draggable="true" id="btc-hash-module">
       <div class="module-header">
         <h2 class="text-lg md:text-xl sixtyfour-font">> BTC Hash Visualization</h2>
@@ -850,10 +846,11 @@
         </div>
         <div id="btc-color-legend" class="mt-2 flex justify-center gap-2"></div>
         <button id="toggle-events" role="button" aria-label="Toggle event markers" data-tooltip="Toggle event markers">Show Events</button>
+        <button id="download-obj" role="button" aria-label="Download OBJ" data-tooltip="Download OBJ">Download OBJ</button>
       </div>
     </section>
   </div>
-  <div class="chat-logs-container w-full max-w-[98vw] mx-auto text-center">
+  <div class="chat-logs-container w-full max-w-[98vw] mx-auto">
     <div class="module-header">
       <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
       <button class="toggle-module-btn" role="button" aria-label="Toggle visibility" data-tooltip="Toggle visibility">▼</button>
@@ -906,14 +903,15 @@
       exportTokensBtn: document.getElementById('export-tokens'),
       exportGasBtn: document.getElementById('export-gas'),
       toggleEventsBtn: document.getElementById('toggle-events'),
-      tokenPerformanceChart: document.getElementById('token-performance-chart')
+      tokenPerformanceChart: document.getElementById('token-performance-chart'),
+      downloadObjBtn: document.getElementById('download-obj')
     };
 
     let draggedModule = null;
     let isIndicatorEnabledHeader = false;
     let isIndicatorEnabledModal = false;
     const chartCache = {};
-    let scene, camera, renderer, controls, btcLine, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeTubes = [];
+    let scene, camera, renderer, controls, btcLine, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeMarkers = [];
     let showEvents = false;
     let colorIndex = 0;
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
@@ -1211,20 +1209,50 @@
       }
     }
 
-    function createVolumeTube(start, end, volume) {
-      const path = new THREE.LineCurve3(start, end);
-      const radius = 0.1 + (volume / 100000000) * 0.9; // Scale radius based on volume
-      const geometry = new THREE.TubeGeometry(path, 20, radius, 8, false);
+    function createVolumeSphere(position, volume) {
+      const maxVolume = Math.max(...tokensData.map(token => token.total_volume));
+      const radius = 0.1 + (volume / maxVolume) * 0.9;
+      const geometry = new THREE.SphereGeometry(radius, 8, 8);
       const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-      const tube = new THREE.Mesh(geometry, material);
-      return tube;
+      const sphere = new THREE.Mesh(geometry, material);
+      sphere.position.copy(position);
+      return sphere;
+    }
+
+    function addLegend() {
+      const legendGroup = new THREE.Group();
+      const legendColors = siteColors;
+      const legendLabels = ['Price', 'Volume', 'Time', 'Other'];
+
+      legendColors.forEach((color, index) => {
+        const sphereGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+        const sphereMaterial = new THREE.MeshBasicMaterial({ color: color });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.set(-10 + index * 2, 10, 0);
+        legendGroup.add(sphere);
+
+        const loader = new THREE.FontLoader();
+        loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', (font) => {
+          const textGeometry = new THREE.TextGeometry(legendLabels[index], {
+            font: font,
+            size: 0.5,
+            height: 0.1
+          });
+          const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+          const text = new THREE.Mesh(textGeometry, textMaterial);
+          text.position.set(-10 + index * 2, 9, 0);
+          legendGroup.add(text);
+        });
+      });
+
+      scene.add(legendGroup);
     }
 
     function init3D() {
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setClearColor(0x000000, 1); // Set background to black
+      renderer.setClearColor(0x000000, 1);
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
@@ -1253,7 +1281,9 @@
       scene.add(line);
       btcLine = line;
 
-      colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString(), volume: 4500000 });
+      addLegend();
+
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString() });
       updateColorLegend();
       addSystemLog('Initialized BTC Hash with mock data');
 
@@ -1290,7 +1320,6 @@
           const index = markers.indexOf(marker);
           const price = btcPriceHistory[index % btcPriceHistory.length];
           const time = colorLegend[index % colorLegend.length].time;
-          const volume = colorLegend[index % colorLegend.length].volume;
 
           const tooltip = document.createElement('div');
           tooltip.id = 'tooltip';
@@ -1303,7 +1332,7 @@
           tooltip.style.borderRadius = '4px';
           tooltip.style.fontSize = '0.75rem';
           tooltip.style.zIndex = '60';
-          tooltip.innerHTML = `Price: $${price.toLocaleString()}<br>Volume: ${volume.toLocaleString()}<br>Time: ${time}`;
+          tooltip.innerHTML = `Price: $${price.toLocaleString()}<br>Time: ${time}`;
           document.body.appendChild(tooltip);
 
           tooltipTimeout = setTimeout(() => tooltip.remove(), 2000);
@@ -1328,24 +1357,20 @@
       const newColor = new THREE.Color(siteColors[colorIndex]);
       const newPoints = hashToPoints(hash);
 
-      newPoints.forEach((point, index) => {
+      newPoints.forEach(point => {
         positions.push(point.x, point.y, point.z);
         colors.push(newColor.r, newColor.g, newColor.b);
-        if (index > 0) {
-          const start = newPoints[index - 1];
-          const end = point;
-          const tube = createVolumeTube(start, end, volume);
-          scene.add(tube);
-          volumeTubes.push(tube);
-        }
+        const sphere = createVolumeSphere(point, volume);
+        scene.add(sphere);
+        volumeMarkers.push(sphere);
       });
 
       if (positions.length / 3 > 1000) {
         const removeCount = positions.length / 3 - 1000;
         positions = positions.slice(removeCount * 3);
         colors = colors.slice(removeCount * 3);
-        const removedTubes = volumeTubes.splice(0, removeCount);
-        removedTubes.forEach(tube => scene.remove(tube));
+        const removedSpheres = volumeMarkers.splice(0, removeCount);
+        removedSpheres.forEach(sphere => scene.remove(sphere));
       }
 
       btcLine.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -1359,7 +1384,7 @@
         markers.push(marker);
       }
 
-      colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString(), volume });
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString() });
       if (colorLegend.length > 5) colorLegend.shift();
       updateColorLegend();
 
@@ -1538,7 +1563,7 @@
 
     function updateColorLegend() {
       document.getElementById('btc-color-legend').innerHTML = colorLegend.slice(-5).map(item => `
-        <div class="legend-item" data-tooltip="Time: ${item.time}\nVolume: ${item.volume.toLocaleString()}">
+        <div class="legend-item" data-tooltip="${item.time}">
           <div class="legend-color" style="background: ${item.color}"></div>
         </div>
       `).join('');
@@ -1864,6 +1889,12 @@
         DOM.toggleBackgroundBtn.setAttribute('data-tooltip', 'Show background in full screen');
       });
 
+      DOM.undockBackgroundBtn.addEventListener('click', () => {
+        DOM.splineModal.classList.remove('active');
+        DOM.toggleBackgroundBtn.textContent = 'Show Background';
+        DOM.toggleBackgroundBtn.setAttribute('data-tooltip', 'Show background in full screen');
+      });
+
       DOM.splineFullscreenBtn.addEventListener('click', () => {
         const splineModalContent = document.querySelector('.spline-modal-content');
         if (!document.fullscreenElement) {
@@ -1900,6 +1931,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query: input })
           });
+          if (!response.ok) throw new Error('API request failed');
           const data = await response.json();
           const botMessage = document.createElement('li');
           botMessage.className = 'p-2 rounded';
@@ -1910,7 +1942,7 @@
           console.error('Grok API error:', error);
           const errorMessage = document.createElement('li');
           errorMessage.className = 'p-2 rounded text-orange-400';
-          errorMessage.innerHTML = `<div>Grok: Error processing request</div>`;
+          errorMessage.innerHTML = `<div>Grok: Error processing request - ${error.message}</div>`;
           DOM.chatList.appendChild(errorMessage);
         }
         DOM.chatInput.value = '';
@@ -1922,6 +1954,18 @@
 
       DOM.exportGasBtn.addEventListener('click', () => {
         exportToCSV(gasHistory, 'gas_data.csv');
+      });
+
+      DOM.downloadObjBtn.addEventListener('click', () => {
+        const exporter = new THREE.OBJExporter();
+        const result = exporter.parse(scene);
+        const blob = new Blob([result], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'btc_hash.obj';
+        a.click();
+        URL.revokeObjectURL(url);
       });
 
       const observer = new IntersectionObserver((entries) => {
