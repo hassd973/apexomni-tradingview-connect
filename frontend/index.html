@@ -549,28 +549,11 @@
       text-align: center;
     }
     .chat-logs-container, .btc-hash-container {
+      padding: 1rem;
       background: rgba(35, 46, 46, 0.1);
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
-      padding: 1rem;
-      margin: 1rem auto;
-      width: 98vw;
-      max-width: 1200px;
       box-shadow: 0 0 4px var(--shadow-color);
-    }
-    .btc-hash-container {
-      width: 100vw;
-      margin-left: calc(-50vw + 50%);
-      padding: 0;
-      border: none;
-      background: transparent;
-    }
-    .chat-logs-container {
-      width: 100vw;
-      margin-left: calc(-50vw + 50%);
-      padding: 0;
-      border: none;
-      background: transparent;
     }
     .btc-hash-container section {
       border: none;
@@ -834,7 +817,7 @@
       </div>
     </section>
   </main>
-  <div class="btc-hash-container">
+  <div class="btc-hash-container w-full max-w-[98vw] mx-auto">
     <section class="rounded-lg" draggable="true" id="btc-hash-module">
       <div class="module-header">
         <h2 class="text-lg md:text-xl sixtyfour-font">> BTC Hash Visualization</h2>
@@ -852,7 +835,7 @@
       </div>
     </section>
   </div>
-  <div class="chat-logs-container">
+  <div class="chat-logs-container w-full max-w-[98vw] mx-auto">
     <div class="module-header">
       <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
       <button class="toggle-module-btn" role="button" aria-label="Toggle visibility" data-tooltip="Toggle visibility">▼</button>
