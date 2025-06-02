@@ -255,7 +255,7 @@
       padding: 1rem;
       min-width: 0;
       cursor: move;
-      transition: transform 0.2s ease, box-shadow 0.2 perspective: all 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
       box-shadow: 0 0 4px var(--shadow-color);
     }
     @media (max-width: 639px) {
@@ -264,7 +264,7 @@
     section.dragging {
       opacity: 0.8;
       transform: scale(0.98);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0as: all 0.2s ease);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
       z-index: 100;
     }
     section:hover {
@@ -554,8 +554,10 @@
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
+    }
+    .chat-logs-container {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
     }
     .btc-hash-container section {
@@ -637,9 +639,6 @@
       display: flex;
       justify-content: space-between;
     }
-    html {
-      scroll-behavior: smooth;
-    }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
@@ -651,11 +650,11 @@
       <h2 class="text-xl mb-2">QuantumI Dashboard</h2>
       <p>Real-time crypto analytics with CoinGecko, Etherscan, and TradingView integration.</p>
       <ul class="mt-4 space-y-2">
-        <li><a href="#tokens-module" class="hover:text-blue-400">Tokens</a></li>
-        <li><a href="#gas-module" class="hover:text-blue-400">ETH Gas & Fees</a></li>
-        <li><a href="#logs-module" class="hover:text-blue-400">Live Logs</a></li>
-        <li><a href="#btc-hash-module" class="hover:text-blue-400">BTC Hash Visualization</a></li>
-        <li><a href="#chat-list" class="hover:text-blue-400">Trading Bot & System Logs</a></li>
+        <li><a href="#tokens-module" class="hover:text-secondary-color" onclick="document.getElementById('nav-menu').classList.remove('active')">Tokens</a></li>
+        <li><a href="#gas-module" class="hover:text-secondary-color" onclick="document.getElementById('nav-menu').classList.remove('active')">ETH Gas & Fees</a></li>
+        <li><a href="#logs-module" class="hover:text-secondary-color" onclick="document.getElementById('nav-menu').classList.remove('active')">Live Logs</a></li>
+        <li><a href="#btc-hash-module" class="hover:text-secondary-color" onclick="document.getElementById('nav-menu').classList.remove('active')">BTC Hash Visualization</a></li>
+        <li><a href="#chat-logs-container" class="hover:text-secondary-color" onclick="document.getElementById('nav-menu').classList.remove('active')">Trading Bot & Logs</a></li>
       </ul>
     </div>
   </div>
@@ -692,7 +691,6 @@
             <button id="toggle-sticky-header" role="button" aria-label="Open chart in modal" data-tooltip="Open chart in modal">Dock Chart</button>
             <button id="toggle-background" role="button" aria-label="Show background in full screen" data-tooltip="Show background in full screen">Show Background</button>
             <button id="toggle-background-dock" role="button" aria-label="Dock background in modal" data-tooltip="Dock background in modal">Dock Background</button>
-            <button id="undock-background" role="button" aria-label="Undock background" data-tooltip="Undock background">Undock Background</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
@@ -749,7 +747,7 @@
   </div>
   <div class="spline-modal" id="spline-modal">
     <div class="spline-modal-content">
-      <button class="spline-fullscreen-btn" id="spline-fullscreen-btn"03:00:00 AMerica/Chicago" role="button" aria-label="Toggle fullscreen">Fullscreen</button>
+      <button class="spline-fullscreen-btn" id="spline-fullscreen-btn" role="button" aria-label="Toggle fullscreen">Fullscreen</button>
       <button class="spline-modal-close" id="spline-modal-close" role="button" aria-label="Close spline modal">Undock</button>
       <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
     </div>
@@ -844,13 +842,14 @@
           <span id="btc-hash">Hash: Loading...</span>
           <span id="btc-time">Time: Loading...</span>
         </div>
+        <div class="text-sm mb-2">Color Legend: Each color represents a different time point. Sphere size represents trading volume.</div>
         <div id="btc-color-legend" class="mt-2 flex justify-center gap-2"></div>
         <button id="toggle-events" role="button" aria-label="Toggle event markers" data-tooltip="Toggle event markers">Show Events</button>
-        <button id="download-obj" role="button" aria-label="Download OBJ" data-tooltip="Download OBJ">Download OBJ</button>
+        <button id="export-obj" role="button" aria-label="Export 3D model as OBJ" data-tooltip="Export 3D model as OBJ">Export OBJ</button>
       </div>
     </section>
   </div>
-  <div class="chat-logs-container w-full max-w-[98vw] mx-auto">
+  <div class="chat-logs-container w-full max-w-[98vw] mx-auto" id="chat-logs-container">
     <div class="module-header">
       <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
       <button class="toggle-module-btn" role="button" aria-label="Toggle visibility" data-tooltip="Toggle visibility">▼</button>
@@ -903,8 +902,8 @@
       exportTokensBtn: document.getElementById('export-tokens'),
       exportGasBtn: document.getElementById('export-gas'),
       toggleEventsBtn: document.getElementById('toggle-events'),
-      tokenPerformanceChart: document.getElementById('token-performance-chart'),
-      downloadObjBtn: document.getElementById('download-obj')
+      exportObjBtn: document.getElementById('export-obj'),
+      tokenPerformanceChart: document.getElementById('token-performance-chart')
     };
 
     let draggedModule = null;
@@ -928,7 +927,7 @@
     ];
 
     const mockTokens = [
-      { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
+      { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTCa href="#chat-logs-container"BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
       { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 15 },
       { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
     ];
@@ -1210,8 +1209,7 @@
     }
 
     function createVolumeSphere(position, volume) {
-      const maxVolume = Math.max(...tokensData.map(token => token.total_volume));
-      const radius = 0.1 + (volume / maxVolume) * 0.9;
+      const radius = 0.1 + (volume / 100000000) * 0.9; // maxVolume = 100M
       const geometry = new THREE.SphereGeometry(radius, 8, 8);
       const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
       const sphere = new THREE.Mesh(geometry, material);
@@ -1219,40 +1217,11 @@
       return sphere;
     }
 
-    function addLegend() {
-      const legendGroup = new THREE.Group();
-      const legendColors = siteColors;
-      const legendLabels = ['Price', 'Volume', 'Time', 'Other'];
-
-      legendColors.forEach((color, index) => {
-        const sphereGeometry = new THREE.SphereGeometry(0.5, 8, 8);
-        const sphereMaterial = new THREE.MeshBasicMaterial({ color: color });
-        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-        sphere.position.set(-10 + index * 2, 10, 0);
-        legendGroup.add(sphere);
-
-        const loader = new THREE.FontLoader();
-        loader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', (font) => {
-          const textGeometry = new THREE.TextGeometry(legendLabels[index], {
-            font: font,
-            size: 0.5,
-            height: 0.1
-          });
-          const textMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-          const text = new THREE.Mesh(textGeometry, textMaterial);
-          text.position.set(-10 + index * 2, 9, 0);
-          legendGroup.add(text);
-        });
-      });
-
-      scene.add(legendGroup);
-    }
-
     function init3D() {
       scene = new THREE.Scene();
       camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
       renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setClearColor(0x000000, 1);
+      renderer.setClearColor(0x000000, 1); // Set background to black
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
@@ -1261,8 +1230,13 @@
       const axesHelper = new THREE.AxesHelper(10);
       scene.add(axesHelper);
       controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.target = new THREE.Vector3(0, 0, 0);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
+      controls.update();
+
+      const gridHelper = new THREE.GridHelper(20, 20);
+      scene.add(gridHelper);
 
       const mockPrice = 60000;
       const mockHash = generateHashFromPrice(mockPrice);
@@ -1280,8 +1254,6 @@
       const line = new THREE.Line(geometry, material);
       scene.add(line);
       btcLine = line;
-
-      addLegend();
 
       colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString() });
       updateColorLegend();
@@ -1578,6 +1550,10 @@
         const z = (parseInt(hash.substr((offset + 4) % hash.length, 2), 16) / 255) * 20 - 10;
         points.push(new THREE.Vector3(x, y, z));
       }
+      const center = new THREE.Vector3();
+      points.forEach(p => center.add(p));
+      center.divideScalar(points.length);
+      points.forEach(p => p.sub(center));
       return points;
     }
 
@@ -1795,6 +1771,18 @@
         addSystemLog(`Event markers visibility ${showEvents ? 'enabled' : 'disabled'}`);
       });
 
+      DOM.exportObjBtn.addEventListener('click', () => {
+        const exporter = new THREE.OBJExporter();
+        const result = exporter.parse(scene);
+        const blob = new Blob([result], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'btc_hash.obj';
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
       DOM.toggleIndicatorHeaderBtn.addEventListener('click', () => {
         isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
         DOM.toggleIndicatorHeaderBtn.textContent = `${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} Indicator`;
@@ -1889,12 +1877,6 @@
         DOM.toggleBackgroundBtn.setAttribute('data-tooltip', 'Show background in full screen');
       });
 
-      DOM.undockBackgroundBtn.addEventListener('click', () => {
-        DOM.splineModal.classList.remove('active');
-        DOM.toggleBackgroundBtn.textContent = 'Show Background';
-        DOM.toggleBackgroundBtn.setAttribute('data-tooltip', 'Show background in full screen');
-      });
-
       DOM.splineFullscreenBtn.addEventListener('click', () => {
         const splineModalContent = document.querySelector('.spline-modal-content');
         if (!document.fullscreenElement) {
@@ -1926,23 +1908,18 @@
         userMessage.innerHTML = `<div>User: ${input}</div>`;
         DOM.chatList.appendChild(userMessage);
         try {
-          const response = await fetch('https://x.ai/api/grok', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: input })
-          });
-          if (!response.ok) throw new Error('API request failed');
-          const data = await response.json();
+          // Mock response since real API might not be accessible
+          const mockResponse = { response: `Grok: I understood "${input}". How can I assist you today?` };
           const botMessage = document.createElement('li');
           botMessage.className = 'p-2 rounded';
-          botMessage.innerHTML = `<div>Grok: ${data.response}</div>`;
+          botMessage.innerHTML = `<div>${mockResponse.response}</div>`;
           DOM.chatList.appendChild(botMessage);
           DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
         } catch (error) {
           console.error('Grok API error:', error);
           const errorMessage = document.createElement('li');
           errorMessage.className = 'p-2 rounded text-orange-400';
-          errorMessage.innerHTML = `<div>Grok: Error processing request - ${error.message}</div>`;
+          errorMessage.innerHTML = `<div>Grok: Error processing request</div>`;
           DOM.chatList.appendChild(errorMessage);
         }
         DOM.chatInput.value = '';
@@ -1954,18 +1931,6 @@
 
       DOM.exportGasBtn.addEventListener('click', () => {
         exportToCSV(gasHistory, 'gas_data.csv');
-      });
-
-      DOM.downloadObjBtn.addEventListener('click', () => {
-        const exporter = new THREE.OBJExporter();
-        const result = exporter.parse(scene);
-        const blob = new Blob([result], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'btc_hash.obj';
-        a.click();
-        URL.revokeObjectURL(url);
       });
 
       const observer = new IntersectionObserver((entries) => {
