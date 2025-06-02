@@ -13,16 +13,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Limelight&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet">
-  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js"></script>
-  <script src="https://s3.tradingview.com/tv.js" async></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
+  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js" defer></script>
+  <script src="https://s3.tradingview.com/tv.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/FBXExporter.js" defer></script>
   <style>
+    :root {
+      --bg-color: #121212;
+      --text-color: #e0f7fa;
+      --primary-color: #87CEEB;
+      --secondary-color: #ffbb33;
+      --shadow-color: rgba(135, 206, 235, 0.3);
+    }
     body {
       font-family: 'Inconsolata', monospace;
-      background: #121212;
-      color: #e0f7fa;
+      background: var(--bg-color);
+      color: var(--text-color);
       margin: 0;
       min-height: 100vh;
       display: flex;
@@ -31,8 +40,8 @@
     }
     h1, h2, h3 {
       font-family: 'Limelight', cursive;
-      color: #e0f7fa;
-      text-shadow: 0 0 8px rgba(135, 206, 235, 0.5), 0 0 12px rgba(255, 187, 51, 0.3);
+      color: var(--text-color);
+      text-shadow: 0 0 8px var(--shadow-color), 0 0 12px rgba(255, 187, 51, 0.3);
     }
     .main-title, .sixtyfour-font {
       font-family: 'Sixtyfour', sans-serif;
@@ -43,7 +52,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: #121212;
+      background: var(--bg-color);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -78,7 +87,7 @@
     }
     .snowflake {
       position: absolute;
-      color: #e0f7fa;
+      color: var(--text-color);
       font-size: 6px;
       animation: snowflake linear infinite;
       pointer-events: none;
@@ -113,10 +122,10 @@
     header, footer {
       background: rgba(35, 46, 46, 0.1);
       padding: 1rem;
-      border-bottom: 1px solid rgba(135, 206, 235, 0.1);
+      border-bottom: 1px solid var(--shadow-color);
     }
     footer {
-      border-top: 1px solid rgba(135, 206, 235, 0.1);
+      border-top: 1px solid var(--shadow-color);
     }
     main {
       flex: 1;
@@ -133,9 +142,9 @@
       height: calc(100vh - 320px);
       min-height: 250px;
       max-height: 600px;
-      border: 1px solid rgba(135, 206, 235, 0.2);
+      border: 1px solid var(--shadow-color);
       border-radius: 6px;
-      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+      box-shadow: 0 0 4px var(--shadow-color);
     }
     .chart-container.hidden {
       display: none;
@@ -156,7 +165,7 @@
       align-items: center;
       background: rgba(35, 46, 46, 0.2);
       z-index: 10;
-      color: #87CEEB;
+      color: var(--primary-color);
       font-size: 0.875rem;
     }
     #chart-container-modal {
@@ -189,13 +198,13 @@
     .chart-modal-content {
       background: rgba(35, 46, 46, 0.2);
       padding: 1rem;
-      border: 1px solid rgba(135, 206, 235, 0.2);
+      border: 1px solid var(--shadow-color);
       border-radius: 6px;
       width: 95%;
       max-width: 1200px;
       max-height: 90vh;
       overflow-y: auto;
-      box-shadow: 0 0 8px rgba(135, 206, 235, 0.3);
+      box-shadow: 0 0 8px var(--shadow-color);
     }
     .spline-modal {
       display: none;
@@ -217,47 +226,38 @@
       position: relative;
       pointer-events: all;
     }
-    .spline-modal-close {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background-color: #87CEEB;
+    .spline-modal-close, .spline-fullscreen-btn, button, #chat-send, #toggle-indicator-header, #toggle-indicator-modal, #toggle-background, #toggle-background-dock {
+      background-color: var(--primary-color);
       color: #1e2727;
-      border: 1px solid rgba(135, 206, 235, 0.3);
+      border: 1px solid var(--shadow-color);
       font-size: 0.875rem;
       border-radius: 6px;
       padding: 0.5rem 1rem;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
-    .spline-modal-close:hover {
-      background-color: #ffbb33;
-      box-shadow: 0 0 8px #00BFFF;
+    .spline-modal-close:hover, .spline-fullscreen-btn:hover, button:hover, #chat-send:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-background:hover, #toggle-background-dock:hover {
+      background-color: var(--secondary-color);
+      box-shadow: 0 0 8px var(--secondary-color);
+    }
+    .spline-modal-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
     }
     .spline-fullscreen-btn {
       position: absolute;
       top: 1rem;
       right: 5rem;
-      background-color: #87CEEB;
-      color: #1e2727;
-      border: 1px solid rgba(135, 206, 235, 0.3);
-      font-size: 0.875rem;
-      border-radius: 6px;
-      padding: 0.5rem 1rem;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    }
-    .spline-fullscreen-btn:hover {
-      background-color: #ffbb33;
-      box-shadow: 0 0 8px #00BFFF;
     }
     section {
       background: rgba(35, 46, 46, 0.1);
-      border: 1px solid rgba(135, 206, 235, 0.2);
+      border: 1px solid var(--shadow-color);
       border-radius: 6px;
       padding: 1rem;
       min-width: 0;
       cursor: move;
       transition: transform 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+      box-shadow: 0 0 4px var(--shadow-color);
     }
     @media (max-width: 639px) {
       section { cursor: default; }
@@ -269,7 +269,7 @@
       z-index: 100;
     }
     section:hover {
-      box-shadow: 0 0 8px rgba(135, 206, 235, 0.5);
+      box-shadow: 0 0 8px var(--shadow-color);
     }
     .module-header {
       display: flex;
@@ -280,21 +280,21 @@
     .toggle-module-btn {
       background: none;
       border: none;
-      color: #87CEEB;
+      color: var(--primary-color);
       font-size: 0.875rem;
       cursor: pointer;
       padding: 0.25rem;
       transition: color 0.3s ease;
     }
     .toggle-module-btn:hover {
-      color: #ffbb33;
+      color: var(--secondary-color);
     }
     .module-content.hidden {
       display: none;
     }
     ul {
       scrollbar-width: thin;
-      scrollbar-color: #87CEEB rgba(35, 46, 46, 0.2);
+      scrollbar-color: var(--primary-color) rgba(35, 46, 46, 0.2);
       list-style: none;
       padding: 0;
     }
@@ -305,7 +305,7 @@
       background: rgba(35, 46, 46, 0.2);
     }
     ul::-webkit-scrollbar-thumb {
-      background: #87CEEB;
+      background: var(--primary-color);
       border-radius: 4px;
     }
     #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
@@ -315,6 +315,9 @@
     }
     #gas-heatmap-list {
       max-height: 20vh;
+    }
+    #chat-list {
+      height: calc(100vh - 200px);
     }
     @media (min-width: 640px) {
       #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
@@ -344,16 +347,16 @@
     #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover {
       background: rgba(255, 187, 51, 0.1);
       transform: translateX(2px);
-      box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
+      box-shadow: 0 0 6px var(--shadow-color);
     }
     #token-list li.selected-token {
-      border: 1px solid #ffbb33;
+      border: 1px solid var(--secondary-color);
       background: rgba(255, 187, 51, 0.1);
-      box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
+      box-shadow: 0 0 6px var(--shadow-color);
     }
     #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric {
       font-size: 0.75rem;
-      color: #e0f7fa;
+      color: var(--text-color);
     }
     #gas-heatmap-list .metric, #log-list .metric {
       word-break: break-all;
@@ -362,8 +365,8 @@
       font-size: 0.875rem;
       font-weight: 700;
     }
-    #profit-pairs .top-pair { color: #87CEEB; }
-    #profit-pairs .bottom-pair { color: #ffbb33; }
+    #profit-pairs .top-pair { color: var(--primary-color); }
+    #profit-pairs .bottom-pair { color: var(--secondary-color); }
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.02); }
@@ -376,15 +379,16 @@
     .fade-in { animation: fadeIn 0.5s ease-in; }
     .hover-transition { transition: all 0.3s ease; }
     .hover-transition:hover { background: rgba(255, 187, 51, 0.1); }
+    .drop-target { border: 2px dashed var(--secondary-color); }
     .marquee-container {
       background: rgba(35, 46, 46, 0.2);
-      border: 1px solid rgba(135, 206, 235, 0.2);
+      border: 1px solid var(--shadow-color);
       overflow: hidden;
       white-space: nowrap;
       padding: 0.5rem 0;
       margin-top: 0.5rem;
       border-radius: 6px;
-      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+      box-shadow: 0 0 4px var(--shadow-color);
     }
     .marquee {
       display: inline-block;
@@ -395,32 +399,19 @@
     .marquee span {
       margin-right: 1rem;
       font-size: 0.875rem;
-      color: #e0f7fa;
+      color: var(--text-color);
     }
     @media (min-width: 640px) { .marquee span { font-size: 0.875rem; } }
     .marquee-container:hover .marquee { animation-play-state: paused; }
-    button, #chat-send, #toggle-indicator-header, #toggle-indicator-modal, #toggle-background, #toggle-background-dock {
-      background-color: #87CEEB;
-      color: #1e2727;
-      border: 1px solid rgba(135, 206, 235, 0.3);
-      font-size: 0.875rem;
-      border-radius: 6px;
-      padding: 0.5rem 1rem;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    }
-    button:hover, #chat-send:hover, #toggle-indicator-header:hover, #toggle-indicator-modal:hover, #toggle-background:hover, #toggle-background-dock:hover {
-      background-color: #ffbb33;
-      box-shadow: 0 0 8px #ffbb33;
-    }
     .timeframe-btn.active {
-      background-color: #ffbb33;
-      box-shadow: 0 0 8px #ffbb33, 0 0 12px rgba(255, 187, 51, 0.6);
-      border: 1px solid #ffbb33;
+      background-color: var(--secondary-color);
+      box-shadow: 0 0 8px var(--secondary-color), 0 0 12px rgba(255, 187, 51, 0.6);
+      border: 1px solid var(--secondary-color);
     }
     #chat-input {
       background: rgba(35, 46, 46, 0.2);
-      border: 1px solid rgba(135, 206, 235, 0.2);
-      color: #e0f7fa;
+      border: 1px solid var(--shadow-color);
+      color: var(--text-color);
       width: 100%;
       padding: 0.5rem;
       border-radius: 6px;
@@ -428,8 +419,8 @@
     }
     #chat-input:focus {
       outline: none;
-      border-color: #ffbb33;
-      box-shadow: 0 0 6px rgba(255, 187, 51, 0.4);
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 6px var(--shadow-color);
     }
     .loader {
       display: flex;
@@ -441,7 +432,7 @@
       content: '';
       width: 14px;
       height: 14px;
-      border: 2px solid #87CEEB;
+      border: 2px solid var(--primary-color);
       border-top: 2px solid transparent;
       border-radius: 50%;
       animation: spin 1s linear infinite;
@@ -451,7 +442,7 @@
       display: inline-block;
       overflow: hidden;
       white-space: nowrap;
-      border-right: 2px solid #87CEEB;
+      border-right: 2px solid var(--primary-color);
       animation: typing 4s steps(30, end), blink-caret 0.75s step-end infinite;
     }
     @keyframes typing {
@@ -460,18 +451,18 @@
     }
     @keyframes blink-caret {
       from, to { border-color: transparent; }
-      50% { border-color: #87CEEB; }
+      50% { border-color: var(--primary-color); }
     }
     .title-box {
-      color: #e0f7fa;
+      color: var(--text-color);
       text-align: center;
       margin-bottom: 1rem;
       background: rgba(35, 46, 46, 0.2);
-      border: 2px solid #87CEEB;
+      border: 2px solid var(--primary-color);
       border-radius: 6px;
       padding: 1.5rem;
       animation: pulse 4s infinite;
-      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+      box-shadow: 0 0 4px var(--shadow-color);
     }
     @media (min-width: 640px) {
       .title-box { font-size: 1.25rem; }
@@ -482,13 +473,13 @@
       border-radius: 6px;
       background: rgba(35, 46, 46, 0.2);
       font-size: 0.875rem;
-      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+      box-shadow: 0 0 4px var(--shadow-color);
     }
     @media (min-width: 640px) {
       #chart-title-header, #chart-title-modal { font-size: 1rem; }
     }
     [data-tooltip] { position: relative; }
-    [data-tooltip]:hover::after {
+    [data-tooltip]:hover::after, [data-tooltip]:focus::after {
       content: attr(data-tooltip);
       position: absolute;
       bottom: 100%;
@@ -501,7 +492,7 @@
       font-size: 0.75rem;
       white-space: nowrap;
       z-index: 60;
-      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+      box-shadow: 0 0 4px var(--shadow-color);
     }
     .gas-heatmap-section {
       display: flex;
@@ -516,12 +507,12 @@
     #gas-heatmap-canvas {
       width: 100%;
       height: 20vh;
-      border: 1px solid rgba(135, 206, 235, 0.2);
+      border: 1px solid var(--shadow-color);
       border-radius: 6px;
-      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+      box-shadow: 0 0 4px var(--shadow-color);
     }
     @media (min-width: 640px) {
-      #gas #gas-heatmap-canvas { height: 25vh; }
+      #gas-heatmap-canvas { height: 25vh; }
     }
     #gas-heatmap-legend {
       display: flex;
@@ -551,7 +542,7 @@
     }
     .data-warning {
       background: rgba(255, 187, 51, 0.2);
-      color: #ffbb33;
+      color: var(--secondary-color);
       padding: 0.5rem;
       border-radius: 6px;
       font-size: 0.75rem;
@@ -559,20 +550,28 @@
       text-align: center;
     }
     .chat-logs-container, .btc-hash-container {
-      background: rgba(35, 46, 46, 0.1);
-      border: 1px solid rgba(135, 206, 235, 0.2);
-      border-radius: 6px;
       padding: 1rem;
-      margin: 1rem auto;
-      width: 98vw;
-      max-width: 1200px;
-      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+      background: rgba(35, 46, 46, 0.1);
+      border: 1px solid var(--shadow-color);
+      border-radius: 6px;
+      box-shadow: 0 0 4px var(--shadow-color);
+      text-align: center;
+    }
+    .btc-hash-container section {
+      border: none;
+      box-shadow: none;
+      padding: 0;
+    }
+    #btc-hash-canvas {
+      width: 100% !important;
+      height: 50vh !important;
+      opacity: 0.8;
     }
     .btc-hash-svg {
-      background: rgba(35, 46, 46, 0.2);
-      border: 1px solid rgba(135, 206, 235, 0.2);
+      background: #000000;
+      border: 1px solid var(--shadow-color);
       border-radius: 6px;
-      box-shadow: 0 0 4px rgba(135, 206, 235, 0.3);
+      box-shadow: 0 0 4px var(--shadow-color);
     }
     @media (max-width: 640px) {
       #chat-list {
@@ -605,13 +604,13 @@
     }
     .nav-menu-content {
       padding: 2rem;
-      color: #e0f7fa;
+      color: var(--text-color);
     }
     .nav-menu-toggle {
       position: fixed;
       top: 1rem;
       left: 1rem;
-      background: #87CEEB;
+      background: var(--primary-color);
       color: #1e2727;
       border: none;
       padding: 0.5rem;
@@ -624,7 +623,7 @@
       right: 1rem;
       background: none;
       border: none;
-      color: #e0f7fa;
+      color: var(--text-color);
       font-size: 1.5rem;
       cursor: pointer;
     }
@@ -637,16 +636,34 @@
       display: flex;
       justify-content: space-between;
     }
+    .nav-link {
+      display: block;
+      padding: 0.5rem 0;
+      color: var(--text-color);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .nav-link:hover {
+      color: var(--secondary-color);
+    }
   </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
-  <button class="nav-menu-toggle" id="nav-menu-toggle">☰</button>
+  <button class="nav-menu-toggle" id="nav-menu-toggle" role="button" aria-label="Toggle navigation menu">☰</button>
   <div class="nav-menu" id="nav-menu">
-    <button class="nav-menu-close" id="nav-menu-close">×</button>
+    <button class="nav-menu-close" id="nav-menu-close" role="button" aria-label="Close navigation menu">×</button>
     <div class="nav-menu-content">
       <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-16 h-16 mb-4">
       <h2 class="text-xl mb-2">QuantumI Dashboard</h2>
       <p>Real-time crypto analytics with CoinGecko, Etherscan, and TradingView integration.</p>
+      <nav>
+        <a href="#tokens-module" class="nav-link">Tokens</a>
+        <a href="#gas-module" class="nav-link">Gas & Fees</a>
+        <a href="#logs-module" class="nav-link">Logs</a>
+        <a href="#btc-hash-module" class="nav-link">BTC Hash</a>
+        <a href="#chat-logs-container" class="nav-link">Chat & Logs</a>
+        <a href="#" id="undock-background-link" class="nav-link">Undock Background</a>
+      </nav>
     </div>
   </div>
   <div id="loading-screen">
@@ -671,17 +688,17 @@
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
           <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn" data-interval="1" data-tooltip="1-minute chart">1M</button>
-            <button id="header-timeframe-5min" class="timeframe-btn" data-interval="5" data-tooltip="5-minute chart">5M</button>
-            <button id="header-timeframe-15min" class="timeframe-btn" data-interval="15" data-tooltip="15-minute chart">15M</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn" data-interval="60" data-tooltip="1-hour chart">1H</button>
-            <button id="header-timeframe-1d" class="timeframe-btn active" data-interval="D" data-tooltip="Daily chart">1D</button>
+            <button id="header-timeframe-1min" class="timeframe-btn" data-interval="1" role="button" aria-label="Switch to 1-minute chart" data-tooltip="1-minute chart">1M</button>
+            <button id="header-timeframe-5min" class="timeframe-btn" data-interval="5" role="button" aria-label="Switch to 5-minute chart" data-tooltip="5-minute chart">5M</button>
+            <button id="header-timeframe-15min" class="timeframe-btn" data-interval="15" role="button" aria-label="Switch to 15-minute chart" data-tooltip="15-minute chart">15M</button>
+            <button id="header-timeframe-1hr" class="timeframe-btn" data-interval="60" role="button" aria-label="Switch to 1-hour chart" data-tooltip="1-hour chart">1H</button>
+            <button id="header-timeframe-1d" class="timeframe-btn active" data-interval="D" role="button" aria-label="Switch to daily chart" data-tooltip="Daily chart">1D</button>
           </div>
           <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="toggle-indicator-header" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
-            <button id="toggle-sticky-header" data-tooltip="Open chart in modal">Dock Chart</button>
-            <button id="toggle-background" data-tooltip="Show background in full screen">Show Background</button>
-            <button id="toggle-background-dock" data-tooltip="Dock background in modal">Dock Background</button>
+            <button id="toggle-indicator-header" role="button" aria-label="Toggle QuantumI indicator" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
+            <button id="toggle-sticky-header" role="button" aria-label="Open chart in modal" data-tooltip="Open chart in modal">Dock Chart</button>
+            <button id="toggle-background" role="button" aria-label="Show background in full screen" data-tooltip="Show background in full screen">Show Background</button>
+            <button id="toggle-background-dock" role="button" aria-label="Dock background in modal" data-tooltip="Dock background in modal">Dock Background</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
@@ -707,15 +724,15 @@
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
           <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn" data-interval="1" data-tooltip="1-minute chart">1M</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn" data-interval="5" data-tooltip="5-minute chart">5M</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn" data-interval="15" data-tooltip="15-minute chart">15M</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn" data-interval="60" data-tooltip="1-hour chart">1H</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn active" data-interval="D" data-tooltip="Daily chart">1D</button>
+            <button id="modal-timeframe-1min" class="timeframe-btn" data-interval="1" role="button" aria-label="Switch to 1-minute chart" data-tooltip="1-minute chart">1M</button>
+            <button id="modal-timeframe-5min" class="timeframe-btn" data-interval="5" role="button" aria-label="Switch to 5-minute chart" data-tooltip="5-minute chart">5M</button>
+            <button id="modal-timeframe-15min" class="timeframe-btn" data-interval="15" role="button" aria-label="Switch to 15-minute chart" data-tooltip="15-minute chart">15M</button>
+            <button id="modal-timeframe-1hr" class="timeframe-btn" data-interval="60" role="button" aria-label="Switch to 1-hour chart" data-tooltip="1-hour chart">1H</button>
+            <button id="modal-timeframe-1d" class="timeframe-btn active" data-interval="D" role="button" aria-label="Switch to daily chart" data-tooltip="Daily chart">1D</button>
           </div>
           <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="toggle-indicator-modal" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
-            <button id="toggle-sticky-modal" data-tooltip="Close chart modal">Undock Chart</button>
+            <button id="toggle-indicator-modal" role="button" aria-label="Toggle QuantumI indicator" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
+            <button id="toggle-sticky-modal" role="button" aria-label="Close chart modal" data-tooltip="Close chart modal">Undock Chart</button>
           </div>
         </div>
         <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
@@ -738,16 +755,16 @@
   </div>
   <div class="spline-modal" id="spline-modal">
     <div class="spline-modal-content">
-      <button class="spline-fullscreen-btn" id="spline-fullscreen-btn">Fullscreen</button>
-      <button class="spline-modal-close" id="spline-modal-close">Undock</button>
+      <button class="spline-fullscreen-btn" id="spline-fullscreen-btn" role="button" aria-label="Toggle fullscreen">Fullscreen</button>
+      <button class="spline-modal-close" id="spline-modal-close" role="button" aria-label="Close spline modal">Undock</button>
       <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
     </div>
   </div>
   <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
-    <section class="rounded-lg" draggable="true">
+    <section class="rounded-lg" draggable="true" id="tokens-module">
       <div class="module-header">
         <h2 class="text-lg md:text-xl typewriter">> Tokens</h2>
-        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
+        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
         <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
@@ -761,12 +778,17 @@
           <h3 class="text-base md:text-lg mb-2 typewriter">> Top USDT Pairs</h3>
           <ul id="top-pairs" class="text-sm text-gray-500 flex flex-wrap gap-2"></ul>
         </div>
+        <div class="mt-4">
+          <h3 class="text-base md:text-lg mb-2 typewriter">> Token Performance</h3>
+          <canvas id="token-performance-chart"></canvas>
+        </div>
+        <button id="export-tokens" class="mt-2" role="button" aria-label="Export token data as CSV" data-tooltip="Export token data as CSV">Export CSV</button>
       </div>
     </section>
-    <section class="rounded-lg gas-heatmap-section" draggable="true">
+    <section class="rounded-lg gas-heatmap-section" draggable="true" id="gas-module">
       <div class="module-header">
         <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">> ETH Gas & Fees</h2>
-        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
+        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
         <div id="loader-gas-fees" class="loader text-center text-gray-500 text-sm">> Loading...</div>
@@ -797,47 +819,47 @@
             </ul>
           </div>
         </div>
+        <button id="export-gas" class="mt-2" role="button" aria-label="Export gas data as CSV" data-tooltip="Export gas data as CSV">Export CSV</button>
       </div>
     </section>
-    <section class="rounded-lg" draggable="true">
+    <section class="rounded-lg" draggable="true" id="logs-module">
       <div class="module-header">
         <h2 class="text-lg md:text-xl typewriter">> Live Logs</h2>
-        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
+        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
         <div class="flex justify-between items-center mb-2">
           <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-          <button id="toggle-logs-data" data-tooltip="Switch log data source">Real Logs</button>
+          <button id="toggle-logs-data" role="button" aria-label="Switch log data source" data-tooltip="Switch log data source">Real Logs</button>
         </div>
         <div id="logs-warning" class="data-warning" style="display: none;">> Using mock logs due to connection issue</div>
         <ul id="log-list" class="space-y-2 text-sm"></ul>
       </div>
     </section>
   </main>
-  <div class="btc-hash-container w-full max-w-[98vw] mx-auto">
+  <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
     <section class="rounded-lg" draggable="true" id="btc-hash-module">
       <div class="module-header">
         <h2 class="text-lg md:text-xl sixtyfour-font">> BTC Hash Visualization</h2>
-        <button class="toggle-module-btn" data-tooltip="Toggle module visibility">▼</button>
+        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
-        <div id="btc-hash-canvas" class="btc-hash-svg" style="width: 100%; height: 50vh;"></div>
+        <div id="btc-hash-canvas" class="btc-hash-svg"></div>
         <div id="btc-legend">
           <span id="btc-price">Price: Loading...</span>
           <span id="btc-hash">Hash: Loading...</span>
           <span id="btc-time">Time: Loading...</span>
         </div>
-        <div class="text-sm mb-2">Color Legend: Each color represents a different time point. Sphere size represents trading volume.</div>
         <div id="btc-color-legend" class="mt-2 flex justify-center gap-2"></div>
-        <button id="toggle-events" class="mt-2">Show Events</button>
-        <button id="export-obj" class="mt-2">Export OBJ</button>
+        <button id="toggle-events" role="button" aria-label="Toggle event markers" data-tooltip="Toggle event markers">Show Events</button>
+        <button id="export-fbx" class="mt-2" role="button" aria-label="Export as FBX" data-tooltip="Export as FBX">Export FBX</button>
       </div>
     </section>
   </div>
-  <div class="chat-logs-container">
+  <div class="chat-logs-container w-full max-w-[98vw] mx-auto text-center">
     <div class="module-header">
       <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
-      <button class="toggle-module-btn" data-tooltip="Toggle visibility">▼</button>
+      <button class="toggle-module-btn" role="button" aria-label="Toggle visibility" data-tooltip="Toggle visibility">▼</button>
     </div>
     <div class="module-content">
       <div class="mt-4">
@@ -852,10 +874,10 @@
         </div>
       </div>
       <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 max-h-[50vh] scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm"></div>
+      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm"></div>
       <div class="mt-4 flex flex-col sm:flex-row gap-2">
         <input id="chat-input" type="text" placeholder="Ask Grok..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
-        <button id="chat-send" class="px-4 py-2 rounded" aria-label="Send chat message" data-tooltip="Send message">Send</button>
+        <button id="chat-send" class="px-4 py-2 rounded" role="button" aria-label="Send chat message" data-tooltip="Send message">Send</button>
       </div>
     </div>
   </div>
@@ -863,18 +885,75 @@
     <p class="typewriter">Powered by CoinGecko, Etherscan & TradingView</p>
   </footer>
   <script>
-    const navMenuToggle = document.getElementById('nav-menu-toggle');
-    const navMenuClose = document.getElementById('nav-menu-close');
-    const navMenu = document.getElementById('nav-menu');
+    const DOM = {
+      navMenuToggle: document.getElementById('nav-menu-toggle'),
+      navMenuClose: document.getElementById('nav-menu-close'),
+      navMenu: document.getElementById('nav-menu'),
+      loadingScreen: document.getElementById('loading-screen'),
+      particleContainer: document.getElementById('particles'),
+      moduleGrid: document.getElementById('module-grid'),
+      toggleIndicatorHeaderBtn: document.getElementById('toggle-indicator-header'),
+      toggleIndicatorModalBtn: document.getElementById('toggle-indicator-modal'),
+      toggleStickyHeader: document.getElementById('toggle-sticky-header'),
+      toggleStickyModal: document.getElementById('toggle-sticky-modal'),
+      chartModal: document.getElementById('chart-modal'),
+      tokenList: document.getElementById('token-list'),
+      toggleBackgroundBtn: document.getElementById('toggle-background'),
+      toggleBackgroundDockBtn: document.getElementById('toggle-background-dock'),
+      splineModal: document.getElementById('spline-modal'),
+      splineModalCloseBtn: document.getElementById('spline-modal-close'),
+      splineFullscreenBtn: document.getElementById('spline-fullscreen-btn'),
+      chatSendBtn: document.getElementById('chat-send'),
+      chatInput: document.getElementById('chat-input'),
+      chatList: document.getElementById('chat-list'),
+      exportTokensBtn: document.getElementById('export-tokens'),
+      exportGasBtn: document.getElementById('export-gas'),
+      toggleEventsBtn: document.getElementById('toggle-events'),
+      tokenPerformanceChart: document.getElementById('token-performance-chart'),
+      exportFbxBtn: document.getElementById('export-fbx'),
+      undockBackgroundLink: document.getElementById('undock-background-link')
+    };
 
-    navMenuToggle.addEventListener('click', () => navMenu.classList.add('active'));
-    navMenuClose.addEventListener('click', () => navMenu.classList.remove('active'));
+    let draggedModule = null;
+    let isIndicatorEnabledHeader = false;
+    let isIndicatorEnabledModal = false;
+    const chartCache = {};
+    let scene, camera, renderer, controls, btcLine, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeTubes = [];
+    let showEvents = false;
+    let colorIndex = 0;
+    const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
+    let colorLegend = [];
+    let currentEthPrice = 0;
+    let isUsingMockLogs = true;
+    let gasHistory = [];
+    let tokensData = [];
+
+    const mockLogs = [
+      { id: 1, message: 'Trade executed: BTC/USDT at $60,000', timestamp: new Date(Date.now() - 60000).toLocaleTimeString(), type: 'trade' },
+      { id: 2, message: 'Price alert: ETH crossed $4,000', timestamp: new Date(Date.now() - 120000).toLocaleTimeString(), type: 'alert' },
+      { id: 3, message: 'System: API connection stable', timestamp: new Date(Date.now() - 180000).toLocaleTimeString(), type: 'system' }
+    ];
+
+    const mockTokens = [
+      { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
+      { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 15 },
+      { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
+    ];
+
+    const quantumPuns = [
+      "Entangled in profits!", "Quantum leaps in trading!", "Superposition your trades!",
+      "Uncertainty in the market, certainty in gains!", "Wave function collapse to profits!",
+      "Quantum tunneling through resistance!", "Spooky action at a distance: instant trades!",
+      "Heisenberg's uncertainty: but your profits are certain!", "Quantum computing your next move!",
+      "Entanglement: your portfolio and success!", "Quantum supremacy in trading!",
+      "Decoherence? Not in my portfolio!", "Quantum bits, quantum profits!",
+      "Riding the quantum wave to success!"
+    ];
 
     window.onload = function() {
-      const loadingScreen = document.getElementById('loading-screen');
-      loadingScreen.style.opacity = '0';
+      DOM.loadingScreen.style.opacity = '0';
       setTimeout(() => {
-        loadingScreen.style.display = 'none';
+        DOM.loadingScreen.style.display = 'none';
         document.querySelector('header').style.opacity = '1';
         setTimeout(() => document.querySelector('main').style.opacity = '1', 300);
         setTimeout(() => document.querySelector('footer').style.opacity = '1', 500);
@@ -884,17 +963,16 @@
       }, 500);
     };
 
-    const particleContainer = document.getElementById('particles');
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 20; i++) {
       const particle = document.createElement('div');
       particle.className = 'star';
       particle.style.left = `${Math.random() * 100}%`;
       particle.style.top = `${Math.random() * 100}%`;
       particle.style.animationDelay = `${Math.random() * 15}s`;
-      particleContainer.appendChild(particle);
+      DOM.particleContainer.appendChild(particle);
     }
 
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 20; i++) {
       const snowflake = document.createElement('div');
       snowflake.className = 'snowflake';
       snowflake.textContent = '❄️';
@@ -905,9 +983,6 @@
       snowflake.style.setProperty('--drift', `${-20 + Math.random() * 40}px`);
       document.body.appendChild(snowflake);
     }
-
-    const moduleGrid = document.getElementById('module-grid');
-    let draggedModule = null;
 
     function setupDragAndDrop() {
       const modules = document.querySelectorAll('#module-grid section');
@@ -928,21 +1003,22 @@
           module.addEventListener('dragover', (e) => e.preventDefault());
           module.addEventListener('dragenter', (e) => {
             e.preventDefault();
-            module.classList.add('hover-transition');
+            module.classList.add('drop-target');
           });
-          module.addEventListener('dragleave', () => module.classList.remove('hover-transition'));
+          module.addEventListener('dragleave', () => module.classList.remove('drop-target'));
           module.addEventListener('drop', (e) => {
             e.preventDefault();
-            module.classList.remove('hover-transition');
+            module.classList.remove('drop-target');
             if (draggedModule && draggedModule !== module) {
-              const allModules = Array.from(moduleGrid.children);
+              const allModules = Array.from(DOM.moduleGrid.children);
               const draggedIndex = allModules.indexOf(draggedModule);
               const targetIndex = allModules.indexOf(module);
               if (draggedIndex < targetIndex) {
-                moduleGrid.insertBefore(draggedModule, module.nextSibling);
+                DOM.moduleGrid.insertBefore(draggedModule, module.nextSibling);
               } else {
-                moduleGrid.insertBefore(draggedModule, module);
+                DOM.moduleGrid.insertBefore(draggedModule, module);
               }
+              saveModuleOrder();
               window.dispatchEvent(new Event('resize'));
             }
           });
@@ -951,14 +1027,11 @@
             module.classList.add('dragging');
           });
           module.addEventListener('touchmove', (e) => {
-            const target = e.target.closest('ul');
-            if (!target || !target.match('#token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list')) {
-              e.preventDefault();
-            }
+            e.preventDefault();
             const touch = e.touches[0];
             const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('#module-grid section');
             if (dropTarget && dropTarget !== draggedModule) {
-              dropTarget.classList.add('hover-transition');
+              dropTarget.classList.add('drop-target');
             }
           });
           module.addEventListener('touchend', (e) => {
@@ -967,21 +1040,37 @@
             const target = document.elementFromPoint(touch.clientX, touch.clientY);
             const dropTarget = target?.closest('#module-grid section');
             if (dropTarget && dropTarget !== draggedModule) {
-              const allModules = Array.from(moduleGrid.children);
+              const allModules = Array.from(DOM.moduleGrid.children);
               const draggedIndex = allModules.indexOf(draggedModule);
               const targetIndex = allModules.indexOf(dropTarget);
               if (draggedIndex < targetIndex) {
-                moduleGrid.insertBefore(draggedModule, dropTarget.nextSibling);
+                DOM.moduleGrid.insertBefore(draggedModule, dropTarget.nextSibling);
               } else {
-                moduleGrid.insertBefore(draggedModule, dropTarget);
+                DOM.moduleGrid.insertBefore(draggedModule, dropTarget);
               }
+              saveModuleOrder();
               window.dispatchEvent(new Event('resize'));
             }
             draggedModule = null;
-            modules.forEach(m => m.classList.remove('hover-transition'));
+            modules.forEach(m => m.classList.remove('drop-target'));
           });
         }
       });
+    }
+
+    function saveModuleOrder() {
+      const order = Array.from(DOM.moduleGrid.children).map(module => module.id);
+      localStorage.setItem('moduleOrder', JSON.stringify(order));
+    }
+
+    function loadModuleOrder() {
+      const order = JSON.parse(localStorage.getItem('moduleOrder'));
+      if (order) {
+        order.forEach(id => {
+          const module = document.getElementById(id);
+          if (module) DOM.moduleGrid.appendChild(module);
+        });
+      }
     }
 
     function setupModuleToggles() {
@@ -991,14 +1080,15 @@
           const isHidden = moduleContent.classList.toggle('hidden');
           btn.textContent = isHidden ? '▶' : '▼';
           btn.setAttribute('data-tooltip', isHidden ? 'Show module content' : 'Hide module content');
+          btn.setAttribute('aria-label', isHidden ? 'Show module content' : 'Hide module content');
         });
       });
     }
 
-    let isIndicatorEnabledHeader = false;
-    let isIndicatorEnabledModal = false;
+    function initializeChart(containerId, symbol, interval = 'D', retries = 3) {
+      const cacheKey = `${containerId}-${symbol}-${interval}`;
+      if (chartCache[cacheKey]) return chartCache[cacheKey];
 
-    function initializeChart(containerId, symbol, interval = 'D', retries = 2) {
       const container = document.getElementById(containerId);
       const chartTitle = document.getElementById(containerId === 'chart-container-header' ? 'chart-title-header' : 'chart-title-modal');
       if (!container || !chartTitle) return console.error(`Container or chart title not found for ${containerId}`);
@@ -1045,17 +1135,19 @@
             onChartReady: () => {
               console.log(`Chart loaded for ${containerId} with symbol ${symbol}`);
               if (isIndicatorEnabled) alert('Please manually add the "QuantumI Indicator":\n1. Click Indicators (f(x)).\n2. Search "QuantumI Indicator".\n3. Apply.');
+              chartCache[cacheKey] = widget;
+              container.removeChild(loadingDiv);
             },
             onError: (error) => {
               console.error(`Chart error for ${containerId}:`, error);
               if (retries > 0) setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
-              else loadingDiv.textContent = `Failed to load ${symbol.replace('BINANCE:', '')} chart.`;
+              else loadingDiv.textContent = `Failed to load ${symbol.replace('BINANCE:', '')} chart after 3 attempts. Please try again later.`;
             }
           });
         } catch (error) {
           console.error(`Critical error initializing chart for ${containerId}:`, error);
           if (retries > 0) setTimeout(() => initializeChart(containerId, symbol, interval, retries - 1), 500);
-          else loadingDiv.textContent = `Critical failure loading ${symbol.replace('BINANCE:', '')} chart.`;
+          else loadingDiv.textContent = `Critical failure loading ${symbol.replace('BINANCE:', '')} chart after 3 attempts.`;
         }
       };
       setTimeout(initWidget, 300);
@@ -1067,21 +1159,6 @@
           const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit', headers: { 'Accept': 'application/json' } });
           if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}, Text: ${response.statusText}`);
           return await response.json();
-        } catch (error) {
-          if (i === retries) throw error;
-          const backoff = delay * Math.pow(2, i);
-          console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${backoff}ms: ${error.message}`);
-          await new Promise(resolve => setTimeout(resolve, backoff));
-        }
-      }
-    }
-
-    async function fetchTextWithRetry(url, retries = 3, delay = 1000) {
-      for (let i = 0; i <= retries; i++) {
-        try {
-          const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit' });
-          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}, Text: ${response.statusText}`);
-          return await response.text();
         } catch (error) {
           if (i === retries) throw error;
           const backoff = delay * Math.pow(2, i);
@@ -1109,41 +1186,200 @@
       }
     }
 
-    async function fetchBTCHash() {
-      const url = 'https://blockchain.info/q/latesthash';
-      try {
-        const hash = await fetchTextWithRetry(url);
-        return hash;
-      } catch (error) {
-        console.error('Failed to fetch BTC hash:', error);
-        const price = await fetchBTCPrice().then(res => res.price);
-        return generateHashFromPrice(price);
-      }
-    }
-
     async function fetchGasPrices() {
-      const apiKey = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
-      const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
+      const url = '/api/gas-prices';
       try {
         const data = await fetchWithRetry(url);
-        if (data.status === '1' && data.result) {
-          const gasData = {
-            safeGasPrice: parseInt(data.result.SafeGasPrice) || 10,
-            proposeGasPrice: parseInt(data.result.ProposeGasPrice) || 15,
-            fastGasPrice: parseInt(data.result.FastGasPrice) || 20,
-            lastBlock: data.result.LastBlock || 'N/A',
-            timestamp: new Date().getTime()
-          };
-          if (gasData.fastGasPrice > 25) notifyUser(`Gas price spiked to ${gasData.fastGasPrice} Gwei!`);
-          return gasData;
-        } else throw new Error('Invalid gas price data');
+        const gasData = {
+          safeGasPrice: parseInt(data.result.SafeGasPrice) || 10,
+          proposeGasPrice: parseInt(data.result.ProposeGasPrice) || 15,
+          fastGasPrice: parseInt(data.result.FastGasPrice) || 20,
+          lastBlock: data.result.LastBlock || 'N/A',
+          timestamp: Date.now()
+        };
+        if (gasData.fastGasPrice > 25) notifyUser(`Gas price spiked to ${gasData.fastGasPrice} Gwei!`);
+        return gasData;
       } catch (error) {
         console.error('Failed to fetch gas prices:', error);
         return { safeGasPrice: 10, proposeGasPrice: 15, fastGasPrice: 20, lastBlock: 'N/A', timestamp: Date.now() };
       }
     }
 
-    let currentEthPrice = 0;
+    async function fetchBTCHash() {
+      const url = 'https://blockchain.info/q/latesthash';
+      try {
+        const response = await fetchWithRetry(url);
+        return response;
+      } catch (error) {
+        console.error('Failed to fetch BTC hash:', error);
+        return generateHashFromPrice(await fetchBTCPrice().then(res => res.price));
+      }
+    }
+
+    function createVolumeTube(start, end, volume) {
+      const path = new THREE.LineCurve3(start, end);
+      const radius = 0.1 + (volume / 100000000) * 0.9;
+      const geometry = new THREE.TubeGeometry(path, 64, radius, 16, false);
+      const material = new THREE.MeshPhongMaterial({ color: 0xff0000, shininess: 100 });
+      const tube = new THREE.Mesh(geometry, material);
+      return tube;
+    }
+
+    function init3D() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setClearColor(0x000000, 1);
+      const container = document.getElementById('btc-hash-canvas');
+      renderer.setSize(container.clientWidth, container.clientHeight);
+      container.appendChild(renderer.domElement);
+      camera.position.set(0, 0, 30);
+      camera.lookAt(0, 0, 0);
+
+      const ambientLight = new THREE.AmbientLight(0x404040);
+      scene.add(ambientLight);
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+      directionalLight.position.set(5, 10, 7.5);
+      scene.add(directionalLight);
+
+      const axesHelper = new THREE.AxesHelper(10);
+      scene.add(axesHelper);
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.05;
+
+      const mockPrice = 60000;
+      const mockHash = generateHashFromPrice(mockPrice);
+      const initialPoints = hashToPoints(mockHash);
+      const initialColor = new THREE.Color(siteColors[colorIndex]);
+      initialPoints.forEach(point => {
+        positions.push(point.x, point.y, point.z);
+        colors.push(initialColor.r, initialColor.g, initialColor.b);
+      });
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      const material = new THREE.LineBasicMaterial({ vertexColors: true });
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+      btcLine = line;
+
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString(), volume: 4500000 });
+      updateColorLegend();
+      addSystemLog('Initialized BTC Hash with mock data');
+
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          renderer.setSize(container.clientWidth, container.clientHeight);
+          camera.aspect = container.clientWidth / container.clientHeight;
+          camera.updateProjectionMatrix();
+          renderer.render(scene, camera);
+        }, 100);
+      });
+
+      const raycaster = new THREE.Raycaster();
+      const mouse = new THREE.Vector2();
+      let tooltipTimeout;
+
+      container.addEventListener('mousemove', (event) => {
+        const rect = container.getBoundingClientRect();
+        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(markers);
+
+        clearTimeout(tooltipTimeout);
+        const existingTooltip = document.getElementById('tooltip');
+        if (existingTooltip) existingTooltip.remove();
+
+        if (intersects.length > 0) {
+          const intersect = intersects[0];
+          const marker = intersect.object;
+          const index = markers.indexOf(marker);
+          const price = btcPriceHistory[index % btcPriceHistory.length];
+          const time = colorLegend[index % colorLegend.length].time;
+          const volume = colorLegend[index % colorLegend.length].volume;
+
+          const tooltip = document.createElement('div');
+          tooltip.id = 'tooltip';
+          tooltip.style.position = 'absolute';
+          tooltip.style.left = `${event.clientX + 10}px`;
+          tooltip.style.top = `${event.clientY + 10}px`;
+          tooltip.style.background = 'rgba(135, 206, 235, 0.8)';
+          tooltip.style.color = '#1e2727';
+          tooltip.style.padding = '0.25rem 0.5rem';
+          tooltip.style.borderRadius = '4px';
+          tooltip.style.fontSize = '0.75rem';
+          tooltip.style.zIndex = '60';
+          tooltip.innerHTML = `Price: $${price.toLocaleString()}<br>Volume: ${volume.toLocaleString()}<br>Time: ${time}`;
+          document.body.appendChild(tooltip);
+
+          tooltipTimeout = setTimeout(() => tooltip.remove(), 2000);
+        }
+      });
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+      animate();
+    }
+
+    async function updateBTCHash() {
+      const { price, volume } = await fetchBTCPrice();
+      const timestamp = Date.now();
+      const hash = await fetchBTCHash();
+      btcPriceHistory.push(price);
+      if (btcPriceHistory.length > 10) btcPriceHistory.shift();
+      colorIndex = (colorIndex + 1) % siteColors.length;
+      const newColor = new THREE.Color(siteColors[colorIndex]);
+      const newPoints = hashToPoints(hash);
+
+      newPoints.forEach((point, index) => {
+        positions.push(point.x, point.y, point.z);
+        colors.push(newColor.r, newColor.g, newColor.b);
+        if (index > 0) {
+          const start = newPoints[index - 1];
+          const end = point;
+          const tube = createVolumeTube(start, end, volume);
+          scene.add(tube);
+          volumeTubes.push(tube);
+        }
+      });
+
+      if (positions.length / 3 > 1000) {
+        const removeCount = positions.length / 3 - 1000;
+        positions = positions.slice(removeCount * 3);
+        colors = colors.slice(removeCount * 3);
+        const removedTubes = volumeTubes.splice(0, removeCount);
+        removedTubes.forEach(tube => scene.remove(tube));
+      }
+
+      btcLine.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      btcLine.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+      btcLine.geometry.attributes.position.needsUpdate = true;
+      btcLine.geometry.attributes.color.needsUpdate = true;
+
+      if (showEvents && newPoints.length > 0) {
+        const marker = createMarker(newPoints[0]);
+        scene.add(marker);
+        markers.push(marker);
+      }
+
+      colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString(), volume });
+      if (colorLegend.length > 5) colorLegend.shift();
+      updateColorLegend();
+
+      document.getElementById('btc-price').textContent = `Price: $${price.toLocaleString()}`;
+      document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
+      document.getElementById('btc-time').textContent = `Time: ${new Date(timestamp).toLocaleTimeString()}`;
+      addSystemLog('BTC Hash updated');
+    }
 
     async function renderGasHeatmapAndFees() {
       const canvas = document.getElementById('gas-heatmap-canvas');
@@ -1159,7 +1395,6 @@
         return console.error('[ERROR] Failed to get 2D context for gas heatmap canvas');
       }
 
-      let gasHistory = [];
       const maxHistory = 20;
       const margin = { top: 20, right: 10, bottom: 20, left: 40 };
 
@@ -1173,7 +1408,11 @@
       };
 
       resizeCanvas();
-      window.addEventListener('resize', resizeCanvas);
+      let resizeTimeout;
+      window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(resizeCanvas, 100);
+      });
 
       const getColor = (type) => {
         return type === 'safe' ? '#87CEEB' : type === 'propose' ? '#ffbb33' : '#ff0000';
@@ -1240,7 +1479,6 @@
 
           updateFees(gasData.proposeGasPrice, currentEthPrice > 0 ? currentEthPrice : 4000);
           loader.style.display = 'none';
-          console.log('[DEBUG] Gas heatmap and fees updated:', { gasHistoryLength: gasHistory.length, latestGasData: gasData, isMockGas });
         } catch (error) {
           console.error('[ERROR] Failed to update gas heatmap and fees:', error);
           loader.textContent = '> Error loading gas heatmap and fees';
@@ -1265,13 +1503,6 @@
       document.getElementById('bridge-fee').textContent = bridgeFeeUsd.toFixed(2);
       document.getElementById('loader-gas-fees').style.display = 'none';
     }
-
-    let isUsingMockLogs = true;
-    const mockLogs = [
-      { id: 1, message: 'Trade executed: BTC/USDT at $60,000', timestamp: new Date(Date.now() - 60000).toLocaleTimeString(), type: 'trade' },
-      { id: 2, message: 'Price alert: ETH crossed $4,000', timestamp: new Date(Date.now() - 120000).toLocaleTimeString(), type: 'alert' },
-      { id: 3, message: 'System: API connection stable', timestamp: new Date(Date.now() - 180000).toLocaleTimeString(), type: 'system' }
-    ];
 
     async function fetchLogs() {
       try {
@@ -1308,15 +1539,6 @@
       }
     }
 
-    let scene, camera, renderer, controls;
-    let btcPriceHistory = [];
-    let markers = [];
-    let showEvents = false;
-    let colorIndex = 0;
-    const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
-    let colorLegend = [];
-    let hashObjects = [];
-
     function addSystemLog(message) {
       const logList = document.getElementById('system-logs-list');
       const li = document.createElement('li');
@@ -1326,115 +1548,9 @@
       if (logList.children.length > 10) logList.removeChild(logList.lastChild);
     }
 
-    function init3D() {
-      scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setClearColor(0x000000, 1);
-      const container = document.getElementById('btc-hash-canvas');
-      renderer.setSize(container.clientWidth, container.clientHeight);
-      container.appendChild(renderer.domElement);
-      camera.position.set(0, 0, 30);
-      camera.lookAt(0, 0, 0);
-      const axesHelper = new THREE.AxesHelper(10);
-      scene.add(axesHelper);
-      controls = new THREE.OrbitControls(camera, renderer.domElement);
-      controls.target = new THREE.Vector3(0, 0, 0);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
-      controls.update();
-
-      const gridHelper = new THREE.GridHelper(20, 20);
-      scene.add(gridHelper);
-
-      const mockPrice = 60000;
-      const mockHash = generateHashFromPrice(mockPrice);
-      const initialPoints = hashToPoints(mockHash);
-      const initialColor = new THREE.Color(siteColors[colorIndex]);
-
-      const initialGroup = new THREE.Group();
-      const geometry = new THREE.BufferGeometry();
-      const positions = initialPoints.flatMap(p => [p.x, p.y, p.z]);
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      const material = new THREE.LineBasicMaterial({ color: initialColor });
-      const line = new THREE.Line(geometry, material);
-      initialGroup.add(line);
-
-      initialPoints.forEach(point => {
-        const sphere = createVolumeSphere(point, 4500000);
-        initialGroup.add(sphere);
-      });
-
-      scene.add(initialGroup);
-      hashObjects.push(initialGroup);
-
-      colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString() });
-      updateColorLegend();
-      addSystemLog('Initialized BTC Hash with mock data');
-
-      let resizeTimeout;
-      window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          renderer.setSize(container.clientWidth, container.clientHeight);
-          camera.aspect = container.clientWidth / container.clientHeight;
-          camera.updateProjectionMatrix();
-          renderer.render(scene, camera);
-        }, 100);
-      });
-
-      const raycaster = new THREE.Raycaster();
-      const mouse = new THREE.Vector2();
-      let tooltipTimeout;
-
-      container.addEventListener('mousemove', (event) => {
-        const rect = container.getBoundingClientRect();
-        mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        raycaster.setFromCamera(mouse, camera);
-        const intersects = raycaster.intersectObjects(markers);
-
-        clearTimeout(tooltipTimeout);
-        const existingTooltip = document.getElementById('tooltip');
-        if (existingTooltip) existingTooltip.remove();
-
-        if (intersects.length > 0) {
-          const intersect = intersects[0];
-          const marker = intersect.object;
-          const index = markers.indexOf(marker);
-          const price = btcPriceHistory[index % btcPriceHistory.length];
-          const time = colorLegend[index % colorLegend.length].time;
-
-          const tooltip = document.createElement('div');
-          tooltip.id = 'tooltip';
-          tooltip.style.position = 'absolute';
-          tooltip.style.left = `${event.clientX + 10}px`;
-          tooltip.style.top = `${event.clientY + 10}px`;
-          tooltip.style.background = 'rgba(135, 206, 235, 0.8)';
-          tooltip.style.color = '#1e2727';
-          tooltip.style.padding = '0.25rem 0.5rem';
-          tooltip.style.borderRadius = '4px';
-          tooltip.style.fontSize = '0.75rem';
-          tooltip.style.zIndex = '60';
-          tooltip.innerHTML = `Price: $${price.toLocaleString()}<br>Time: ${time}`;
-          document.body.appendChild(tooltip);
-
-          tooltipTimeout = setTimeout(() => tooltip.remove(), 2000);
-        }
-      });
-
-      function animate() {
-        requestAnimationFrame(animate);
-        controls.update();
-        renderer.render(scene, camera);
-      }
-      animate();
-    }
-
     function updateColorLegend() {
       document.getElementById('btc-color-legend').innerHTML = colorLegend.slice(-5).map(item => `
-        <div class="legend-item" data-tooltip="${item.time}">
+        <div class="legend-item" data-tooltip="Time: ${item.time}\nVolume: ${item.volume.toLocaleString()}">
           <div class="legend-color" style="background: ${item.color}"></div>
         </div>
       `).join('');
@@ -1449,10 +1565,6 @@
         const z = (parseInt(hash.substr((offset + 4) % hash.length, 2), 16) / 255) * 20 - 10;
         points.push(new THREE.Vector3(x, y, z));
       }
-      const center = new THREE.Vector3();
-      points.forEach(p => center.add(p));
-      center.divideScalar(points.length);
-      points.forEach(p => p.sub(center));
       return points;
     }
 
@@ -1467,16 +1579,7 @@
 
     function createMarker(position) {
       const geometry = new THREE.SphereGeometry(0.5, 8, 8);
-      const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-      const sphere = new THREE.Mesh(geometry, material);
-      sphere.position.copy(position);
-      return sphere;
-    }
-
-    function createVolumeSphere(position, volume) {
-      const radius = 0.1 + (volume / 100000000) * 0.9;
-      const geometry = new THREE.SphereGeometry(radius, 8, 8);
-      const material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+      const material = new THREE.MeshPhongMaterial({ color: 0xff0000, shininess: 100 });
       const sphere = new THREE.Mesh(geometry, material);
       sphere.position.copy(position);
       return sphere;
@@ -1486,55 +1589,40 @@
       markers.forEach(marker => marker.visible = showEvents);
     }
 
-    async function updateBTCHash() {
-      const { price, volume } = await fetchBTCPrice();
-      const timestamp = Date.now();
-      const hash = await fetchBTCHash();
-      btcPriceHistory.push(price);
-      if (btcPriceHistory.length > 10) btcPriceHistory.shift();
-      colorIndex = (colorIndex + 1) % siteColors.length;
-      const newColor = new THREE.Color(siteColors[colorIndex]);
-      const newPoints = hashToPoints(hash);
-
-      const hashGroup = new THREE.Group();
-      const geometry = new THREE.BufferGeometry();
-      const positions = newPoints.flatMap(p => [p.x, p.y, p.z]);
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      const material = new THREE.LineBasicMaterial({ color: newColor });
-      const line = new THREE.Line(geometry, material);
-      hashGroup.add(line);
-
-      newPoints.forEach(point => {
-        const sphere = createVolumeSphere(point, volume);
-        hashGroup.add(sphere);
-      });
-
-      if (showEvents && newPoints.length > 0) {
-        const marker = createMarker(newPoints[0]);
-        hashGroup.add(marker);
-        markers.push(marker);
-      }
-
-      scene.add(hashGroup);
-      hashObjects.push(hashGroup);
-      if (hashObjects.length > 10) {
-        const oldGroup = hashObjects.shift();
-        scene.remove(oldGroup);
-        const markerIndex = markers.findIndex(m => oldGroup.children.includes(m));
-        if (markerIndex !== -1) {
-          scene.remove(markers[markerIndex]);
-          markers.splice(markerIndex, 1);
+    function renderTokenPerformanceChart(tokens) {
+      const ctx = DOM.tokenPerformanceChart.getContext('2d');
+      const labels = tokens.map(token => token.symbol);
+      const data = tokens.map(token => token.price_change_percentage_24h);
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '24h Price Change (%)',
+            data: data,
+            backgroundColor: data.map(value => value >= 0 ? '#87CEEB' : '#ff0000')
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
         }
-      }
+      });
+    }
 
-      colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString() });
-      if (colorLegend.length > 5) colorLegend.shift();
-      updateColorLegend();
-
-      document.getElementById('btc-price').textContent = `Price: $${price.toLocaleString()}`;
-      document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
-      document.getElementById('btc-time').textContent = `Time: ${new Date(timestamp).toLocaleTimeString()}`;
-      addSystemLog('BTC Hash updated');
+    function exportToCSV(data, filename) {
+      const csv = data.map(row => Object.values(row).join(',')).join('\n');
+      const headers = Object.keys(data[0]).join(',');
+      const blob = new Blob([headers + '\n' + csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(url);
     }
 
     function notifyUser(message) {
@@ -1546,16 +1634,6 @@
         });
       }
     }
-
-    const quantumPuns = [
-      "Entangled in profits!", "Quantum leaps in trading!", "Superposition your trades!",
-      "Uncertainty in the market, certainty in gains!", "Wave function collapse to profits!",
-      "Quantum tunneling through resistance!", "Spooky action at a distance: instant trades!",
-      "Heisenberg's uncertainty: but your profits are certain!", "Quantum computing your next move!",
-      "Entanglement: your portfolio and success!", "Quantum supremacy in trading!",
-      "Decoherence? Not in my portfolio!", "Quantum bits, quantum profits!",
-      "Riding the quantum wave to success!"
-    ];
 
     const loadData = async () => {
       const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
@@ -1572,12 +1650,15 @@
           ethData.gasPrice = gasData.proposeGasPrice;
           currentEthPrice = ethData.current_price;
         }
+        tokensData = data;
         updateUI(data);
         tokenWarning.style.display = 'none';
         renderGasHeatmapAndFees();
         renderLogs();
+        renderTokenPerformanceChart(data);
       } catch (error) {
         console.error('Failed to load real data:', error);
+        tokensData = mockTokens;
         updateUI(mockTokens);
         tokenWarning.style.display = 'block';
         tokenWarning.textContent = '> Using mock data due to API failure';
@@ -1587,6 +1668,7 @@
         document.getElementById('loader-tokens').style.display = 'none';
         renderGasHeatmapAndFees();
         renderLogs();
+        renderTokenPerformanceChart(mockTokens);
       }
 
       document.getElementById('toggle-logs-data').addEventListener('click', () => {
@@ -1674,20 +1756,18 @@
       document.getElementById('gas-fees-warning').style.display = 'none';
     }
 
+    function sanitizeInput(input) {
+      const div = document.createElement('div');
+      div.textContent = input;
+      return div.innerHTML;
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      const toggleIndicatorHeaderBtn = document.getElementById('toggle-indicator-header');
-      const toggleIndicatorModalBtn = document.getElementById('toggle-indicator-modal');
-      const toggleStickyHeader = document.getElementById('toggle-sticky-header');
-      const toggleStickyModal = document.getElementById('toggle-sticky-modal');
-      const chartModal = document.getElementById('chart-modal');
-      const tokenList = document.getElementById('token-list');
-      const toggleBackgroundBtn = document.getElementById('toggle-background');
-      const toggleBackgroundDockBtn = document.getElementById('toggle-background-dock');
-      const splineModal = document.getElementById('spline-modal');
-      const splineModalCloseBtn = document.getElementById('spline-modal-close');
-      const splineFullscreenBtn = document.getElementById('spline-fullscreen-btn');
+      DOM.navMenuToggle.addEventListener('click', () => DOM.navMenu.classList.add('active'));
+      DOM.navMenuClose.addEventListener('click', () => DOM.navMenu.classList.remove('active'));
 
       setupDragAndDrop();
+      loadModuleOrder();
       setupModuleToggles();
       loadData();
       init3D();
@@ -1695,44 +1775,28 @@
 
       setInterval(updateBTCHash, 60000);
 
-      document.getElementById('toggle-events').addEventListener('click', () => {
+      DOM.toggleEventsBtn.addEventListener('click', () => {
         showEvents = !showEvents;
-        document.getElementById('toggle-events').textContent = showEvents ? 'Hide Events' : 'Show Events';
+        DOM.toggleEventsBtn.textContent = showEvents ? 'Hide Events' : 'Show Events';
         toggleMarkers();
         addSystemLog(`Event markers visibility ${showEvents ? 'enabled' : 'disabled'}`);
       });
 
-      document.getElementById('export-obj').addEventListener('click', () => {
-        const exporter = new THREE.OBJExporter();
-        const result = exporter.parse(scene);
-        const blob = new Blob([result], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'btc_hash.obj';
-        a.click();
-        URL.revokeObjectURL(url);
+      DOM.toggleIndicatorHeaderBtn.addEventListener('click', () => {
+        isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
+        DOM.toggleIndicatorHeaderBtn.textContent = `${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} Indicator`;
+        const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
+        const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
+        initializeChart('chart-container-header', symbol, interval);
       });
 
-      if (toggleIndicatorHeaderBtn) {
-        toggleIndicatorHeaderBtn.addEventListener('click', () => {
-          isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
-          toggleIndicatorHeaderBtn.textContent = `${isIndicatorEnabledHeader ? 'Disable' : 'Enable'} Indicator`;
-          const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
-          const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
-          initializeChart('chart-container-header', symbol, interval);
-        });
-      }
-
-      if (toggleIndicatorModalBtn) {
-        toggleIndicatorModalBtn.addEventListener('click', () => {
-          isIndicatorEnabledModal = !isIndicatorEnabledModal;
-          toggleIndicatorModalBtn.textContent = `${isIndicatorEnabledModal ? 'Disable' : 'Enable'} Indicator`;
-          const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
-          const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
-          initializeChart('chart-container-modal', symbol, interval);
-        });
-      }
+      DOM.toggleIndicatorModalBtn.addEventListener('click', () => {
+        isIndicatorEnabledModal = !isIndicatorEnabledModal;
+        DOM.toggleIndicatorModalBtn.textContent = `${isIndicatorEnabledModal ? 'Disable' : 'Enable'} Indicator`;
+        const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
+        const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
+        initializeChart('chart-container-modal', symbol, interval);
+      });
 
       const timeframes = ['1min', '5min', '15min', '1hr', '1d'];
       timeframes.forEach(tf => {
@@ -1758,102 +1822,155 @@
         }
       });
 
-      if (tokenList) {
-        tokenList.addEventListener('click', (e) => {
-          const li = e.target.closest('li');
-          if (li && li.dataset.symbol) {
-            const symbol = li.dataset.symbol;
-            const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
-            initializeChart('chart-container-header', symbol, interval);
-            initializeChart('chart-container-modal', symbol, interval);
-            document.getElementById('chart-title-header').setAttribute('data-symbol', symbol);
-            document.getElementById('chart-title-header').textContent = symbol;
-            document.getElementById('chart-title-modal').setAttribute('data-symbol', symbol);
-            document.getElementById('chart-title-modal').textContent = symbol;
-            document.querySelectorAll('#token-list li').forEach(item => item.classList.remove('selected-token'));
-            li.classList.add('selected-token');
-            console.log(`Switched to token: ${symbol}`);
-          }
-        });
-      }
-
-      if (toggleStickyHeader) {
-        toggleStickyHeader.addEventListener('click', () => {
-          chartModal.classList.add('active');
-          toggleStickyHeader.textContent = 'Chart Docked';
-          setTimeout(() => toggleStickyHeader.textContent = 'Dock Chart', 1000);
-          const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
+      DOM.tokenList.addEventListener('click', (e) => {
+        const li = e.target.closest('li');
+        if (li && li.dataset.symbol) {
+          const symbol = li.dataset.symbol;
           const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
-          initializeChart('chart-container-modal', symbol, interval);
-        });
-      }
-      if (toggleStickyModal) {
-        toggleStickyModal.addEventListener('click', () => {
-          chartModal.classList.remove('active');
-          toggleStickyModal.textContent = 'Chart Undocked';
-          setTimeout(() => toggleStickyModal.textContent = 'Undock Chart', 1000);
-          const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
-          const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
           initializeChart('chart-container-header', symbol, interval);
-        });
-      }
+          initializeChart('chart-container-modal', symbol, interval);
+          document.getElementById('chart-title-header').setAttribute('data-symbol', symbol);
+          document.getElementById('chart-title-header').textContent = symbol;
+          document.getElementById('chart-title-modal').setAttribute('data-symbol', symbol);
+          document.getElementById('chart-title-modal').textContent = symbol;
+          document.querySelectorAll('#token-list li').forEach(item => item.classList.remove('selected-token'));
+          li.classList.add('selected-token');
+          console.log(`Switched to token: ${symbol}`);
+        }
+      });
 
-      if (toggleBackgroundBtn) {
-        toggleBackgroundBtn.addEventListener('click', () => {
-          splineModal.classList.toggle('active');
-          toggleBackgroundBtn.textContent = splineModal.classList.contains('active') ? 'Show Chart' : 'Show Background';
-          toggleBackgroundBtn.setAttribute('data-tooltip', splineModal.classList.contains('active') ? 'Exit to chart' : 'Show background in full screen');
-        });
-      }
+      DOM.toggleStickyHeader.addEventListener('click', () => {
+        DOM.chartModal.classList.add('active');
+        DOM.toggleStickyHeader.textContent = 'Chart Docked';
+        setTimeout(() => DOM.toggleStickyHeader.textContent = 'Dock Chart', 1000);
+        const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
+        const interval = document.querySelector('#header-timeframe-1d').getAttribute('data-interval');
+        initializeChart('chart-container-modal', symbol, interval);
+      });
 
-      if (toggleBackgroundDockBtn) {
-        toggleBackgroundDockBtn.addEventListener('click', () => {
-          splineModal.classList.add('active');
-          toggleBackgroundDockBtn.textContent = 'Docked';
-          setTimeout(() => toggleBackgroundDockBtn.textContent = 'Dock Background', 1000);
-          document.getElementById('spline-viewer-modal').setAttribute('url', 'https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode');
-        });
-      }
+      DOM.toggleStickyModal.addEventListener('click', () => {
+        DOM.chartModal.classList.remove('active');
+        DOM.toggleStickyModal.textContent = 'Chart Undocked';
+        setTimeout(() => DOM.toggleStickyModal.textContent = 'Undock Chart', 1000);
+        const symbol = document.getElementById('chart-title-modal').getAttribute('data-symbol');
+        const interval = document.querySelector('#modal-timeframe-1d').getAttribute('data-interval');
+        initializeChart('chart-container-header', symbol, interval);
+      });
 
-      if (splineModalCloseBtn) {
-        splineModalCloseBtn.addEventListener('click', () => {
-          splineModal.classList.remove('active');
-          toggleBackgroundBtn.textContent = 'Show Background';
-          toggleBackgroundBtn.setAttribute('data-tooltip', 'Show background in full screen');
-        });
-      }
+      DOM.toggleBackgroundBtn.addEventListener('click', () => {
+        DOM.splineModal.classList.toggle('active');
+        DOM.toggleBackgroundBtn.textContent = DOM.splineModal.classList.contains('active') ? 'Show Chart' : 'Show Background';
+        DOM.toggleBackgroundBtn.setAttribute('data-tooltip', DOM.splineModal.classList.contains('active') ? 'Exit to chart' : 'Show background in full screen');
+      });
 
-      if (splineFullscreenBtn) {
-        splineFullscreenBtn.addEventListener('click', () => {
-          const splineModalContent = document.querySelector('.spline-modal-content');
-          if (!document.fullscreenElement) {
-            if (splineModalContent.requestFullscreen) splineModalContent.requestFullscreen();
-            else if (splineModalContent.mozRequestFullScreen) splineModalContent.mozRequestFullScreen();
-            else if (splineModalContent.webkitRequestFullscreen) splineModalContent.webkitRequestFullscreen();
-            else if (splineModalContent.msRequestFullscreen) splineModalContent.msRequestFullscreen();
-          } else {
-            if (document.exitFullscreen) document.exitFullscreen();
-            else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-            else if (document.msExitFullscreen) document.msExitFullscreen();
+      DOM.toggleBackgroundDockBtn.addEventListener('click', () => {
+        DOM.splineModal.classList.add('active');
+        DOM.toggleBackgroundDockBtn.textContent = 'Docked';
+        setTimeout(() => DOM.toggleBackgroundDockBtn.textContent = 'Dock Background', 1000);
+        document.getElementById('spline-viewer-modal').setAttribute('url', 'https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode');
+      });
+
+      DOM.splineModalCloseBtn.addEventListener('click', () => {
+        DOM.splineModal.classList.remove('active');
+        DOM.toggleBackgroundBtn.textContent = 'Show Background';
+        DOM.toggleBackgroundBtn.setAttribute('data-tooltip', 'Show background in full screen');
+      });
+
+      DOM.undockBackgroundLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        DOM.splineModal.classList.remove('active');
+        DOM.toggleBackgroundBtn.textContent = 'Show Background';
+        DOM.toggleBackgroundBtn.setAttribute('data-tooltip', 'Show background in full screen');
+        DOM.navMenu.classList.remove('active');
+      });
+
+      DOM.splineFullscreenBtn.addEventListener('click', () => {
+        const splineModalContent = document.querySelector('.spline-modal-content');
+        if (!document.fullscreenElement) {
+          if (splineModalContent.requestFullscreen) splineModalContent.requestFullscreen();
+          else if (splineModalContent.mozRequestFullScreen) splineModalContent.mozRequestFullScreen();
+          else if (splineModalContent.webkitRequestFullscreen) splineModalContent.webkitRequestFullscreen();
+          else if (splineModalContent.msRequestFullscreen) splineModalContent.msRequestFullscreen();
+        } else {
+          if (document.exitFullscreen) document.exitFullscreen();
+          else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          else if (document.msExitFullscreen) document.msExitFullscreen();
+        }
+      });
+
+      const handleFullscreenChange = () => {
+        DOM.splineFullscreenBtn.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+      };
+      document.addEventListener('fullscreenchange', handleFullscreenChange);
+      document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.addEventListener('msfullscreenchange', handleFullscreenChange);
+
+      DOM.chatSendBtn.addEventListener('click', async () => {
+        const input = sanitizeInput(DOM.chatInput.value);
+        if (!input) return;
+        const userMessage = document.createElement('li');
+        userMessage.className = 'p-2 rounded';
+        userMessage.innerHTML = `<div>User: ${input}</div>`;
+        DOM.chatList.appendChild(userMessage);
+        try {
+          const response = await fetch('https://x.ai/api/grok', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: input })
+          });
+          const data = await response.json();
+          const botMessage = document.createElement('li');
+          botMessage.className = 'p-2 rounded';
+          botMessage.innerHTML = `<div>Grok: ${data.response}</div>`;
+          DOM.chatList.appendChild(botMessage);
+          DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
+        } catch (error) {
+          console.error('Grok API error:', error);
+          const errorMessage = document.createElement('li');
+          errorMessage.className = 'p-2 rounded text-orange-400';
+          errorMessage.innerHTML = `<div>Grok: Error processing request</div>`;
+          DOM.chatList.appendChild(errorMessage);
+        }
+        DOM.chatInput.value = '';
+      });
+
+      DOM.exportTokensBtn.addEventListener('click', () => {
+        exportToCSV(tokensData, 'tokens_data.csv');
+      });
+
+      DOM.exportGasBtn.addEventListener('click', () => {
+        exportToCSV(gasHistory, 'gas_data.csv');
+      });
+
+      DOM.exportFbxBtn.addEventListener('click', () => {
+        const exportGroup = new THREE.Group();
+        exportGroup.add(btcLine);
+        volumeTubes.forEach(tube => exportGroup.add(tube));
+        markers.forEach(marker => exportGroup.add(marker));
+        const exporter = new THREE.FBXExporter();
+        const result = exporter.parse(exportGroup);
+        const blob = new Blob([result], { type: 'application/octet-stream' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'hash_art.fbx';
+        link.click();
+        addSystemLog('Exported BTC Hash Art as FBX');
+      });
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            if (entry.target.id === 'spline-bg') {
+              entry.target.querySelector('spline-viewer').load('https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode');
+            }
           }
         });
+      }, { threshold: 0.1 });
 
-        const handleFullscreenChange = () => {
-          splineFullscreenBtn.textContent = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
-        };
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('msfullscreenchange', handleFullscreenChange);
-      }
+      observer.observe(document.getElementById('spline-bg'));
     });
-
-    const mockTokens = [
-      { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
-      { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 15 },
-      { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
-    ];
   </script>
 </body>
 </html>
