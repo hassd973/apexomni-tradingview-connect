@@ -844,6 +844,7 @@
         <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
+        <div id="btc-hash-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
         <div id="btc-hash-canvas" class="btc-hash-svg"></div>
         <div id="btc-legend">
           <span id="btc-price">Price: Loading...</span>
@@ -918,7 +919,7 @@
     let isIndicatorEnabledHeader = false;
     let isIndicatorEnabledModal = false;
     const chartCache = {};
-    let scene, camera, renderer, controls, btcLine, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeTubes = [];
+    let scene, camera, renderer, controls, btcLine, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeTubes = [], dotCloud;
     let showEvents = false;
     let colorIndex = 0;
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
@@ -927,6 +928,8 @@
     let isUsingMockLogs = true;
     let gasHistory = [];
     let tokensData = [];
+    let isBTCPriceMock = false;
+    let isBTCHashMock = false;
 
     const mockLogs = [
       { id: 1, message: 'Trade executed: BTC/USDT at $60,000', timestamp: new Date(Date.now() - 60000).toLocaleTimeString(), type: 'trade' },
@@ -1186,6 +1189,17 @@
       }
     }
 
+    async function fetchBTCHistoricalData() {
+      const url = 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1';
+      try {
+        const data = await fetchWithRetry(url);
+        return data;
+      } catch (error) {
+        console.error('Failed to fetch BTC historical data:', error);
+        return null;
+      }
+    }
+
     async function fetchGasPrices() {
       const url = '/api/gas-prices';
       try {
@@ -1331,9 +1345,29 @@
     }
 
     async function updateBTCHash() {
-      const { price, volume } = await fetchBTCPrice();
+      isBTCPriceMock = false;
+      isBTCHashMock = false;
+
+      let price, volume;
+      try {
+        const priceData = await fetchBTCPrice();
+        price = priceData.price;
+        volume = priceData.volume;
+      } catch (error) {
+        isBTCPriceMock = true;
+        price = 60000;
+        volume = 4500000;
+      }
+
       const timestamp = Date.now();
-      const hash = await fetchBTCHash();
+      let hash;
+      try {
+        hash = await fetchBTCHash();
+      } catch (error) {
+        isBTCHashMock = true;
+        hash = generateHashFromPrice(price);
+      }
+
       btcPriceHistory.push(price);
       if (btcPriceHistory.length > 10) btcPriceHistory.shift();
       colorIndex = (colorIndex + 1) % siteColors.length;
@@ -1371,6 +1405,54 @@
         markers.push(marker);
       }
 
+      const historicalData = await fetchBTCHistoricalData();
+      if (historicalData) {
+        const prices = historicalData.prices;
+        const volumes = historicalData.total_volumes;
+        const timestamps = prices.map(p => p[0]);
+        const minTime = Math.min(...timestamps);
+        const maxTime = Math.max(...timestamps);
+        const minPrice = Math.min(...prices.map(p => p[1]));
+        const maxPrice = Math.max(...prices.map(p => p[1]));
+        const minVolume = Math.min(...volumes.map(v => v[1]));
+        const maxVolume = Math.max(...volumes.map(v => v[1]));
+        const pointsPerData = 10;
+        const dotPositions = [];
+        const dotColors = [];
+        const cloudColor = new THREE.Color(0x87CEEB);
+
+        for (let i = 0; i < prices.length; i++) {
+          const timestamp = timestamps[i];
+          const price = prices[i][1];
+          const volume = volumes[i][1];
+          const z = ((timestamp - minTime) / (maxTime - minTime)) * 20 - 10;
+          const x = ((price - minPrice) / (maxPrice - minPrice)) * 20 - 10;
+          const y = ((volume - minVolume) / (maxVolume - minVolume)) * 20 - 10;
+
+          for (let j = 0; j < pointsPerData; j++) {
+            const offsetX = (Math.random() - 0.5) * 1;
+            const offsetY = (Math.random() - 0.5) * 1;
+            const offsetZ = (Math.random() - 0.5) * 1;
+            dotPositions.push(x + offsetX, y + offsetY, z + offsetZ);
+            dotColors.push(cloudColor.r, cloudColor.g, cloudColor.b);
+          }
+        }
+
+        if (!dotCloud) {
+          const geometry = new THREE.BufferGeometry();
+          geometry.setAttribute('position', new THREE.Float32BufferAttribute(dotPositions, 3));
+          geometry.setAttribute('color', new THREE.Float32BufferAttribute(dotColors, 3));
+          const material = new THREE.PointsMaterial({ size: 0.1, vertexColors: true });
+          dotCloud = new THREE.Points(geometry, material);
+          scene.add(dotCloud);
+        } else {
+          dotCloud.geometry.setAttribute('position', new THREE.Float32BufferAttribute(dotPositions, 3));
+          dotCloud.geometry.setAttribute('color', new THREE.Float32BufferAttribute(dotColors, 3));
+          dotCloud.geometry.attributes.position.needsUpdate = true;
+          dotCloud.geometry.attributes.color.needsUpdate = true;
+        }
+      }
+
       colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString(), volume });
       if (colorLegend.length > 5) colorLegend.shift();
       updateColorLegend();
@@ -1379,6 +1461,13 @@
       document.getElementById('btc-hash').textContent = `Hash: ${hash.substring(0, 16)}...`;
       document.getElementById('btc-time').textContent = `Time: ${new Date(timestamp).toLocaleTimeString()}`;
       addSystemLog('BTC Hash updated');
+
+      if (isBTCPriceMock || isBTCHashMock) {
+        document.getElementById('btc-hash-warning').style.display = 'block';
+        document.getElementById('btc-hash-warning').textContent = `> Using mock data for ${isBTCPriceMock ? 'price' : ''}${isBTCPriceMock && isBTCHashMock ? ' and ' : ''}${isBTCHashMock ? 'hash' : ''}`;
+      } else {
+        document.getElementById('btc-hash-warning').style.display = 'none';
+      }
     }
 
     async function renderGasHeatmapAndFees() {
@@ -1947,6 +2036,7 @@
       DOM.exportFbxBtn.addEventListener('click', () => {
         const exportGroup = new THREE.Group();
         exportGroup.add(btcLine);
+        exportGroup.add(dotCloud);
         volumeTubes.forEach(tube => exportGroup.add(tube));
         markers.forEach(marker => exportGroup.add(marker));
         const exporter = new THREE.FBXExporter();
