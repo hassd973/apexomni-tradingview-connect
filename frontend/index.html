@@ -656,6 +656,7 @@
         <li><a href="#btc-hash-module" class="hover:text-secondary-color" onclick="document.getElementById('nav-menu').classList.remove('active')">BTC Hash Visualization</a></li>
         <li><a href="#chat-logs-container" class="hover:text-secondary-color" onclick="document.getElementById('nav-menu').classList.remove('active')">Trading Bot & Logs</a></li>
       </ul>
+      <button id="undock-background" class="mt-4 px-4 py-2 bg-primary-color text-black rounded">Undock Background</button>
     </div>
   </div>
   <div id="loading-screen">
@@ -910,7 +911,8 @@
     let isIndicatorEnabledHeader = false;
     let isIndicatorEnabledModal = false;
     const chartCache = {};
-    let scene, camera, renderer, controls, btcLine, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeMarkers = [];
+    let scene, camera, renderer, controls, positions = [], colors = [], btcPriceHistory = [], markers = [], volumeMarkers = [];
+    let hashObjects = []; // Array to store hash groups
     let showEvents = false;
     let colorIndex = 0;
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
@@ -927,7 +929,7 @@
     ];
 
     const mockTokens = [
-      { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTCa href="#chat-logs-container"BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
+      { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
       { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 15 },
       { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
     ];
@@ -1242,18 +1244,23 @@
       const mockHash = generateHashFromPrice(mockPrice);
       const initialPoints = hashToPoints(mockHash);
       const initialColor = new THREE.Color(siteColors[colorIndex]);
+
+      // Create initial hash group
+      const initialGroup = new THREE.Group();
+      const geometry = new THREE.BufferGeometry();
+      const positions = initialPoints.flatMap(p => [p.x, p.y, p.z]);
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      const material = new THREE.LineBasicMaterial({ color: initialColor });
+      const line = new THREE.Line(geometry, material);
+      initialGroup.add(line);
+
       initialPoints.forEach(point => {
-        positions.push(point.x, point.y, point.z);
-        colors.push(initialColor.r, initialColor.g, initialColor.b);
+        const sphere = createVolumeSphere(point, 4500000); // Mock volume
+        initialGroup.add(sphere);
       });
 
-      const geometry = new THREE.BufferGeometry();
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-      const material = new THREE.LineBasicMaterial({ vertexColors: true });
-      const line = new THREE.Line(geometry, material);
-      scene.add(line);
-      btcLine = line;
+      scene.add(initialGroup);
+      hashObjects.push(initialGroup);
 
       colorLegend.push({ color: siteColors[colorIndex], time: new Date().toLocaleTimeString() });
       updateColorLegend();
@@ -1329,31 +1336,44 @@
       const newColor = new THREE.Color(siteColors[colorIndex]);
       const newPoints = hashToPoints(hash);
 
+      // Create a group for this hash
+      const hashGroup = new THREE.Group();
+
+      // Create line for this hash
+      const geometry = new THREE.BufferGeometry();
+      const positions = newPoints.flatMap(p => [p.x, p.y, p.z]);
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      const material = new THREE.LineBasicMaterial({ color: newColor });
+      const line = new THREE.Line(geometry, material);
+      hashGroup.add(line);
+
+      // Create spheres for each point
       newPoints.forEach(point => {
-        positions.push(point.x, point.y, point.z);
-        colors.push(newColor.r, newColor.g, newColor.b);
         const sphere = createVolumeSphere(point, volume);
-        scene.add(sphere);
-        volumeMarkers.push(sphere);
+        hashGroup.add(sphere);
       });
 
-      if (positions.length / 3 > 1000) {
-        const removeCount = positions.length / 3 - 1000;
-        positions = positions.slice(removeCount * 3);
-        colors = colors.slice(removeCount * 3);
-        const removedSpheres = volumeMarkers.splice(0, removeCount);
-        removedSpheres.forEach(sphere => scene.remove(sphere));
-      }
-
-      btcLine.geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      btcLine.geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
-      btcLine.geometry.attributes.position.needsUpdate = true;
-      btcLine.geometry.attributes.color.needsUpdate = true;
-
+      // Add event marker if enabled
       if (showEvents && newPoints.length > 0) {
         const marker = createMarker(newPoints[0]);
-        scene.add(marker);
+        hashGroup.add(marker);
         markers.push(marker);
+      }
+
+      // Add the group to the scene
+      scene.add(hashGroup);
+
+      // Manage the number of hash groups
+      hashObjects.push(hashGroup);
+      if (hashObjects.length > 10) {
+        const oldGroup = hashObjects.shift();
+        scene.remove(oldGroup);
+        // Remove associated marker if any
+        const markerIndex = markers.findIndex(m => oldGroup.children.includes(m));
+        if (markerIndex !== -1) {
+          scene.remove(markers[markerIndex]);
+          markers.splice(markerIndex, 1);
+        }
       }
 
       colorLegend.push({ color: siteColors[colorIndex], time: new Date(timestamp).toLocaleTimeString() });
@@ -1931,6 +1951,13 @@
 
       DOM.exportGasBtn.addEventListener('click', () => {
         exportToCSV(gasHistory, 'gas_data.csv');
+      });
+
+      // Add event listener for undock background button
+      document.getElementById('undock-background').addEventListener('click', () => {
+        DOM.splineModal.classList.remove('active');
+        DOM.toggleBackgroundBtn.textContent = 'Show Background';
+        DOM.toggleBackgroundBtn.setAttribute('data-tooltip', 'Show background in full screen');
       });
 
       const observer = new IntersectionObserver((entries) => {
