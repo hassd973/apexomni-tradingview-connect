@@ -849,9 +849,15 @@
         <div id="btc-legend">
           <span id="btc-price">Price: Loading...</span>
           <span id="btc-time">Time: Loading...</span>
+          <p>Each color represents a different time period's BTC price and volume data.</p>
         </div>
         <div id="btc-color-legend" class="mt-2 flex justify-center gap-2"></div>
         <button id="export-fbx" class="mt-2" role="button" aria-label="Export as FBX" data-tooltip="Export as FBX">Export FBX</button>
+        <div id="hash-log" class="mt-4">
+          <h3 class="text-base md:text-lg mb-2">Hash Log</h3>
+          <ul id="hash-log-list" class="space-y-2 text-sm"></ul>
+        </div>
+        <button id="export-hash-csv" class="mt-2" role="button" aria-label="Export hash log as CSV" data-tooltip="Export hash log as CSV">Export Hash Log CSV</button>
       </div>
     </section>
   </div>
@@ -916,7 +922,7 @@
     let isIndicatorEnabledHeader = false;
     let isIndicatorEnabledModal = false;
     const chartCache = {};
-    let scene, camera, renderer, controls, dotClouds = [], colorLegend = [];
+    let scene, camera, renderer, controls, dotClouds = [], colorLegend = [], hashLog = [];
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
     let currentEthPrice = 0;
     let isUsingMockLogs = true;
@@ -1194,20 +1200,24 @@
     }
 
     async function fetchGasPrices() {
-      const url = '/api/gas-prices';
+      const apiKey = 'YourApiKeyToken'; // Replace with actual API key
+      const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
       try {
-        const data = await fetchWithRetry(url);
-        const gasData = {
-          safeGasPrice: parseInt(data.result.SafeGasPrice) || 10,
-          proposeGasPrice: parseInt(data.result.ProposeGasPrice) || 15,
-          fastGasPrice: parseInt(data.result.FastGasPrice) || 20,
-          lastBlock: data.result.LastBlock || 'N/A',
-          timestamp: Date.now()
-        };
-        if (gasData.fastGasPrice > 25) notifyUser(`Gas price spiked to ${gasData.fastGasPrice} Gwei!`);
-        return gasData;
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.status === '1') {
+          return {
+            safeGasPrice: parseInt(data.result.SafeGasPrice),
+            proposeGasPrice: parseInt(data.result.ProposeGasPrice),
+            fastGasPrice: parseInt(data.result.FastGasPrice),
+            lastBlock: data.result.LastBlock,
+            timestamp: Date.now()
+          };
+        } else {
+          throw new Error('API error: ' + data.message);
+        }
       } catch (error) {
-        console.error('Failed to fetch gas prices:', error);
+        console.error('Failed to fetch gas prices from EtherScan:', error);
         return { safeGasPrice: 10, proposeGasPrice: 15, fastGasPrice: 20, lastBlock: 'N/A', timestamp: Date.now() };
       }
     }
@@ -1352,8 +1362,11 @@
         const latestPrice = prices[prices.length - 1][1];
         const latestVolume = volumes[volumes.length - 1][1];
         const latestTime = new Date(timestamps[timestamps.length - 1]).toLocaleTimeString();
+        const latestHash = generateHashFromPrice(latestPrice); // Assuming you have this function
         colorLegend.push({ color: siteColors[colorIndex], price: latestPrice, volume: latestVolume, time: latestTime });
+        hashLog.push({ hash: latestHash, price: latestPrice, volume: latestVolume, time: latestTime });
         updateColorLegend();
+        updateHashLog();
 
         document.getElementById('btc-price').textContent = `Price: $${latestPrice.toLocaleString()}`;
         document.getElementById('btc-time').textContent = `Time: ${latestTime}`;
@@ -1368,6 +1381,18 @@
         <div class="legend-item" data-tooltip="Price: $${item.price.toLocaleString()}\nVolume: ${item.volume.toLocaleString()}\nTime: ${item.time}">
           <div class="legend-color" style="background: ${item.color}"></div>
         </div>
+      `).join('');
+    }
+
+    function updateHashLog() {
+      const logList = document.getElementById('hash-log-list');
+      logList.innerHTML = hashLog.map(entry => `
+        <li class="p-2 rounded">
+          <div>Hash: ${entry.hash}</div>
+          <div>Price: $${entry.price.toLocaleString()}</div>
+          <div>Volume: ${entry.volume.toLocaleString()}</div>
+          <div>Time: ${entry.time}</div>
+        </li>
       `).join('');
     }
 
@@ -1584,6 +1609,15 @@
       }
     }
 
+    function generateHashFromPrice(price) {
+      const priceStr = price.toString();
+      let hash = '';
+      for (let i = 0; i < 64; i++) {
+        hash += (priceStr.charCodeAt(i % priceStr.length) % 16).toString(16);
+      }
+      return hash;
+    }
+
     const loadData = async () => {
       const backendApiUrl = 'https://apexomni-backend-fppm.onrender.com/api/crypto';
       const tokenWarning = document.getElementById('token-warning');
@@ -1751,7 +1785,7 @@
             document.querySelectorAll('#header-timeframe-' + timeframes.map(t => `#header-timeframe-${t}`).join(',')).forEach(btn => btn.classList.remove('active'));
             headerBtn.classList.add('active');
             const symbol = document.getElementById('chart-title-header').getAttribute('data-symbol');
-            initializeChart('chart-container-header', symbol, interval);
+           publication.initializeChart('chart-container-header', symbol, interval);
           });
         }
         if (modalBtn) {
@@ -1888,7 +1922,7 @@
 
       DOM.exportFbxBtn.addEventListener('click', () => {
         const exportGroup = new THREE.Group();
-        dotClouds.forEach(cloud => exportGroup.add(cloud));
+        dotClouds.forEach(cloud => exportGroup.add(cloud.clone())); // Clone to avoid affecting the scene
         const exporter = new THREE.FBXExporter();
         const result = exporter.parse(exportGroup);
         const blob = new Blob([result], { type: 'application/octet-stream' });
@@ -1897,6 +1931,10 @@
         link.download = 'hash_art.fbx';
         link.click();
         addSystemLog('Exported BTC Hash Art as FBX');
+      });
+
+      document.getElementById('export-hash-csv').addEventListener('click', () => {
+        exportToCSV(hashLog, 'hash_log.csv');
       });
 
       const observer = new IntersectionObserver((entries) => {
