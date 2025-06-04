@@ -661,6 +661,7 @@
         <a href="#gas-module" class="nav-link">Gas & Fees</a>
         <a href="#logs-module" class="nav-link">Logs</a>
         <a href="#btc-hash-module" class="nav-link">BTC Hash</a>
+        <a href="#balances-module" class="nav-link">Balances</a>
         <a href="#chat-logs-container" class="nav-link">Chat & Logs</a>
         <a href="#" id="undock-background-link" class="nav-link">Undock Background</a>
       </nav>
@@ -787,7 +788,7 @@
     </section>
     <section class="rounded-lg gas-heatmap-section" draggable="true" id="gas-module">
       <div class="module-header">
-        <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">> ETH Gas & Fees</h2>
+        <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">> Gas Prices & Fees</h2>
         <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
       </div>
       <div class="module-content">
@@ -795,7 +796,7 @@
         <div id="gas-fees-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
         <div class="flex flex-col gap-4">
           <div>
-            <h3 class="text-base md:text-lg mb-2">ETH Gas Heatmap</h3>
+            <h3 class="text-base md:text-lg mb-2">Ethereum Gas Heatmap</h3>
             <canvas id="gas-heatmap-canvas"></canvas>
             <div id="gas-heatmap-legend">
               <div class="legend-item"><div class="legend-color" style="background: #87CEEB"></div><span>Safe</span></div>
@@ -803,6 +804,10 @@
               <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div><span>Fast</span></div>
             </div>
             <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
+          </div>
+          <div>
+            <h3 class="text-base md:text-lg mb-2">Gas Prices by Chain</h3>
+            <ul id="gas-prices-list" class="space-y-2 text-sm"></ul>
           </div>
           <div>
             <h3 class="text-base md:text-lg mb-2">Fees</h3>
@@ -834,6 +839,16 @@
         </div>
         <div id="logs-warning" class="data-warning" style="display: none;">> Using mock logs due to connection issue</div>
         <ul id="log-list" class="space-y-2 text-sm"></ul>
+      </div>
+    </section>
+    <section class="rounded-lg" draggable="true" id="balances-module">
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl typewriter">> Balances</h2>
+        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
+      </div>
+      <div class="module-content">
+        <div id="loader-balances" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <ul id="balances-list" class="space-y-2 text-sm"></ul>
       </div>
     </section>
   </main>
@@ -923,6 +938,26 @@
       undockBackgroundLink: document.getElementById('undock-background-link'),
       exportHashLogBtn: document.getElementById('export-hash-log')
     };
+
+    const chains = [
+      { id: 1, name: 'Ethereum' },
+      { id: 42161, name: 'Arbitrum' },
+      { id: 8453, name: 'Base' },
+      { id: 10, name: 'Optimism' },
+      { id: 534352, name: 'Scroll' },
+      { id: 81457, name: 'Blast' }
+    ];
+
+    const chainApiMap = {
+      1: 'https://api.etherscan.io',
+      42161: 'https://api.arbiscan.io',
+      8453: 'https://api.basescan.org',
+      10: 'https://api-optimistic.etherscan.io',
+      534352: 'https://api.scrollscan.com',
+      81457: 'https://api.blastscan.io'
+    };
+
+    const address = '0xb5d85cbf7cb3ee0d56b3bb207d5fc4b82f43f511';
 
     let draggedModule = null;
     let isIndicatorEnabledHeader = false;
@@ -1205,25 +1240,61 @@
       }
     }
 
-    async function fetchGasPrices() {
-      const apiKey = 'YOUR_ETHERSCAN_API_KEY'; // Replace with your actual Etherscan API key
-      const url = `https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
+    async function fetchGasPrices(chainId) {
+      const apiKey = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
+      const baseUrl = chainApiMap[chainId];
+      if (!baseUrl) throw new Error(`No API endpoint for chain ID ${chainId}`);
+      const url = `${baseUrl}/api?module=gastracker&action=gasoracle&apikey=${apiKey}`;
       try {
         const data = await fetchWithRetry(url);
-        if (!data.result) throw new Error('Invalid response from Etherscan');
+        if (!data.result) throw new Error('Invalid response from API');
         const gasData = {
           safeGasPrice: parseInt(data.result.SafeGasPrice) || 10,
           proposeGasPrice: parseInt(data.result.ProposeGasPrice) || 15,
           fastGasPrice: parseInt(data.result.FastGasPrice) || 20,
           lastBlock: data.result.LastBlock || 'N/A',
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          chainId: chainId
         };
-        if (gasData.fastGasPrice > 25) notifyUser(`Gas price spiked to ${gasData.fastGasPrice} Gwei!`);
         return gasData;
       } catch (error) {
-        console.error('Failed to fetch gas prices from Etherscan:', error);
-        return { safeGasPrice: 10, proposeGasPrice: 15, fastGasPrice: 20, lastBlock: 'N/A', timestamp: Date.now() };
+        console.error(`Failed to fetch gas prices for chain ${chainId}:`, error);
+        return { safeGasPrice: 10, proposeGasPrice: 15, fastGasPrice: 20, lastBlock: 'N/A', timestamp: Date.now(), chainId: chainId };
       }
+    }
+
+    async function fetchBalance(chainId, address) {
+      const apiKey = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
+      const baseUrl = chainApiMap[chainId];
+      if (!baseUrl) throw new Error(`No API endpoint for chain ID ${chainId}`);
+      const url = `${baseUrl}/api?module=account&action=balance&address=${address}&tag=latest&apikey=${apiKey}`;
+      try {
+        const data = await fetchWithRetry(url);
+        if (data.status !== '1') throw new Error('Invalid response from API');
+        const balance = data.result / 1e18;
+        return balance;
+      } catch (error) {
+        console.error(`Failed to fetch balance for chain ${chainId}:`, error);
+        return 0;
+      }
+    }
+
+    async function renderBalances() {
+      const balancesList = document.getElementById('balances-list');
+      const loader = document.getElementById('loader-balances');
+      loader.style.display = 'block';
+      balancesList.innerHTML = '';
+
+      const balancePromises = chains.map(chain => fetchBalance(chain.id, address));
+      const balances = await Promise.all(balancePromises);
+
+      balancesList.innerHTML = chains.map((chain, index) => `
+        <li class="p-2 rounded">
+          <div>${chain.name}: ${balances[index].toFixed(6)} ETH</div>
+        </li>
+      `).join('');
+
+      loader.style.display = 'none';
     }
 
     function generateHashFromPrice(price) {
@@ -1451,60 +1522,78 @@
           gasList.innerHTML = '';
           gasFeesWarning.style.display = 'none';
 
-          const gasData = await fetchGasPrices();
-          const isMockGas = gasData.lastBlock === 'N/A' && gasData.safeGasPrice === 10;
-          if (isMockGas) gasFeesWarning.style.display = 'block';
+          const gasDataPromises = chains.map(chain => fetchGasPrices(chain.id));
+          const gasDataArray = await Promise.all(gasDataPromises);
 
-          gasHistory.push(gasData);
-          if (gasHistory.length > maxHistory) gasHistory.shift();
+          const ethGasData = gasDataArray.find(data => data.chainId === 1);
+          if (ethGasData) {
+            gasHistory.push(ethGasData);
+            if (gasHistory.length > maxHistory) gasHistory.shift();
 
-          gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
-            <li class="p-2 rounded">
-              <div>Block: ${data.lastBlock}</div>
-              <div>Safe: ${data.safeGasPrice} Gwei</div>
-              <div>Propose: ${data.proposeGasPrice} Gwei</div>
-              <div>Fast: ${data.fastGasPrice} Gwei</div>
-              <div class="metric">Time: ${new Date(data.timestamp).toLocaleTimeString()}</div>
-            </li>
-          `).join('');
+            gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
+              <li class="p-2 rounded">
+                <div>Block: ${data.lastBlock}</div>
+                <div>Safe: ${data.safeGasPrice} Gwei</div>
+                <div>Propose: ${data.proposeGasPrice} Gwei</div>
+                <div>Fast: ${data.fastGasPrice} Gwei</div>
+                <div class="metric">Time: ${new Date(data.timestamp).toLocaleTimeString()}</div>
+              </li>
+            `).join('');
 
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
-          const plotWidth = canvas.offsetWidth - margin.left - margin.right;
-          const plotHeight = canvas.offsetHeight - margin.top - margin.bottom;
-          const barWidth = Math.max(plotWidth / maxHistory / 3.5, 2);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const maxGas = Math.max(...gasHistory.map(d => Math.max(d.fastGasPrice, d.proposeGasPrice, d.safeGasPrice)), 100);
+            const plotWidth = canvas.offsetWidth - margin.left - margin.right;
+            const plotHeight = canvas.offsetHeight - margin.top - margin.bottom;
+            const barWidth = Math.max(plotWidth / maxHistory / 3.5, 2);
 
-          gasHistory.forEach((data, i) => {
-            const x = margin.left + (i * plotWidth / maxHistory);
-            const prices = [
-              { value: data.safeGasPrice, type: 'safe' },
-              { value: data.proposeGasPrice, type: 'propose' },
-              { value: data.fastGasPrice, type: 'fast' }
-            ];
-            prices.forEach((price, j) => {
-              const height = (price.value / maxGas) * plotHeight * 0.9;
-              const y = margin.top + plotHeight - height;
-              ctx.fillStyle = getColor(price.type);
-              ctx.fillRect(x + j * (barWidth + 1), y, barWidth - 1, height);
+            gasHistory.forEach((data, i) => {
+              const x = margin.left + (i * plotWidth / maxHistory);
+              const prices = [
+                { value: data.safeGasPrice, type: 'safe' },
+                { value: data.proposeGasPrice, type: 'propose' },
+                { value: data.fastGasPrice, type: 'fast' }
+              ];
+              prices.forEach((price, j) => {
+                const height = (price.value / maxGas) * plotHeight * 0.9;
+                const y = margin.top + plotHeight - height;
+                ctx.fillStyle = getColor(price.type);
+                ctx.fillRect(x + j * (barWidth + 1), y, barWidth - 1, height);
+              });
             });
-          });
 
-          ctx.fillStyle = '#e0f7fa';
-          ctx.font = '10px Inconsolata';
-          ctx.textAlign = 'right';
-          ctx.textBaseline = 'middle';
-          const yTicks = [0, Math.round(maxGas / 2), maxGas];
-          yTicks.forEach(tick => {
-            const y = margin.top + plotHeight - (tick / maxGas) * plotHeight;
-            ctx.fillText(`${tick} Gwei`, margin.left - 5, y);
-          });
+            ctx.fillStyle = '#e0f7fa';
+            ctx.font = '10px Inconsolata';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            const yTicks = [0, Math.round(maxGas / 2), maxGas];
+            yTicks.forEach(tick => {
+              const y = margin.top + plotHeight - (tick / maxGas) * plotHeight;
+              ctx.fillText(`${tick} Gwei`, margin.left - 5, y);
+            });
 
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'top';
-          const latestTime = new Date(gasHistory[gasHistory.length - 1]?.timestamp);
-          ctx.fillText(latestTime.toLocaleTimeString(), margin.left + plotWidth, margin.top + plotHeight + 5);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            const latestTime = new Date(gasHistory[gasHistory.length - 1]?.timestamp);
+            ctx.fillText(latestTime.toLocaleTimeString(), margin.left + plotWidth, margin.top + plotHeight + 5);
 
-          updateFees(gasData.proposeGasPrice, currentEthPrice > 0 ? currentEthPrice : 4000);
+            updateFees(ethGasData.proposeGasPrice, currentEthPrice > 0 ? currentEthPrice : 4000);
+          }
+
+          const gasPricesList = document.getElementById('gas-prices-list');
+          gasPricesList.innerHTML = gasDataArray.map(data => {
+            const chain = chains.find(c => c.id === data.chainId);
+            return `
+              <li class="p-2 rounded">
+                <div>${chain.name}</div>
+                <div>Safe: ${data.safeGasPrice} Gwei</div>
+                <div>Propose: ${data.proposeGasPrice} Gwei</div>
+                <div>Fast: ${data.fastGasPrice} Gwei</div>
+                <div class="metric">Block: ${data.lastBlock}</div>
+                <div class="metric">Time: ${new Date(data.timestamp).toLocaleTimeString()}</div>
+              </li>
+            `;
+          }).join('');
+
           loader.style.display = 'none';
         } catch (error) {
           console.error('[ERROR] Failed to update gas heatmap and fees:', error);
@@ -1632,7 +1721,7 @@
         if (!Array.isArray(data) || data.length === 0) throw new Error('Invalid or empty response from backend');
         const ethData = data.find(token => token.symbol === 'ETH');
         if (ethData) {
-          const gasData = await fetchGasPrices();
+          const gasData = await fetchGasPrices(1);
           ethData.gasPrice = gasData.proposeGasPrice;
           currentEthPrice = ethData.current_price;
         }
@@ -1642,6 +1731,7 @@
         renderGasHeatmapAndFees();
         renderLogs();
         renderTokenPerformanceChart(data);
+        await renderBalances();
       } catch (error) {
         console.error('Failed to load real data:', error);
         tokensData = mockTokens;
@@ -1655,6 +1745,7 @@
         renderGasHeatmapAndFees();
         renderLogs();
         renderTokenPerformanceChart(mockTokens);
+        await renderBalances();
       }
 
       document.getElementById('toggle-logs-data').addEventListener('click', () => {
@@ -1930,7 +2021,7 @@
         dotClouds.forEach(cloud => exportGroup.add(cloud.clone()));
         const exporter = new THREE.FBXExporter();
         const result = exporter.parse(exportGroup);
-        const blob = new Blob([result], { type: 'application/octet-stream' });
+        const blob = new Blob([result], { type: 'model/fbx' });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = 'hash_art.fbx';
