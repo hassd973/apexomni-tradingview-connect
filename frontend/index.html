@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="QuantumI Dashboard: Live crypto market analytics powered by CoinGecko, Etherscan, and TradingView across multiple chains.">
-  <meta name="keywords" content="crypto, dashboard, QuantumI, trading, analytics, multi-chain">
+  <meta name="description" content="QuantumI Dashboard: Live crypto market analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains.">
+  <meta name="keywords" content="crypto, dashboard, QuantumI, trading, analytics, multi-chain, Dune">
   <meta name="author" content="xAI">
   <title>⚛️ QUANTUMI 🌌</title>
   <link rel="icon" type="image/png" href="https://i.postimg.cc/R6HKW38z/q-logo.png">
@@ -308,26 +308,26 @@
       background: var(--primary-color);
       border-radius: 4px;
     }
-    #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
+    #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list {
       max-height: 50vh;
       overflow-y: auto;
       padding-right: 4px;
     }
-    #gas-heatmap-list {
+    #gas-heatmap-list, #balances-list, #token-insights-list {
       max-height: 20vh;
     }
     #chat-list {
       height: calc(100vh - 200px);
     }
     @media (min-width: 640px) {
-      #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list {
+      #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list {
         max-height: 60vh;
       }
-      #gas-heatmap-list {
+      #gas-heatmap-list, #balances-list, #token-insights-list {
         max-height: 20vh;
       }
     }
-    #token-list li, #profit-pairs li, #gas-heatmap-list li, #log-list li {
+    #token-list li, #profit-pairs li, #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li {
       display: flex;
       flex-direction: column;
       padding: 0.75rem;
@@ -338,13 +338,13 @@
       font-size: 0.875rem;
       background: rgba(35, 46, 46, 0.2);
     }
-    #gas-heatmap-list li, #log-list li {
+    #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li {
       font-size: 0.75rem;
       padding: 0.5rem;
       overflow-x: auto;
       white-space: nowrap;
     }
-    #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover {
+    #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover, #balances-list li:hover, #token-insights-list li:hover {
       background: rgba(255, 187, 51, 0.1);
       transform: translateX(2px);
       box-shadow: 0 0 6px var(--shadow-color);
@@ -354,11 +354,11 @@
       background: rgba(255, 187, 51, 0.1);
       box-shadow: 0 0 6px var(--shadow-color);
     }
-    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric {
+    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric {
       font-size: 0.75rem;
       color: var(--text-color);
     }
-    #gas-heatmap-list .metric, #log-list .metric {
+    #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric {
       word-break: break-all;
     }
     #token-list .performance, #profit-pairs .top-pair, #profit-pairs .bottom-pair {
@@ -494,12 +494,12 @@
       z-index: 60;
       box-shadow: 0 0 4px var(--shadow-color);
     }
-    .gas-heatmap-section {
+    .gas-heatmap-section, .balances-section, .token-insights-section {
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
     }
-    .gas-heatmap-title {
+    .gas-heatmap-title, .balances-title, .token-insights-title {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -537,7 +537,7 @@
       height: 10px;
       border-radius: 2px;
     }
-    #live-logs-container, #chat-list {
+    #live-logs-container, #chat-list, #balances-container, #token-insights-container {
       background: rgba(35, 46, 46, 0.2);
     }
     .data-warning {
@@ -549,7 +549,7 @@
       margin-bottom: 0.5rem;
       text-align: center;
     }
-    .chat-logs-container, .btc-hash-container {
+    .chat-logs-container, .btc-hash-container, .balances-container, .token-insights-container {
       padding: 1rem;
       background: rgba(35, 46, 46, 0.1);
       border: 1px solid var(--shadow-color);
@@ -557,7 +557,7 @@
       box-shadow: 0 0 4px var(--shadow-color);
       text-align: center;
     }
-    .btc-hash-container section {
+    .btc-hash-container section, .balances-container section, .token-insights-container section {
       border: none;
       box-shadow: none;
       padding: 0;
@@ -577,7 +577,7 @@
       #chat-list {
         max-height: 30vh;
       }
-      .chat-logs-container, .btc-hash-container {
+      .chat-logs-container, .btc-hash-container, .balances-container, .token-insights-container {
         padding: 0.5rem;
       }
       #chat-input {
@@ -627,7 +627,7 @@
       font-size: 1.5rem;
       cursor: pointer;
     }
-    #btc-legend {
+    #btc-legend, #balances-legend, #token-insights-legend {
       margin-top: 0.5rem;
       font-size: 0.75rem;
       background: rgba(35, 46, 46, 0.2);
@@ -655,11 +655,13 @@
     <div class="nav-menu-content">
       <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-16 h-16 mb-4">
       <h2 class="text-xl mb-2">QuantumI Dashboard</h2>
-      <p>Real-time crypto analytics with CoinGecko, Etherscan, and TradingView across multiple chains.</p>
+      <p>Real-time crypto analytics with CoinGecko, Etherscan, Dune, and TradingView across multiple chains.</p>
       <nav>
         <a href="#tokens-module" class="nav-link">Tokens</a>
         <a href="#gas-module" class="nav-link">Gas & Fees</a>
         <a href="#logs-module" class="nav-link">Logs</a>
+        <a href="#balances-module" class="nav-link">Balances</a>
+        <a href="#token-insights-module" class="nav-link">Token Insights</a>
         <a href="#btc-hash-module" class="nav-link">BTC Hash</a>
         <a href="#chat-logs-container" class="nav-link">Chat & Logs</a>
         <a href="#" id="undock-background-link" class="nav-link">Undock Background</a>
@@ -684,7 +686,7 @@
       <div class="title-box">
         <h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
       </div>
-      <p class="text-base text-center">Real-time cryptocurrency market data and analytics powered by CoinGecko, Etherscan, and TradingView across multiple chains.</p>
+      <p class="text-base text-center">Real-time cryptocurrency market data and analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains.</p>
       <div class="chart-wrapper w-full">
         <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
           <div class="flex flex-wrap space-x-2 gap-2">
@@ -836,6 +838,30 @@
         <ul id="log-list" class="space-y-2 text-sm"></ul>
       </div>
     </section>
+    <section class="rounded-lg balances-section" draggable="true" id="balances-module">
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl balances-title typewriter">> Balances (Dune API)</h2>
+        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
+      </div>
+      <div class="module-content">
+        <div id="loader-balances" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="balances-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
+        <ul id="balances-list" class="space-y-2 text-sm"></ul>
+        <button id="export-balances" class="mt-2" role="button" aria-label="Export balances as CSV" data-tooltip="Export balances as CSV">Export CSV</button>
+      </div>
+    </section>
+    <section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
+      <div class="module-header">
+        <h2 class="text-lg md:text-xl token-insights-title typewriter">> Token Insights (Dune API)</h2>
+        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
+      </div>
+      <div class="module-content">
+        <div id="loader-token-insights" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+        <div id="token-insights-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
+        <ul id="token-insights-list" class="space-y-2 text-sm"></ul>
+        <button id="export-token-insights" class="mt-2" role="button" aria-label="Export token insights as CSV" data-tooltip="Export token insights as CSV">Export CSV</button>
+      </div>
+    </section>
   </main>
   <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
     <section class="rounded-lg" draggable="true" id="btc-hash-module">
@@ -892,7 +918,7 @@
     </div>
   </div>
   <footer class="text-center text-gray-500 text-sm">
-    <p class="typewriter">Powered by CoinGecko, Etherscan & TradingView</p>
+    <p class="typewriter">Powered by CoinGecko, Etherscan, Dune & TradingView</p>
   </footer>
   <script>
     const DOM = {
@@ -921,7 +947,15 @@
       tokenPerformanceChart: document.getElementById('token-performance-chart'),
       exportFbxBtn: document.getElementById('export-fbx'),
       undockBackgroundLink: document.getElementById('undock-background-link'),
-      exportHashLogBtn: document.getElementById('export-hash-log')
+      exportHashLogBtn: document.getElementById('export-hash-log'),
+      exportBalancesBtn: document.getElementById('export-balances'),
+      balancesList: document.getElementById('balances-list'),
+      loaderBalances: document.getElementById('loader-balances'),
+      balancesWarning: document.getElementById('balances-warning'),
+      exportTokenInsightsBtn: document.getElementById('export-token-insights'),
+      tokenInsightsList: document.getElementById('token-insights-list'),
+      loaderTokenInsights: document.getElementById('loader-token-insights'),
+      tokenInsightsWarning: document.getElementById('token-insights-warning')
     };
 
     let draggedModule = null;
@@ -934,10 +968,15 @@
     let isUsingMockLogs = true;
     let gasHistory = [];
     let tokensData = [];
+    let balancesData = [];
+    let tokenInsightsData = [];
     let isBTCPriceMock = false;
 
     const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
+    const DUNE_API_KEY = 'sim_166oiUHo2nJJgnWUrA1Qkq9n1MKzmDSZ';
     const CHAINS = [1, 42161, 8453, 10, 534352, 81457]; // Mainnet, Arbitrum, Base, Optimism, Scroll, Blast
+    const TOKEN_ADDRESS = '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca';
+    const CHAIN_ID = 8453;
 
     const mockLogs = [
       { id: 1, message: 'Trade executed: BTC/USDT at $60,000', timestamp: new Date(Date.now() - 60000).toLocaleTimeString(), type: 'trade' },
@@ -949,6 +988,18 @@
       { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', current_price: 60000, total_volume: 4500000, price_change_percentage_24h: 5.2, market_cap: 1500000000, circulating_supply: 19000000, source: 'Mock', high_24h: 61000, low_24h: 59000, market_cap_rank: 1 },
       { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', current_price: 4000, total_volume: 3000000, price_change_percentage_24h: -2.1, market_cap: 7500000000, circulating_supply: 120000000, source: 'Mock', high_24h: 4100, low_24h: 3900, market_cap_rank: 2, gasPrice: 15 },
       { id: 'constitutiondao', name: 'ConstitutionDAO', symbol: 'PEOPLE', current_price: 0.01962, total_volume: 135674.745, price_change_percentage_24h: 41.10, market_cap: 99400658.805, circulating_supply: 5066406500, source: 'Mock', high_24h: 0.020, low_24h: 0.018, market_cap_rank: 150 }
+    ];
+
+    const mockBalances = [
+      { token: 'USDC', balance: 1000, chainId: 8453 },
+      { token: 'ETH', balance: 2.5, chainId: 8453 },
+      { token: 'DAI', balance: 500, chainId: 8453 }
+    ];
+
+    const mockTokenInsights = [
+      { symbol: 'USDC', name: 'USD Coin', decimals: 6, chainId: 8453 },
+      { symbol: 'ETH', name: 'Ethereum', decimals: 18, chainId: 8453 },
+      { symbol: 'DAI', name: 'Dai Stablecoin', decimals: 18, chainId: 8453 }
     ];
 
     const quantumPuns = [
@@ -1164,10 +1215,10 @@
       setTimeout(initWidget, 300);
     }
 
-    async function fetchWithRetry(url, retries = 3, delay = 1000) {
+    async function fetchWithRetry(url, options = {}, retries = 3, delay = 1000) {
       for (let i = 0; i <= retries; i++) {
         try {
-          const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit', headers: { 'Accept': 'application/json' } });
+          const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit', headers: { 'Accept': 'application/json', ...options.headers }, ...options });
           if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}, Text: ${response.statusText}`);
           return await response.json();
         } catch (error) {
@@ -1238,6 +1289,18 @@
       } catch (error) {
         console.error(`Failed to fetch gas prices for chain ${chainId}:`, error);
         return { chainId, safeGasPrice: 10, proposeGasPrice: 15, fastGasPrice: 20, lastBlock: 'N/A', timestamp: Date.now() };
+      }
+    }
+
+    async function fetchTokenInfo(tokenAddress, chainId) {
+      const url = `https://api.sim.dune.com/v1/evm/token-info/${tokenAddress}?chain_ids=${chainId}`;
+      try {
+        const data = await fetchWithRetry(url, { headers: { 'X-Sim-Api-Key': DUNE_API_KEY } });
+        if (!data || !data.data) throw new Error('Invalid response from Dune API');
+        return data.data;
+      } catch (error) {
+        console.error(`Failed to fetch token info for ${tokenAddress} on chain ${chainId}:`, error);
+        return null;
       }
     }
 
@@ -1645,6 +1708,8 @@
       const tokenWarning = document.getElementById('token-warning');
       const logsWarning = document.getElementById('logs-warning');
       const gasFeesWarning = document.getElementById('gas-fees-warning');
+      const balancesWarning = document.getElementById('balances-warning');
+      const tokenInsightsWarning = document.getElementById('token-insights-warning');
 
       try {
         const data = await fetchWithRetry(backendApiUrl);
@@ -1682,6 +1747,30 @@
         logsWarning.style.display = isUsingMockLogs ? 'block' : 'none';
         renderLogs();
       });
+
+      try {
+        const tokenInfo = await fetchTokenInfo(TOKEN_ADDRESS, CHAIN_ID);
+        if (tokenInfo) {
+          balancesData = tokenInfo.map(info => ({ token: info.symbol, balance: info.balance, chainId: info.chain_id }));
+          updateBalancesUI(balancesData);
+          DOM.balancesWarning.style.display = 'none';
+          
+          tokenInsightsData = tokenInfo.map(info => ({ symbol: info.symbol, name: info.name, decimals: info.decimals, chainId: info.chain_id }));
+          updateTokenInsightsUI(tokenInsightsData);
+          DOM.tokenInsightsWarning.style.display = 'none';
+        } else throw new Error('No token info received');
+      } catch (error) {
+        console.error('Failed to load data from Dune API:', error);
+        balancesData = mockBalances;
+        updateBalancesUI(mockBalances);
+        DOM.balancesWarning.style.display = 'block';
+        DOM.balancesWarning.textContent = '> Using mock balances due to API failure';
+        
+        tokenInsightsData = mockTokenInsights;
+        updateTokenInsightsUI(mockTokenInsights);
+        DOM.tokenInsightsWarning.style.display = 'block';
+        DOM.tokenInsightsWarning.textContent = '> Using mock insights due to API failure';
+      }
     };
 
     function updateUI(tokens) {
@@ -1759,6 +1848,41 @@
         updateFees(gasPrice, currentEthPrice);
       } else updateFees(15, 4000);
       document.getElementById('gas-fees-warning').style.display = 'none';
+    }
+
+    function updateBalancesUI(balances) {
+      if (!balances || balances.length === 0) {
+        console.error('No balances provided to updateBalancesUI');
+        DOM.loaderBalances.textContent = '> No data available';
+        return;
+      }
+
+      DOM.loaderBalances.style.display = 'none';
+      DOM.balancesList.innerHTML = balances.map(balance => `
+        <li class="p-2 rounded">
+          <div>Token: ${balance.token}</div>
+          <div>Balance: ${balance.balance.toLocaleString()}</div>
+          <div class="metric">Chain ID: ${balance.chainId}</div>
+        </li>
+      `).join('');
+    }
+
+    function updateTokenInsightsUI(insights) {
+      if (!insights || insights.length === 0) {
+        console.error('No token insights provided to updateTokenInsightsUI');
+        DOM.loaderTokenInsights.textContent = '> No data available';
+        return;
+      }
+
+      DOM.loaderTokenInsights.style.display = 'none';
+      DOM.tokenInsightsList.innerHTML = insights.map(insight => `
+        <li class="p-2 rounded">
+          <div>Token: ${insight.symbol}</div>
+          <div>Name: ${insight.name}</div>
+          <div class="metric">Decimals: ${insight.decimals}</div>
+          <div class="metric">Chain ID: ${insight.chainId}</div>
+        </li>
+      `).join('');
     }
 
     function sanitizeInput(input) {
@@ -1959,6 +2083,14 @@
 
       DOM.exportHashLogBtn.addEventListener('click', () => {
         exportToCSV(hashLog, 'hash_log.csv');
+      });
+
+      DOM.exportBalancesBtn.addEventListener('click', () => {
+        exportToCSV(balancesData, 'balances_data.csv');
+      });
+
+      DOM.exportTokenInsightsBtn.addEventListener('click', () => {
+        exportToCSV(tokenInsightsData, 'token_insights_data.csv');
       });
 
       const observer = new IntersectionObserver((entries) => {
