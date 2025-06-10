@@ -58,17 +58,18 @@ router.post('/', async (req, res) => {
 	res.send('OK');
 });
 
-// ✅ New secure /webhook route with token check
+// ✅ Secure /webhook route with token validation and token stripping
 router.post('/webhook', async (req, res) => {
 	console.log('📥 Webhook POST received:', req.body);
 
-	const token = req.body.token;
+	const { token, ...cleanBody } = req.body;
+
 	if (!token || token !== process.env.WEBHOOK_SECRET) {
 		console.warn('🚨 Invalid token:', token);
 		return res.status(403).send('Forbidden: Invalid Token');
 	}
 
-	const validated = await validateAlert(req.body);
+	const validated = await validateAlert(cleanBody);
 	if (!validated) {
 		res.send('Error. Alert message is not valid');
 		return;
@@ -76,14 +77,14 @@ router.post('/webhook', async (req, res) => {
 
 	let orderResult;
 	try {
-		const orderParams = await apexomniBuildOrderParams(req.body);
+		const orderParams = await apexomniBuildOrderParams(cleanBody);
 		if (!orderParams) return;
 		orderResult = await apexomniCreateOrder(orderParams);
 		if (!orderResult) return;
 		await apexomniExportOrder(
-			req.body['strategy'],
+			cleanBody['strategy'],
 			orderResult,
-			req.body['price']
+			cleanBody['price']
 		);
 	} catch (e) {
 		res.send('Error. ' + (e.message || e));
