@@ -11,34 +11,30 @@ import {
 const router: Router = express.Router();
 
 router.get('/', async (req, res) => {
-	console.log('Recieved GET request.');
+	console.log('Received GET request.');
 
 	const apexomniAccount = await apexomniGetAccount();
 
-	if (!apexomniAccount ) {
+	if (!apexomniAccount) {
 		res.send('Error on getting account data');
 	} else {
-		const message =
-			'apexomni Account Ready: ' +
-			apexomniAccount ;
+		const message = 'apexomni Account Ready: ' + apexomniAccount;
 		res.send(message);
 	}
 });
 
 router.post('/', async (req, res) => {
-	console.log('Recieved Tradingview strategy alert:', req.body);
+	console.log('Received TradingView alert at `/`: ', req.body);
 
 	const validated = await validateAlert(req.body);
 	if (!validated) {
-		res.send('Error. alert message is not valid');
+		res.send('Error. Alert message is not valid');
 		return;
 	}
 
-	// if (!orderParams) return;
 	let orderResult;
 	switch (req.body['exchange']) {
 		case 'perpetual': {
-
 			break;
 		}
 		default: {
@@ -59,9 +55,42 @@ router.post('/', async (req, res) => {
 		}
 	}
 
-	//checkAfterPosition(req.body);
-
 	res.send('OK');
+});
+
+// ✅ New secure /webhook route with token check
+router.post('/webhook', async (req, res) => {
+	console.log('📥 Webhook POST received:', req.body);
+
+	const token = req.body.token;
+	if (!token || token !== process.env.WEBHOOK_SECRET) {
+		console.warn('🚨 Invalid token:', token);
+		return res.status(403).send('Forbidden: Invalid Token');
+	}
+
+	const validated = await validateAlert(req.body);
+	if (!validated) {
+		res.send('Error. Alert message is not valid');
+		return;
+	}
+
+	let orderResult;
+	try {
+		const orderParams = await apexomniBuildOrderParams(req.body);
+		if (!orderParams) return;
+		orderResult = await apexomniCreateOrder(orderParams);
+		if (!orderResult) return;
+		await apexomniExportOrder(
+			req.body['strategy'],
+			orderResult,
+			req.body['price']
+		);
+	} catch (e) {
+		res.send('Error. ' + (e.message || e));
+		return;
+	}
+
+	res.send('✅ Secure webhook OK');
 });
 
 router.get('/debug-sentry', function mainHandler(req, res) {
