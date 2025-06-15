@@ -671,7 +671,7 @@
   .custom-scroll::-webkit-scrollbar-track {
     background: #1e293b;
   }
-</style></head>
+</style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
 <button aria-label="Toggle navigation menu" class="nav-menu-toggle" id="nav-menu-toggle" role="button">☰</button>
 <div class="nav-menu" id="nav-menu">
@@ -889,19 +889,41 @@
 <section class="rounded-lg" draggable="true" id="inverse-winners-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">&gt; Inverse Metrics</h2>
-<button aria-label="Toggle module visibility" class="toggle-module-btn" role="button">▼</button>
+<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
-<div class="module-content">
-<canvas class="w-full h-64" id="inverse-chart"></canvas>
+<div class="module-content max-h-64 overflow-auto">
+<div>
+<h3 class="text-base font-semibold mt-2 text-green-400">Inverse Winners (↑ while market ↓)</h3>
+<div class="loader text-center text-gray-500 text-sm" id="loader-inverse-winners">&gt; Loading...</div>
+<ul class="space-y-1 text-sm" id="inverse-winners-list"></ul>
+</div>
+<div class="mt-4">
+<h3 class="text-base font-semibold mt-2 text-red-400">Inverse Losers (↓ while market ↑)</h3>
+<div class="loader text-center text-gray-500 text-sm" id="loader-inverse-losers">&gt; Loading...</div>
+<ul class="space-y-1 text-sm" id="inverse-losers-list"></ul>
+</div>
+<button aria-label="Export inverse metrics as CSV" class="mt-4" data-tooltip="Export inverse metrics as CSV" id="export-inverse-data" role="button">Export CSV</button>
 </div>
 </section>
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
-<div class="module-header">
-<h2 class="text-lg md:text-xl typewriter">&gt; Live Bot Logs</h2>
-<button aria-label="Toggle visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+<div class="flex justify-between items-center mb-2">
+<h2 class="text-white text-lg font-semibold">📡 Omni Wallet + Live Alerts</h2>
+<button class="px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700" id="connectWallet">🔗 Connect Wallet</button>
 </div>
-<div class="module-content max-h-64 overflow-auto text-xs bg-black text-green-400 font-mono p-2 rounded">
-<ul id="live-logs-list"></ul>
+<div class="text-xs text-white mb-4" id="walletAddress">Wallet: Not Connected</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-[#1e1e2e] rounded-lg p-3">
+<h3 class="text-sm text-blue-400 mb-2">Live Webhook Alerts</h3>
+<ul class="space-y-1 text-sm text-blue-300 max-h-64 overflow-y-auto pr-2" id="live-logs-list"></ul>
+</div>
+<div class="bg-[#1e1e2e] rounded-lg p-3">
+<h3 class="text-sm text-green-400 mb-2">Omni Exchange Portfolio</h3>
+<div class="text-xs text-white space-y-2" id="omni-info">
+<div><strong>Balance:</strong> <span id="omni-balance">-</span></div>
+<div><strong>Open Positions:</strong></div>
+<ul class="list-disc ml-4" id="omni-positions"></ul>
+</div>
+</div>
 </div>
 </section>
 </main>
@@ -2395,54 +2417,223 @@ function openCMC(event) {
   }
 }
 </script><script>
-async function fetchInverseMetrics() {
+let inverseChart;
+
+async function loadInverseMetrics() {
   try {
-    // Fetch live token performance data from the new API
-    const res = await fetch('https://quantumi.site/api/inverse-metrics?apiKey=bef090eb-323d-4ae8-86dd-266236262f19');
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
     const data = await res.json();
-    // Expect data format: [{ symbol: 'BTC', inversePercent: 5.2 }, ...]
+    if (!data.success || !data.tokens) return;
 
-    // Sort tokens by inversePercent descending
-    const sorted = data.sort((a, b) => b.inversePercent - a.inversePercent).slice(0, 10);
-    const labels = sorted.map(item => item.symbol);
-    const values = sorted.map(item => item.inversePercent);
+    const ctx = document.getElementById('inverseChart').getContext('2d');
+    const labels = data.tokens.map(token => token.symbol.toUpperCase());
+    const values = data.tokens.map(token => token.score);
 
-    // Render Chart.js bar chart
-    const ctx = document.getElementById('inverse-chart').getContext('2d');
-    if (window.inverseChart) window.inverseChart.destroy();
-    window.inverseChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Inverse Performance (%)',
-          data: values,
-          backgroundColor: labels.map(() => 'rgba(135, 206, 235, 0.7)'),
-          borderColor: labels.map(() => 'rgba(135, 206, 235, 1)'),
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-          y: { beginAtZero: true, title: { display: true, text: 'Inverse %' } }
+    if (inverseChart) {
+      inverseChart.data.labels = labels;
+      inverseChart.data.datasets[0].data = values;
+      inverseChart.update();
+    } else {
+      inverseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Inverse Score',
+            data: values,
+            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
         },
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Top 10 Inverse Metrics vs Market' }
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Inverse Strength' }
+            }
+          }
         }
-      }
-    });
-  } catch (err) {
-    console.error('Error fetching inverse metrics:', err);
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load inverse metrics', e);
   }
 }
 
-// Initialize and refresh every minute
+function refreshInverseChart() {
+  loadInverseMetrics();
+}
+
+window.addEventListener('load', loadInverseMetrics);
+</script><script>
+// === Load Inverse Metrics Table ===
+async function loadInverseMetricsTable() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    const tbody = document.getElementById('inverse-metrics-body');
+    if (!tbody || !data.tokens) return;
+    tbody.innerHTML = '';
+    const seen = new Set();
+    data.tokens.forEach(token => {
+      const id = token.symbol.toLowerCase();
+      if (seen.has(id)) return;
+      seen.add(id);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="px-4 py-2 font-medium">${token.symbol.toUpperCase()}</td>
+        <td class="px-4 py-2">${token.score.toFixed(2)}</td>
+        <td class="px-4 py-2">$${token.price?.toFixed(4) || '-'}</td>
+        <td class="px-4 py-2">${token.change_24h?.toFixed(2) || '0.00'}%</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (e) {
+    console.error('Inverse Metrics Table Error:', e);
+  }
+}
+
+// === MetaMask Integration + Live Logs ===
+let userWallet = null;
+
+document.getElementById('connectWallet').addEventListener('click', async () => {
+  if (window.ethereum) {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      userWallet = accounts[0];
+      document.getElementById('walletAddress').textContent = 'Wallet: ' + userWallet;
+    } catch (err) {
+      console.error('Wallet connection failed', err);
+    }
+  } else {
+    alert('MetaMask not found. Please install it.');
+  }
+});
+
+// === Webhook Alert Listener ===
+async function loadWebhookLogs() {
+  try {
+    const res = await fetch('https://quantumi.site/api/live-logs');
+    const data = await res.json();
+    const logList = document.getElementById('live-logs-list');
+    if (!data.logs || !logList) return;
+    logList.innerHTML = '';
+    const seen = new Set();
+    data.logs.forEach(log => {
+      const item = `[${log.timestamp}] ${log.message}`;
+      if (!seen.has(item)) {
+        seen.add(item);
+        const li = document.createElement('li');
+        li.textContent = item;
+        logList.appendChild(li);
+      }
+    });
+  } catch (e) {
+    console.error('Webhook Logs Error:', e);
+  }
+}
+
 window.addEventListener('load', () => {
-  fetchInverseMetrics();
-  setInterval(fetchInverseMetrics, 60000);
+  loadInverseMetricsTable();
+  loadWebhookLogs();
+  setInterval(loadWebhookLogs, 15000);
+});
+</script><script>
+// === Inverse Metrics Table Loader ===
+async function loadInverseMetricsTable() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    const tbody = document.getElementById('inverse-metrics-body');
+    if (!tbody || !data.tokens) return;
+    tbody.innerHTML = '';
+    const seen = new Set();
+    data.tokens.forEach(token => {
+      const id = token.symbol.toLowerCase();
+      if (seen.has(id)) return;
+      seen.add(id);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="px-4 py-2 font-medium">${token.symbol.toUpperCase()}</td>
+        <td class="px-4 py-2">${token.score?.toFixed(2) || '0.00'}</td>
+        <td class="px-4 py-2">$${token.price?.toFixed(4) || '-'}</td>
+        <td class="px-4 py-2">${token.change_24h?.toFixed(2) || '0.00'}%</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (e) {
+    console.error('Inverse Metrics Table Error:', e);
+  }
+}
+
+// === MetaMask + Omni Portfolio Integration ===
+let userWallet = null;
+
+document.getElementById('connectWallet').addEventListener('click', async () => {
+  if (window.ethereum) {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      userWallet = accounts[0];
+      document.getElementById('walletAddress').textContent = 'Wallet: ' + userWallet;
+      loadOmniPortfolio(userWallet);
+    } catch (err) {
+      console.error('Wallet connection failed', err);
+    }
+  } else {
+    alert('MetaMask not found. Please install it.');
+  }
+});
+
+// === Omni Portfolio Fetcher ===
+async function loadOmniPortfolio(address) {
+  try {
+    const res = await fetch(`https://quantumi.site/api/omni-portfolio?wallet=${address}`);
+    const data = await res.json();
+    document.getElementById('omni-balance').textContent = `$${data.balance?.toFixed(2) || 0}`;
+    const posList = document.getElementById('omni-positions');
+    posList.innerHTML = '';
+    data.positions?.forEach(pos => {
+      const li = document.createElement('li');
+      li.textContent = `${pos.symbol.toUpperCase()} | Size: ${pos.size} | PnL: ${pos.pnl}%`;
+      posList.appendChild(li);
+    });
+  } catch (e) {
+    console.error('Failed to load Omni data:', e);
+  }
+}
+
+// === Webhook Alert Listener ===
+async function loadWebhookLogs() {
+  try {
+    const res = await fetch('https://quantumi.site/api/live-logs');
+    const data = await res.json();
+    const logList = document.getElementById('live-logs-list');
+    if (!data.logs || !logList) return;
+    logList.innerHTML = '';
+    const seen = new Set();
+    data.logs.forEach(log => {
+      const item = `[${log.timestamp}] ${log.message}`;
+      if (!seen.has(item)) {
+        seen.add(item);
+        const li = document.createElement('li');
+        li.textContent = item;
+        logList.appendChild(li);
+      }
+    });
+  } catch (e) {
+    console.error('Webhook Logs Error:', e);
+  }
+}
+
+window.addEventListener('load', () => {
+  loadInverseMetricsTable();
+  loadWebhookLogs();
+  setInterval(loadWebhookLogs, 15000);
 });
 </script></body>
 </html>
