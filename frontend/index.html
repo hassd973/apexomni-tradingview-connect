@@ -886,23 +886,15 @@
 <button aria-label="Export token insights as CSV" class="mt-2" data-tooltip="Export token insights as CSV" id="export-token-insights" role="button">Export CSV</button>
 </div>
 </section>
+
+
 <section class="rounded-lg" draggable="true" id="inverse-winners-module">
 <div class="module-header">
-<h2 class="text-lg md:text-xl typewriter">&gt; Inverse Metrics</h2>
+<h2 class="text-lg md:text-xl typewriter">📊 Inverse Metrics</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
-<div class="module-content max-h-64 overflow-auto">
-<div>
-<h3 class="text-base font-semibold mt-2 text-green-400">Inverse Winners (↑ while market ↓)</h3>
-<div class="loader text-center text-gray-500 text-sm" id="loader-inverse-winners">&gt; Loading...</div>
-<ul class="space-y-1 text-sm" id="inverse-winners-list"></ul>
-</div>
-<div class="mt-4">
-<h3 class="text-base font-semibold mt-2 text-red-400">Inverse Losers (↓ while market ↑)</h3>
-<div class="loader text-center text-gray-500 text-sm" id="loader-inverse-losers">&gt; Loading...</div>
-<ul class="space-y-1 text-sm" id="inverse-losers-list"></ul>
-</div>
-<button aria-label="Export inverse metrics as CSV" class="mt-4" data-tooltip="Export inverse metrics as CSV" id="export-inverse-data" role="button">Export CSV</button>
+<div class="module-content flex justify-center items-center">
+<img alt="Token Correlation with BTC" class="rounded-lg shadow-md w-full max-w-2xl border border-blue-500" src="inverse_correlation_chart.png"/>
 </div>
 </section>
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
