@@ -671,7 +671,7 @@
   .custom-scroll::-webkit-scrollbar-track {
     background: #1e293b;
   }
-</style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
+</style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
 <button aria-label="Toggle navigation menu" class="nav-menu-toggle" id="nav-menu-toggle" role="button">☰</button>
 <div class="nav-menu" id="nav-menu">
@@ -2635,5 +2635,69 @@ window.addEventListener('load', () => {
   loadWebhookLogs();
   setInterval(loadWebhookLogs, 15000);
 });
+</script><script>
+let inverseChart;
+async function drawInverseChart() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    if (!data.tokens) return;
+    const labels = [];
+    const scores = [];
+    const colors = [];
+    const seen = new Set();
+
+    data.tokens.forEach(token => {
+      const id = token.symbol.toLowerCase();
+      if (seen.has(id)) return;
+      seen.add(id);
+      labels.push(token.symbol.toUpperCase());
+      scores.push(token.score);
+      colors.push(token.score > 0 ? 'rgba(0, 255, 204, 0.7)' : 'rgba(255, 99, 132, 0.6)');
+    });
+
+    const ctx = document.getElementById('inverseChartCanvas').getContext('2d');
+    if (inverseChart) {
+      inverseChart.data.labels = labels;
+      inverseChart.data.datasets[0].data = scores;
+      inverseChart.update();
+    } else {
+      inverseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Inverse Strength',
+            data: scores,
+            backgroundColor: colors,
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#cccccc' },
+              grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            y: {
+              ticks: { color: '#cccccc' },
+              grid: { color: 'rgba(255,255,255,0.1)' },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Chart error:', err);
+  }
+}
+
+window.addEventListener('load', drawInverseChart);
 </script></body>
 </html>
