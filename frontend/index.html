@@ -886,14 +886,31 @@
 <button aria-label="Export token insights as CSV" class="mt-2" data-tooltip="Export token insights as CSV" id="export-token-insights" role="button">Export CSV</button>
 </div>
 </section>
-
-
 <section class="rounded-lg" draggable="true" id="inverse-winners-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">📊 Inverse Metrics</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
 <div class="module-content">
+<div class="flex flex-wrap justify-between items-center mb-3">
+<div>
+<label class="text-white mr-2 text-sm" for="chartTypeToggle">Metric:</label>
+<select class="bg-gray-800 text-white text-sm px-2 py-1 rounded" id="chartTypeToggle">
+<option selected="" value="correlation">Correlation</option>
+<option value="change_24h">24h % Change</option>
+</select>
+</div>
+<div>
+<label class="text-white mr-2 text-sm" for="topCount">Top:</label>
+<select class="bg-gray-800 text-white text-sm px-2 py-1 rounded" id="topCount">
+<option selected="" value="5">Top 5</option>
+<option value="10">Top 10</option>
+<option value="20">Top 20</option>
+</select>
+<button class="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" onclick="exportChart()">📤 Export</button>
+</div>
+</div>
+
 <canvas class="w-full max-w-3xl mx-auto h-72 md:h-96" id="inverseChart"></canvas>
 </div>
 </section>
@@ -2693,69 +2710,87 @@ async function drawInverseChart() {
 window.addEventListener('load', drawInverseChart);
 </script><script>
 let inverseChart;
+let allTokens = [];
+
+function updateInverseChart(metric = 'correlation', top = 5) {
+  if (!allTokens.length) return;
+
+  const sorted = [...allTokens].sort((a, b) => Math.abs(b[metric]) - Math.abs(a[metric])).slice(0, top);
+
+  const labels = sorted.map(t => t.symbol.toUpperCase());
+  const values = sorted.map(t => t[metric]);
+  const colors = values.map(val => val > 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.7)');
+
+  const ctx = document.getElementById('inverseChart').getContext('2d');
+  if (inverseChart) {
+    inverseChart.data.labels = labels;
+    inverseChart.data.datasets[0].data = values;
+    inverseChart.data.datasets[0].backgroundColor = colors;
+    inverseChart.update();
+  } else {
+    inverseChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: metric === 'correlation' ? 'Correlation with BTC' : '24h % Change',
+          data: values,
+          backgroundColor: colors
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            ticks: { color: '#ccc' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          },
+          y: {
+            ticks: { color: '#ccc' },
+            grid: { color: 'rgba(255,255,255,0.1)' },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+}
+
 async function drawInverseChart() {
   try {
     const res = await fetch('https://quantumi.site/api/inverse-metrics');
     const data = await res.json();
     if (!data.tokens) return;
-
-    const labels = [];
-    const scores = [];
-    const colors = [];
-
-    data.tokens.forEach(token => {
-      labels.push(token.symbol.toUpperCase());
-      scores.push(token.score);
-      colors.push(token.score > 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.7)');
-    });
-
-    const ctx = document.getElementById('inverseChart').getContext('2d');
-
-    if (inverseChart) {
-      inverseChart.data.labels = labels;
-      inverseChart.data.datasets[0].data = scores;
-      inverseChart.data.datasets[0].backgroundColor = colors;
-      inverseChart.update();
-    } else {
-      inverseChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Correlation with BTC',
-            data: scores,
-            backgroundColor: colors,
-            borderColor: 'rgba(255,255,255,0.1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false }
-          },
-          scales: {
-            x: {
-              ticks: { color: '#cccccc' },
-              grid: { color: 'rgba(255,255,255,0.1)' }
-            },
-            y: {
-              ticks: { color: '#cccccc' },
-              grid: { color: 'rgba(255,255,255,0.1)' },
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    }
+    allTokens = data.tokens;
+    updateInverseChart('correlation', 5);
   } catch (e) {
     console.error('Failed to load chart:', e);
   }
 }
 
+function exportChart() {
+  const link = document.createElement('a');
+  link.download = 'inverse_chart.png';
+  link.href = document.getElementById('inverseChart').toDataURL('image/png');
+  link.click();
+}
+
+document.getElementById('chartTypeToggle').addEventListener('change', (e) => {
+  const metric = e.target.value;
+  const top = parseInt(document.getElementById('topCount').value);
+  updateInverseChart(metric, top);
+});
+
+document.getElementById('topCount').addEventListener('change', (e) => {
+  const top = parseInt(e.target.value);
+  const metric = document.getElementById('chartTypeToggle').value;
+  updateInverseChart(metric, top);
+});
+
 window.addEventListener('load', () => {
   drawInverseChart();
-  setInterval(drawInverseChart, 30000); // Refresh every 30s
+  setInterval(drawInverseChart, 30000);
 });
 </script></body>
 </html>
