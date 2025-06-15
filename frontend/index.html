@@ -671,7 +671,17 @@
   .custom-scroll::-webkit-scrollbar-track {
     background: #1e293b;
   }
-</style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
+</style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+#refreshWalletData, #chart-export-btn, #connectWallet {
+    background-color: #2563EB !important; /* blue-600 */
+    transition: background-color 0.3s ease;
+}
+#refreshWalletData:hover, #chart-export-btn:hover, #connectWallet:hover {
+    background-color: #1D4ED8 !important; /* blue-700 */
+}
+</style>
+</head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
 <button aria-label="Toggle navigation menu" class="nav-menu-toggle" id="nav-menu-toggle" role="button">☰</button>
 <div class="nav-menu" id="nav-menu">
@@ -914,29 +924,17 @@
 </div>
 </section>
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
-<div class="bg-gray-900 p-4 rounded-md mb-4 text-white text-sm">
-<p>🔗 <strong>Wallet:</strong> <span id="wallet-address">Not connected</span></p>
-<p>💰 <strong>Balance (USD):</strong> <span id="wallet-balance">-</span></p>
-<ul class="list-disc ml-5 mt-2" id="open-trades"></ul>
+<div class="module-header flex justify-between items-center">
+<h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
+<button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
 </div>
-<div class="flex justify-between items-center mb-2">
-<h2 class="text-white text-lg font-semibold">📡 Omni Wallet + Live Alerts</h2>
-<button class="px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700" id="connectWallet">🔗 Connect Wallet</button>
+<div class="module-content text-white">
+<div class="wallet-info my-2">
+<p><strong>Wallet Address:</strong> <span id="wallet-address">Not connected</span></p>
+<p><strong>ETH Balance:</strong> <span id="wallet-balance">-</span></p>
+<p><strong>Detected Exchange:</strong> <span id="detected-exchange">Scanning...</span></p>
 </div>
-<div class="text-xs text-white mb-4" id="walletAddress">Wallet: Not Connected</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-<div class="bg-[#1e1e2e] rounded-lg p-3">
-<h3 class="text-sm text-blue-400 mb-2">Live Webhook Alerts</h3>
-<ul class="space-y-1 text-sm text-blue-300 max-h-64 overflow-y-auto pr-2" id="live-logs-list"></ul>
-</div>
-<div class="bg-[#1e1e2e] rounded-lg p-3">
-<h3 class="text-sm text-green-400 mb-2">Omni Exchange Portfolio</h3>
-<div class="text-xs text-white space-y-2" id="omni-info">
-<div><strong>Balance:</strong> <span id="omni-balance">-</span></div>
-<div><strong>Open Positions:</strong></div>
-<ul class="list-disc ml-4" id="omni-positions"></ul>
-</div>
-</div>
+<ul class="list-disc ml-4 text-sm text-gray-300" id="open-trades"></ul>
 </div>
 </section>
 </main>
@@ -2534,5 +2532,44 @@ async function connectWalletAndExtractData() {
   }
 }
 window.addEventListener("load", connectWalletAndExtractData);
+</script><script>
+async function connectWallet() {
+    if (typeof window.ethereum === 'undefined') {
+        alert('MetaMask not detected');
+        return;
+    }
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    return provider;
+}
+
+async function refreshWalletData() {
+    const provider = await connectWallet();
+    const signer = provider.getSigner();
+    const address = await signer.getAddress();
+    const balanceWei = await provider.getBalance(address);
+    const balanceEth = ethers.utils.formatEther(balanceWei);
+
+    document.getElementById("wallet-address").innerText = address;
+    document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
+
+    // Simulated exchange detection and trades (to keep anonymity)
+    document.getElementById("detected-exchange").innerText = "Exchange detected via wallet activity";
+
+    // Example trades (replace this logic with a real backend or API to scan on-chain activity)
+    const simulatedTrades = [
+        { exchange: "Exchange A", token: "BTC", status: "Open", pnl: "+2.5%" },
+        { exchange: "Exchange B", token: "ETH", status: "Closed", pnl: "-1.2%" }
+    ];
+
+    const positionsEl = document.getElementById("open-trades");
+    positionsEl.innerHTML = simulatedTrades.map(trade => 
+        `<li>${trade.token} on ${trade.exchange} - Status: ${trade.status}, PnL: ${trade.pnl}</li>`
+    ).join('');
+}
+
+document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
+
+window.addEventListener("load", refreshWalletData);
 </script></body>
 </html>
