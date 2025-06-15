@@ -889,20 +889,10 @@
 <section class="rounded-lg" draggable="true" id="inverse-winners-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">&gt; Inverse Metrics</h2>
-<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+<button aria-label="Toggle module visibility" class="toggle-module-btn" role="button">▼</button>
 </div>
-<div class="module-content max-h-64 overflow-auto">
-<div>
-<h3 class="text-base font-semibold mt-2 text-green-400">Inverse Winners (↑ while market ↓)</h3>
-<div class="loader text-center text-gray-500 text-sm" id="loader-inverse-winners">&gt; Loading...</div>
-<ul class="space-y-1 text-sm" id="inverse-winners-list"></ul>
-</div>
-<div class="mt-4">
-<h3 class="text-base font-semibold mt-2 text-red-400">Inverse Losers (↓ while market ↑)</h3>
-<div class="loader text-center text-gray-500 text-sm" id="loader-inverse-losers">&gt; Loading...</div>
-<ul class="space-y-1 text-sm" id="inverse-losers-list"></ul>
-</div>
-<button aria-label="Export inverse metrics as CSV" class="mt-4" data-tooltip="Export inverse metrics as CSV" id="export-inverse-data" role="button">Export CSV</button>
+<div class="module-content">
+<canvas class="w-full h-64" id="inverse-chart"></canvas>
 </div>
 </section>
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
@@ -2158,7 +2148,6 @@
       observer.observe(document.getElementById('spline-bg'));
     });
   </script>
-
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const inverseList = document.getElementById('inverse-winners-list');
@@ -2405,5 +2394,55 @@ function openCMC(event) {
     window.open(`https://coinmarketcap.com/currencies/${symbol}/`, '_blank');
   }
 }
+</script><script>
+async function fetchInverseMetrics() {
+  try {
+    // Fetch live token performance data from the new API
+    const res = await fetch('https://quantumi.site/api/inverse-metrics?apiKey=bef090eb-323d-4ae8-86dd-266236262f19');
+    const data = await res.json();
+    // Expect data format: [{ symbol: 'BTC', inversePercent: 5.2 }, ...]
+
+    // Sort tokens by inversePercent descending
+    const sorted = data.sort((a, b) => b.inversePercent - a.inversePercent).slice(0, 10);
+    const labels = sorted.map(item => item.symbol);
+    const values = sorted.map(item => item.inversePercent);
+
+    // Render Chart.js bar chart
+    const ctx = document.getElementById('inverse-chart').getContext('2d');
+    if (window.inverseChart) window.inverseChart.destroy();
+    window.inverseChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Inverse Performance (%)',
+          data: values,
+          backgroundColor: labels.map(() => 'rgba(135, 206, 235, 0.7)'),
+          borderColor: labels.map(() => 'rgba(135, 206, 235, 1)'),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: 'Inverse %' } }
+        },
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Top 10 Inverse Metrics vs Market' }
+        }
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching inverse metrics:', err);
+  }
+}
+
+// Initialize and refresh every minute
+window.addEventListener('load', () => {
+  fetchInverseMetrics();
+  setInterval(fetchInverseMetrics, 60000);
+});
 </script></body>
 </html>
