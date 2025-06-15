@@ -914,15 +914,6 @@
 <ul id="live-logs-list"></ul>
 </div>
 </section>
-<section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
-<div class="module-header">
-<h2 class="text-lg md:text-xl typewriter">&gt; Live Bot Logs</h2>
-<button aria-label="Toggle visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
-</div>
-<div class="module-content max-h-64 overflow-auto text-xs bg-black text-green-400 font-mono p-2 rounded">
-<ul id="live-logs-list"></ul>
-</div>
-</section>
 </main>
 <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
 <section class="rounded-lg" draggable="true" id="btc-hash-module">
@@ -2167,14 +2158,7 @@
       observer.observe(document.getElementById('spline-bg'));
     });
   </script>
-<script>
-  function openCMC(event) {
-    if (event.target && event.target.dataset && event.target.dataset.symbol) {
-      const symbol = event.target.dataset.symbol.toUpperCase();
-      window.open(`https://coinmarketcap.com/currencies/${symbol}/`, '_blank');
-    }
-  }
-</script>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const inverseList = document.getElementById('inverse-winners-list');
@@ -2369,5 +2353,57 @@ document.addEventListener("DOMContentLoaded", () => {
     return local[q.toLowerCase().trim()] || "No local answer found.";
   };
 });
+</script><script>
+// === Live Logs ===
+async function loadLiveLogs() {
+  try {
+    const res = await fetch('https://quantumi.site/api/live-logs');
+    const data = await res.json();
+    const logList = document.getElementById('live-logs-list');
+    if (!logList) return;
+    logList.innerHTML = '';
+    const seen = new Set();
+    data.logs.forEach(log => {
+      const text = `[${log.timestamp}] ${log.message}`;
+      if (!seen.has(text)) {
+        seen.add(text);
+        const li = document.createElement('li');
+        li.textContent = text;
+        logList.appendChild(li);
+      }
+    });
+  } catch (e) {
+    console.error('Live logs error', e);
+  }
+}
+window.addEventListener('load', () => {
+  loadLiveLogs();
+  setInterval(loadLiveLogs, 15000);
+});
+
+// === GPT Chat ===
+document.getElementById('chat-send')?.addEventListener('click', async () => {
+  const input = document.getElementById('chat-input');
+  const chat = document.getElementById('chat-list');
+  const msg = input.value.trim();
+  if (!msg) return;
+  chat.innerHTML += `<div class='text-xs text-blue-300'>You: ${msg}</div>`;
+  input.value = '';
+  const res = await fetch('/api/grok', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ prompt: msg })
+  });
+  const data = await res.json();
+  chat.innerHTML += `<div class='text-xs text-green-300'>GPT: ${data.response}</div>`;
+});
+</script><script>
+function openCMC(event) {
+  const li = event.target.closest('li');
+  const symbol = li?.getAttribute('data-symbol');
+  if (symbol) {
+    window.open(`https://coinmarketcap.com/currencies/${symbol}/`, '_blank');
+  }
+}
 </script></body>
 </html>
