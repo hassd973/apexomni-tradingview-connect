@@ -2429,7 +2429,474 @@ function openCMC(event) {
     window.open(`https://coinmarketcap.com/currencies/${symbol}/`, '_blank');
   }
 }
+</script><script>
+let inverseChart;
+
+async function loadInverseMetrics() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    if (!data.success || !data.tokens) return;
+
+    const ctx = document.getElementById('inverseChart').getContext('2d');
+    const labels = data.tokens.map(token => token.symbol.toUpperCase());
+    const values = data.tokens.map(token => token.score);
+
+    if (inverseChart) {
+      inverseChart.data.labels = labels;
+      inverseChart.data.datasets[0].data = values;
+      inverseChart.update();
+    } else {
+      inverseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Inverse Score',
+            data: values,
+            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Inverse Strength' }
+            }
+          }
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load inverse metrics', e);
+  }
+}
+
+function refreshInverseChart() {
+  loadInverseMetrics();
+}
+
+window.addEventListener('load', loadInverseMetrics);
+</script><script>
+// === Load Inverse Metrics Table ===
+async function loadInverseMetricsTable() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    const tbody = document.getElementById('inverse-metrics-body');
+    if (!tbody || !data.tokens) return;
+    tbody.innerHTML = '';
+    const seen = new Set();
+    data.tokens.forEach(token => {
+      const id = token.symbol.toLowerCase();
+      if (seen.has(id)) return;
+      seen.add(id);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="px-4 py-2 font-medium">${token.symbol.toUpperCase()}</td>
+        <td class="px-4 py-2">${token.score.toFixed(2)}</td>
+        <td class="px-4 py-2">$${token.price?.toFixed(4) || '-'}</td>
+        <td class="px-4 py-2">${token.change_24h?.toFixed(2) || '0.00'}%</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (e) {
+    console.error('Inverse Metrics Table Error:', e);
+  }
+}
+
+// === MetaMask Integration + Live Logs ===
+let userWallet = null;
+
+document.getElementById('connectWallet').addEventListener('click', async () => {
+  if (window.ethereum) {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      userWallet = accounts[0];
+      document.getElementById('walletAddress').textContent = 'Wallet: ' + userWallet;
+    } catch (err) {
+      console.error('Wallet connection failed', err);
+    }
+  } else {
+    alert('MetaMask not found. Please install it.');
+  }
+});
+
+// === Webhook Alert Listener ===
+async function loadWebhookLogs() {
+  try {
+    const res = await fetch('https://quantumi.site/api/live-logs');
+    const data = await res.json();
+    const logList = document.getElementById('live-logs-list');
+    if (!data.logs || !logList) return;
+    logList.innerHTML = '';
+    const seen = new Set();
+    data.logs.forEach(log => {
+      const item = `[${log.timestamp}] ${log.message}`;
+      if (!seen.has(item)) {
+        seen.add(item);
+        const li = document.createElement('li');
+        li.textContent = item;
+        logList.appendChild(li);
+      }
+    });
+  } catch (e) {
+    console.error('Webhook Logs Error:', e);
+  }
+}
+
+window.addEventListener('load', () => {
+  loadInverseMetricsTable();
+  loadWebhookLogs();
+  setInterval(loadWebhookLogs, 15000);
+});
+</script><script>
+// === Inverse Metrics Table Loader ===
+async function loadInverseMetricsTable() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    const tbody = document.getElementById('inverse-metrics-body');
+    if (!tbody || !data.tokens) return;
+    tbody.innerHTML = '';
+    const seen = new Set();
+    data.tokens.forEach(token => {
+      const id = token.symbol.toLowerCase();
+      if (seen.has(id)) return;
+      seen.add(id);
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="px-4 py-2 font-medium">${token.symbol.toUpperCase()}</td>
+        <td class="px-4 py-2">${token.score?.toFixed(2) || '0.00'}</td>
+        <td class="px-4 py-2">$${token.price?.toFixed(4) || '-'}</td>
+        <td class="px-4 py-2">${token.change_24h?.toFixed(2) || '0.00'}%</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (e) {
+    console.error('Inverse Metrics Table Error:', e);
+  }
+}
+
+// === MetaMask + Omni Portfolio Integration ===
+let userWallet = null;
+
+document.getElementById('connectWallet').addEventListener('click', async () => {
+  if (window.ethereum) {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      userWallet = accounts[0];
+      document.getElementById('walletAddress').textContent = 'Wallet: ' + userWallet;
+      loadOmniPortfolio(userWallet);
+    } catch (err) {
+      console.error('Wallet connection failed', err);
+    }
+  } else {
+    alert('MetaMask not found. Please install it.');
+  }
+});
+
+// === Omni Portfolio Fetcher ===
+async function loadOmniPortfolio(address) {
+  try {
+    const res = await fetch(`https://quantumi.site/api/omni-portfolio?wallet=${address}`);
+    const data = await res.json();
+    document.getElementById('omni-balance').textContent = `$${data.balance?.toFixed(2) || 0}`;
+    const posList = document.getElementById('omni-positions');
+    posList.innerHTML = '';
+    data.positions?.forEach(pos => {
+      const li = document.createElement('li');
+      li.textContent = `${pos.symbol.toUpperCase()} | Size: ${pos.size} | PnL: ${pos.pnl}%`;
+      posList.appendChild(li);
+    });
+  } catch (e) {
+    console.error('Failed to load Omni data:', e);
+  }
+}
+
+// === Webhook Alert Listener ===
+async function loadWebhookLogs() {
+  try {
+    const res = await fetch('https://quantumi.site/api/live-logs');
+    const data = await res.json();
+    const logList = document.getElementById('live-logs-list');
+    if (!data.logs || !logList) return;
+    logList.innerHTML = '';
+    const seen = new Set();
+    data.logs.forEach(log => {
+      const item = `[${log.timestamp}] ${log.message}`;
+      if (!seen.has(item)) {
+        seen.add(item);
+        const li = document.createElement('li');
+        li.textContent = item;
+        logList.appendChild(li);
+      }
+    });
+  } catch (e) {
+    console.error('Webhook Logs Error:', e);
+  }
+}
+
+window.addEventListener('load', () => {
+  loadInverseMetricsTable();
+  loadWebhookLogs();
+  setInterval(loadWebhookLogs, 15000);
+});
+</script><script>
+let inverseChart;
+async function drawInverseChart() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    if (!data.tokens) return;
+    const labels = [];
+    const scores = [];
+    const colors = [];
+    const seen = new Set();
+
+    data.tokens.forEach(token => {
+      const id = token.symbol.toLowerCase();
+      if (seen.has(id)) return;
+      seen.add(id);
+      labels.push(token.symbol.toUpperCase());
+      scores.push(token.score);
+      colors.push(token.score > 0 ? 'rgba(0, 255, 204, 0.7)' : 'rgba(255, 99, 132, 0.6)');
+    });
+
+    const ctx = document.getElementById('inverseChartCanvas').getContext('2d');
+    if (inverseChart) {
+      inverseChart.data.labels = labels;
+      inverseChart.data.datasets[0].data = scores;
+      inverseChart.update();
+    } else {
+      inverseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Inverse Strength',
+            data: scores,
+            backgroundColor: colors,
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#cccccc' },
+              grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            y: {
+              ticks: { color: '#cccccc' },
+              grid: { color: 'rgba(255,255,255,0.1)' },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+  } catch (err) {
+    console.error('Chart error:', err);
+  }
+}
+
+window.addEventListener('load', drawInverseChart);
+</script><script>
+let inverseChart;
+let allTokens = [];
+
+function updateInverseChart(metric = 'correlation', top = 5) {
+  if (!allTokens.length) return;
+
+  const sorted = [...allTokens].sort((a, b) => Math.abs(b[metric]) - Math.abs(a[metric])).slice(0, top);
+
+  const labels = sorted.map(t => t.symbol.toUpperCase());
+  const values = sorted.map(t => t[metric]);
+  const colors = values.map(val => val > 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.7)');
+
+  const ctx = document.getElementById('inverseChart').getContext('2d');
+  if (inverseChart) {
+    inverseChart.data.labels = labels;
+    inverseChart.data.datasets[0].data = values;
+    inverseChart.data.datasets[0].backgroundColor = colors;
+    inverseChart.update();
+  } else {
+    inverseChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: metric === 'correlation' ? 'Correlation with BTC' : '24h % Change',
+          data: values,
+          backgroundColor: colors
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: {
+            ticks: { color: '#ccc' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          },
+          y: {
+            ticks: { color: '#ccc' },
+            grid: { color: 'rgba(255,255,255,0.1)' },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+}
+
+async function drawInverseChart() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    if (!data.tokens) return;
+    allTokens = data.tokens;
+    updateInverseChart('correlation', 5);
+  } catch (e) {
+    console.error('Failed to load chart:', e);
+  }
+}
+
+function exportChart() {
+  const link = document.createElement('a');
+  link.download = 'inverse_chart.png';
+  link.href = document.getElementById('inverseChart').toDataURL('image/png');
+  link.click();
+}
+
+document.getElementById('chartTypeToggle').addEventListener('change', (e) => {
+  const metric = e.target.value;
+  const top = parseInt(document.getElementById('topCount').value);
+  updateInverseChart(metric, top);
+});
+
+document.getElementById('topCount').addEventListener('change', (e) => {
+  const top = parseInt(e.target.value);
+  const metric = document.getElementById('chartTypeToggle').value;
+  updateInverseChart(metric, top);
+});
+
+window.addEventListener('load', () => {
+  drawInverseChart();
+  setInterval(drawInverseChart, 30000);
+});
 </script><script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script><script>
+let inverseChart;
+let allTokens = [];
+
+const ASSET_NAMES = {
+  btc: "bitcoin",
+  eth: "ethereum",
+  xrp: "xrp",
+  ada: "cardano",
+  doge: "dogecoin",
+  sol: "solana",
+  ltc: "litecoin",
+  bnb: "binancecoin"
+};
+
+function updateInverseChart(metric = 'correlation', top = 5) {
+  if (!allTokens.length) return;
+
+  const sorted = [...allTokens].sort((a, b) => Math.abs(b[metric]) - Math.abs(a[metric])).slice(0, top);
+
+  const labels = sorted.map(t => t.symbol.toUpperCase());
+  const values = sorted.map(t => t[metric]);
+  const colors = values.map(val => val > 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.7)');
+
+  const ctx = document.getElementById('inverseChart').getContext('2d');
+  if (inverseChart) {
+    inverseChart.data.labels = labels;
+    inverseChart.data.datasets[0].data = values;
+    inverseChart.data.datasets[0].backgroundColor = colors;
+    inverseChart.update();
+  } else {
+    inverseChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: metric === 'correlation' ? 'Correlation with BTC' : '24h % Change',
+          data: values,
+          backgroundColor: colors
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        animation: { duration: 800 },
+        scales: {
+          x: {
+            ticks: { color: '#ccc' },
+            grid: { color: 'rgba(255,255,255,0.1)' }
+          },
+          y: {
+            ticks: { color: '#ccc' },
+            grid: { color: 'rgba(255,255,255,0.1)' },
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  }
+}
+
+async function drawInverseChart() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    if (!data.tokens) throw new Error("Invalid token data");
+    allTokens = data.tokens;
+    updateInverseChart('correlation', 5);
+  } catch (e) {
+    const ctx = document.getElementById('inverseChart').getContext('2d');
+    ctx.font = "16px sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.fillText("Failed to load inverse metrics.", 50, 50);
+    console.error("Inverse chart error:", e);
+  }
+}
+
+function exportChart() {
+  const link = document.createElement('a');
+  link.download = 'inverse_chart.png';
+  link.href = document.getElementById('inverseChart').toDataURL('image/png');
+  link.click();
+}
+
+document.getElementById('chartTypeToggle').addEventListener('change', (e) => {
+  const metric = e.target.value;
+  const top = parseInt(document.getElementById('topCount').value);
+  updateInverseChart(metric, top);
+});
+
+document.getElementById('topCount').addEventListener('change', (e) => {
+  const top = parseInt(e.target.value);
+  const metric = document.getElementById('chartTypeToggle').value;
+  updateInverseChart(metric, top);
+});
+
+window.addEventListener('load', () => {
+  drawInverseChart();
+  setInterval(drawInverseChart, 30000);
+});
+</script><script>
 async function connectWalletAndLoadOmniData() {
   if (typeof window.ethereum === 'undefined') {
     alert('MetaMask not detected');
@@ -2443,94 +2910,45 @@ async function connectWalletAndLoadOmniData() {
 
   document.getElementById("wallet-address").innerText = address;
 
-  // Simulated fetch using connected address directly
-  const omniApiUrl = `https://api.omnidex.finance/v1/user/${address}/positions`; // Replace with valid endpoint when known
+  // Example Omni on-chain call simulated
+  const omniApiUrl = `https://api.omnidex.finance/v1/user/${address}/positions`;
 
   try {
     const response = await fetch(omniApiUrl);
     const data = await response.json();
 
-    const balance = data?.account?.balanceUsd || 'N/A';
+    const balance = parseFloat(data?.account?.balanceUsd || 0).toFixed(2);
+    animateValue("wallet-balance", 0, balance, 1200);
+
     const positions = data?.positions || [];
-
-    document.getElementById("wallet-balance").innerText = balance;
-
     const positionsEl = document.getElementById("open-trades");
-    positionsEl.innerHTML = positions.map(p =>
-      `<li>${p.symbol.toUpperCase()} | Size: ${p.size} | PnL: ${p.pnlPercent}%</li>`
-    ).join('');
+    positionsEl.innerHTML = "";
+
+    positions.forEach(p => {
+      const item = document.createElement("li");
+      item.innerHTML = `<strong>${p.symbol.toUpperCase()}</strong> | Size: ${p.size} | PnL: <span class="text-${p.pnlPercent >= 0 ? 'green' : 'red'}-500">${p.pnlPercent}%</span>`;
+      positionsEl.appendChild(item);
+    });
   } catch (e) {
     console.error("Omni fetch failed:", e);
   }
 }
+
+function animateValue(id, start, end, duration) {
+  const range = end - start;
+  let current = start;
+  const increment = range / (duration / 50);
+  const obj = document.getElementById(id);
+  const timer = setInterval(() => {
+    current += increment;
+    obj.innerText = "$" + Math.round(current * 100) / 100;
+    if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+      clearInterval(timer);
+      obj.innerText = "$" + end;
+    }
+  }, 50);
+}
+
 window.addEventListener("load", connectWalletAndLoadOmniData);
-</script><script>
-async function loadInverseFromCMC() {
-  const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false");
-  const coins = await response.json();
-
-  const sorted = coins
-    .filter(coin => coin.price_change_percentage_24h !== null)
-    .sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h)
-    .slice(0, 10);
-
-  const labels = sorted.map(coin => coin.symbol.toUpperCase());
-  const values = sorted.map(coin => coin.price_change_percentage_24h);
-  const colors = values.map(v => v > 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.7)');
-
-  const ctx = document.getElementById('inverseChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: '24h % Change (Inverse Movers)',
-        data: values,
-        backgroundColor: colors
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: {
-          ticks: { color: '#ccc' },
-          grid: { color: 'rgba(255,255,255,0.1)' }
-        },
-        y: {
-          ticks: { color: '#ccc' },
-          grid: { color: 'rgba(255,255,255,0.1)' },
-          beginAtZero: true
-        }
-      }
-    }
-  });
-}
-
-window.addEventListener('load', loadInverseFromCMC);
-</script><script>
-function animateNumber(elementId, finalValue, duration = 1500) {
-  const el = document.getElementById(elementId);
-  if (!el) return;
-  let start = 0;
-  const stepTime = Math.ceil(duration / 60);
-  const increment = finalValue / stepTime;
-
-  function animate() {
-    start += increment;
-    if (start < finalValue) {
-      el.innerText = '$' + start.toFixed(2);
-      requestAnimationFrame(animate);
-    } else {
-      el.innerText = '$' + finalValue.toFixed(2);
-    }
-  }
-  animate();
-}
-
-function demoWalletUpdate() {
-  animateNumber("wallet-balance", 2356.72);
-}
-window.addEventListener("load", demoWalletUpdate);
 </script></body>
 </html>
