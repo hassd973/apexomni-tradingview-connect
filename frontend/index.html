@@ -1,3 +1,4 @@
+84% of storage used … If you run out, you can't create, edit, and upload files. Get 100 GB of storage for £1.59 £0.39/month for 3 months.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -863,16 +864,34 @@
       </div>
     </section>
   
+
 <section class="rounded-lg" draggable="true" id="inverse-winners-module">
   <div class="module-header">
-    <h2 class="text-lg md:text-xl typewriter">> Inverse Winners</h2>
+    <h2 class="text-lg md:text-xl typewriter">> Inverse Metrics</h2>
     <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
   </div>
   <div class="module-content">
+    <h3 class="text-base font-semibold mt-2">Coins Winning When Market is Down</h3>
     <div id="loader-inverse-winners" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-    <div id="inverse-winners-warning" class="data-warning" style="display: none;">> Live data from Dune API</div>
     <ul id="inverse-winners-list" class="space-y-2 text-sm"></ul>
-    <button id="export-inverse-winners" class="mt-2" role="button" aria-label="Export inverse winners as CSV" data-tooltip="Export inverse winners as CSV">Export CSV</button>
+
+    <h3 class="text-base font-semibold mt-4 text-red-500">Coins Losing When Market is Up</h3>
+    <div id="loader-inverse-losers" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+    <ul id="inverse-losers-list" class="space-y-2 text-sm"></ul>
+
+    <button id="export-inverse-data" class="mt-4" role="button" aria-label="Export inverse metrics as CSV" data-tooltip="Export inverse metrics as CSV">Export CSV</button>
+  </div>
+</section>
+
+
+
+<section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
+  <div class="module-header">
+    <h2 class="text-lg md:text-xl typewriter">> Live Bot Logs</h2>
+    <button class="toggle-module-btn" role="button" aria-label="Toggle visibility" data-tooltip="Toggle module visibility">▼</button>
+  </div>
+  <div class="module-content max-h-64 overflow-auto text-xs bg-black text-green-400 font-mono p-2 rounded">
+    <ul id="live-logs-list"></ul>
   </div>
 </section>
 
@@ -2161,6 +2180,67 @@
     document.getElementById('btc-volatility').textContent = "Volatility: 3.2%";
     document.getElementById('btc-momentum').textContent = "Momentum: +1.6%";
   });
+</script>
+
+
+<script>
+  // Inverse Metrics Mock Data
+  document.addEventListener('DOMContentLoaded', () => {
+    const winners = [
+      { symbol: "DOGE", change: "+8.5%" },
+      { symbol: "XMR", change: "+6.2%" }
+    ];
+    const losers = [
+      { symbol: "SOL", change: "-7.1%" },
+      { symbol: "PEPE", change: "-5.6%" }
+    ];
+
+    document.getElementById('loader-inverse-winners').style.display = 'none';
+    document.getElementById('loader-inverse-losers').style.display = 'none';
+
+    winners.forEach(token => {
+      const li = document.createElement('li');
+      li.textContent = `${token.symbol}: ${token.change}`;
+      li.className = "text-green-400";
+      document.getElementById('inverse-winners-list').appendChild(li);
+    });
+
+    losers.forEach(token => {
+      const li = document.createElement('li');
+      li.textContent = `${token.symbol}: ${token.change}`;
+      li.className = "text-red-400";
+      document.getElementById('inverse-losers-list').appendChild(li);
+    });
+  });
+
+  // Live Webhook Listener (Simulation)
+  async function pollWebhook() {
+    try {
+      const res = await fetch('https://www.quantumi.site/webhook-logs');
+      const data = await res.json();
+      const logList = document.getElementById('live-logs-list');
+      logList.innerHTML = "";
+      data.forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = `[${entry.timestamp}] ${entry.token}: ${entry.message}`;
+        logList.appendChild(li);
+      });
+    } catch (e) {
+      console.warn("Webhook log fetch failed", e);
+    }
+  }
+  setInterval(pollWebhook, 5000); // Poll every 5s
+
+  // ChatGPT placeholder API
+  async function askChatGPT(query) {
+    const res = await fetch('https://www.quantumi.site/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ query })
+    });
+    const result = await res.json();
+    return result.answer;
+  }
 </script>
 
 </body>
