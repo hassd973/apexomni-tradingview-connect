@@ -1,26 +1,27 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="QuantumI Dashboard: Live crypto market analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains.">
-  <meta name="keywords" content="crypto, dashboard, QuantumI, trading, analytics, multi-chain, Dune">
-  <meta name="author" content="xAI">
-  <title>⚛️ QUANTUMI 🌌</title>
-  <link rel="icon" type="image/png" href="https://i.postimg.cc/R6HKW38z/q-logo.png">
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&family=Limelight&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" defer></script>
-  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js" defer></script>
-  <script src="https://s3.tradingview.com/tv.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/FBXExporter.js" defer></script>
-  <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="QuantumI Dashboard: Live crypto market analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains." name="description"/>
+<meta content="crypto, dashboard, QuantumI, trading, analytics, multi-chain, Dune" name="keywords"/>
+<meta content="xAI" name="author"/>
+<title>⚛️ QUANTUMI 🌌</title>
+<link href="https://i.postimg.cc/R6HKW38z/q-logo.png" rel="icon" type="image/png"/>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&amp;family=Limelight&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Sixtyfour&amp;display=swap" rel="stylesheet"/>
+<script defer="" src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script defer="" src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js" type="module"></script>
+<script defer="" src="https://s3.tradingview.com/tv.js"></script>
+<script defer="" src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script defer="" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js"></script>
+<script defer="" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script defer="" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/FBXExporter.js"></script>
+<style>
     :root {
       --bg-color: #121212;
       --text-color: #e0f7fa;
@@ -647,333 +648,344 @@
       color: var(--secondary-color);
     }
   </style>
-</head>
+<style>
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    font-family: 'Inter', sans-serif;
+  }
+  .module-card {
+    border-radius: 0.75rem;
+    background: linear-gradient(to bottom, #0f172a, #000);
+    border: 1px solid #0ea5e9;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  .custom-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scroll::-webkit-scrollbar-thumb {
+    background-color: #06b6d4;
+    border-radius: 6px;
+  }
+  .custom-scroll::-webkit-scrollbar-track {
+    background: #1e293b;
+  }
+</style></head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
-  <button class="nav-menu-toggle" id="nav-menu-toggle" role="button" aria-label="Toggle navigation menu">☰</button>
-  <div class="nav-menu" id="nav-menu">
-    <button class="nav-menu-close" id="nav-menu-close" role="button" aria-label="Close navigation menu">×</button>
-    <div class="nav-menu-content">
-      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-16 h-16 mb-4">
-      <h2 class="text-xl mb-2">QuantumI Dashboard</h2>
-      <p>Real-time crypto analytics with CoinGecko, Etherscan, Dune, and TradingView across multiple chains.</p>
-      <nav>
-        <a href="#tokens-module" class="nav-link">Tokens</a>
-        <a href="#gas-module" class="nav-link">Gas & Fees</a>
-        <a href="#logs-module" class="nav-link">Logs</a>
-        <a href="#balances-module" class="nav-link">Balances</a>
-        <a href="#token-insights-module" class="nav-link">Token Insights</a>
-        <a href="#btc-hash-module" class="nav-link">BTC Hash</a>
-        <a href="#chat-logs-container" class="nav-link">Chat & Logs</a>
-        <a href="#" id="undock-background-link" class="nav-link">Undock Background</a>
-      </nav>
-    </div>
-  </div>
-  <div id="loading-screen">
-    <div class="title-box">
-      <h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
-    </div>
-    <div class="chart-loading">
-      <div class="loader"></div>
-      <div class="ml-2">Loading...</div>
-    </div>
-  </div>
-  <div class="spline-bg" id="spline-bg">
-    <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
-  </div>
-  <div class="particles" id="particles"></div>
-  <header class="w-full flex justify-center items-center">
-    <div class="w-full max-w-[98vw] mx-auto px-4">
-      <div class="title-box">
-        <h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
-      </div>
-      <p class="text-base text-center">Real-time cryptocurrency market data and analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains.</p>
-      <div class="chart-wrapper w-full">
-        <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-          <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="header-timeframe-1min" class="timeframe-btn" data-interval="1" role="button" aria-label="Switch to 1-minute chart" data-tooltip="1-minute chart">1M</button>
-            <button id="header-timeframe-5min" class="timeframe-btn" data-interval="5" role="button" aria-label="Switch to 5-minute chart" data-tooltip="5-minute chart">5M</button>
-            <button id="header-timeframe-15min" class="timeframe-btn" data-interval="15" role="button" aria-label="Switch to 15-minute chart" data-tooltip="15-minute chart">15M</button>
-            <button id="header-timeframe-1hr" class="timeframe-btn" data-interval="60" role="button" aria-label="Switch to 1-hour chart" data-tooltip="1-hour chart">1H</button>
-            <button id="header-timeframe-1d" class="timeframe-btn active" data-interval="D" role="button" aria-label="Switch to daily chart" data-tooltip="Daily chart">1D</button>
-          </div>
-          <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="toggle-indicator-header" role="button" aria-label="Toggle QuantumI indicator" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
-            <button id="toggle-sticky-header" role="button" aria-label="Open chart in modal" data-tooltip="Open chart in modal">Dock Chart</button>
-            <button id="toggle-background" role="button" aria-label="Dock background in modal" data-tooltip="Dock background in modal">Dock Background</button>
-            <button id="toggle-background-dock" role="button" aria-label="Turn off background" data-tooltip="Turn off background to speed up the site">Turn Off Background</button>
-          </div>
-        </div>
-        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-          <div id="live-price-header" class="text-sm">> Live Price: Loading...</div>
-        </div>
-        <div id="chart-container-header" class="chart-container">
-          <div class="chart-loading">
-            <div class="loader"></div>
-            <div class="ml-2">Loading chart...</div>
-          </div>
-        </div>
-        <h3 id="chart-title-header" class="mt-2">Loading...</h3>
-        <div class="marquee-container">
-          <div class="marquee" id="ticker-marquee-header">
-            <span>Loading market data...</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
-  <div class="chart-modal" id="chart-modal">
-    <div class="chart-modal-content">
-      <div class="chart-wrapper w-full">
-        <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-          <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="modal-timeframe-1min" class="timeframe-btn" data-interval="1" role="button" aria-label="Switch to 1-minute chart" data-tooltip="1-minute chart">1M</button>
-            <button id="modal-timeframe-5min" class="timeframe-btn" data-interval="5" role="button" aria-label="Switch to 5-minute chart" data-tooltip="5-minute chart">5M</button>
-            <button id="modal-timeframe-15min" class="timeframe-btn" data-interval="15" role="button" aria-label="Switch to 15-minute chart" data-tooltip="15-minute chart">15M</button>
-            <button id="modal-timeframe-1hr" class="timeframe-btn" data-interval="60" role="button" aria-label="Switch to 1-hour chart" data-tooltip="1-hour chart">1H</button>
-            <button id="modal-timeframe-1d" class="timeframe-btn active" data-interval="D" role="button" aria-label="Switch to daily chart" data-tooltip="Daily chart">1D</button>
-          </div>
-          <div class="flex flex-wrap space-x-2 gap-2">
-            <button id="toggle-indicator-modal" role="button" aria-label="Toggle QuantumI indicator" data-tooltip="Toggle QuantumI indicator">Toggle Indicator</button>
-            <button id="toggle-sticky-modal" role="button" aria-label="Close chart modal" data-tooltip="Close chart modal">Undock Chart</button>
-          </div>
-        </div>
-        <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-          <div id="live-price-modal" class="text-sm">> Live Price: Loading...</div>
-        </div>
-        <div id="chart-container-modal" class="chart-container">
-          <div class="chart-loading">
-            <div class="loader"></div>
-            <div class="ml-2">Loading chart...</div>
-          </div>
-        </div>
-        <h3 id="chart-title-modal" class="mt-2">Loading...</h3>
-        <div class="marquee-container">
-          <div class="marquee" id="ticker-marquee-modal">
-            <span>Loading market data...</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="spline-modal" id="spline-modal">
-    <div class="spline-modal-content">
-      <button class="spline-fullscreen-btn" id="spline-fullscreen-btn" role="button" aria-label="Toggle fullscreen">Fullscreen</button>
-      <button class="spline-modal-close" id="spline-modal-close" role="button" aria-label="Close spline modal">Undock</button>
-      <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
-    </div>
-  </div>
-  <main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
-    <section class="rounded-lg" draggable="true" id="tokens-module">
-      <div class="module-header">
-        <h2 class="text-lg md:text-xl typewriter">> Tokens</h2>
-        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
-      </div>
-      <div class="module-content">
-        <div id="loader-tokens" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-        <div id="token-warning" class="data-warning" style="display: none;">> Live data from Dune API</div>
-        <ul id="token-list" class="space-y-2 text-sm" onclick="openCMC(event)"></ul>
-        <div class="mt-4">
-          <h3 class="text-base md:text-lg mb-2 typewriter">> Performers</h3>
-          <ul id="profit-pairs" class="space-y-2 text-sm"></ul>
-        </div>
-        <div class="mt-4">
-          <h3 class="text-base md:text-lg mb-2 typewriter">> Top USDT Pairs</h3>
-          <ul id="top-pairs" class="text-sm text-gray-500 flex flex-wrap gap-2"></ul>
-        </div>
-        <div class="mt-4">
-          <h3 class="text-base md:text-lg mb-2 typewriter">> Token Performance</h3>
-          <canvas id="token-performance-chart"></canvas>
-        </div>
-        <button id="export-tokens" class="mt-2" role="button" aria-label="Export token data as CSV" data-tooltip="Export token data as CSV">Export CSV</button>
-      </div>
-    </section>
-    <section class="rounded-lg gas-heatmap-section" draggable="true" id="gas-module">
-      <div class="module-header">
-        <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">> Multi-Chain Gas & Fees</h2>
-        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
-      </div>
-      <div class="module-content">
-        <div id="loader-gas-fees" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-        <div id="gas-fees-warning" class="data-warning" style="display: none;">> Live data from Dune API</div>
-        <div class="flex flex-col gap-4">
-          <div>
-            <h3 class="text-base md:text-lg mb-2">Gas Heatmap (Multi-Chain)</h3>
-            <canvas id="gas-heatmap-canvas"></canvas>
-            <div id="gas-heatmap-legend">
-              <div class="legend-item"><div class="legend-color" style="background: #87CEEB"></div><span>Safe</span></div>
-              <div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
-              <div class="legend-item"><div class="legend-color" style="background: #ff0000"></div><span>Fast</span></div>
-            </div>
-            <ul id="gas-heatmap-list" class="space-y-2 text-sm mt-2"></ul>
-          </div>
-          <div>
-            <h3 class="text-base md:text-lg mb-2">Fees</h3>
-            <ul id="fees-list" class="space-y-2 text-sm">
-              <li class="p-2 rounded">
-                <div>Transfer Fee (ETH): <span id="transfer-fee">Loading...</span> USD</div>
-              </li>
-              <li class="p-2 rounded">
-                <div>Withdraw Fee: <span id="withdraw-fee">Loading...</span> USD</div>
-              </li>
-              <li class="p-2 rounded">
-                <div>Bridge Fee: <span id="bridge-fee">Loading...</span> USD</div>
-              </li>
-            </ul>
-          </div>
-        </div>
-        <button id="export-gas" class="mt-2" role="button" aria-label="Export gas data as CSV" data-tooltip="Export gas data as CSV">Export CSV</button>
-      </div>
-    </section>
-    <section class="rounded-lg" draggable="true" id="logs-module">
-      <div class="module-header">
-        <h2 class="text-lg md:text-xl typewriter">> Live Logs</h2>
-        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
-      </div>
-      <div class="module-content">
-        <div class="flex justify-between items-center mb-2">
-          <div id="loader-logs" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-          <button id="toggle-logs-data" role="button" aria-label="Switch log data source" data-tooltip="Switch log data source">Real Logs</button>
-        </div>
-        <div id="logs-warning" class="data-warning" style="display: none;">> Using mock logs due to connection issue</div>
-        <ul id="log-list" class="space-y-2 text-sm"></ul>
-      </div>
-    </section>
-    <section class="rounded-lg balances-section" draggable="true" id="balances-module">
-      <div class="module-header">
-        <h2 class="text-lg md:text-xl balances-title typewriter">> Balances (Dune API)</h2>
-        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
-      </div>
-      <div class="module-content">
-        <div id="loader-balances" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-        <div id="balances-warning" class="data-warning" style="display: none;">> Live data from Dune API</div>
-        <ul id="balances-list" class="space-y-2 text-sm"></ul>
-        <button id="export-balances" class="mt-2" role="button" aria-label="Export balances as CSV" data-tooltip="Export balances as CSV">Export CSV</button>
-      </div>
-    </section>
-    <section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
-      <div class="module-header">
-        <h2 class="text-lg md:text-xl token-insights-title typewriter">> Token Insights (Dune API)</h2>
-        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
-      </div>
-      <div class="module-content">
-        <div id="loader-token-insights" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-        <div id="token-insights-warning" class="data-warning" style="display: none;">> Live data from Dune API</div>
-        <ul id="token-insights-list" class="space-y-2 text-sm"></ul>
-        <button id="export-token-insights" class="mt-2" role="button" aria-label="Export token insights as CSV" data-tooltip="Export token insights as CSV">Export CSV</button>
-      </div>
-    </section>
-  
-
-
-<section class="rounded-lg" draggable="true" id="inverse-winners-module">
-  <div class="module-header">
-    <h2 class="text-lg md:text-xl typewriter">> Inverse Metrics</h2>
-    <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
-  </div>
-  <div class="module-content max-h-64 overflow-auto">
-    <div>
-      <h3 class="text-base font-semibold mt-2 text-green-400">Inverse Winners (↑ while market ↓)</h3>
-      <div id="loader-inverse-winners" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="inverse-winners-list" class="space-y-1 text-sm"></ul>
-    </div>
-    <div class="mt-4">
-      <h3 class="text-base font-semibold mt-2 text-red-400">Inverse Losers (↓ while market ↑)</h3>
-      <div id="loader-inverse-losers" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <ul id="inverse-losers-list" class="space-y-1 text-sm"></ul>
-    </div>
-    <button id="export-inverse-data" class="mt-4" role="button" aria-label="Export inverse metrics as CSV" data-tooltip="Export inverse metrics as CSV">Export CSV</button>
-  </div>
-</section>
-
-
-
-
-<section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
-  <div class="module-header">
-    <h2 class="text-lg md:text-xl typewriter">> Live Bot Logs</h2>
-    <button class="toggle-module-btn" role="button" aria-label="Toggle visibility" data-tooltip="Toggle module visibility">▼</button>
-  </div>
-  <div class="module-content max-h-64 overflow-auto text-xs bg-black text-green-400 font-mono p-2 rounded">
-    <ul id="live-logs-list"></ul>
-  </div>
-</section>
-
-
-<section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
-  <div class="module-header">
-    <h2 class="text-lg md:text-xl typewriter">> Live Bot Logs</h2>
-    <button class="toggle-module-btn" role="button" aria-label="Toggle visibility" data-tooltip="Toggle module visibility">▼</button>
-  </div>
-  <div class="module-content max-h-64 overflow-auto text-xs bg-black text-green-400 font-mono p-2 rounded">
-    <ul id="live-logs-list"></ul>
-  </div>
-</section>
-
-</main>
-  <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
-    <section class="rounded-lg" draggable="true" id="btc-hash-module">
-      <div class="module-header">
-        <h2 class="text-lg md:text-xl sixtyfour-font">> BTC Hash Visualization</h2>
-        <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
-      </div>
-      <div class="module-content">
-        <div id="btc-hash-warning" class="data-warning" style="display: none;">> Live data from Dune API</div>
-        <div id="btc-hash-canvas" class="btc-hash-svg"></div>
-        
-<div id="btc-legend">
-  <span id="btc-price">Price: Loading...</span>
-  <span id="btc-time">Time: Loading...</span>
-  <span id="btc-date">Date: Loading...</span>
-  <span id="btc-volume">Volume: Loading...</span>
-  <span id="btc-volatility">Volatility: Loading...</span>
-  <span id="btc-momentum">Momentum: Loading...</span>
+<button aria-label="Toggle navigation menu" class="nav-menu-toggle" id="nav-menu-toggle" role="button">☰</button>
+<div class="nav-menu" id="nav-menu">
+<button aria-label="Close navigation menu" class="nav-menu-close" id="nav-menu-close" role="button">×</button>
+<div class="nav-menu-content">
+<img alt="QuantumI Logo" class="w-16 h-16 mb-4" src="https://i.postimg.cc/R6HKW38z/q-logo.png"/>
+<h2 class="text-xl mb-2">QuantumI Dashboard</h2>
+<p>Real-time crypto analytics with CoinGecko, Etherscan, Dune, and TradingView across multiple chains.</p>
+<nav>
+<a class="nav-link" href="#tokens-module">Tokens</a>
+<a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
+<a class="nav-link" href="#logs-module">Logs</a>
+<a class="nav-link" href="#balances-module">Balances</a>
+<a class="nav-link" href="#token-insights-module">Token Insights</a>
+<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
+<a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
+<a class="nav-link" href="#" id="undock-background-link">Undock Background</a>
+</nav>
 </div>
-
-        <div id="btc-color-legend" class="mt-2 flex justify-center gap-2"></div>
-        <div id="btc-legend-explanation" class="mt-4 text-sm">
-          <h3 class="text-base md:text-lg mb-2">Legend</h3>
-          <p>Each particle cloud represents a snapshot of BTC price and volume data over the last 24 hours.</p>
-          <p>Colors cycle through the website's palette to distinguish between different snapshots.</p>
-          <p>Hover over the color indicators in the legend to see specific price, volume, and time information.</p>
-        </div>
-        <button id="export-obj" class="mt-2" role="button" aria-label="Export as OBJ" data-tooltip="Export as OBJ">Export OBJ</button>
-        <div id="btc-hash-log" class="mt-4">
-          <h3 class="text-base md:text-lg mb-2">Hash Log</h3>
-          <ul id="hash-log-list" class="space-y-2 text-sm"></ul>
-          <button id="export-hash-log" class="mt-2" role="button" aria-label="Export hash log as CSV" data-tooltip="Export hash log as CSV">Export CSV</button>
-        </div>
-      </div>
-    </section>
-  </div>
-  <div class="chat-logs-container w-full max-w-[98vw] mx-auto text-center">
-    <div class="module-header">
-      <h2 class="text-lg md:text-xl typewriter">> Trading Bot & System Logs</h2>
-      <button class="toggle-module-btn" role="button" aria-label="Toggle visibility" data-tooltip="Toggle visibility">▼</button>
-    </div>
-    <div class="module-content">
-      <div class="mt-4">
-        <h3 class="text-base md:text-lg mb-2">System Logs</h3>
-        <div id="live-logs-container" class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm">
-          <ul id="system-logs-list" class="space-y-2">
-            <li class="p-2 rounded"><div>System initialized successfully</div><div class="metric">Time: 13:14:01</div></li>
-            <li class="p-2 rounded"><div>API connection established</div><div class="metric">Time: 13:14:05</div></li>
-            <li class="p-2 rounded"><div>Data feed active: CoinGecko</div><div class="metric">Time: 13:14:10</div></li>
-            <li class="p-2 rounded"><div>TradingView widget loaded</div><div class="metric">Time: 13:14:15</div></li>
-          </ul>
-        </div>
-      </div>
-      <div id="loader-chat" class="loader text-center text-gray-500 text-sm">> Loading...</div>
-      <div id="chat-list" class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm"></div>
-      <div class="mt-4 flex flex-col sm:flex-row gap-2">
-        <input id="chat-input" type="text" placeholder="Ask ChatGPT..." class="p-2 rounded" aria-label="Chat input" data-tooltip="Type your query">
-        <button id="chat-send" class="px-4 py-2 rounded" role="button" aria-label="Send chat message" data-tooltip="Send message">Send</button>
-      </div>
-    </div>
-  </div>
-  <footer class="text-center text-gray-500 text-sm">
-    <p class="typewriter">Powered by CoinGecko, Etherscan, Dune & TradingView</p>
-  </footer>
-  <script>
+</div>
+<div id="loading-screen">
+<div class="title-box">
+<h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
+</div>
+<div class="chart-loading">
+<div class="loader"></div>
+<div class="ml-2">Loading...</div>
+</div>
+</div>
+<div class="spline-bg" id="spline-bg">
+<spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
+</div>
+<div class="particles" id="particles"></div>
+<header class="w-full flex justify-center items-center">
+<div class="w-full max-w-[98vw] mx-auto px-4">
+<div class="title-box">
+<h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
+</div>
+<p class="text-base text-center">Real-time cryptocurrency market data and analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains.</p>
+<div class="chart-wrapper w-full">
+<div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+<div class="flex flex-wrap space-x-2 gap-2">
+<button aria-label="Switch to 1-minute chart" class="timeframe-btn" data-interval="1" data-tooltip="1-minute chart" id="header-timeframe-1min" role="button">1M</button>
+<button aria-label="Switch to 5-minute chart" class="timeframe-btn" data-interval="5" data-tooltip="5-minute chart" id="header-timeframe-5min" role="button">5M</button>
+<button aria-label="Switch to 15-minute chart" class="timeframe-btn" data-interval="15" data-tooltip="15-minute chart" id="header-timeframe-15min" role="button">15M</button>
+<button aria-label="Switch to 1-hour chart" class="timeframe-btn" data-interval="60" data-tooltip="1-hour chart" id="header-timeframe-1hr" role="button">1H</button>
+<button aria-label="Switch to daily chart" class="timeframe-btn active" data-interval="D" data-tooltip="Daily chart" id="header-timeframe-1d" role="button">1D</button>
+</div>
+<div class="flex flex-wrap space-x-2 gap-2">
+<button aria-label="Toggle QuantumI indicator" data-tooltip="Toggle QuantumI indicator" id="toggle-indicator-header" role="button">Toggle Indicator</button>
+<button aria-label="Open chart in modal" data-tooltip="Open chart in modal" id="toggle-sticky-header" role="button">Dock Chart</button>
+<button aria-label="Dock background in modal" data-tooltip="Dock background in modal" id="toggle-background" role="button">Dock Background</button>
+<button aria-label="Turn off background" data-tooltip="Turn off background to speed up the site" id="toggle-background-dock" role="button">Turn Off Background</button>
+</div>
+</div>
+<div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+<div class="text-sm" id="live-price-header">&gt; Live Price: Loading...</div>
+</div>
+<div class="chart-container" id="chart-container-header">
+<div class="chart-loading">
+<div class="loader"></div>
+<div class="ml-2">Loading chart...</div>
+</div>
+</div>
+<h3 class="mt-2" id="chart-title-header">Loading...</h3>
+<div class="marquee-container">
+<div class="marquee" id="ticker-marquee-header">
+<span>Loading market data...</span>
+</div>
+</div>
+</div>
+</div>
+</header>
+<div class="chart-modal" id="chart-modal">
+<div class="chart-modal-content">
+<div class="chart-wrapper w-full">
+<div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+<div class="flex flex-wrap space-x-2 gap-2">
+<button aria-label="Switch to 1-minute chart" class="timeframe-btn" data-interval="1" data-tooltip="1-minute chart" id="modal-timeframe-1min" role="button">1M</button>
+<button aria-label="Switch to 5-minute chart" class="timeframe-btn" data-interval="5" data-tooltip="5-minute chart" id="modal-timeframe-5min" role="button">5M</button>
+<button aria-label="Switch to 15-minute chart" class="timeframe-btn" data-interval="15" data-tooltip="15-minute chart" id="modal-timeframe-15min" role="button">15M</button>
+<button aria-label="Switch to 1-hour chart" class="timeframe-btn" data-interval="60" data-tooltip="1-hour chart" id="modal-timeframe-1hr" role="button">1H</button>
+<button aria-label="Switch to daily chart" class="timeframe-btn active" data-interval="D" data-tooltip="Daily chart" id="modal-timeframe-1d" role="button">1D</button>
+</div>
+<div class="flex flex-wrap space-x-2 gap-2">
+<button aria-label="Toggle QuantumI indicator" data-tooltip="Toggle QuantumI indicator" id="toggle-indicator-modal" role="button">Toggle Indicator</button>
+<button aria-label="Close chart modal" data-tooltip="Close chart modal" id="toggle-sticky-modal" role="button">Undock Chart</button>
+</div>
+</div>
+<div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+<div class="text-sm" id="live-price-modal">&gt; Live Price: Loading...</div>
+</div>
+<div class="chart-container" id="chart-container-modal">
+<div class="chart-loading">
+<div class="loader"></div>
+<div class="ml-2">Loading chart...</div>
+</div>
+</div>
+<h3 class="mt-2" id="chart-title-modal">Loading...</h3>
+<div class="marquee-container">
+<div class="marquee" id="ticker-marquee-modal">
+<span>Loading market data...</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="spline-modal" id="spline-modal">
+<div class="spline-modal-content">
+<button aria-label="Toggle fullscreen" class="spline-fullscreen-btn" id="spline-fullscreen-btn" role="button">Fullscreen</button>
+<button aria-label="Close spline modal" class="spline-modal-close" id="spline-modal-close" role="button">Undock</button>
+<spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
+</div>
+</div>
+<main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
+<section class="rounded-lg" draggable="true" id="tokens-module">
+<div class="module-header">
+<h2 class="text-lg md:text-xl typewriter">&gt; Tokens</h2>
+<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+</div>
+<div class="module-content">
+<div class="loader text-center text-gray-500 text-sm" id="loader-tokens">&gt; Loading...</div>
+<div class="data-warning" id="token-warning" style="display: none;">&gt; Live data from Dune API</div>
+<ul class="space-y-2 text-sm" id="token-list" onclick="openCMC(event)"></ul>
+<div class="mt-4">
+<h3 class="text-base md:text-lg mb-2 typewriter">&gt; Performers</h3>
+<ul class="space-y-2 text-sm" id="profit-pairs"></ul>
+</div>
+<div class="mt-4">
+<h3 class="text-base md:text-lg mb-2 typewriter">&gt; Top USDT Pairs</h3>
+<ul class="text-sm text-gray-500 flex flex-wrap gap-2" id="top-pairs"></ul>
+</div>
+<div class="mt-4">
+<h3 class="text-base md:text-lg mb-2 typewriter">&gt; Token Performance</h3>
+<canvas id="token-performance-chart"></canvas>
+</div>
+<button aria-label="Export token data as CSV" class="mt-2" data-tooltip="Export token data as CSV" id="export-tokens" role="button">Export CSV</button>
+</div>
+</section>
+<section class="rounded-lg gas-heatmap-section" draggable="true" id="gas-module">
+<div class="module-header">
+<h2 class="text-lg md:text-xl gas-heatmap-title typewriter">&gt; Multi-Chain Gas &amp; Fees</h2>
+<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+</div>
+<div class="module-content">
+<div class="loader text-center text-gray-500 text-sm" id="loader-gas-fees">&gt; Loading...</div>
+<div class="data-warning" id="gas-fees-warning" style="display: none;">&gt; Live data from Dune API</div>
+<div class="flex flex-col gap-4">
+<div>
+<h3 class="text-base md:text-lg mb-2">Gas Heatmap (Multi-Chain)</h3>
+<canvas id="gas-heatmap-canvas"></canvas>
+<div id="gas-heatmap-legend">
+<div class="legend-item"><div class="legend-color" style="background: #87CEEB"></div><span>Safe</span></div>
+<div class="legend-item"><div class="legend-color" style="background: #ffbb33"></div><span>Propose</span></div>
+<div class="legend-item"><div class="legend-color" style="background: #ff0000"></div><span>Fast</span></div>
+</div>
+<ul class="space-y-2 text-sm mt-2" id="gas-heatmap-list"></ul>
+</div>
+<div>
+<h3 class="text-base md:text-lg mb-2">Fees</h3>
+<ul class="space-y-2 text-sm" id="fees-list">
+<li class="p-2 rounded">
+<div>Transfer Fee (ETH): <span id="transfer-fee">Loading...</span> USD</div>
+</li>
+<li class="p-2 rounded">
+<div>Withdraw Fee: <span id="withdraw-fee">Loading...</span> USD</div>
+</li>
+<li class="p-2 rounded">
+<div>Bridge Fee: <span id="bridge-fee">Loading...</span> USD</div>
+</li>
+</ul>
+</div>
+</div>
+<button aria-label="Export gas data as CSV" class="mt-2" data-tooltip="Export gas data as CSV" id="export-gas" role="button">Export CSV</button>
+</div>
+</section>
+<section class="rounded-lg" draggable="true" id="logs-module">
+<div class="module-header">
+<h2 class="text-lg md:text-xl typewriter">&gt; Live Logs</h2>
+<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+</div>
+<div class="module-content">
+<div class="flex justify-between items-center mb-2">
+<div class="loader text-center text-gray-500 text-sm" id="loader-logs">&gt; Loading...</div>
+<button aria-label="Switch log data source" data-tooltip="Switch log data source" id="toggle-logs-data" role="button">Real Logs</button>
+</div>
+<div class="data-warning" id="logs-warning" style="display: none;">&gt; Using mock logs due to connection issue</div>
+<ul class="space-y-2 text-sm" id="log-list"></ul>
+</div>
+</section>
+<section class="rounded-lg balances-section" draggable="true" id="balances-module">
+<div class="module-header">
+<h2 class="text-lg md:text-xl balances-title typewriter">&gt; Balances (Dune API)</h2>
+<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+</div>
+<div class="module-content">
+<div class="loader text-center text-gray-500 text-sm" id="loader-balances">&gt; Loading...</div>
+<div class="data-warning" id="balances-warning" style="display: none;">&gt; Live data from Dune API</div>
+<ul class="space-y-2 text-sm" id="balances-list"></ul>
+<button aria-label="Export balances as CSV" class="mt-2" data-tooltip="Export balances as CSV" id="export-balances" role="button">Export CSV</button>
+</div>
+</section>
+<section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
+<div class="module-header">
+<h2 class="text-lg md:text-xl token-insights-title typewriter">&gt; Token Insights (Dune API)</h2>
+<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+</div>
+<div class="module-content">
+<div class="loader text-center text-gray-500 text-sm" id="loader-token-insights">&gt; Loading...</div>
+<div class="data-warning" id="token-insights-warning" style="display: none;">&gt; Live data from Dune API</div>
+<ul class="space-y-2 text-sm" id="token-insights-list"></ul>
+<button aria-label="Export token insights as CSV" class="mt-2" data-tooltip="Export token insights as CSV" id="export-token-insights" role="button">Export CSV</button>
+</div>
+</section>
+<section class="rounded-lg" draggable="true" id="inverse-winners-module">
+<div class="module-header">
+<h2 class="text-lg md:text-xl typewriter">&gt; Inverse Metrics</h2>
+<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+</div>
+<div class="module-content max-h-64 overflow-auto">
+<div>
+<h3 class="text-base font-semibold mt-2 text-green-400">Inverse Winners (↑ while market ↓)</h3>
+<div class="loader text-center text-gray-500 text-sm" id="loader-inverse-winners">&gt; Loading...</div>
+<ul class="space-y-1 text-sm" id="inverse-winners-list"></ul>
+</div>
+<div class="mt-4">
+<h3 class="text-base font-semibold mt-2 text-red-400">Inverse Losers (↓ while market ↑)</h3>
+<div class="loader text-center text-gray-500 text-sm" id="loader-inverse-losers">&gt; Loading...</div>
+<ul class="space-y-1 text-sm" id="inverse-losers-list"></ul>
+</div>
+<button aria-label="Export inverse metrics as CSV" class="mt-4" data-tooltip="Export inverse metrics as CSV" id="export-inverse-data" role="button">Export CSV</button>
+</div>
+</section>
+<section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
+<div class="module-header">
+<h2 class="text-lg md:text-xl typewriter">&gt; Live Bot Logs</h2>
+<button aria-label="Toggle visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+</div>
+<div class="module-content max-h-64 overflow-auto text-xs bg-black text-green-400 font-mono p-2 rounded">
+<ul id="live-logs-list"></ul>
+</div>
+</section>
+<section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
+<div class="module-header">
+<h2 class="text-lg md:text-xl typewriter">&gt; Live Bot Logs</h2>
+<button aria-label="Toggle visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+</div>
+<div class="module-content max-h-64 overflow-auto text-xs bg-black text-green-400 font-mono p-2 rounded">
+<ul id="live-logs-list"></ul>
+</div>
+</section>
+</main>
+<div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
+<section class="rounded-lg" draggable="true" id="btc-hash-module">
+<div class="module-header">
+<h2 class="text-lg md:text-xl sixtyfour-font">&gt; BTC Hash Visualization</h2>
+<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+</div>
+<div class="module-content">
+<div class="data-warning" id="btc-hash-warning" style="display: none;">&gt; Live data from Dune API</div>
+<div class="btc-hash-svg" id="btc-hash-canvas"></div>
+<div id="btc-legend">
+<span id="btc-price">Price: Loading...</span>
+<span id="btc-time">Time: Loading...</span>
+<span id="btc-date">Date: Loading...</span>
+<span id="btc-volume">Volume: Loading...</span>
+<span id="btc-volatility">Volatility: Loading...</span>
+<span id="btc-momentum">Momentum: Loading...</span>
+</div>
+<div class="mt-2 flex justify-center gap-2" id="btc-color-legend"></div>
+<div class="mt-4 text-sm" id="btc-legend-explanation">
+<h3 class="text-base md:text-lg mb-2">Legend</h3>
+<p>Each particle cloud represents a snapshot of BTC price and volume data over the last 24 hours.</p>
+<p>Colors cycle through the website's palette to distinguish between different snapshots.</p>
+<p>Hover over the color indicators in the legend to see specific price, volume, and time information.</p>
+</div>
+<button aria-label="Export as OBJ" class="mt-2" data-tooltip="Export as OBJ" id="export-obj" role="button">Export OBJ</button>
+<div class="mt-4" id="btc-hash-log">
+<h3 class="text-base md:text-lg mb-2">Hash Log</h3>
+<ul class="space-y-2 text-sm" id="hash-log-list"></ul>
+<button aria-label="Export hash log as CSV" class="mt-2" data-tooltip="Export hash log as CSV" id="export-hash-log" role="button">Export CSV</button>
+</div>
+</div>
+</section>
+</div>
+<div class="chat-logs-container w-full max-w-[98vw] mx-auto text-center">
+<div class="module-header">
+<h2 class="text-lg md:text-xl typewriter">&gt; Trading Bot &amp; System Logs</h2>
+<button aria-label="Toggle visibility" class="toggle-module-btn" data-tooltip="Toggle visibility" role="button">▼</button>
+</div>
+<div class="module-content">
+<div class="mt-4">
+<h3 class="text-base md:text-lg mb-2">System Logs</h3>
+<div class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm" id="live-logs-container">
+<ul class="space-y-2" id="system-logs-list">
+<li class="p-2 rounded"><div>System initialized successfully</div><div class="metric">Time: 13:14:01</div></li>
+<li class="p-2 rounded"><div>API connection established</div><div class="metric">Time: 13:14:05</div></li>
+<li class="p-2 rounded"><div>Data feed active: CoinGecko</div><div class="metric">Time: 13:14:10</div></li>
+<li class="p-2 rounded"><div>TradingView widget loaded</div><div class="metric">Time: 13:14:15</div></li>
+</ul>
+</div>
+</div>
+<div class="loader text-center text-gray-500 text-sm" id="loader-chat">&gt; Loading...</div>
+<div class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm" id="chat-list"></div>
+<div class="mt-4 flex flex-col sm:flex-row gap-2">
+<input aria-label="Chat input" class="p-2 rounded" data-tooltip="Type your query" id="chat-input" placeholder="Ask ChatGPT..." type="text"/>
+<button aria-label="Send chat message" class="px-4 py-2 rounded" data-tooltip="Send message" id="chat-send" role="button">Send</button>
+</div>
+</div>
+</div>
+<footer class="text-center text-gray-500 text-sm">
+<p class="typewriter">Powered by CoinGecko, Etherscan, Dune &amp; TradingView</p>
+</footer>
+<script>
     const DOM = {
       navMenuToggle: document.getElementById('nav-menu-toggle'),
       navMenuClose: document.getElementById('nav-menu-close'),
@@ -2155,7 +2167,6 @@
       observer.observe(document.getElementById('spline-bg'));
     });
   </script>
-
 <script>
   function openCMC(event) {
     if (event.target && event.target.dataset && event.target.dataset.symbol) {
@@ -2164,8 +2175,6 @@
     }
   }
 </script>
-
-
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const inverseList = document.getElementById('inverse-winners-list');
@@ -2183,8 +2192,6 @@
     document.getElementById('loader-inverse-winners').style.display = 'none';
   });
 </script>
-
-
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btc-time').textContent = "Time: " + new Date().toLocaleTimeString();
@@ -2195,8 +2202,6 @@
     document.getElementById('btc-momentum').textContent = "Momentum: +1.6%";
   });
 </script>
-
-
 <script>
   // Inverse Metrics Mock Data
   document.addEventListener('DOMContentLoaded', () => {
@@ -2256,8 +2261,6 @@
     return result.answer;
   }
 </script>
-
-
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const winners = [
@@ -2323,6 +2326,48 @@
     }
   }
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const winners = [{ symbol: "DOGE", change: "+5.3%" }, { symbol: "XMR", change: "+4.9%" }];
+  const losers = [{ symbol: "SOL", change: "-4.5%" }, { symbol: "PEPE", change: "-3.7%" }];
+  const logs = [
+    { time: "12:01", token: "BTC", msg: "Live sync enabled" },
+    { time: "12:03", token: "DOGE", msg: "Inverse signal triggered" }
+  ];
 
-</body>
+  const winList = document.getElementById("inverse-winners-list");
+  const loseList = document.getElementById("inverse-losers-list");
+  const logList = document.getElementById("live-logs-list");
+
+  if (winList) winners.forEach(t => {
+    const li = document.createElement("li");
+    li.textContent = `${t.symbol}: ${t.change}`;
+    li.className = "text-blue-400";
+    winList.appendChild(li);
+  });
+
+  if (loseList) losers.forEach(t => {
+    const li = document.createElement("li");
+    li.textContent = `${t.symbol}: ${t.change}`;
+    li.className = "text-red-500";
+    loseList.appendChild(li);
+  });
+
+  if (logList) logs.forEach(l => {
+    const li = document.createElement("li");
+    li.textContent = `[${l.time}] ${l.token}: ${l.msg}`;
+    li.className = "text-green-400 font-mono";
+    logList.appendChild(li);
+  });
+
+  window.askChatGPT = async function(q) {
+    const local = {
+      "what is btc": "Bitcoin is a decentralized cryptocurrency.",
+      "quantumi": "Quantumi is a real-time crypto metrics dashboard.",
+      "inverse winners": "Tokens that tend to rise during market drops."
+    };
+    return local[q.toLowerCase().trim()] || "No local answer found.";
+  };
+});
+</script></body>
 </html>
