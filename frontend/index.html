@@ -671,7 +671,7 @@
   .custom-scroll::-webkit-scrollbar-track {
     background: #1e293b;
   }
-</style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
+</style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
 <button aria-label="Toggle navigation menu" class="nav-menu-toggle" id="nav-menu-toggle" role="button">☰</button>
 <div class="nav-menu" id="nav-menu">
@@ -893,8 +893,8 @@
 <h2 class="text-lg md:text-xl typewriter">📊 Inverse Metrics</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
-<div class="module-content flex justify-center items-center">
-<img alt="Token Correlation with BTC" class="rounded-lg shadow-md w-full max-w-2xl border border-blue-500" src="inverse_correlation_chart.png"/>
+<div class="module-content">
+<canvas class="w-full max-w-3xl mx-auto h-72 md:h-96" id="inverseChart"></canvas>
 </div>
 </section>
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
@@ -2691,5 +2691,71 @@ async function drawInverseChart() {
 }
 
 window.addEventListener('load', drawInverseChart);
+</script><script>
+let inverseChart;
+async function drawInverseChart() {
+  try {
+    const res = await fetch('https://quantumi.site/api/inverse-metrics');
+    const data = await res.json();
+    if (!data.tokens) return;
+
+    const labels = [];
+    const scores = [];
+    const colors = [];
+
+    data.tokens.forEach(token => {
+      labels.push(token.symbol.toUpperCase());
+      scores.push(token.score);
+      colors.push(token.score > 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.7)');
+    });
+
+    const ctx = document.getElementById('inverseChart').getContext('2d');
+
+    if (inverseChart) {
+      inverseChart.data.labels = labels;
+      inverseChart.data.datasets[0].data = scores;
+      inverseChart.data.datasets[0].backgroundColor = colors;
+      inverseChart.update();
+    } else {
+      inverseChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Correlation with BTC',
+            data: scores,
+            backgroundColor: colors,
+            borderColor: 'rgba(255,255,255,0.1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#cccccc' },
+              grid: { color: 'rgba(255,255,255,0.1)' }
+            },
+            y: {
+              ticks: { color: '#cccccc' },
+              grid: { color: 'rgba(255,255,255,0.1)' },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load chart:', e);
+  }
+}
+
+window.addEventListener('load', () => {
+  drawInverseChart();
+  setInterval(drawInverseChart, 30000); // Refresh every 30s
+});
 </script></body>
 </html>
