@@ -2509,28 +2509,30 @@ async function loadInverseFromCMC() {
 
 window.addEventListener('load', loadInverseFromCMC);
 </script><script>
-function animateNumber(elementId, finalValue, duration = 1500) {
-  const el = document.getElementById(elementId);
-  if (!el) return;
-  let start = 0;
-  const stepTime = Math.ceil(duration / 60);
-  const increment = finalValue / stepTime;
-
-  function animate() {
-    start += increment;
-    if (start < finalValue) {
-      el.innerText = '$' + start.toFixed(2);
-      requestAnimationFrame(animate);
-    } else {
-      el.innerText = '$' + finalValue.toFixed(2);
-    }
+async function connectWalletAndExtractData() {
+  if (typeof window.ethereum === 'undefined') {
+    alert('MetaMask not detected');
+    return;
   }
-  animate();
-}
 
-function demoWalletUpdate() {
-  animateNumber("wallet-balance", 2356.72);
+  try {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const address = await signer.getAddress();
+    const balanceWei = await provider.getBalance(address);
+    const balanceEth = ethers.utils.formatEther(balanceWei);
+
+    document.getElementById("wallet-address").innerText = address;
+    document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
+    document.getElementById("open-trades").innerHTML = "<li>📍 No Omni positions fetched (wallet only)</li>";
+  } catch (err) {
+    console.error("Wallet connection failed:", err);
+    document.getElementById("wallet-address").innerText = "Error";
+    document.getElementById("wallet-balance").innerText = "Error";
+    document.getElementById("open-trades").innerHTML = "<li>❌ Failed to read wallet data</li>";
+  }
 }
-window.addEventListener("load", demoWalletUpdate);
+window.addEventListener("load", connectWalletAndExtractData);
 </script></body>
 </html>
