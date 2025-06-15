@@ -1,4 +1,3 @@
-quantumi_beta_inversed_wallet_chart_fixed.html
 <!DOCTYPE html>
 
 <html lang="en">
@@ -2422,12 +2421,23 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
 });
 </script><script>
 function openCMC(event) {
-  const li = event.target.closest('li');
-  const symbol = li?.getAttribute('data-symbol');
-  if (symbol) {
-    window.open(`https://coinmarketcap.com/currencies/${symbol}/`, '_blank');
-  }
+    const tokenSymbol = event.target.closest('li')?.querySelector('.token-symbol')?.textContent?.trim().toLowerCase();
+    const tokenNameMap = {
+        eth: 'ethereum',
+        btc: 'bitcoin',
+        xrp: 'xrp',
+        ada: 'cardano',
+        bnb: 'binancecoin',
+        ltc: 'litecoin',
+        link: 'chainlink',
+        dot: 'polkadot',
+        sol: 'solana',
+        usdt: 'tether'
+    };
+    const cmcToken = tokenNameMap[tokenSymbol] || tokenSymbol;
+    window.open(`https://coinmarketcap.com/currencies/${cmcToken}/`, '_blank');
 }
+document.getElementById('token-list').addEventListener('click', openCMC);
 </script><script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script><script>
 async function connectWalletAndLoadOmniData() {
   if (typeof window.ethereum === 'undefined') {
@@ -2534,105 +2544,41 @@ async function connectWalletAndExtractData() {
 }
 window.addEventListener("load", connectWalletAndExtractData);
 </script><script>
-async function connectWallet() {
-    if (typeof window.ethereum === 'undefined') {
-        alert('MetaMask not detected');
-        return;
-    }
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    return provider;
-}
-
-async function refreshWalletData() {
-    const provider = await connectWallet();
-    const signer = provider.getSigner();
-    const address = await signer.getAddress();
-    const balanceWei = await provider.getBalance(address);
-    const balanceEth = ethers.utils.formatEther(balanceWei);
-
-    document.getElementById("wallet-address").innerText = address;
-    document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
-
-    // Simulated exchange detection and trades (to keep anonymity)
-    document.getElementById("detected-exchange").innerText = "Exchange detected via wallet activity";
-
-    // Example trades (replace this logic with a real backend or API to scan on-chain activity)
-    const simulatedTrades = [
-        { exchange: "Exchange A", token: "BTC", status: "Open", pnl: "+2.5%" },
-        { exchange: "Exchange B", token: "ETH", status: "Closed", pnl: "-1.2%" }
-    ];
-
-    const positionsEl = document.getElementById("open-trades");
-    positionsEl.innerHTML = simulatedTrades.map(trade => 
-        `<li>${trade.token} on ${trade.exchange} - Status: ${trade.status}, PnL: ${trade.pnl}</li>`
-    ).join('');
-}
-
-document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
-
-window.addEventListener("load", refreshWalletData);
-</script><script>
-const inverseCtx = document.getElementById('inverseChart').getContext('2d');
-let inverseChart;
-
 async function loadInverseChart() {
-  const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1');
-  const data = await response.json();
+    const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd');
+    const tokens = await response.json();
 
-  // Dummy correlation data for now — you can wire your own logic or source
-  const marketDown = data.filter(token => token.price_change_percentage_24h < 0);
-  const winners = marketDown.map(t => ({ name: t.id, change: t.price_change_percentage_24h }));
+    const isMarketDown = tokens.filter(t => t.price_change_percentage_24h < 0).length > tokens.length / 2;
 
-  // Sort by inverse correlation (roughly here, we sort positive on negative market)
-  const sorted = winners.sort((a, b) => b.change - a.change).slice(0, 10);
+    const sortedTokens = tokens.sort((a, b) => isMarketDown ? b.price_change_percentage_24h - a.price_change_percentage_24h : a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, 10);
 
-  const labels = sorted.map(x => x.name);
-  const values = sorted.map(x => x.change);
-  const bgColor = values.map(v => v > 0 ? 'blue' : 'red');
+    const labels = sortedTokens.map(t => t.symbol.toUpperCase());
+    const data = sortedTokens.map(t => t.price_change_percentage_24h);
+    const colors = sortedTokens.map(t => isMarketDown ? 'blue' : 'red');
 
-  if (inverseChart) inverseChart.destroy();
-
-  inverseChart = new Chart(inverseCtx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Inverse Correlation %',
-        data: values,
-        backgroundColor: bgColor,
-      }]
-    },
-    options: {
-      onClick: (evt, elements) => {
-        if (elements.length > 0) {
-          const index = elements[0].index;
-          const token = labels[index];
-          const url = `https://coinmarketcap.com/currencies/${token}/`;
-          window.open(url, '_blank');
-        }
-      },
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        y: {
-          ticks: {
-            color: '#ffffff'
-          }
+    const ctx = document.getElementById('inverseChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{ data, backgroundColor: colors }]
         },
-        x: {
-          ticks: {
-            color: '#ffffff'
-          }
+        options: {
+            onClick: (e, items) => {
+                if (items.length > 0) {
+                    const token = sortedTokens[items[0].index].id;
+                    window.open(`https://coinmarketcap.com/currencies/${token}/`, '_blank');
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#ffffff' } },
+                y: { ticks: { color: '#ffffff' }, beginAtZero: true }
+            }
         }
-      }
-    }
-  });
+    });
 }
 
-window.addEventListener("load", loadInverseChart);
+window.addEventListener('load', loadInverseChart);
 </script><script>
 async function refreshWalletData() {
   if (typeof window.ethereum === 'undefined') {
@@ -2650,17 +2596,13 @@ async function refreshWalletData() {
   document.getElementById("wallet-address").innerText = address;
   document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
 
-  // Simulated detection
-  const positions = [
-    { token: "ETH", exchange: "Detected DEX", status: "Open", pnl: "+3.2%" },
-    { token: "LINK", exchange: "Detected DEX", status: "Closed", pnl: "-0.5%" }
-  ];
-
-  document.getElementById("detected-exchange").innerText = "DEX Detected via Activity";
+  const positions = [{ token: "ETH", exchange: "Detected Exchange", status: "Open", pnl: "+1.5%" }];
+  document.getElementById("detected-exchange").innerText = "Exchange Detected";
   document.getElementById("open-trades").innerHTML = positions.map(p =>
-    `<li>${p.token} - ${p.status} on ${p.exchange}, PnL: ${p.pnl}</li>`
+    `<li>${p.token} on ${p.exchange} (${p.status}) PnL: ${p.pnl}</li>`
   ).join('');
 }
+
 document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
 window.addEventListener("load", refreshWalletData);
 </script></body>
