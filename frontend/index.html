@@ -1,3 +1,4 @@
+84% of storage used … If you run out, you can't create, edit, and upload files. Get 100 GB of storage for £1.59 £0.39/month for 3 months.
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -862,7 +863,20 @@
         <button id="export-token-insights" class="mt-2" role="button" aria-label="Export token insights as CSV" data-tooltip="Export token insights as CSV">Export CSV</button>
       </div>
     </section>
-  </main>
+  
+<section class="rounded-lg" draggable="true" id="inverse-winners-module">
+  <div class="module-header">
+    <h2 class="text-lg md:text-xl typewriter">> Inverse Winners</h2>
+    <button class="toggle-module-btn" role="button" aria-label="Toggle module visibility" data-tooltip="Toggle module visibility">▼</button>
+  </div>
+  <div class="module-content">
+    <div id="loader-inverse-winners" class="loader text-center text-gray-500 text-sm">> Loading...</div>
+    <div id="inverse-winners-warning" class="data-warning" style="display: none;">> Using mock data due to API failure</div>
+    <ul id="inverse-winners-list" class="space-y-2 text-sm"></ul>
+    <button id="export-inverse-winners" class="mt-2" role="button" aria-label="Export inverse winners as CSV" data-tooltip="Export inverse winners as CSV">Export CSV</button>
+  </div>
+</section>
+</main>
   <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
     <section class="rounded-lg" draggable="true" id="btc-hash-module">
       <div class="module-header">
@@ -874,7 +888,9 @@
         <div id="btc-hash-canvas" class="btc-hash-svg"></div>
         <div id="btc-legend">
           <span id="btc-price">Price: Loading...</span>
-          <span id="btc-time">Time: Loading...</span>
+          <span id="btc-time">Time: 05:53</span>
+<span id="btc-date">Date: 2025-06-15</span>
+Time: Loading...</span>
         </div>
         <div id="btc-color-legend" class="mt-2 flex justify-center gap-2"></div>
         <div id="btc-legend-explanation" class="mt-4 text-sm">
