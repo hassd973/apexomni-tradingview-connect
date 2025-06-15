@@ -2324,49 +2324,5 @@
   }
 </script>
 
-
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const winners = [{ symbol: "DOGE", change: "+5.3%" }, { symbol: "XMR", change: "+4.9%" }];
-  const losers = [{ symbol: "SOL", change: "-4.5%" }, { symbol: "PEPE", change: "-3.7%" }];
-  const logs = [
-    { time: "12:01", token: "BTC", msg: "Live sync enabled" },
-    { time: "12:03", token: "DOGE", msg: "Inverse signal triggered" }
-  ];
-
-  const winList = document.getElementById("inverse-winners-list");
-  const loseList = document.getElementById("inverse-losers-list");
-  const logList = document.getElementById("live-logs-list");
-
-  winners.forEach(t => {
-    const li = document.createElement("li");
-    li.textContent = `${t.symbol}: ${t.change}`;
-    li.className = "text-blue-400";
-    winList?.appendChild(li);
-  });
-
-  losers.forEach(t => {
-    const li = document.createElement("li");
-    li.textContent = `${t.symbol}: ${t.change}`;
-    li.className = "text-red-500";
-    loseList?.appendChild(li);
-  });
-
-  logs.forEach(l => {
-    const li = document.createElement("li");
-    li.textContent = `[${l.time}] ${l.token}: ${l.msg}`;
-    logList?.appendChild(li);
-  });
-
-  window.askChatGPT = async function(q) {
-    const local = {
-      "what is btc": "Bitcoin is a decentralized cryptocurrency.",
-      "quantumi": "Quantumi is a real-time insight and signal platform."
-    };
-    return local[q.toLowerCase().trim()] || "No local answer available.";
-  };
-});
-</script>
-
 </body>
 </html>
