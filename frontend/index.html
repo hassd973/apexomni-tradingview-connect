@@ -574,19 +574,46 @@
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
     }
+    .tx-hash-container {
+      padding: 1rem;
+      background: rgba(35, 46, 46, 0.1);
+      border: 1px solid var(--shadow-color);
+      border-radius: 6px;
+      box-shadow: 0 0 4px var(--shadow-color);
+      text-align: center;
+    }
+    .hash-box {
+      font-family: monospace;
+      word-break: break-all;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--shadow-color);
+      border-radius: 6px;
+      padding: 0.5rem;
+    }
     @media (max-width: 640px) {
-      #chat-list {
-        max-height: 30vh;
-      }
-      .chat-logs-container, .btc-hash-container, .balances-container, .token-insights-container {
-        padding: 0.5rem;
-      }
+    #chat-list {
+      max-height: 30vh;
+    }
+    .chat-logs-container, .btc-hash-container, .balances-container, .token-insights-container {
+      padding: 0.5rem;
+    }
       #chat-input {
         font-size: 0.75rem;
+        width: 100%;
       }
       #chat-send {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
+        width: 100%;
+      }
+      #chat-list {
+        max-height: 25vh;
+      }
+      #btc-legend {
+        flex-direction: column;
+        align-items: center;
       }
     }
     .nav-menu {
@@ -635,7 +662,9 @@
       padding: 0.5rem;
       border-radius: 6px;
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
     }
     .nav-link {
       display: block;
@@ -671,18 +700,23 @@
   .custom-scroll::-webkit-scrollbar-track {
     background: #1e293b;
   }
-</style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</style>
 <style>
-#refreshWalletData, #chart-export-btn, #connectWallet {
-    background-color: #2563EB !important; /* blue-600 */
-    transition: background-color 0.3s ease;
-}
-#refreshWalletData:hover, #chart-export-btn:hover, #connectWallet:hover {
-    background-color: #1D4ED8 !important; /* blue-700 */
-}
+  .pro-banner {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  }
+  .cmc-link {
+    font-size: 0.75rem;
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+  .cmc-link:hover {
+    text-decoration: underline;
+  }
 </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
+<div class="pro-banner text-black text-center text-xs py-1 uppercase w-full">PRO ALPHA BETA</div>
 <button aria-label="Toggle navigation menu" class="nav-menu-toggle" id="nav-menu-toggle" role="button">☰</button>
 <div class="nav-menu" id="nav-menu">
 <button aria-label="Close navigation menu" class="nav-menu-close" id="nav-menu-close" role="button">×</button>
@@ -805,7 +839,7 @@
 <div class="module-content">
 <div class="loader text-center text-gray-500 text-sm" id="loader-tokens">&gt; Loading...</div>
 <div class="data-warning" id="token-warning" style="display: none;">&gt; Live data from Dune API</div>
-<ul class="space-y-2 text-sm" id="token-list" onclick="openCMC(event)"></ul>
+<ul class="space-y-2 text-sm" id="token-list"></ul>
 <div class="mt-4">
 <h3 class="text-base md:text-lg mb-2 typewriter">&gt; Performers</h3>
 <ul class="space-y-2 text-sm" id="profit-pairs"></ul>
@@ -917,22 +951,26 @@
 <option value="10">Top 10</option>
 <option value="20">Top 20</option>
 </select>
-<button class="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" onclick="exportChart()">📤 Export</button>
+<button class="ml-4 px-3 py-1 rounded text-sm" onclick="exportChart()">📤 Export</button>
 </div>
 </div>
 <canvas class="w-full max-w-3xl mx-auto h-72 md:h-96" id="inverseChart"></canvas>
 </div>
 </section>
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
-<div class="module-header flex justify-between items-center">
+<div class="module-header flex flex-wrap justify-between items-center gap-2">
 <h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
-<button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
+<div class="flex gap-2">
+<button class="py-1 px-4 rounded text-sm" id="connectWallet">🦊 Connect Wallet</button>
+<button class="py-1 px-4 rounded text-sm" id="toggleWallet">👁 Toggle</button>
+<button class="py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
+</div>
 </div>
 <div class="module-content text-white">
-<div class="wallet-info my-2">
-<p><strong>Wallet Address:</strong> <span id="wallet-address">Not connected</span></p>
-<p><strong>ETH Balance:</strong> <span id="wallet-balance">-</span></p>
-<p><strong>Detected Exchange:</strong> <span id="detected-exchange">Scanning...</span></p>
+<div class="wallet-info my-2" id="walletDetails">
+<p><strong>Wallet Address:</strong> <span id="wallet-address">**********</span></p>
+<p><strong>ETH Balance:</strong> <span id="wallet-balance">**********</span></p>
+<p><strong>Detected Exchange:</strong> <span id="detected-exchange">**********</span></p>
 </div>
 <ul class="list-disc ml-4 text-sm text-gray-300" id="open-trades"></ul>
 </div>
@@ -971,6 +1009,17 @@
 </div>
 </section>
 </div>
+<div class="tx-hash-container w-full max-w-[98vw] mx-auto text-center">
+  <section class="rounded-lg" draggable="true" id="tx-hash-module">
+    <div class="module-header">
+      <h2 class="text-lg md:text-xl">➿ Transaction Hash Visual</h2>
+      <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+    </div>
+    <div class="module-content">
+      <pre class="hash-box" id="tx-hash-content">0x0000000000000000000000000000000000000000000000000000000000000000</pre>
+    </div>
+  </section>
+</div>
 <div class="chat-logs-container w-full max-w-[98vw] mx-auto text-center">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">&gt; Trading Bot &amp; System Logs</h2>
@@ -988,10 +1037,12 @@
 </ul>
 </div>
 </div>
+<h3 class="text-base md:text-lg mb-2 typewriter">QuantGPT Chat</h3>
 <div class="loader text-center text-gray-500 text-sm" id="loader-chat">&gt; Loading...</div>
 <div class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm" id="chat-list"></div>
 <div class="mt-4 flex flex-col sm:flex-row gap-2">
-<input aria-label="Chat input" class="p-2 rounded" data-tooltip="Type your query" id="chat-input" placeholder="Ask ChatGPT..." type="text"/>
+<!-- QuantGPT Chat Input -->
+<input aria-label="Chat input" class="p-2 rounded" data-tooltip="Type your query" id="chat-input" placeholder="Ask QuantGPT..." type="text"/>
 <button aria-label="Send chat message" class="px-4 py-2 rounded" data-tooltip="Send message" id="chat-send" role="button">Send</button>
 </div>
 </div>
@@ -1091,7 +1142,7 @@
       "Riding the quantum wave to success!"
     ];
 
-    window.onload = function() {
+    document.addEventListener('DOMContentLoaded', () => {
       DOM.loadingScreen.style.opacity = '0';
       setTimeout(() => {
         DOM.loadingScreen.style.display = 'none';
@@ -1102,7 +1153,7 @@
           setTimeout(() => section.style.opacity = '1', 700 + index * 200);
         });
       }, 500);
-    };
+    });
 
     for (let i = 0; i < 20; i++) {
       const particle = document.createElement('div');
@@ -1555,6 +1606,8 @@
       if (logList.children.length > 10) logList.removeChild(logList.lastChild);
       hashLog.unshift({ hashId, time });
       if (hashLog.length > 10) hashLog.pop();
+      const txEl = document.getElementById('tx-hash-content');
+      if (txEl) txEl.textContent = hashId;
     }
 
     function updateColorLegend() {
@@ -1833,22 +1886,38 @@
           balancesData = tokenInfo.map(info => ({ token: info.symbol, balance: info.balance, chainId: info.chain_id }));
           updateBalancesUI(balancesData);
           DOM.balancesWarning.style.display = 'none';
-          
+          localStorage.setItem('cachedBalances', JSON.stringify(balancesData));
+
           tokenInsightsData = tokenInfo.map(info => ({ symbol: info.symbol, name: info.name, decimals: info.decimals, chainId: info.chain_id }));
           updateTokenInsightsUI(tokenInsightsData);
           DOM.tokenInsightsWarning.style.display = 'none';
+          localStorage.setItem('cachedInsights', JSON.stringify(tokenInsightsData));
         } else throw new Error('No token info received');
       } catch (error) {
         console.error('Failed to load data from Dune API:', error);
-        balancesData = mockBalances;
-        updateBalancesUI(mockBalances);
-        DOM.balancesWarning.style.display = 'block';
-        DOM.balancesWarning.textContent = '> Using mock balances due to API failure';
-        
-        tokenInsightsData = mockTokenInsights;
-        updateTokenInsightsUI(mockTokenInsights);
-        DOM.tokenInsightsWarning.style.display = 'block';
-        DOM.tokenInsightsWarning.textContent = '> Using mock insights due to API failure';
+        const cachedBalances = localStorage.getItem('cachedBalances');
+        const cachedInsights = localStorage.getItem('cachedInsights');
+        if (cachedBalances && cachedInsights) {
+          balancesData = JSON.parse(cachedBalances);
+          updateBalancesUI(balancesData);
+          DOM.balancesWarning.style.display = 'block';
+          DOM.balancesWarning.textContent = '> Using cached balances';
+
+          tokenInsightsData = JSON.parse(cachedInsights);
+          updateTokenInsightsUI(tokenInsightsData);
+          DOM.tokenInsightsWarning.style.display = 'block';
+          DOM.tokenInsightsWarning.textContent = '> Using cached insights';
+        } else {
+          balancesData = mockBalances;
+          updateBalancesUI(mockBalances);
+          DOM.balancesWarning.style.display = 'block';
+          DOM.balancesWarning.textContent = '> Using mock balances due to API failure';
+
+          tokenInsightsData = mockTokenInsights;
+          updateTokenInsightsUI(mockTokenInsights);
+          DOM.tokenInsightsWarning.style.display = 'block';
+          DOM.tokenInsightsWarning.textContent = '> Using mock insights due to API failure';
+        }
       }
     };
 
@@ -1864,11 +1933,15 @@
       tokenList.innerHTML = tokens.map((token, index) => {
         const isPositive = token.price_change_percentage_24h >= 0;
         const symbol = `BINANCE:${token.symbol}USDT`;
+        const cmcSlug = (token.id || token.name).toLowerCase().replace(/\s+/g, '-');
         return `
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
-            <div class="flex justify-between">
+            <div class="flex justify-between items-center">
               <span>${token.name} (${token.symbol})</span>
-              <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
+              <div class="flex gap-2 items-center">
+                <a href="https://coinmarketcap.com/currencies/${cmcSlug}/" target="_blank" rel="noopener" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
+                <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
+              </div>
             </div>
             <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
@@ -2117,18 +2190,18 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query: input })
           });
-          if (!response.ok) throw new Error('ChatGPT API request failed');
+          if (!response.ok) throw new Error('QuantGPT API request failed');
           const data = await response.json();
           const botMessage = document.createElement('li');
           botMessage.className = 'p-2 rounded';
-          botMessage.innerHTML = `<div>ChatGPT: ${data.response || 'No response received'}</div>`;
+          botMessage.innerHTML = `<div>QuantGPT: ${data.response || 'No response received'}</div>`;
           DOM.chatList.appendChild(botMessage);
           DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
         } catch (error) {
-          console.error('ChatGPT API error:', error);
+          console.error('QuantGPT API error:', error);
           const errorMessage = document.createElement('li');
           errorMessage.className = 'p-2 rounded text-orange-400';
-          errorMessage.innerHTML = `<div>ChatGPT: Error processing request - ${error.message}</div>`;
+          errorMessage.innerHTML = `<div>QuantGPT: Error processing request - ${error.message}</div>`;
           DOM.chatList.appendChild(errorMessage);
         }
         DOM.chatInput.value = '';
@@ -2398,7 +2471,7 @@ async function loadLiveLogs() {
     console.error('Live logs error', e);
   }
 }
-window.addEventListener('load', () => {
+document.addEventListener('DOMContentLoaded', () => {
   loadLiveLogs();
   setInterval(loadLiveLogs, 15000);
 });
@@ -2411,37 +2484,30 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
   if (!msg) return;
   chat.innerHTML += `<div class='text-xs text-blue-300'>You: ${msg}</div>`;
   input.value = '';
+  const context = tokensData.slice(0, 5)
+    .map(t => `${t.symbol}:${t.price_change_percentage_24h}`)
+    .join(', ');
+  // QuantGPT enhancement provides market context to GPT
+  const quantPrompt =
+    `As a quantitative crypto analyst, consider recent token changes (${context}). ${msg}`;
   const res = await fetch('/api/grok', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ prompt: msg })
+    body: JSON.stringify({ prompt: quantPrompt })
   });
   const data = await res.json();
-  chat.innerHTML += `<div class='text-xs text-green-300'>GPT: ${data.response}</div>`;
+  chat.innerHTML += `<div class='text-xs text-green-300'>QuantGPT: ${data.response}</div>`;
 });
-</script><script>
-function openCMC(event) {
-  const li = event.target.closest('li');
-  const symbol = li?.getAttribute('data-symbol');
-  if (symbol) {
-    window.open(`https://coinmarketcap.com/currencies/${symbol}/`, '_blank');
-  }
-}
 </script><script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script><script>
 async function connectWalletAndLoadOmniData() {
-  if (typeof window.ethereum === 'undefined') {
-    alert('MetaMask not detected');
-    return;
-  }
-
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
+  const provider = await connectWallet();
+  if (!provider) return;
   const signer = provider.getSigner();
   const address = await signer.getAddress();
 
   document.getElementById("wallet-address").innerText = address;
 
-  // Simulated fetch using connected address directly
+  // Fetch open positions from Omni API
   const omniApiUrl = `https://api.omnidex.finance/v1/user/${address}/positions`; // Replace with valid endpoint when known
 
   try {
@@ -2450,18 +2516,19 @@ async function connectWalletAndLoadOmniData() {
 
     const balance = data?.account?.balanceUsd || 'N/A';
     const positions = data?.positions || [];
+    const dex = data?.exchange || data?.account?.exchange || 'Unknown DEX';
 
-    document.getElementById("wallet-balance").innerText = balance;
+    document.getElementById("wallet-balance").innerText = `${balance} USD`;
+    document.getElementById("detected-exchange").innerText = dex;
 
     const positionsEl = document.getElementById("open-trades");
-    positionsEl.innerHTML = positions.map(p =>
-      `<li>${p.symbol.toUpperCase()} | Size: ${p.size} | PnL: ${p.pnlPercent}%</li>`
-    ).join('');
+    positionsEl.innerHTML = positions.length
+      ? positions.map(p => `<li>${p.symbol.toUpperCase()} | Size: ${p.size} | PnL: ${p.pnlPercent}%</li>`).join('')
+      : '<li>No open trades</li>';
   } catch (e) {
     console.error("Omni fetch failed:", e);
   }
 }
-window.addEventListener("load", connectWalletAndLoadOmniData);
 </script><script>
 async function loadInverseFromCMC() {
   const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false");
@@ -2505,17 +2572,12 @@ async function loadInverseFromCMC() {
   });
 }
 
-window.addEventListener('load', loadInverseFromCMC);
+document.addEventListener('DOMContentLoaded', loadInverseFromCMC);
 </script><script>
 async function connectWalletAndExtractData() {
-  if (typeof window.ethereum === 'undefined') {
-    alert('MetaMask not detected');
-    return;
-  }
-
+  const provider = await connectWallet();
+  if (!provider) return;
   try {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
     const address = await signer.getAddress();
     const balanceWei = await provider.getBalance(address);
@@ -2524,6 +2586,8 @@ async function connectWalletAndExtractData() {
     document.getElementById("wallet-address").innerText = address;
     document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
     document.getElementById("open-trades").innerHTML = "<li>📍 No Omni positions fetched (wallet only)</li>";
+    localStorage.setItem("walletAddress", address);
+    localStorage.setItem("walletBalance", parseFloat(balanceEth).toFixed(4) + ' ETH');
   } catch (err) {
     console.error("Wallet connection failed:", err);
     document.getElementById("wallet-address").innerText = "Error";
@@ -2531,12 +2595,12 @@ async function connectWalletAndExtractData() {
     document.getElementById("open-trades").innerHTML = "<li>❌ Failed to read wallet data</li>";
   }
 }
-window.addEventListener("load", connectWalletAndExtractData);
 </script><script>
 async function connectWallet() {
     if (typeof window.ethereum === 'undefined') {
-        alert('MetaMask not detected');
-        return;
+        const dapp = encodeURIComponent(window.location.href);
+        window.location.href = `https://metamask.app.link/dapp/${dapp}`;
+        return null;
     }
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
@@ -2547,50 +2611,70 @@ async function refreshWalletData() {
     const provider = await connectWallet();
     const signer = provider.getSigner();
     const address = await signer.getAddress();
-    const balanceWei = await provider.getBalance(address);
-    const balanceEth = ethers.utils.formatEther(balanceWei);
 
     document.getElementById("wallet-address").innerText = address;
-    document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
 
-    // Simulated exchange detection and trades (to keep anonymity)
-    document.getElementById("detected-exchange").innerText = "Exchange detected via wallet activity";
+    const omniApiUrl = `https://api.omnidex.finance/v1/user/${address}/positions`;
+    try {
+        const response = await fetch(omniApiUrl);
+        const data = await response.json();
 
-    // Example trades (replace this logic with a real backend or API to scan on-chain activity)
-    const simulatedTrades = [
-        { exchange: "Exchange A", token: "BTC", status: "Open", pnl: "+2.5%" },
-        { exchange: "Exchange B", token: "ETH", status: "Closed", pnl: "-1.2%" }
-    ];
+        const balance = data?.account?.balanceUsd || 'N/A';
+        const positions = data?.positions || [];
+        const dex = data?.exchange || data?.account?.exchange || 'Unknown DEX';
 
-    const positionsEl = document.getElementById("open-trades");
-    positionsEl.innerHTML = simulatedTrades.map(trade => 
-        `<li>${trade.token} on ${trade.exchange} - Status: ${trade.status}, PnL: ${trade.pnl}</li>`
-    ).join('');
+        document.getElementById("wallet-balance").innerText = `${balance} USD`;
+        document.getElementById("detected-exchange").innerText = dex;
+
+        const positionsEl = document.getElementById("open-trades");
+        positionsEl.innerHTML = positions.length
+            ? positions.map(trade => `<li>${trade.symbol.toUpperCase()} - ${trade.status} on ${dex}, PnL: ${trade.pnlPercent}%</li>`).join('')
+            : '<li>No open trades</li>';
+    } catch (err) {
+        console.error("Wallet refresh failed:", err);
+        document.getElementById("open-trades").innerHTML = '<li>❌ Failed to load trades</li>';
+    }
 }
 
 document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
-
-window.addEventListener("load", refreshWalletData);
 </script><script>
 const inverseCtx = document.getElementById('inverseChart').getContext('2d');
 let inverseChart;
+const metricSelect = document.getElementById('chartTypeToggle');
+const topSelect = document.getElementById('topCount');
+
+function exportChart() {
+  if (!inverseChart) return;
+  const link = document.createElement('a');
+  link.href = inverseChart.toBase64Image();
+  link.download = 'inverse_metrics.png';
+  link.click();
+}
 
 async function loadInverseChart() {
+  const metric = metricSelect.value;
+  const top = parseInt(topSelect.value, 10);
+
   const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
   const data = await res.json();
 
-  const marketAvg = data.reduce((acc, t) => acc + t.price_change_percentage_24h, 0) / data.length;
+  let processed;
+  if (metric === 'correlation') {
+    const avg = data.reduce((acc, t) => acc + t.price_change_percentage_24h, 0) / data.length;
+    processed = data.map(t => ({ id: t.id, change: t.price_change_percentage_24h, score: Math.abs(t.price_change_percentage_24h - avg) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, top);
+  } else {
+    const marketTrend = data.reduce((sum, t) => sum + t.price_change_percentage_24h, 0);
+    const isDown = marketTrend < 0;
+    processed = data.sort((a, b) => isDown ? b.price_change_percentage_24h - a.price_change_percentage_24h : a.price_change_percentage_24h - b.price_change_percentage_24h)
+      .slice(0, top)
+      .map(t => ({ id: t.id, change: t.price_change_percentage_24h }));
+  }
 
-  const inverseData = data.map(t => ({
-    name: t.id,
-    symbol: t.symbol,
-    change: t.price_change_percentage_24h,
-    inverse_score: Math.abs(t.price_change_percentage_24h - marketAvg)
-  })).sort((a, b) => b.inverse_score - a.inverse_score).slice(0, 10);
-
-  const labels = inverseData.map(x => x.name);
-  const values = inverseData.map(x => x.change);
-  const bgColor = values.map(v => v > 0 ? 'blue' : 'red');
+  const labels = processed.map(x => x.id);
+  const values = processed.map(x => x.change);
+  const bgColor = values.map(v => v > 0 ? '#3b82f6' : '#ef4444');
 
   if (inverseChart) inverseChart.destroy();
 
@@ -2609,7 +2693,8 @@ async function loadInverseChart() {
       onClick: (evt, elements) => {
         if (elements.length > 0) {
           const token = labels[elements[0].index];
-          window.open(`https://coinmarketcap.com/currencies/${token}/`, "_blank");
+          const cmcSlug = token.toLowerCase().replace(/\s+/g, '-');
+          window.open(`https://coinmarketcap.com/currencies/${cmcSlug}/`, '_blank');
         }
       },
       plugins: {
@@ -2622,48 +2707,21 @@ async function loadInverseChart() {
       },
       scales: {
         y: {
-          title: { display: true, text: "% Change", color: "#ffffff" },
-          ticks: { color: "#ffffff" }
+          title: { display: true, text: '% Change', color: '#ffffff' },
+          ticks: { color: '#ffffff' }
         },
         x: {
-          title: { display: true, text: "Top Inverse Performers", color: "#ffffff" },
-          ticks: { color: "#ffffff" }
+          title: { display: true, text: 'Top Inverse Performers', color: '#ffffff' },
+          ticks: { color: '#ffffff' }
         }
       }
     }
   });
 }
-window.addEventListener("load", loadInverseChart);
-</script><script>
-async function refreshWalletData() {
-  if (typeof window.ethereum === 'undefined') {
-    alert('MetaMask not detected');
-    return;
-  }
 
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
-  const signer = provider.getSigner();
-  const address = await signer.getAddress();
-  const balanceWei = await provider.getBalance(address);
-  const balanceEth = ethers.utils.formatEther(balanceWei);
-
-  document.getElementById("wallet-address").innerText = address;
-  document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
-
-  // Simulated detection
-  const positions = [
-    { token: "ETH", exchange: "Detected DEX", status: "Open", pnl: "+3.2%" },
-    { token: "LINK", exchange: "Detected DEX", status: "Closed", pnl: "-0.5%" }
-  ];
-
-  document.getElementById("detected-exchange").innerText = "DEX Detected via Activity";
-  document.getElementById("open-trades").innerHTML = positions.map(p =>
-    `<li>${p.token} - ${p.status} on ${p.exchange}, PnL: ${p.pnl}</li>`
-  ).join('');
-}
-document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
-window.addEventListener("load", refreshWalletData);
+metricSelect.addEventListener('change', loadInverseChart);
+topSelect.addEventListener('change', loadInverseChart);
+document.addEventListener('DOMContentLoaded', loadInverseChart);
 </script>
 <script>
 document.getElementById("toggleWallet").addEventListener("click", () => {
@@ -2679,65 +2737,10 @@ document.getElementById("toggleWallet").addEventListener("click", () => {
 });
 
 document.getElementById("connectWallet").addEventListener("click", async () => {
-  if (typeof window.ethereum !== "undefined") {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = provider.getSigner();
-    const address = await signer.getAddress();
-    const balanceWei = await provider.getBalance(address);
-    const balanceEth = ethers.utils.formatEther(balanceWei);
-    localStorage.setItem("walletAddress", address);
-    localStorage.setItem("walletBalance", parseFloat(balanceEth).toFixed(4) + ' ETH');
-    alert("Wallet Connected!");
-  } else {
-    alert("Please install MetaMask!");
-  }
+  await connectWalletAndLoadOmniData();
 });
 </script>
 
-<script>
-window.addEventListener("load", async () => {
-  const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd");
-  const tokens = await response.json();
-  const isMarketDown = tokens.reduce((sum, t) => sum + t.price_change_percentage_24h, 0) < 0;
-  const topCount = 10;
-  const sorted = tokens.sort((a, b) => isMarketDown ? b.price_change_percentage_24h - a.price_change_percentage_24h : a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, topCount);
-  const ctx = document.getElementById("inverseChart").getContext("2d");
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: sorted.map(t => t.symbol.toUpperCase()),
-      datasets: [{
-        label: "Inverse Metrics",
-        data: sorted.map(t => t.price_change_percentage_24h),
-        backgroundColor: sorted.map(t =>
-          isMarketDown
-            ? (t.price_change_percentage_24h > 0 ? "#3b82f6" : "#ef4444")
-            : (t.price_change_percentage_24h < 0 ? "#ef4444" : "#3b82f6")
-        )
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      onClick: (e, items) => {
-        if (items.length > 0) {
-          const token = sorted[items[0].index].id;
-          window.open(`https://coinmarketcap.com/currencies/${token}/`, "_blank");
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { color: "#fff" }
-        },
-        x: {
-          ticks: { color: "#fff" }
-        }
-      }
-    }
-  });
-});
-</script>
+
 </body>
 </html>
