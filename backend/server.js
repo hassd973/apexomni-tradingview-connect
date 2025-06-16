@@ -8,8 +8,11 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Determine the correct frontend path
-const frontendPath = process.env.FRONTEND_PATH || path.join(__dirname, 'frontend');
+// Determine the correct frontend path. Default to the frontend directory one
+// level up from the backend folder so running the server from the project root
+// works out of the box.
+const frontendPath = process.env.FRONTEND_PATH ||
+  path.join(__dirname, '..', 'frontend');
 console.log('Frontend Path:', frontendPath);
 
 // Serve static files from the frontend directory
@@ -36,15 +39,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Better Stack configuration
-const BETTER_STACK_USERNAME = 'uJDSRvXdjN0eT2afRJ88m24R6YZiEwGcJ';
-const BETTER_STACK_PASSWORD = '2WT0nhxDRzsw3KxyNJx9sOCmvajKzjaW3VTIRaY1vwPvHdTvGk3TVubeUFHPrEve';
-const BETTER_STACK_HOST = 'eu-nbg-2-connect.betterstackdata.com';
+// Credentials are expected via environment variables to avoid hard coding
+// sensitive values in the repository.
+const BETTER_STACK_HOST = process.env.BETTER_STACK_HOST ||
+  'eu-nbg-2-connect.betterstackdata.com';
 const BETTER_STACK_PORT = 443;
 const BETTER_STACK_API_URL = `https://${BETTER_STACK_HOST}:${BETTER_STACK_PORT}`;
-const BETTER_STACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
+const BETTER_STACK_TOKEN = process.env.BETTER_STACK_TOKEN;
 
 // Etherscan API configuration
-const ETHERSCAN_API_KEY = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
 const ETHERSCAN_API_URL = 'https://api.etherscan.io/api';
 
 // Specific log collections
