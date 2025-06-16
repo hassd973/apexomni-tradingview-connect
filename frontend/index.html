@@ -593,18 +593,27 @@
       padding: 0.5rem;
     }
     @media (max-width: 640px) {
-      #chat-list {
-        max-height: 30vh;
-      }
-      .chat-logs-container, .btc-hash-container, .balances-container, .token-insights-container {
-        padding: 0.5rem;
-      }
+    #chat-list {
+      max-height: 30vh;
+    }
+    .chat-logs-container, .btc-hash-container, .balances-container, .token-insights-container {
+      padding: 0.5rem;
+    }
       #chat-input {
         font-size: 0.75rem;
+        width: 100%;
       }
       #chat-send {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
+        width: 100%;
+      }
+      #chat-list {
+        max-height: 25vh;
+      }
+      #btc-legend {
+        flex-direction: column;
+        align-items: center;
       }
       #btc-legend {
         flex-direction: column;
@@ -708,7 +717,7 @@
   .cmc-link:hover {
     text-decoration: underline;
   }
-
+  
 </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
@@ -1882,22 +1891,38 @@
           balancesData = tokenInfo.map(info => ({ token: info.symbol, balance: info.balance, chainId: info.chain_id }));
           updateBalancesUI(balancesData);
           DOM.balancesWarning.style.display = 'none';
-          
+          localStorage.setItem('cachedBalances', JSON.stringify(balancesData));
+
           tokenInsightsData = tokenInfo.map(info => ({ symbol: info.symbol, name: info.name, decimals: info.decimals, chainId: info.chain_id }));
           updateTokenInsightsUI(tokenInsightsData);
           DOM.tokenInsightsWarning.style.display = 'none';
+          localStorage.setItem('cachedInsights', JSON.stringify(tokenInsightsData));
         } else throw new Error('No token info received');
       } catch (error) {
         console.error('Failed to load data from Dune API:', error);
-        balancesData = mockBalances;
-        updateBalancesUI(mockBalances);
-        DOM.balancesWarning.style.display = 'block';
-        DOM.balancesWarning.textContent = '> Using mock balances due to API failure';
-        
-        tokenInsightsData = mockTokenInsights;
-        updateTokenInsightsUI(mockTokenInsights);
-        DOM.tokenInsightsWarning.style.display = 'block';
-        DOM.tokenInsightsWarning.textContent = '> Using mock insights due to API failure';
+        const cachedBalances = localStorage.getItem('cachedBalances');
+        const cachedInsights = localStorage.getItem('cachedInsights');
+        if (cachedBalances && cachedInsights) {
+          balancesData = JSON.parse(cachedBalances);
+          updateBalancesUI(balancesData);
+          DOM.balancesWarning.style.display = 'block';
+          DOM.balancesWarning.textContent = '> Using cached balances';
+
+          tokenInsightsData = JSON.parse(cachedInsights);
+          updateTokenInsightsUI(tokenInsightsData);
+          DOM.tokenInsightsWarning.style.display = 'block';
+          DOM.tokenInsightsWarning.textContent = '> Using cached insights';
+        } else {
+          balancesData = mockBalances;
+          updateBalancesUI(mockBalances);
+          DOM.balancesWarning.style.display = 'block';
+          DOM.balancesWarning.textContent = '> Using mock balances due to API failure';
+
+          tokenInsightsData = mockTokenInsights;
+          updateTokenInsightsUI(mockTokenInsights);
+          DOM.tokenInsightsWarning.style.display = 'block';
+          DOM.tokenInsightsWarning.textContent = '> Using mock insights due to API failure';
+        }
       }
     };
 
@@ -2487,7 +2512,7 @@ async function connectWalletAndLoadOmniData() {
 
   document.getElementById("wallet-address").innerText = address;
 
-  // Simulated fetch using connected address directly
+  // Fetch open positions from Omni API
   const omniApiUrl = `https://api.omnidex.finance/v1/user/${address}/positions`; // Replace with valid endpoint when known
 
   try {
@@ -2496,13 +2521,15 @@ async function connectWalletAndLoadOmniData() {
 
     const balance = data?.account?.balanceUsd || 'N/A';
     const positions = data?.positions || [];
+    const dex = data?.exchange || data?.account?.exchange || 'Unknown DEX';
 
-    document.getElementById("wallet-balance").innerText = balance;
+    document.getElementById("wallet-balance").innerText = `${balance} USD`;
+    document.getElementById("detected-exchange").innerText = dex;
 
     const positionsEl = document.getElementById("open-trades");
-    positionsEl.innerHTML = positions.map(p =>
-      `<li>${p.symbol.toUpperCase()} | Size: ${p.size} | PnL: ${p.pnlPercent}%</li>`
-    ).join('');
+    positionsEl.innerHTML = positions.length
+      ? positions.map(p => `<li>${p.symbol.toUpperCase()} | Size: ${p.size} | PnL: ${p.pnlPercent}%</li>`).join('')
+      : '<li>No open trades</li>';
   } catch (e) {
     console.error("Omni fetch failed:", e);
   }
@@ -2589,25 +2616,29 @@ async function refreshWalletData() {
     const provider = await connectWallet();
     const signer = provider.getSigner();
     const address = await signer.getAddress();
-    const balanceWei = await provider.getBalance(address);
-    const balanceEth = ethers.utils.formatEther(balanceWei);
 
     document.getElementById("wallet-address").innerText = address;
-    document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
 
-    // Simulated exchange detection and trades (to keep anonymity)
-    document.getElementById("detected-exchange").innerText = "Exchange detected via wallet activity";
+    const omniApiUrl = `https://api.omnidex.finance/v1/user/${address}/positions`;
+    try {
+        const response = await fetch(omniApiUrl);
+        const data = await response.json();
 
-    // Example trades (replace this logic with a real backend or API to scan on-chain activity)
-    const simulatedTrades = [
-        { exchange: "Exchange A", token: "BTC", status: "Open", pnl: "+2.5%" },
-        { exchange: "Exchange B", token: "ETH", status: "Closed", pnl: "-1.2%" }
-    ];
+        const balance = data?.account?.balanceUsd || 'N/A';
+        const positions = data?.positions || [];
+        const dex = data?.exchange || data?.account?.exchange || 'Unknown DEX';
 
-    const positionsEl = document.getElementById("open-trades");
-    positionsEl.innerHTML = simulatedTrades.map(trade => 
-        `<li>${trade.token} on ${trade.exchange} - Status: ${trade.status}, PnL: ${trade.pnl}</li>`
-    ).join('');
+        document.getElementById("wallet-balance").innerText = `${balance} USD`;
+        document.getElementById("detected-exchange").innerText = dex;
+
+        const positionsEl = document.getElementById("open-trades");
+        positionsEl.innerHTML = positions.length
+            ? positions.map(trade => `<li>${trade.symbol.toUpperCase()} - ${trade.status} on ${dex}, PnL: ${trade.pnlPercent}%</li>`).join('')
+            : '<li>No open trades</li>';
+    } catch (err) {
+        console.error("Wallet refresh failed:", err);
+        document.getElementById("open-trades").innerHTML = '<li>❌ Failed to load trades</li>';
+    }
 }
 
 document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
@@ -2711,7 +2742,7 @@ document.getElementById("toggleWallet").addEventListener("click", () => {
 });
 
 document.getElementById("connectWallet").addEventListener("click", async () => {
-  await connectWalletAndExtractData();
+  await connectWalletAndLoadOmniData();
 });
 </script>
 
