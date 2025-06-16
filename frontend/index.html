@@ -1033,10 +1033,12 @@
 </ul>
 </div>
 </div>
+<h3 class="text-base md:text-lg mb-2 typewriter">QuantGPT Chat</h3>
 <div class="loader text-center text-gray-500 text-sm" id="loader-chat">&gt; Loading...</div>
 <div class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm" id="chat-list"></div>
 <div class="mt-4 flex flex-col sm:flex-row gap-2">
-<input aria-label="Chat input" class="p-2 rounded" data-tooltip="Type your query" id="chat-input" placeholder="Ask ChatGPT..." type="text"/>
+<!-- QuantGPT Chat Input -->
+<input aria-label="Chat input" class="p-2 rounded" data-tooltip="Type your query" id="chat-input" placeholder="Ask QuantGPT..." type="text"/>
 <button aria-label="Send chat message" class="px-4 py-2 rounded" data-tooltip="Send message" id="chat-send" role="button">Send</button>
 </div>
 </div>
@@ -1911,14 +1913,13 @@
       tokenList.innerHTML = tokens.map((token, index) => {
         const isPositive = token.price_change_percentage_24h >= 0;
         const symbol = `BINANCE:${token.symbol}USDT`;
-        const cmcQuery = encodeURIComponent(token.name);
+        const cmcSlug = (token.id || token.name).toLowerCase().replace(/\s+/g, '-');
         return `
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="flex justify-between items-center">
               <span>${token.name} (${token.symbol})</span>
               <div class="flex gap-2 items-center">
-                <a href="https://coinmarketcap.com/search/?q=${cmcQuery}" target="_blank" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
-
+                <a href="https://coinmarketcap.com/currencies/${cmcSlug}/" target="_blank" rel="noopener" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
               </div>
             </div>
@@ -2169,18 +2170,18 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query: input })
           });
-          if (!response.ok) throw new Error('ChatGPT API request failed');
+          if (!response.ok) throw new Error('QuantGPT API request failed');
           const data = await response.json();
           const botMessage = document.createElement('li');
           botMessage.className = 'p-2 rounded';
-          botMessage.innerHTML = `<div>ChatGPT: ${data.response || 'No response received'}</div>`;
+          botMessage.innerHTML = `<div>QuantGPT: ${data.response || 'No response received'}</div>`;
           DOM.chatList.appendChild(botMessage);
           DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
         } catch (error) {
-          console.error('ChatGPT API error:', error);
+          console.error('QuantGPT API error:', error);
           const errorMessage = document.createElement('li');
           errorMessage.className = 'p-2 rounded text-orange-400';
-          errorMessage.innerHTML = `<div>ChatGPT: Error processing request - ${error.message}</div>`;
+          errorMessage.innerHTML = `<div>QuantGPT: Error processing request - ${error.message}</div>`;
           DOM.chatList.appendChild(errorMessage);
         }
         DOM.chatInput.value = '';
@@ -2475,7 +2476,7 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
     body: JSON.stringify({ prompt: quantPrompt })
   });
   const data = await res.json();
-  chat.innerHTML += `<div class='text-xs text-green-300'>GPT: ${data.response}</div>`;
+  chat.innerHTML += `<div class='text-xs text-green-300'>QuantGPT: ${data.response}</div>`;
 });
 </script><script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script><script>
 async function connectWalletAndLoadOmniData() {
@@ -2666,9 +2667,8 @@ async function loadInverseChart() {
       onClick: (evt, elements) => {
         if (elements.length > 0) {
           const token = labels[elements[0].index];
-          const cmcQuery = encodeURIComponent(token);
-          window.open(`https://coinmarketcap.com/search/?q=${cmcQuery}`, '_blank');
-
+          const cmcSlug = token.toLowerCase().replace(/\s+/g, '-');
+          window.open(`https://coinmarketcap.com/currencies/${cmcSlug}/`, '_blank');
         }
       },
       plugins: {
@@ -2714,7 +2714,6 @@ document.getElementById("connectWallet").addEventListener("click", async () => {
   await connectWalletAndExtractData();
 });
 </script>
-
 
 
 </body>
