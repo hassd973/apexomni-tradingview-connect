@@ -801,6 +801,7 @@
 				box-shadow: 0 0 4px var(--shadow-color);
 				text-align: center;
 			}
+
                         .hash-box {
                                 font-family: monospace;
                                 word-break: break-all;
@@ -812,6 +813,7 @@
                                 border-radius: 6px;
                                 padding: 0.5rem;
                         }
+
 			@media (max-width: 640px) {
 				#chat-list {
 					max-height: 30vh;
@@ -988,6 +990,7 @@
 					<a class="nav-link" href="#balances-module">Balances</a>
 					<a class="nav-link" href="#token-insights-module">Token Insights</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
+
                                         <a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
                                         <a class="nav-link" href="#serverjs-module">Server JS</a>
                                         <a class="nav-link" href="#" id="undock-background-link"
@@ -1665,6 +1668,7 @@
 							price, volume, and time information.
 						</p>
 					</div>
+
                                         <button
                                                 aria-label="Export as OBJ"
                                                 class="mt-2"
@@ -1684,6 +1688,7 @@
                                                 Zoom
                                         </button>
                                         <div class="mt-4" id="btc-hash-log">
+
 						<h3 class="text-base md:text-lg mb-2">Hash Log</h3>
 						<ul class="space-y-2 text-sm" id="hash-log-list"></ul>
 						<button
@@ -1787,6 +1792,7 @@
 					>
 						Send
 					</button>
+
                                 </div>
                         </div>
                 </div>
@@ -3011,6 +3017,7 @@
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="token-row">
               <span class="token-name">${token.name} (${token.symbol})</span>
+
               <div class="flex gap-2 items-center">
                 <a href="https://coinmarketcap.com/currencies/${cmcSlug}/" target="_blank" rel="noopener" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
