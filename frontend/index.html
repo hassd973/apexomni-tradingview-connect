@@ -574,6 +574,22 @@
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
     }
+    .tx-hash-container {
+      padding: 1rem;
+      background: rgba(35, 46, 46, 0.1);
+      border: 1px solid var(--shadow-color);
+      border-radius: 6px;
+      box-shadow: 0 0 4px var(--shadow-color);
+      text-align: center;
+    }
+    .hash-box {
+      font-family: monospace;
+      word-break: break-all;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--shadow-color);
+      border-radius: 6px;
+      padding: 0.5rem;
+    }
     @media (max-width: 640px) {
       #chat-list {
         max-height: 30vh;
@@ -587,6 +603,10 @@
       #chat-send {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
+      }
+      #btc-legend {
+        flex-direction: column;
+        align-items: center;
       }
     }
     .nav-menu {
@@ -635,7 +655,9 @@
       padding: 0.5rem;
       border-radius: 6px;
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      justify-content: center;
     }
     .nav-link {
       display: block;
@@ -683,6 +705,7 @@
 </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
+<div class="bg-yellow-600 text-black text-center text-xs py-1 uppercase w-full">PRO ALPHA BETA</div>
 <button aria-label="Toggle navigation menu" class="nav-menu-toggle" id="nav-menu-toggle" role="button">☰</button>
 <div class="nav-menu" id="nav-menu">
 <button aria-label="Close navigation menu" class="nav-menu-close" id="nav-menu-close" role="button">×</button>
@@ -924,15 +947,19 @@
 </div>
 </section>
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
-<div class="module-header flex justify-between items-center">
+<div class="module-header flex flex-wrap justify-between items-center gap-2">
 <h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
+<div class="flex gap-2">
+<button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="connectWallet">🦊 Connect Wallet</button>
+<button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="toggleWallet">👁 Toggle</button>
 <button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
 </div>
+</div>
 <div class="module-content text-white">
-<div class="wallet-info my-2">
-<p><strong>Wallet Address:</strong> <span id="wallet-address">Not connected</span></p>
-<p><strong>ETH Balance:</strong> <span id="wallet-balance">-</span></p>
-<p><strong>Detected Exchange:</strong> <span id="detected-exchange">Scanning...</span></p>
+<div class="wallet-info my-2" id="walletDetails">
+<p><strong>Wallet Address:</strong> <span id="wallet-address">**********</span></p>
+<p><strong>ETH Balance:</strong> <span id="wallet-balance">**********</span></p>
+<p><strong>Detected Exchange:</strong> <span id="detected-exchange">**********</span></p>
 </div>
 <ul class="list-disc ml-4 text-sm text-gray-300" id="open-trades"></ul>
 </div>
@@ -970,6 +997,17 @@
 </div>
 </div>
 </section>
+</div>
+<div class="tx-hash-container w-full max-w-[98vw] mx-auto text-center">
+  <section class="rounded-lg" draggable="true" id="tx-hash-module">
+    <div class="module-header">
+      <h2 class="text-lg md:text-xl">➿ Transaction Hash Visual</h2>
+      <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+    </div>
+    <div class="module-content">
+      <pre class="hash-box" id="tx-hash-content">0x0000000000000000000000000000000000000000000000000000000000000000</pre>
+    </div>
+  </section>
 </div>
 <div class="chat-logs-container w-full max-w-[98vw] mx-auto text-center">
 <div class="module-header">
@@ -1555,6 +1593,8 @@
       if (logList.children.length > 10) logList.removeChild(logList.lastChild);
       hashLog.unshift({ hashId, time });
       if (hashLog.length > 10) hashLog.pop();
+      const txEl = document.getElementById('tx-hash-content');
+      if (txEl) txEl.textContent = hashId;
     }
 
     function updateColorLegend() {
@@ -2461,7 +2501,6 @@ async function connectWalletAndLoadOmniData() {
     console.error("Omni fetch failed:", e);
   }
 }
-window.addEventListener("load", connectWalletAndLoadOmniData);
 </script><script>
 async function loadInverseFromCMC() {
   const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false");
@@ -2524,6 +2563,8 @@ async function connectWalletAndExtractData() {
     document.getElementById("wallet-address").innerText = address;
     document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
     document.getElementById("open-trades").innerHTML = "<li>📍 No Omni positions fetched (wallet only)</li>";
+    localStorage.setItem("walletAddress", address);
+    localStorage.setItem("walletBalance", parseFloat(balanceEth).toFixed(4) + ' ETH');
   } catch (err) {
     console.error("Wallet connection failed:", err);
     document.getElementById("wallet-address").innerText = "Error";
@@ -2531,7 +2572,6 @@ async function connectWalletAndExtractData() {
     document.getElementById("open-trades").innerHTML = "<li>❌ Failed to read wallet data</li>";
   }
 }
-window.addEventListener("load", connectWalletAndExtractData);
 </script><script>
 async function connectWallet() {
     if (typeof window.ethereum === 'undefined') {
@@ -2569,8 +2609,6 @@ async function refreshWalletData() {
 }
 
 document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
-
-window.addEventListener("load", refreshWalletData);
 </script><script>
 const inverseCtx = document.getElementById('inverseChart').getContext('2d');
 let inverseChart;
@@ -2663,7 +2701,6 @@ async function refreshWalletData() {
   ).join('');
 }
 document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
-window.addEventListener("load", refreshWalletData);
 </script>
 <script>
 document.getElementById("toggleWallet").addEventListener("click", () => {
@@ -2680,15 +2717,7 @@ document.getElementById("toggleWallet").addEventListener("click", () => {
 
 document.getElementById("connectWallet").addEventListener("click", async () => {
   if (typeof window.ethereum !== "undefined") {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = provider.getSigner();
-    const address = await signer.getAddress();
-    const balanceWei = await provider.getBalance(address);
-    const balanceEth = ethers.utils.formatEther(balanceWei);
-    localStorage.setItem("walletAddress", address);
-    localStorage.setItem("walletBalance", parseFloat(balanceEth).toFixed(4) + ' ETH');
-    alert("Wallet Connected!");
+    await connectWalletAndExtractData();
   } else {
     alert("Please install MetaMask!");
   }
