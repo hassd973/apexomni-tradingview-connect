@@ -2461,8 +2461,12 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
   if (!msg) return;
   chat.innerHTML += `<div class='text-xs text-blue-300'>You: ${msg}</div>`;
   input.value = '';
-  const context = tokensData.slice(0, 5).map(t => `${t.symbol}:${t.price_change_percentage_24h}`).join(', ');
-  const quantPrompt = `As a quantitative crypto analyst, consider recent token changes (${context}). ${msg}`;
+  const context = tokensData.slice(0, 5)
+    .map(t => `${t.symbol}:${t.price_change_percentage_24h}`)
+    .join(', ');
+  // QuantGPT enhancement provides market context to GPT
+  const quantPrompt =
+    `As a quantitative crypto analyst, consider recent token changes (${context}). ${msg}`;
   const res = await fetch('/api/grok', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
