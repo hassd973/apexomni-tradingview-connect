@@ -1486,11 +1486,11 @@
 						▼
 					</button>
 				</div>
-				<div class="module-content">
-					<div
-						class="loader text-center text-gray-500 text-sm"
-						id="loader-token-insights"
-					>
+                        <section class="rounded-lg order-first sm:order-none" draggable="true" id="inverse-winners-module">
+                        <section
+                                class="rounded-lg col-span-full order-first sm:order-none"
+                                draggable="true"
+                                id="live-logs-module"
 						&gt; Loading...
 					</div>
 					<div
@@ -1612,17 +1612,12 @@
 						<p>
 							<strong>Detected Exchange:</strong>
 							<span id="detected-exchange">**********</span>
-						</p>
+                                        <div class="btc-hash-svg" id="btc-hash-canvas"></div>
+                                        <div class="mt-2 flex justify-center gap-2" id="zoom-controls">
+                                                <button class="px-3 py-1 rounded text-sm" id="zoom-in" aria-label="Zoom in">➕</button>
+                                                <button class="px-3 py-1 rounded text-sm" id="zoom-out" aria-label="Zoom out">➖</button>
+                                        </div>
 					</div>
-					<ul
-						class="list-disc ml-4 text-sm text-gray-300"
-						id="open-trades"
-					></ul>
-				</div>
-			</section>
-		</main>
-		<div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
-			<section class="rounded-lg" draggable="true" id="btc-hash-module">
 				<div class="module-header">
 					<h2 class="text-lg md:text-xl sixtyfour-font">
 						&gt; BTC Hash Visualization
@@ -1822,8 +1817,8 @@
 		<script>
 			const DOM = {
 				navMenuToggle: document.getElementById('nav-menu-toggle'),
-				navMenuClose: document.getElementById('nav-menu-close'),
-				navMenu: document.getElementById('nav-menu'),
+                                zoomInBtn: document.getElementById('zoom-in'),
+                                zoomOutBtn: document.getElementById('zoom-out'),
 				loadingScreen: document.getElementById('loading-screen'),
 				particleContainer: document.getElementById('particles'),
 				moduleGrid: document.getElementById('module-grid'),
@@ -3385,22 +3380,17 @@
 						botMessage.innerHTML = `<div>QuantGPT: ${data.response || 'No response received'}</div>`;
 						DOM.chatList.appendChild(botMessage);
 						DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
-					} catch (error) {
-						console.error('QuantGPT API error:', error);
-						const errorMessage = document.createElement('li');
-						errorMessage.className = 'p-2 rounded text-orange-400';
-						errorMessage.innerHTML = `<div>QuantGPT: Error processing request - ${error.message}</div>`;
-						DOM.chatList.appendChild(errorMessage);
-					}
-					DOM.chatInput.value = '';
-					DOM.loaderChat.style.display = 'none';
-				});
-
-				DOM.exportTokensBtn.addEventListener('click', () => {
-					exportToCSV(tokensData, 'tokens_data.csv');
-				});
-
-				DOM.exportGasBtn.addEventListener('click', () => {
+                                function smoothZoom(delta) {
+                                        const steps = 10;
+                                        let count = 0;
+                                        const step = delta / steps;
+                                        const interval = setInterval(() => {
+                                                camera.position.z = Math.max(10, Math.min(40, camera.position.z + step));
+                                                count++;
+                                                if (count >= steps) clearInterval(interval);
+                                        }, 50);
+                                DOM.zoomInBtn.addEventListener('click', () => smoothZoom(-2));
+                                DOM.zoomOutBtn.addEventListener('click', () => smoothZoom(2));
 					exportToCSV(gasHistory, 'gas_data.csv');
 				});
 
@@ -3947,10 +3937,10 @@
 				);
 				const data = await res.json();
 
-				let processed;
-				if (metric === 'correlation') {
-					const avg =
-						data.reduce((acc, t) => acc + t.price_change_percentage_24h, 0) /
+                                const bgColor = values.map((v) => (v > 0 ? '#3b82f6' : '#ffbb33'));
+                                                                        color: (ctx) => bgColor[ctx.index],
+                                                                }
+                                                        }
 						data.length;
 					processed = data
 						.map((t) => ({
