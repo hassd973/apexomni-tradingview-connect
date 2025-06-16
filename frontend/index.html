@@ -585,6 +585,8 @@
     .hash-box {
       font-family: monospace;
       word-break: break-all;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
       background: rgba(0,0,0,0.3);
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
@@ -695,13 +697,17 @@
   }
 </style>
 <style>
-#refreshWalletData, #chart-export-btn, #connectWallet {
-    background-color: #2563EB !important; /* blue-600 */
-    transition: background-color 0.3s ease;
-}
-#refreshWalletData:hover, #chart-export-btn:hover, #connectWallet:hover {
-    background-color: #1D4ED8 !important; /* blue-700 */
-}
+  .pro-banner {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  }
+  .cmc-link {
+    font-size: 0.75rem;
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+  .cmc-link:hover {
+    text-decoration: underline;
+  }
 </style>
 <style>
   .pro-banner {
@@ -953,7 +959,7 @@
 <option value="10">Top 10</option>
 <option value="20">Top 20</option>
 </select>
-<button class="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" onclick="exportChart()">📤 Export</button>
+<button class="ml-4 px-3 py-1 rounded text-sm" onclick="exportChart()">📤 Export</button>
 </div>
 </div>
 <canvas class="w-full max-w-3xl mx-auto h-72 md:h-96" id="inverseChart"></canvas>
@@ -963,9 +969,10 @@
 <div class="module-header flex flex-wrap justify-between items-center gap-2">
 <h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
 <div class="flex gap-2">
-<button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="connectWallet">🦊 Connect Wallet</button>
-<button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="toggleWallet">👁 Toggle</button>
-<button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
+<button class="py-1 px-4 rounded text-sm" id="connectWallet">🦊 Connect Wallet</button>
+<button class="py-1 px-4 rounded text-sm" id="toggleWallet">👁 Toggle</button>
+<button class="py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
+</div>
 </div>
 </div>
 <div class="module-content text-white">
@@ -1922,7 +1929,8 @@
             <div class="flex justify-between items-center">
               <span>${token.name} (${token.symbol})</span>
               <div class="flex gap-2 items-center">
-                <a href="https://coinmarketcap.com/currencies/${token.id}/" target="_blank" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
+                <a href="https://coinmarketcap.com/search/?q=${token.name}" target="_blank" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
+
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
               </div>
             </div>
@@ -2673,7 +2681,8 @@ async function loadInverseChart() {
       onClick: (evt, elements) => {
         if (elements.length > 0) {
           const token = labels[elements[0].index];
-          window.open(`https://coinmarketcap.com/currencies/${token}/`, '_blank');
+          window.open(`https://coinmarketcap.com/search/?q=${token}`, '_blank');
+
         }
       },
       plugins: {
@@ -2697,7 +2706,6 @@ async function loadInverseChart() {
     }
   });
 }
-
 
 metricSelect.addEventListener('change', loadInverseChart);
 topSelect.addEventListener('change', loadInverseChart);
