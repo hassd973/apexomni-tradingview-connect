@@ -708,19 +708,7 @@
   .cmc-link:hover {
     text-decoration: underline;
   }
-</style>
-<style>
-  .pro-banner {
-    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-  }
-  .cmc-link {
-    font-size: 0.75rem;
-    color: var(--primary-color);
-    text-decoration: none;
-  }
-  .cmc-link:hover {
-    text-decoration: underline;
-  }
+
 </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
@@ -972,7 +960,6 @@
 <button class="py-1 px-4 rounded text-sm" id="connectWallet">🦊 Connect Wallet</button>
 <button class="py-1 px-4 rounded text-sm" id="toggleWallet">👁 Toggle</button>
 <button class="py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
-</div>
 </div>
 </div>
 <div class="module-content text-white">
@@ -1924,13 +1911,14 @@
       tokenList.innerHTML = tokens.map((token, index) => {
         const isPositive = token.price_change_percentage_24h >= 0;
         const symbol = `BINANCE:${token.symbol}USDT`;
+        const cmcQuery = encodeURIComponent(token.name);
         return `
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="flex justify-between items-center">
               <span>${token.name} (${token.symbol})</span>
               <div class="flex gap-2 items-center">
-                <a href="https://coinmarketcap.com/search/?q=${token.name}" target="_blank" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
-
+                <a href="https://coinmarketcap.com/search/?q=${cmcQuery}" target="_blank" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
+              
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
               </div>
             </div>
@@ -2475,23 +2463,20 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
   if (!msg) return;
   chat.innerHTML += `<div class='text-xs text-blue-300'>You: ${msg}</div>`;
   input.value = '';
+  const context = tokensData.slice(0, 5).map(t => `${t.symbol}:${t.price_change_percentage_24h}`).join(', ');
+  const quantPrompt = `As a quantitative crypto analyst, consider recent token changes (${context}). ${msg}`;
   const res = await fetch('/api/grok', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ prompt: msg })
+    body: JSON.stringify({ prompt: quantPrompt })
   });
   const data = await res.json();
   chat.innerHTML += `<div class='text-xs text-green-300'>GPT: ${data.response}</div>`;
 });
 </script><script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script><script>
 async function connectWalletAndLoadOmniData() {
-  if (typeof window.ethereum === 'undefined') {
-    alert('MetaMask not detected');
-    return;
-  }
-
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
+  const provider = await connectWallet();
+  if (!provider) return;
   const signer = provider.getSigner();
   const address = await signer.getAddress();
 
@@ -2563,14 +2548,9 @@ async function loadInverseFromCMC() {
 document.addEventListener('DOMContentLoaded', loadInverseFromCMC);
 </script><script>
 async function connectWalletAndExtractData() {
-  if (typeof window.ethereum === 'undefined') {
-    alert('MetaMask not detected');
-    return;
-  }
-
+  const provider = await connectWallet();
+  if (!provider) return;
   try {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
     const signer = provider.getSigner();
     const address = await signer.getAddress();
     const balanceWei = await provider.getBalance(address);
@@ -2591,8 +2571,9 @@ async function connectWalletAndExtractData() {
 </script><script>
 async function connectWallet() {
     if (typeof window.ethereum === 'undefined') {
-        alert('MetaMask not detected');
-        return;
+        const dapp = encodeURIComponent(window.location.href);
+        window.location.href = `https://metamask.app.link/dapp/${dapp}`;
+        return null;
     }
     const provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send("eth_requestAccounts", []);
@@ -2681,7 +2662,8 @@ async function loadInverseChart() {
       onClick: (evt, elements) => {
         if (elements.length > 0) {
           const token = labels[elements[0].index];
-          window.open(`https://coinmarketcap.com/search/?q=${token}`, '_blank');
+          const cmcQuery = encodeURIComponent(token);
+          window.open(`https://coinmarketcap.com/search/?q=${cmcQuery}`, '_blank');
 
         }
       },
@@ -2725,11 +2707,8 @@ document.getElementById("toggleWallet").addEventListener("click", () => {
 });
 
 document.getElementById("connectWallet").addEventListener("click", async () => {
-  if (typeof window.ethereum !== "undefined") {
-    await connectWalletAndExtractData();
-  } else {
-    alert("Please install MetaMask!");
-  }
+  await connectWalletAndExtractData();
+
 });
 </script>
 
