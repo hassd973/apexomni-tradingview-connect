@@ -2620,23 +2620,41 @@ document.getElementById("refreshWalletData").addEventListener("click", refreshWa
 </script><script>
 const inverseCtx = document.getElementById('inverseChart').getContext('2d');
 let inverseChart;
+const metricSelect = document.getElementById('chartTypeToggle');
+const topSelect = document.getElementById('topCount');
+
+function exportChart() {
+  if (!inverseChart) return;
+  const link = document.createElement('a');
+  link.href = inverseChart.toBase64Image();
+  link.download = 'inverse_metrics.png';
+  link.click();
+}
 
 async function loadInverseChart() {
+  const metric = metricSelect.value;
+  const top = parseInt(topSelect.value, 10);
+
   const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
   const data = await res.json();
 
-  const marketAvg = data.reduce((acc, t) => acc + t.price_change_percentage_24h, 0) / data.length;
+  let processed;
+  if (metric === 'correlation') {
+    const avg = data.reduce((acc, t) => acc + t.price_change_percentage_24h, 0) / data.length;
+    processed = data.map(t => ({ id: t.id, change: t.price_change_percentage_24h, score: Math.abs(t.price_change_percentage_24h - avg) }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, top);
+  } else {
+    const marketTrend = data.reduce((sum, t) => sum + t.price_change_percentage_24h, 0);
+    const isDown = marketTrend < 0;
+    processed = data.sort((a, b) => isDown ? b.price_change_percentage_24h - a.price_change_percentage_24h : a.price_change_percentage_24h - b.price_change_percentage_24h)
+      .slice(0, top)
+      .map(t => ({ id: t.id, change: t.price_change_percentage_24h }));
+  }
 
-  const inverseData = data.map(t => ({
-    name: t.id,
-    symbol: t.symbol,
-    change: t.price_change_percentage_24h,
-    inverse_score: Math.abs(t.price_change_percentage_24h - marketAvg)
-  })).sort((a, b) => b.inverse_score - a.inverse_score).slice(0, 10);
-
-  const labels = inverseData.map(x => x.name);
-  const values = inverseData.map(x => x.change);
-  const bgColor = values.map(v => v > 0 ? 'blue' : 'red');
+  const labels = processed.map(x => x.id);
+  const values = processed.map(x => x.change);
+  const bgColor = values.map(v => v > 0 ? '#3b82f6' : '#ef4444');
 
   if (inverseChart) inverseChart.destroy();
 
@@ -2655,7 +2673,7 @@ async function loadInverseChart() {
       onClick: (evt, elements) => {
         if (elements.length > 0) {
           const token = labels[elements[0].index];
-          window.open(`https://coinmarketcap.com/currencies/${token}/`, "_blank");
+          window.open(`https://coinmarketcap.com/currencies/${token}/`, '_blank');
         }
       },
       plugins: {
@@ -2668,47 +2686,21 @@ async function loadInverseChart() {
       },
       scales: {
         y: {
-          title: { display: true, text: "% Change", color: "#ffffff" },
-          ticks: { color: "#ffffff" }
+          title: { display: true, text: '% Change', color: '#ffffff' },
+          ticks: { color: '#ffffff' }
         },
         x: {
-          title: { display: true, text: "Top Inverse Performers", color: "#ffffff" },
-          ticks: { color: "#ffffff" }
+          title: { display: true, text: 'Top Inverse Performers', color: '#ffffff' },
+          ticks: { color: '#ffffff' }
         }
       }
     }
   });
 }
+
+metricSelect.addEventListener('change', loadInverseChart);
+topSelect.addEventListener('change', loadInverseChart);
 document.addEventListener('DOMContentLoaded', loadInverseChart);
-</script><script>
-async function refreshWalletData() {
-  if (typeof window.ethereum === 'undefined') {
-    alert('MetaMask not detected');
-    return;
-  }
-
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
-  const signer = provider.getSigner();
-  const address = await signer.getAddress();
-  const balanceWei = await provider.getBalance(address);
-  const balanceEth = ethers.utils.formatEther(balanceWei);
-
-  document.getElementById("wallet-address").innerText = address;
-  document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
-
-  // Simulated detection
-  const positions = [
-    { token: "ETH", exchange: "Detected DEX", status: "Open", pnl: "+3.2%" },
-    { token: "LINK", exchange: "Detected DEX", status: "Closed", pnl: "-0.5%" }
-  ];
-
-  document.getElementById("detected-exchange").innerText = "DEX Detected via Activity";
-  document.getElementById("open-trades").innerHTML = positions.map(p =>
-    `<li>${p.token} - ${p.status} on ${p.exchange}, PnL: ${p.pnl}</li>`
-  ).join('');
-}
-document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
 </script>
 <script>
 document.getElementById("toggleWallet").addEventListener("click", () => {
@@ -2732,49 +2724,6 @@ document.getElementById("connectWallet").addEventListener("click", async () => {
 });
 </script>
 
-<script>
-document.addEventListener('DOMContentLoaded', async () => {
-  const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd");
-  const tokens = await response.json();
-  const isMarketDown = tokens.reduce((sum, t) => sum + t.price_change_percentage_24h, 0) < 0;
-  const topCount = 10;
-  const sorted = tokens.sort((a, b) => isMarketDown ? b.price_change_percentage_24h - a.price_change_percentage_24h : a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, topCount);
-  const ctx = document.getElementById("inverseChart").getContext("2d");
-  new Chart(ctx, {
-    type: "bar",
-    data: {
-      labels: sorted.map(t => t.symbol.toUpperCase()),
-      datasets: [{
-        label: "Inverse Metrics",
-        data: sorted.map(t => t.price_change_percentage_24h),
-        backgroundColor: sorted.map(t =>
-          isMarketDown
-            ? (t.price_change_percentage_24h > 0 ? "#3b82f6" : "#ef4444")
-            : (t.price_change_percentage_24h < 0 ? "#ef4444" : "#3b82f6")
-        )
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      onClick: (e, items) => {
-        if (items.length > 0) {
-          const token = sorted[items[0].index].id;
-          window.open(`https://coinmarketcap.com/currencies/${token}/`, "_blank");
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: { color: "#fff" }
-        },
-        x: {
-          ticks: { color: "#fff" }
-        }
-      }
-    }
-  });
-});
-</script>
+
 </body>
 </html>
