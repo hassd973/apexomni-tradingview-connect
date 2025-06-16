@@ -801,16 +801,19 @@
 				box-shadow: 0 0 4px var(--shadow-color);
 				text-align: center;
 			}
-			.hash-box {
-				font-family: monospace;
-				word-break: break-all;
-				white-space: pre-wrap;
-				overflow-wrap: anywhere;
-				background: rgba(0, 0, 0, 0.3);
-				border: 1px solid var(--shadow-color);
-				border-radius: 6px;
-				padding: 0.5rem;
-			}
+
+                        .hash-box {
+                                font-family: monospace;
+                                word-break: break-all;
+                                white-space: pre-wrap;
+                                overflow-wrap: anywhere;
+                                max-width: 100%;
+                                background: rgba(0, 0, 0, 0.3);
+                                border: 1px solid var(--shadow-color);
+                                border-radius: 6px;
+                                padding: 0.5rem;
+                        }
+
 			@media (max-width: 640px) {
 				#chat-list {
 					max-height: 30vh;
@@ -1665,16 +1668,27 @@
 							price, volume, and time information.
 						</p>
 					</div>
-					<button
-						aria-label="Export as OBJ"
-						class="mt-2"
-						data-tooltip="Export as OBJ"
-						id="export-obj"
-						role="button"
-					>
-						Export OBJ
-					</button>
-					<div class="mt-4" id="btc-hash-log">
+
+                                        <button
+                                                aria-label="Export as OBJ"
+                                                class="mt-2"
+                                                data-tooltip="Export as OBJ"
+                                                id="export-obj"
+                                                role="button"
+                                        >
+                                                Export OBJ
+                                        </button>
+                                        <button
+                                                aria-label="Animate Zoom"
+                                                class="mt-2"
+                                                data-tooltip="Toggle zoom animation"
+                                                id="toggle-zoom"
+                                                role="button"
+                                        >
+                                                Zoom
+                                        </button>
+                                        <div class="mt-4" id="btc-hash-log">
+
 						<h3 class="text-base md:text-lg mb-2">Hash Log</h3>
 						<ul class="space-y-2 text-sm" id="hash-log-list"></ul>
 						<button
@@ -1804,7 +1818,6 @@
                         <p class="typewriter">
                                 Powered by CoinGecko, Etherscan, Dune &amp; TradingView
                         </p>
-
 		</footer>
 		<script>
 			const DOM = {
@@ -1839,8 +1852,9 @@
 				tokenPerformanceChart: document.getElementById(
 					'token-performance-chart'
 				),
-				exportObjBtn: document.getElementById('export-obj'),
-				undockBackgroundLink: document.getElementById('undock-background-link'),
+                                exportObjBtn: document.getElementById('export-obj'),
+                                toggleZoomBtn: document.getElementById('toggle-zoom'),
+                                undockBackgroundLink: document.getElementById('undock-background-link'),
 				exportHashLogBtn: document.getElementById('export-hash-log'),
 				exportBalancesBtn: document.getElementById('export-balances'),
 				balancesList: document.getElementById('balances-list'),
@@ -1858,13 +1872,14 @@
 			let isIndicatorEnabledHeader = false;
 			let isIndicatorEnabledModal = false;
 			const chartCache = {};
-			let scene,
-				camera,
-				renderer,
-				controls,
-				dotClouds = [],
-				colorLegend = [],
-				hashLog = [];
+                        let scene,
+                                camera,
+                                renderer,
+                                controls,
+                                dotClouds = [],
+                                colorLegend = [],
+                                hashLog = [];
+                        let zoomInterval = null;
 			const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
 			let currentEthPrice = 0;
 			let isUsingMockLogs = true;
@@ -3152,9 +3167,10 @@
 				setupDragAndDrop();
 				loadModuleOrder();
 				setupModuleToggles();
-				loadData();
-				init3D();
-				updateBTCHash();
+                               loadData();
+                               init3D();
+                               updateBTCHash();
+                               DOM.loaderChat.style.display = 'none';
 
 				setInterval(updateBTCHash, 60000);
 
@@ -3356,12 +3372,12 @@
 					userMessage.className = 'p-2 rounded';
 					userMessage.innerHTML = `<div>User: ${input}</div>`;
 					DOM.chatList.appendChild(userMessage);
-					try {
-						const response = await fetch('https://x.ai/api/grok', {
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ query: input })
-						});
+                                        try {
+                                                const response = await fetch('/api/grok', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        body: JSON.stringify({ query: input })
+                                                });
 						if (!response.ok) throw new Error('QuantGPT API request failed');
 						const data = await response.json();
 						const botMessage = document.createElement('li');
@@ -3388,18 +3404,37 @@
 					exportToCSV(gasHistory, 'gas_data.csv');
 				});
 
-				DOM.exportObjBtn.addEventListener('click', () => {
-					const exportGroup = new THREE.Group();
-					dotClouds.forEach((cloud) => exportGroup.add(cloud.clone()));
-					const exporter = new THREE.OBJExporter();
-					const result = exporter.parse(exportGroup);
-					const blob = new Blob([result], { type: 'text/plain' });
-					const link = document.createElement('a');
-					link.href = URL.createObjectURL(blob);
-					link.download = 'btc_hash_visualization.obj';
-					link.click();
-					addSystemLog('Exported BTC Hash Visualization as OBJ');
-				});
+                                DOM.exportObjBtn.addEventListener('click', () => {
+                                        const exportGroup = new THREE.Group();
+                                        dotClouds.forEach((cloud) => exportGroup.add(cloud.clone()));
+                                        const exporter = new THREE.OBJExporter();
+                                        const result = exporter.parse(exportGroup);
+                                        const blob = new Blob([result], { type: 'text/plain' });
+                                        const link = document.createElement('a');
+                                        link.href = URL.createObjectURL(blob);
+                                        link.download = 'btc_hash_visualization.obj';
+                                        link.click();
+                                        addSystemLog('Exported BTC Hash Visualization as OBJ');
+                                });
+
+                                function toggleZoom() {
+                                        if (zoomInterval) {
+                                                clearInterval(zoomInterval);
+                                                zoomInterval = null;
+                                                DOM.toggleZoomBtn.textContent = 'Zoom';
+                                                return;
+                                        }
+                                        let direction = -1;
+                                        zoomInterval = setInterval(() => {
+                                                camera.position.z += 0.1 * direction;
+                                                if (camera.position.z < 10 || camera.position.z > 40) {
+                                                        direction *= -1;
+                                                }
+                                        }, 100);
+                                        DOM.toggleZoomBtn.textContent = 'Stop Zoom';
+                                }
+
+                                DOM.toggleZoomBtn.addEventListener('click', toggleZoom);
 
 				DOM.exportHashLogBtn.addEventListener('click', () => {
 					exportToCSV(hashLog, 'hash_log.csv');
@@ -3712,7 +3747,7 @@
 				localStorage.setItem('walletChain', chainLabel);
 
                                 try {
-                                        const response = await fetch(`https://api.omni.exchange/v1/wallet?address=${address}`);
+                                        const response = await fetch(`/api/wallet?address=${address}`);
                                         const data = await response.json();
 
                                         const balance = await provider.getBalance(address);
@@ -3737,7 +3772,6 @@
                                 } catch (e) {
                                         console.error('Wallet fetch failed:', e);
                                 }
-
 			}
 		</script>
 		<script>
@@ -3827,7 +3861,6 @@
 		</script>
 		<script>
 			async function connectWallet() {
-
                                 if (typeof window.ethereum === 'undefined') {
                                         if (/Mobi|Android/i.test(navigator.userAgent)) {
                                                 window.location.href = `https://metamask.app.link/dapp/${location.host}${location.pathname}`;
@@ -3836,7 +3869,6 @@
                                         }
                                         return null;
                                 }
-
 				const provider = new ethers.providers.Web3Provider(
 					window.ethereum,
 					'any'
@@ -3858,7 +3890,7 @@
                                 localStorage.setItem('walletChain', chainLabel);
 
                                 try {
-                                        const response = await fetch(`https://api.omni.exchange/v1/wallet?address=${address}`);
+                                        const response = await fetch(`/api/wallet?address=${address}`);
                                         const data = await response.json();
 
                                         const balance = await provider.getBalance(address);
@@ -3984,21 +4016,21 @@
 							}
 						},
 						scales: {
-							y: {
-								title: { display: true, text: '% Change', color: '#ffffff' },
-								ticks: { color: '#ffffff' }
-							},
-							x: {
-								title: {
-									display: true,
-									text: 'Top Inverse Performers',
-									color: '#ffffff'
-								},
-								ticks: {
-									color: '#ffffff',
-									maxRotation: 45,
-									minRotation: 45,
-									autoSkip: false
+                                                        y: {
+                                                                title: { display: true, text: '% Change', color: '#ffbb33' },
+                                                                ticks: { color: '#ffbb33' }
+                                                        },
+                                                        x: {
+                                                                title: {
+                                                                        display: true,
+                                                                        text: 'Top Inverse Performers',
+                                                                        color: '#ffbb33'
+                                                                },
+                                                                ticks: {
+                                                                        color: '#ffbb33',
+                                                                        maxRotation: 45,
+                                                                        minRotation: 45,
+                                                                        autoSkip: false
 								}
 							}
 						}
