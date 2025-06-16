@@ -8,8 +8,11 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Determine the correct frontend path
-const frontendPath = process.env.FRONTEND_PATH || path.join(__dirname, 'frontend');
+// Determine the correct frontend path. Default to the frontend directory one
+// level up from the backend folder so running the server from the project root
+// works out of the box.
+const frontendPath = process.env.FRONTEND_PATH ||
+  path.join(__dirname, '..', 'frontend');
 console.log('Frontend Path:', frontendPath);
 
 // Serve static files from the frontend directory
@@ -36,15 +39,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Better Stack configuration
-const BETTER_STACK_USERNAME = 'uJDSRvXdjN0eT2afRJ88m24R6YZiEwGcJ';
-const BETTER_STACK_PASSWORD = '2WT0nhxDRzsw3KxyNJx9sOCmvajKzjaW3VTIRaY1vwPvHdTvGk3TVubeUFHPrEve';
-const BETTER_STACK_HOST = 'eu-nbg-2-connect.betterstackdata.com';
+// Credentials are expected via environment variables to avoid hard coding
+// sensitive values in the repository.
+const BETTER_STACK_HOST = process.env.BETTER_STACK_HOST ||
+  'eu-nbg-2-connect.betterstackdata.com';
 const BETTER_STACK_PORT = 443;
 const BETTER_STACK_API_URL = `https://${BETTER_STACK_HOST}:${BETTER_STACK_PORT}`;
-const BETTER_STACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
+const BETTER_STACK_TOKEN = process.env.BETTER_STACK_TOKEN;
 
 // Etherscan API configuration
-const ETHERSCAN_API_KEY = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
 const ETHERSCAN_API_URL = 'https://api.etherscan.io/api';
 
 // Specific log collections
@@ -213,6 +217,57 @@ app.get('/api/crypto', async (req, res) => {
   } catch (error) {
     console.error('Error in /api/crypto endpoint:', error.message);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API endpoint to fetch wallet details and open trades
+app.get('/api/wallet', async (req, res) => {
+  const { address } = req.query;
+  if (!address) {
+    return res.status(400).json({ error: 'Address is required' });
+  }
+  try {
+    const balResp = await axios.get(ETHERSCAN_API_URL, {
+      params: {
+        module: 'account',
+        action: 'balance',
+        address,
+        tag: 'latest',
+        apikey: ETHERSCAN_API_KEY
+      }
+    });
+    const balanceEth = parseFloat(balResp.data.result) / 1e18;
+
+    const omniUrl = `https://api.omnidex.finance/v1/user/${address}/positions`;
+    const omniResp = await axios.get(omniUrl);
+    const omniData = omniResp.data || {};
+
+    const tokenResp = await axios.get(`https://api.ethplorer.io/getAddressInfo/${address}?apiKey=freekey`);
+    const tokenCount = tokenResp.data.tokens ? tokenResp.data.tokens.length : 0;
+
+    const txResp = await axios.get(ETHERSCAN_API_URL, {
+      params: {
+        module: 'account',
+        action: 'txlist',
+        address,
+        page: 1,
+        sort: 'desc',
+        apikey: ETHERSCAN_API_KEY
+      }
+    });
+    const lastTx = txResp.data.result && txResp.data.result[0] ? txResp.data.result[0].hash : 'N/A';
+
+    res.json({
+      balanceEth,
+      dex: omniData.exchange || omniData.account?.exchange || 'Unknown DEX',
+      accountBalance: omniData.account?.balanceUsd || 'N/A',
+      positions: omniData.positions || [],
+      tokenCount,
+      lastTx
+    });
+  } catch (error) {
+    console.error('Wallet API error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch wallet data' });
   }
 });
 
