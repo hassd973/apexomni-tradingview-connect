@@ -709,6 +709,19 @@
     text-decoration: underline;
   }
 </style>
+<style>
+  .pro-banner {
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  }
+  .cmc-link {
+    font-size: 0.75rem;
+    color: var(--primary-color);
+    text-decoration: none;
+  }
+  .cmc-link:hover {
+    text-decoration: underline;
+  }
+</style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
 <div class="pro-banner text-black text-center text-xs py-1 uppercase w-full">PRO ALPHA BETA</div>
@@ -959,6 +972,7 @@
 <button class="py-1 px-4 rounded text-sm" id="connectWallet">🦊 Connect Wallet</button>
 <button class="py-1 px-4 rounded text-sm" id="toggleWallet">👁 Toggle</button>
 <button class="py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
+</div>
 </div>
 </div>
 <div class="module-content text-white">
@@ -1916,6 +1930,7 @@
               <span>${token.name} (${token.symbol})</span>
               <div class="flex gap-2 items-center">
                 <a href="https://coinmarketcap.com/search/?q=${token.name}" target="_blank" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
+
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
               </div>
             </div>
@@ -2667,6 +2682,7 @@ async function loadInverseChart() {
         if (elements.length > 0) {
           const token = labels[elements[0].index];
           window.open(`https://coinmarketcap.com/search/?q=${token}`, '_blank');
+
         }
       },
       plugins: {
