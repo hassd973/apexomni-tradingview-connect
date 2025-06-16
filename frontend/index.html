@@ -1129,7 +1129,7 @@
       "Riding the quantum wave to success!"
     ];
 
-    window.onload = function() {
+    document.addEventListener('DOMContentLoaded', () => {
       DOM.loadingScreen.style.opacity = '0';
       setTimeout(() => {
         DOM.loadingScreen.style.display = 'none';
@@ -1140,7 +1140,7 @@
           setTimeout(() => section.style.opacity = '1', 700 + index * 200);
         });
       }, 500);
-    };
+    });
 
     for (let i = 0; i < 20; i++) {
       const particle = document.createElement('div');
@@ -2438,7 +2438,7 @@ async function loadLiveLogs() {
     console.error('Live logs error', e);
   }
 }
-window.addEventListener('load', () => {
+document.addEventListener('DOMContentLoaded', () => {
   loadLiveLogs();
   setInterval(loadLiveLogs, 15000);
 });
@@ -2544,7 +2544,7 @@ async function loadInverseFromCMC() {
   });
 }
 
-window.addEventListener('load', loadInverseFromCMC);
+document.addEventListener('DOMContentLoaded', loadInverseFromCMC);
 </script><script>
 async function connectWalletAndExtractData() {
   if (typeof window.ethereum === 'undefined') {
@@ -2671,7 +2671,7 @@ async function loadInverseChart() {
     }
   });
 }
-window.addEventListener("load", loadInverseChart);
+document.addEventListener('DOMContentLoaded', loadInverseChart);
 </script><script>
 async function refreshWalletData() {
   if (typeof window.ethereum === 'undefined') {
@@ -2725,7 +2725,7 @@ document.getElementById("connectWallet").addEventListener("click", async () => {
 </script>
 
 <script>
-window.addEventListener("load", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd");
   const tokens = await response.json();
   const isMarketDown = tokens.reduce((sum, t) => sum + t.price_change_percentage_24h, 0) < 0;
