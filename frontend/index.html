@@ -708,6 +708,7 @@
   .cmc-link:hover {
     text-decoration: underline;
   }
+
 </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
@@ -1917,6 +1918,7 @@
               <span>${token.name} (${token.symbol})</span>
               <div class="flex gap-2 items-center">
                 <a href="https://coinmarketcap.com/search/?q=${cmcQuery}" target="_blank" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
+              
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
               </div>
             </div>
@@ -2662,6 +2664,7 @@ async function loadInverseChart() {
           const token = labels[elements[0].index];
           const cmcQuery = encodeURIComponent(token);
           window.open(`https://coinmarketcap.com/search/?q=${cmcQuery}`, '_blank');
+
         }
       },
       plugins: {
@@ -2705,6 +2708,7 @@ document.getElementById("toggleWallet").addEventListener("click", () => {
 
 document.getElementById("connectWallet").addEventListener("click", async () => {
   await connectWalletAndExtractData();
+
 });
 </script>
 
