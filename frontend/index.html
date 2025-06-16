@@ -987,6 +987,7 @@
 					<a class="nav-link" href="#balances-module">Balances</a>
 					<a class="nav-link" href="#token-insights-module">Token Insights</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
+
                                         <a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
                                         <a class="nav-link" href="#serverjs-module">Server JS</a>
                                         <a class="nav-link" href="#" id="undock-background-link"
@@ -1777,6 +1778,7 @@
 					>
 						Send
 					</button>
+
                                 </div>
                         </div>
                 </div>
@@ -1802,6 +1804,7 @@
                         <p class="typewriter">
                                 Powered by CoinGecko, Etherscan, Dune &amp; TradingView
                         </p>
+
 		</footer>
 		<script>
 			const DOM = {
@@ -2999,6 +3002,7 @@
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="token-row">
               <span class="token-name">${token.name} (${token.symbol})</span>
+
               <div class="flex gap-2 items-center">
                 <a href="https://coinmarketcap.com/currencies/${cmcSlug}/" target="_blank" rel="noopener" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
@@ -3733,6 +3737,7 @@
                                 } catch (e) {
                                         console.error('Wallet fetch failed:', e);
                                 }
+
 			}
 		</script>
 		<script>
@@ -3822,6 +3827,7 @@
 		</script>
 		<script>
 			async function connectWallet() {
+
                                 if (typeof window.ethereum === 'undefined') {
                                         if (/Mobi|Android/i.test(navigator.userAgent)) {
                                                 window.location.href = `https://metamask.app.link/dapp/${location.host}${location.pathname}`;
@@ -3830,6 +3836,7 @@
                                         }
                                         return null;
                                 }
+
 				const provider = new ethers.providers.Web3Provider(
 					window.ethereum,
 					'any'
