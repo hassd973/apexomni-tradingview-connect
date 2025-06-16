@@ -1918,7 +1918,7 @@
               <span>${token.name} (${token.symbol})</span>
               <div class="flex gap-2 items-center">
                 <a href="https://coinmarketcap.com/search/?q=${cmcQuery}" target="_blank" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
-              
+
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
               </div>
             </div>
@@ -2463,8 +2463,12 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
   if (!msg) return;
   chat.innerHTML += `<div class='text-xs text-blue-300'>You: ${msg}</div>`;
   input.value = '';
-  const context = tokensData.slice(0, 5).map(t => `${t.symbol}:${t.price_change_percentage_24h}`).join(', ');
-  const quantPrompt = `As a quantitative crypto analyst, consider recent token changes (${context}). ${msg}`;
+  const context = tokensData.slice(0, 5)
+    .map(t => `${t.symbol}:${t.price_change_percentage_24h}`)
+    .join(', ');
+  // QuantGPT enhancement provides market context to GPT
+  const quantPrompt =
+    `As a quantitative crypto analyst, consider recent token changes (${context}). ${msg}`;
   const res = await fetch('/api/grok', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
@@ -2708,9 +2712,9 @@ document.getElementById("toggleWallet").addEventListener("click", () => {
 
 document.getElementById("connectWallet").addEventListener("click", async () => {
   await connectWalletAndExtractData();
-
 });
 </script>
+
 
 
 </body>
