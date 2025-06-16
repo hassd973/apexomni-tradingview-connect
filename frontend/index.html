@@ -2627,4 +2627,94 @@ async function refreshWalletData() {
 document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
 window.addEventListener("load", refreshWalletData);
 </script></body>
+</html><body>
+  <h1>Inverse Metrics Module - PRO ALPHA BETA Version (Enhanced Performance)</h1>
+  <div class="controls">
+    <div>
+      Metric:
+      <select id="metric-select">
+        <option value="correlation">Correlation</option>
+        <option value="change">24h % Change</option>
+      </select>
+      &nbsp; Top:
+      <select id="top-select">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+      </select>
+    </div>
+    <button id="exportBtn">Export Chart</button>
+  </div>
+  <div class="chart-container">
+    <canvas id="inverseChart"></canvas>
+  </div>
+  <div class="btc-info">
+    <span class="btc-date">Date: 2025-06-16</span>
+    <span class="btc-price">BTC Price: $123,456</span>
+    <span class="btc-time">Time: 14:35:00</span>
+  </div>
+  <div class="wallet-info">
+    <button id="connectWallet">Connect Wallet</button>
+    <span>Balance: <span id="walletBalance" class="private">*******</span></span>
+    <span>Exchange: <span id="exchangeInfo" class="private">*******</span></span>
+  </div>
+  <div class="hash-section">
+    <h2>Recent Transactions</h2>
+    <div class="hash-list">
+      <div>Tx Hash: 0x1a2b3c4d5e...abcd1234</div>
+      <div>Tx Hash: 0x6f7g8h9i0j...7890ef12</div>
+      <div>Tx Hash: 0x3456abcd78...90ab12cd</div>
+    </div>
+  </div>
+  <script>
+    const ctx = document.getElementById('inverseChart').getContext('2d');
+    let chartInstance;
+    let currentMetric = 'correlation';
+    let currentTop = 10;
+    function renderChart() {
+      const labels = Array.from({ length: currentTop }, (_, i) => `Token ${i + 1}`);
+      const dataValues = labels.map(() => Math.random() * 100);
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: { labels, datasets: [{ label: currentMetric === 'correlation' ? 'Correlation' : '24h % Change', data: dataValues, backgroundColor: '#87CEEB' }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+      });
+    }
+    document.getElementById('metric-select').addEventListener('change', (e) => {
+      currentMetric = e.target.value;
+      renderChart();
+    });
+    document.getElementById('top-select').addEventListener('change', (e) => {
+      currentTop = parseInt(e.target.value);
+      renderChart();
+    });
+    document.getElementById('exportBtn').addEventListener('click', () => {
+      if (chartInstance) {
+        const imageURL = chartInstance.toBase64Image();
+        const link = document.createElement('a');
+        link.href = imageURL;
+        link.download = 'inverse_metrics_chart.png';
+        link.click();
+      }
+    });
+    document.getElementById('connectWallet').addEventListener('click', () => {
+      alert('Wallet connected (simulation)');
+    });
+    const balanceEl = document.getElementById('walletBalance');
+    const exchangeEl = document.getElementById('exchangeInfo');
+    balanceEl.addEventListener('click', () => {
+      balanceEl.textContent = (balanceEl.textContent === '*******') ? '0.123 BTC' : '*******';
+    });
+    exchangeEl.addEventListener('click', () => {
+      exchangeEl.textContent = (exchangeEl.textContent === '*******') ? 'Binance' : '*******';
+    });
+    window.addEventListener('load', () => {
+      const now = new Date();
+      document.querySelector('.btc-date').textContent = 'Date: ' + now.toISOString().split('T')[0];
+      document.querySelector('.btc-time').textContent = 'Time: ' + now.toLocaleTimeString();
+      renderChart();
+    });
+  </script>
+</body>
 </html>
