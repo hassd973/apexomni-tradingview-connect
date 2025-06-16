@@ -101,49 +101,105 @@ async function fetchGasPrices() {
 }
 
 // Function to fetch crypto data from CoinMarketCap
+// Fetch crypto data from CoinMarketCap
+async function fetchCryptoDataFromCMC() {
+  console.log('Fetching crypto data from CoinMarketCap');
+  const response = await axios.get(CMC_API_URL, {
+    headers: {
+      'X-CMC_PRO_API_KEY': CMC_API_KEY,
+    },
+    params: {
+      start: 1,
+      limit: 50,
+      convert: 'USD',
+    },
+    timeout: 10000,
+  });
+
+  const gasData = await fetchGasPrices();
+  return response.data.data.map(coin => {
+    const usdQuote = coin.quote.USD;
+    const tokenData = {
+      id: coin.slug,
+      name: coin.name,
+      symbol: coin.symbol.toUpperCase(),
+      current_price: parseFloat(usdQuote.price),
+      total_volume: parseFloat(usdQuote.volume_24h),
+      price_change_percentage_24h: parseFloat(usdQuote.percent_change_24h),
+      market_cap: parseFloat(usdQuote.market_cap),
+      circulating_supply: parseFloat(coin.circulating_supply),
+      source: 'CoinMarketCap',
+      high_24h: null,
+      low_24h: null,
+      market_cap_rank: coin.cmc_rank
+    };
+    if (coin.symbol.toUpperCase() === 'ETH' && gasData) {
+      tokenData.gasPrice = gasData.proposeGasPrice;
+    }
+    return tokenData;
+  }).filter(token => token.current_price > 0);
+}
+
+// Fetch crypto data from CoinGecko
+async function fetchCryptoDataFromGecko() {
+  console.log('Fetching crypto data from CoinGecko');
+  const response = await axios.get(COINGECKO_API_URL, {
+    params: {
+      vs_currency: 'usd',
+      order: 'market_cap_desc',
+      per_page: 50,
+      page: 1,
+      price_change_percentage: '24h'
+    },
+    timeout: 10000,
+    headers: COINGECKO_API_KEY ? { 'x-cg-pro-api-key': COINGECKO_API_KEY } : {}
+  });
+  return response.data.map(coin => ({
+    id: coin.id,
+    name: coin.name,
+    symbol: coin.symbol.toUpperCase(),
+    current_price: coin.current_price,
+    total_volume: coin.total_volume,
+    price_change_percentage_24h: coin.price_change_percentage_24h,
+    market_cap: coin.market_cap,
+    circulating_supply: coin.circulating_supply,
+    source: 'CoinGecko',
+    high_24h: coin.high_24h,
+    low_24h: coin.low_24h,
+    market_cap_rank: coin.market_cap_rank
+  }));
+}
+
+// Unified function with fallback and caching
+let cachedCryptoData = null;
+let cachedAt = 0;
 async function fetchCryptoData() {
+  const now = Date.now();
+  if (cachedCryptoData && now - cachedAt < 5 * 60 * 1000) {
+    return cachedCryptoData;
+  }
   try {
-    console.log('Fetching crypto data from CoinMarketCap');
-    const response = await axios.get(CMC_API_URL, {
-      headers: {
-        'X-CMC_PRO_API_KEY': CMC_API_KEY,
-      },
-      params: {
-        start: 1,
-        limit: 50,
-        convert: 'USD',
-      },
-      timeout: 10000,
-    });
-
-    const gasData = await fetchGasPrices();
-    const data = response.data.data.map(coin => {
-      const usdQuote = coin.quote.USD;
-      const tokenData = {
-        id: coin.slug,
-        name: coin.name,
-        symbol: coin.symbol.toUpperCase(),
-        current_price: parseFloat(usdQuote.price),
-        total_volume: parseFloat(usdQuote.volume_24h),
-        price_change_percentage_24h: parseFloat(usdQuote.percent_change_24h),
-        market_cap: parseFloat(usdQuote.market_cap),
-        circulating_supply: parseFloat(coin.circulating_supply),
-        source: 'CoinMarketCap',
-        high_24h: null, // CMC doesn't provide high_24h
-        low_24h: null, // CMC doesn't provide low_24h
-        market_cap_rank: coin.cmc_rank
-      };
-      if (coin.symbol.toUpperCase() === 'ETH' && gasData) {
-        tokenData.gasPrice = gasData.proposeGasPrice;
-      }
-      return tokenData;
-    }).filter(token => token.current_price > 0);
-
+    const data = await fetchCryptoDataFromCMC();
+    cachedCryptoData = data;
+    cachedAt = now;
     console.log(`Successfully fetched crypto data, count: ${data.length}`, data.slice(0, 2));
     return data;
   } catch (error) {
     console.error('Failed to fetch crypto data from CoinMarketCap:', error.message, error.response?.data || error.response?.status);
+    console.warn('Trying CoinGecko as fallback');
+    try {
+      const geckoData = await fetchCryptoDataFromGecko();
+      if (geckoData.length > 0) {
+        cachedCryptoData = geckoData;
+        cachedAt = now;
+        return geckoData;
+      }
+    } catch (geckoErr) {
+      console.error('Failed to fetch crypto data from CoinGecko:', geckoErr.message);
+    }
     console.warn('Falling back to mock data');
+    cachedCryptoData = mockCryptoData;
+    cachedAt = now;
     return mockCryptoData;
   }
 }
