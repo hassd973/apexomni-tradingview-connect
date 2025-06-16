@@ -1885,7 +1885,8 @@
         document.getElementById('toggle-logs-data').textContent = isUsingMockLogs ? 'Real Logs' : 'Mock Logs';
         logsWarning.style.display = isUsingMockLogs ? 'block' : 'none';
         renderLogs();
-      });
+        const cmcQuery = encodeURIComponent(token.name);
+                <a href="https://coinmarketcap.com/search/?q=${cmcQuery}" target="_blank" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
 
       try {
         const tokenInfo = await fetchTokenInfo(TOKEN_ADDRESS, CHAIN_ID);
@@ -2435,14 +2436,11 @@ document.addEventListener("DOMContentLoaded", () => {
       "what is btc": "Bitcoin is a decentralized cryptocurrency.",
       "quantumi": "Quantumi is a real-time crypto metrics dashboard.",
       "inverse winners": "Tokens that tend to rise during market drops."
-    };
-    return local[q.toLowerCase().trim()] || "No local answer found.";
-  };
-});
-</script><script>
-// === Live Logs ===
-async function loadLiveLogs() {
-  try {
+  const context = tokensData.slice(0, 5).map(t => `${t.symbol}:${t.price_change_percentage_24h}`).join(', ');
+  const quantPrompt = `As a quantitative crypto analyst, consider recent token changes (${context}). ${msg}`;
+    body: JSON.stringify({ prompt: quantPrompt })
+  const provider = await connectWallet();
+  if (!provider) return;
     const res = await fetch('https://quantumi.site/api/live-logs');
     const data = await res.json();
     const logList = document.getElementById('live-logs-list');
@@ -2523,16 +2521,12 @@ async function loadInverseFromCMC() {
   const coins = await response.json();
 
   const sorted = coins
-    .filter(coin => coin.price_change_percentage_24h !== null)
-    .sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h)
-    .slice(0, 10);
+  const provider = await connectWallet();
+  if (!provider) return;
 
-  const labels = sorted.map(coin => coin.symbol.toUpperCase());
-  const values = sorted.map(coin => coin.price_change_percentage_24h);
-  const colors = values.map(v => v > 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.7)');
-
-  const ctx = document.getElementById('inverseChart').getContext('2d');
-  new Chart(ctx, {
+        const dapp = encodeURIComponent(window.location.href);
+        window.location.href = `https://metamask.app.link/dapp/${dapp}`;
+        return null;
     type: 'bar',
     data: {
       labels,
@@ -2641,13 +2635,10 @@ function exportChart() {
 
 async function loadInverseChart() {
   const metric = metricSelect.value;
-  const top = parseInt(topSelect.value, 10);
+          const cmcQuery = encodeURIComponent(token);
+          window.open(`https://coinmarketcap.com/search/?q=${cmcQuery}`, '_blank');
 
-  const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1');
-  const data = await res.json();
-
-  let processed;
-  if (metric === 'correlation') {
+  await connectWalletAndExtractData();
     const avg = data.reduce((acc, t) => acc + t.price_change_percentage_24h, 0) / data.length;
     processed = data.map(t => ({ id: t.id, change: t.price_change_percentage_24h, score: Math.abs(t.price_change_percentage_24h - avg) }))
       .sort((a, b) => b.score - a.score)
