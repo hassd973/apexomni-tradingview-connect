@@ -2594,13 +2594,16 @@ async function loadInverseFromCMC() {
     }
   });
 }
-
-document.addEventListener('DOMContentLoaded', loadInverseFromCMC);
-</script><script>
-async function connectWalletAndExtractData() {
-  const provider = await connectWallet();
-  if (!provider) return;
-  try {
+  if (typeof window.ethereum === 'undefined') {
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      window.location.href = 'https://metamask.app.link/dapp/quantumi.sspace';
+    } else {
+      alert('MetaMask not found');
+    return null;
+  }
+  const provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+  await provider.send('eth_requestAccounts', []);
+  return provider;
     const signer = provider.getSigner();
     const address = await signer.getAddress();
     const balanceWei = await provider.getBalance(address);
