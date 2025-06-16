@@ -216,6 +216,57 @@ app.get('/api/crypto', async (req, res) => {
   }
 });
 
+// API endpoint to fetch wallet details and open trades
+app.get('/api/wallet', async (req, res) => {
+  const { address } = req.query;
+  if (!address) {
+    return res.status(400).json({ error: 'Address is required' });
+  }
+  try {
+    const balResp = await axios.get(ETHERSCAN_API_URL, {
+      params: {
+        module: 'account',
+        action: 'balance',
+        address,
+        tag: 'latest',
+        apikey: ETHERSCAN_API_KEY
+      }
+    });
+    const balanceEth = parseFloat(balResp.data.result) / 1e18;
+
+    const omniUrl = `https://api.omnidex.finance/v1/user/${address}/positions`;
+    const omniResp = await axios.get(omniUrl);
+    const omniData = omniResp.data || {};
+
+    const tokenResp = await axios.get(`https://api.ethplorer.io/getAddressInfo/${address}?apiKey=freekey`);
+    const tokenCount = tokenResp.data.tokens ? tokenResp.data.tokens.length : 0;
+
+    const txResp = await axios.get(ETHERSCAN_API_URL, {
+      params: {
+        module: 'account',
+        action: 'txlist',
+        address,
+        page: 1,
+        sort: 'desc',
+        apikey: ETHERSCAN_API_KEY
+      }
+    });
+    const lastTx = txResp.data.result && txResp.data.result[0] ? txResp.data.result[0].hash : 'N/A';
+
+    res.json({
+      balanceEth,
+      dex: omniData.exchange || omniData.account?.exchange || 'Unknown DEX',
+      accountBalance: omniData.account?.balanceUsd || 'N/A',
+      positions: omniData.positions || [],
+      tokenCount,
+      lastTx
+    });
+  } catch (error) {
+    console.error('Wallet API error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch wallet data' });
+  }
+});
+
 // API endpoint to get live logs from Better Stack
 app.get('/api/logs', async (req, res) => {
   try {

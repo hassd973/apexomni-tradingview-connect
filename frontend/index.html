@@ -614,7 +614,6 @@
       #btc-legend {
         flex-direction: column;
         align-items: center;
-
       }
     }
     .nav-menu {
@@ -714,7 +713,6 @@
   .cmc-link:hover {
     text-decoration: underline;
   }
-
 </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
@@ -2516,40 +2514,27 @@ async function connectWalletAndLoadOmniData() {
   document.getElementById("wallet-chain").innerText = chainLabel;
   localStorage.setItem("walletChain", chainLabel);
 
-  // Fetch open positions from Omni API
-  const omniApiUrl = `https://api.omnidex.finance/v1/user/${address}/positions`; // Replace with valid endpoint when known
-
   try {
-    const response = await fetch(omniApiUrl);
+    const response = await fetch(`/api/wallet?address=${address}`);
     const data = await response.json();
 
-    const balance = data?.account?.balanceUsd || 'N/A';
-    const positions = data?.positions || [];
-    const dex = data?.exchange || data?.account?.exchange || 'Unknown DEX';
+    document.getElementById("wallet-balance").innerText = `${data.accountBalance} USD`;
+    document.getElementById("detected-exchange").innerText = data.dex;
+    document.getElementById("wallet-token-count").innerText = data.tokenCount;
+    document.getElementById("wallet-last-tx").innerText = data.lastTx;
 
-    document.getElementById("wallet-balance").innerText = `${balance} USD`;
-    document.getElementById("detected-exchange").innerText = dex;
-    localStorage.setItem("walletBalance", `${balance} USD`);
-    localStorage.setItem("walletExchange", dex);
-
-    const tokenRes = await fetch(`https://api.ethplorer.io/getAddressInfo/${address}?apiKey=freekey`);
-    const tokenJson = await tokenRes.json();
-    const tokenCount = tokenJson.tokens ? tokenJson.tokens.length : 0;
-    document.getElementById("wallet-token-count").innerText = tokenCount;
-    localStorage.setItem("walletTokenCount", tokenCount.toString());
-
-    const txUrl = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&page=1&sort=desc&apikey=${API_KEY}`;
-    const txData = await fetchWithRetry(txUrl);
-    const lastTx = txData.result && txData.result[0] ? txData.result[0].hash : 'N/A';
-    document.getElementById("wallet-last-tx").innerText = lastTx;
-    localStorage.setItem("walletLastTx", lastTx);
+    localStorage.setItem("walletBalance", `${data.accountBalance} USD`);
+    localStorage.setItem("walletExchange", data.dex);
+    localStorage.setItem("walletTokenCount", data.tokenCount.toString());
+    localStorage.setItem("walletLastTx", data.lastTx);
 
     const positionsEl = document.getElementById("open-trades");
+    const positions = data.positions || [];
     positionsEl.innerHTML = positions.length
       ? positions.map(p => `<li>${p.symbol.toUpperCase()} | Size: ${p.size} | PnL: ${p.pnlPercent}%</li>`).join('')
       : '<li>No open trades</li>';
   } catch (e) {
-    console.error("Omni fetch failed:", e);
+    console.error("Wallet fetch failed:", e);
   }
 }
 </script><script>
@@ -2620,14 +2605,17 @@ async function connectWalletAndExtractData() {
 }
 </script><script>
 async function connectWallet() {
-    if (typeof window.ethereum === 'undefined') {
-        const dapp = encodeURIComponent(window.location.href);
-        window.location.href = `https://metamask.app.link/dapp/${dapp}`;
-        return null;
+  if (typeof window.ethereum === 'undefined') {
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      window.location.href = 'https://metamask.app.link/dapp/quantumi.sspace';
+    } else {
+      alert('MetaMask not found');
     }
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    return provider;
+    return null;
+  }
+  const provider = new ethers.providers.Web3Provider(window.ethereum, 'any');
+  await provider.send('eth_requestAccounts', []);
+  return provider;
 }
 
 async function refreshWalletData() {
@@ -2641,35 +2629,24 @@ async function refreshWalletData() {
     document.getElementById("wallet-chain").innerText = chainLabel;
     localStorage.setItem("walletChain", chainLabel);
 
-    const omniApiUrl = `https://api.omnidex.finance/v1/user/${address}/positions`;
     try {
-        const response = await fetch(omniApiUrl);
+        const response = await fetch(`/api/wallet?address=${address}`);
         const data = await response.json();
 
-        const balance = data?.account?.balanceUsd || 'N/A';
-        const positions = data?.positions || [];
-        const dex = data?.exchange || data?.account?.exchange || 'Unknown DEX';
+        document.getElementById("wallet-balance").innerText = `${data.accountBalance} USD`;
+        document.getElementById("detected-exchange").innerText = data.dex;
+        document.getElementById("wallet-token-count").innerText = data.tokenCount;
+        document.getElementById("wallet-last-tx").innerText = data.lastTx;
 
-        document.getElementById("wallet-balance").innerText = `${balance} USD`;
-        document.getElementById("detected-exchange").innerText = dex;
-        localStorage.setItem("walletBalance", `${balance} USD`);
-        localStorage.setItem("walletExchange", dex);
-
-        const tokenRes = await fetch(`https://api.ethplorer.io/getAddressInfo/${address}?apiKey=freekey`);
-        const tokenJson = await tokenRes.json();
-        const tokenCount = tokenJson.tokens ? tokenJson.tokens.length : 0;
-        document.getElementById("wallet-token-count").innerText = tokenCount;
-        localStorage.setItem("walletTokenCount", tokenCount.toString());
-
-        const txUrl = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&page=1&sort=desc&apikey=${API_KEY}`;
-        const txData = await fetchWithRetry(txUrl);
-        const lastTx = txData.result && txData.result[0] ? txData.result[0].hash : 'N/A';
-        document.getElementById("wallet-last-tx").innerText = lastTx;
-        localStorage.setItem("walletLastTx", lastTx);
+        localStorage.setItem("walletBalance", `${data.accountBalance} USD`);
+        localStorage.setItem("walletExchange", data.dex);
+        localStorage.setItem("walletTokenCount", data.tokenCount.toString());
+        localStorage.setItem("walletLastTx", data.lastTx);
 
         const positionsEl = document.getElementById("open-trades");
+        const positions = data.positions || [];
         positionsEl.innerHTML = positions.length
-            ? positions.map(trade => `<li>${trade.symbol.toUpperCase()} - ${trade.status} on ${dex}, PnL: ${trade.pnlPercent}%</li>`).join('')
+            ? positions.map(trade => `<li>${trade.symbol.toUpperCase()} - ${trade.status} on ${data.dex}, PnL: ${trade.pnlPercent}%</li>`).join('')
             : '<li>No open trades</li>';
     } catch (err) {
         console.error("Wallet refresh failed:", err);
