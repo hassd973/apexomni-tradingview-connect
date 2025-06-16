@@ -802,6 +802,7 @@
 				text-align: center;
 			}
 
+
                         .hash-box {
                                 font-family: monospace;
                                 word-break: break-all;
@@ -990,7 +991,6 @@
 					<a class="nav-link" href="#balances-module">Balances</a>
 					<a class="nav-link" href="#token-insights-module">Token Insights</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
-
                                         <a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
                                         <a class="nav-link" href="#serverjs-module">Server JS</a>
                                         <a class="nav-link" href="#" id="undock-background-link"
@@ -1512,7 +1512,7 @@
 					</button>
 				</div>
 			</section>
-			<section class="rounded-lg" draggable="true" id="inverse-winners-module">
+                        <section class="rounded-lg order-first sm:order-none" draggable="true" id="inverse-winners-module">
 				<div class="module-header">
 					<h2 class="text-lg md:text-xl typewriter">📊 Inverse Metrics</h2>
 					<button
@@ -1562,10 +1562,10 @@
 					></canvas>
 				</div>
 			</section>
-			<section
-				class="rounded-lg col-span-full"
-				draggable="true"
-				id="live-logs-module"
+                        <section
+                                class="rounded-lg col-span-full order-first sm:order-none"
+                                draggable="true"
+                                id="live-logs-module"
 			>
 				<div
 					class="module-header flex flex-wrap justify-between items-center gap-2"
@@ -1640,7 +1640,11 @@
 					<div class="data-warning" id="btc-hash-warning" style="display: none">
 						&gt; Live data from Dune API
 					</div>
-					<div class="btc-hash-svg" id="btc-hash-canvas"></div>
+                                        <div class="btc-hash-svg" id="btc-hash-canvas"></div>
+                                        <div class="mt-2 flex justify-center gap-2" id="zoom-controls">
+                                                <button class="px-3 py-1 rounded text-sm" id="zoom-in" aria-label="Zoom in">➕</button>
+                                                <button class="px-3 py-1 rounded text-sm" id="zoom-out" aria-label="Zoom out">➖</button>
+                                        </div>
 					<div id="btc-legend">
 						<span id="btc-price">Price: Loading...</span>
 						<span id="btc-time">Time: Loading...</span>
@@ -1677,15 +1681,6 @@
                                                 role="button"
                                         >
                                                 Export OBJ
-                                        </button>
-                                        <button
-                                                aria-label="Animate Zoom"
-                                                class="mt-2"
-                                                data-tooltip="Toggle zoom animation"
-                                                id="toggle-zoom"
-                                                role="button"
-                                        >
-                                                Zoom
                                         </button>
                                         <div class="mt-4" id="btc-hash-log">
 
@@ -1792,7 +1787,6 @@
 					>
 						Send
 					</button>
-
                                 </div>
                         </div>
                 </div>
@@ -1853,7 +1847,9 @@
 					'token-performance-chart'
 				),
                                 exportObjBtn: document.getElementById('export-obj'),
-                                toggleZoomBtn: document.getElementById('toggle-zoom'),
+                                zoomInBtn: document.getElementById('zoom-in'),
+                                zoomOutBtn: document.getElementById('zoom-out'),
+
                                 undockBackgroundLink: document.getElementById('undock-background-link'),
 				exportHashLogBtn: document.getElementById('export-hash-log'),
 				exportBalancesBtn: document.getElementById('export-balances'),
@@ -1879,7 +1875,6 @@
                                 dotClouds = [],
                                 colorLegend = [],
                                 hashLog = [];
-                        let zoomInterval = null;
 			const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
 			let currentEthPrice = 0;
 			let isUsingMockLogs = true;
@@ -3417,24 +3412,19 @@
                                         addSystemLog('Exported BTC Hash Visualization as OBJ');
                                 });
 
-                                function toggleZoom() {
-                                        if (zoomInterval) {
-                                                clearInterval(zoomInterval);
-                                                zoomInterval = null;
-                                                DOM.toggleZoomBtn.textContent = 'Zoom';
-                                                return;
-                                        }
-                                        let direction = -1;
-                                        zoomInterval = setInterval(() => {
-                                                camera.position.z += 0.1 * direction;
-                                                if (camera.position.z < 10 || camera.position.z > 40) {
-                                                        direction *= -1;
-                                                }
-                                        }, 100);
-                                        DOM.toggleZoomBtn.textContent = 'Stop Zoom';
+                                function smoothZoom(delta) {
+                                        const steps = 10;
+                                        let count = 0;
+                                        const step = delta / steps;
+                                        const interval = setInterval(() => {
+                                                camera.position.z = Math.max(10, Math.min(40, camera.position.z + step));
+                                                count++;
+                                                if (count >= steps) clearInterval(interval);
+                                        }, 50);
                                 }
 
-                                DOM.toggleZoomBtn.addEventListener('click', toggleZoom);
+                                DOM.zoomInBtn.addEventListener('click', () => smoothZoom(-2));
+                                DOM.zoomOutBtn.addEventListener('click', () => smoothZoom(2));
 
 				DOM.exportHashLogBtn.addEventListener('click', () => {
 					exportToCSV(hashLog, 'hash_log.csv');
@@ -3978,7 +3968,7 @@
 
 				const labels = processed.map((x) => x.id);
 				const values = processed.map((x) => x.change);
-				const bgColor = values.map((v) => (v > 0 ? '#3b82f6' : '#ffbb33'));
+                                const bgColor = values.map((v) => (v > 0 ? '#3b82f6' : '#ffbb33'));
 
 				if (inverseChart) inverseChart.destroy();
 
@@ -4027,12 +4017,13 @@
                                                                         color: '#ffbb33'
                                                                 },
                                                                 ticks: {
-                                                                        color: '#ffbb33',
+                                                                        color: (ctx) => bgColor[ctx.index],
                                                                         maxRotation: 45,
                                                                         minRotation: 45,
                                                                         autoSkip: false
-								}
-							}
+                                                                }
+                                                        }
+
 						}
 					}
 				});
