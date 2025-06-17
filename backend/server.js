@@ -1,9 +1,11 @@
 require('dotenv').config();
+require('ts-node/register');
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
+const { apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../src/services');
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -324,6 +326,31 @@ app.get('/api/wallet', async (req, res) => {
   } catch (error) {
     console.error('Wallet API error:', error.message);
     res.status(500).json({ error: 'Failed to fetch wallet data' });
+  }
+});
+
+// Simple endpoint to create an order via ApexOmni
+app.post('/api/order', async (req, res) => {
+  const { symbol, side, size } = req.body;
+  if (!symbol || !side || !size) {
+    return res.status(400).json({ error: 'symbol, side and size required' });
+  }
+  try {
+    const params = await apexomniBuildOrderParams({
+      exchange: 'apexomni',
+      strategy: 'manual',
+      market: symbol,
+      size: parseFloat(size),
+      order: side.toLowerCase(),
+      price: 0,
+      position: side.toLowerCase() === 'buy' ? 'long' : 'short',
+      reverse: false,
+    });
+    const order = await apexomniCreateOrder(params);
+    res.json({ order });
+  } catch (e) {
+    console.error('Order API error:', e.message || e);
+    res.status(500).json({ error: 'Failed to create order' });
   }
 });
 
