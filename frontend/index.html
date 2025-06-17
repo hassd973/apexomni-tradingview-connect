@@ -2492,6 +2492,7 @@ function init3D() {
 }
 
  function smoothZoom(direction) {
+
    controls.target.set(0, 0, 0);
    const steps = 30;
    let count = 0;
@@ -3892,6 +3893,7 @@ function init3D() {
                                 if (typeof window.ethereum === 'undefined') {
                                         if (/Mobi|Android/i.test(navigator.userAgent)) {
                                                 window.location.href = 'https://metamask.app.link/dapp/quantumi.sspace';
+
                                         } else {
                                                 alert('MetaMask not found');
                                         }
