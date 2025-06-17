@@ -1,11 +1,31 @@
 require('dotenv').config();
-require('ts-node/register');
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../src/services');
+const fs = require('fs');
+
+let apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill;
+try {
+  const distServicesPath = path.join(__dirname, '..', 'dist', 'services');
+  if (fs.existsSync(distServicesPath)) {
+    ({ apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../dist/services'));
+  } else {
+    try {
+      require('ts-node/register');
+      ({ apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../src/services'));
+    } catch (tsErr) {
+      throw tsErr;
+    }
+  }
+} catch (err) {
+  console.warn('Services not available:', err.message);
+  apexomniBuildOrderParams = async () => { throw new Error('Service unavailable'); };
+  apexomniCreateOrder = async () => { throw new Error('Service unavailable'); };
+  getOrder = async () => { throw new Error('Service unavailable'); };
+  getFill = async () => { throw new Error('Service unavailable'); };
+}
 
 const app = express();
 const port = process.env.PORT || 3001;
