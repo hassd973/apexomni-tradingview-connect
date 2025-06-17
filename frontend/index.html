@@ -1999,16 +1999,16 @@
 				'Riding the quantum wave to success!'
 			];
 
-			document.addEventListener('DOMContentLoaded', () => {
-				DOM.loadingScreen.style.opacity = '0';
+                        function hideLoadingScreen() {
+                                DOM.loadingScreen.style.opacity = '0';
                                 setTimeout(() => {
                                         DOM.loadingScreen.style.display = 'none';
                                         DOM.loadingScreen.style.pointerEvents = 'none';
-					document.querySelector('header').style.opacity = '1';
-					setTimeout(
-						() => (document.querySelector('main').style.opacity = '1'),
-						300
-					);
+                                        document.querySelector('header').style.opacity = '1';
+                                        setTimeout(
+                                                () => (document.querySelector('main').style.opacity = '1'),
+                                                300
+                                        );
 					setTimeout(
 						() => (document.querySelector('footer').style.opacity = '1'),
 						500
@@ -2021,8 +2021,10 @@
 								700 + index * 200
 							);
 						});
-				}, 500);
-			});
+                                }, 500);
+                        }
+                        document.addEventListener('DOMContentLoaded', hideLoadingScreen);
+                        window.addEventListener('load', hideLoadingScreen);
 
 			for (let i = 0; i < 20; i++) {
 				const particle = document.createElement('div');
