@@ -1881,9 +1881,9 @@
                                 colorLegend = [],
                                 hashLog = [];
                         const siteColors = [
-                                '#87CEEB', // light blue
-                                '#ff0000', // red
-                                '#ffbb33'  // orange
+                                '#87CEEB',
+                                '#ffbb33',
+                                '#ff0000'
                         ];
 			let currentEthPrice = 0;
 			let isUsingMockLogs = true;
@@ -2504,16 +2504,18 @@ function init3D() {
 }
 
 function smoothZoom(direction) {
-  controls.target.set(0, 0, 0);
-  const factor = direction === 'in' ? 0.96 : 1.04;
-  const steps = 20;
-  let i = 0;
+  const factor = direction === 'in' ? 0.95 : 1.05;
+  let count = 0;
   function step() {
-    if (i < steps) {
-      camera.position.multiplyScalar(factor);
+    if (count < 30) {
+      if (direction === 'in') {
+        controls.dollyIn(1 / factor);
+      } else {
+        controls.dollyOut(factor);
+      }
       controls.update();
       renderer.render(scene, camera);
-      i++;
+      count++;
       requestAnimationFrame(step);
     }
   }
