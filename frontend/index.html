@@ -21,6 +21,7 @@
 <script defer="" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/OBJExporter.js"></script>
 <script defer="" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script defer="" src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/FBXExporter.js"></script>
+<script src="https://www.youtube.com/iframe_api"></script>
 <style>
     :root {
       --bg-color: #121212;
@@ -71,10 +72,28 @@
       pointer-events: none;
       z-index: -1;
     }
-    #loading-screen .loading-video iframe {
+    #loading-screen .loading-video iframe,
+    #loading-screen #loading-video-player {
       width: 100%;
       height: 100%;
     }
+    #mute-btn {
+      position: absolute;
+      bottom: 1rem;
+      right: 1rem;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      border: none;
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      z-index: 1001;
+      pointer-events: auto;
+    }
+    @media (max-width: 640px) {
+      #mute-btn { padding: 0.25rem; font-size: 0.75rem; }
+    }
+
     #loading-screen .title-box {
       margin-bottom: 2rem;
     }
@@ -752,14 +771,11 @@
 </div>
 <div id="loading-screen">
   <div class="loading-video">
-    <iframe src="https://www.youtube.com/embed/RkQ3m_uGwXE?autoplay=1&amp;mute=1&amp;controls=0&amp;rel=0&amp;modestbranding=1&amp;playsinline=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+    <div id="loading-video-player"></div>
+    <button id="mute-btn" aria-label="Toggle mute">🔇</button>
   </div>
   <div class="title-box">
     <h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
-  </div>
-  <div class="chart-loading">
-    <div class="loader"></div>
-    <div class="ml-2">Loading...</div>
   </div>
 </div>
 <div class="spline-bg" id="spline-bg">
@@ -1097,7 +1113,8 @@
       exportTokenInsightsBtn: document.getElementById('export-token-insights'),
       tokenInsightsList: document.getElementById('token-insights-list'),
       loaderTokenInsights: document.getElementById('loader-token-insights'),
-      tokenInsightsWarning: document.getElementById('token-insights-warning')
+      tokenInsightsWarning: document.getElementById('token-insights-warning'),
+      muteBtn: document.getElementById('mute-btn')
     };
 
     let draggedModule = null;
@@ -1105,6 +1122,7 @@
     let isIndicatorEnabledModal = false;
     const chartCache = {};
     let scene, camera, renderer, controls, dotClouds = [], colorLegend = [], hashLog = [];
+    let ytPlayer;
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
     let currentEthPrice = 0;
     let isUsingMockLogs = true;
@@ -1113,6 +1131,16 @@
     let balancesData = [];
     let tokenInsightsData = [];
     let isBTCPriceMock = false;
+
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('loading-video-player', {
+        videoId: 'RkQ3m_uGwXE',
+        playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
+        events: {
+          onReady: (e) => e.target.mute()
+        }
+      });
+    }
 
     const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
     const DUNE_API_KEY = 'sim_166oiUHo2nJJgnWUrA1Qkq9n1MKzmDSZ';
@@ -1166,7 +1194,7 @@
             setTimeout(() => section.style.opacity = '1', 700 + index * 200);
           });
         }, 500);
-      }, 6500); // allow video to play briefly
+      }, 23000); // allow intro video to finish
     };
 
     for (let i = 0; i < 10; i++) {
@@ -2054,6 +2082,19 @@
       loadData();
       init3D();
       updateBTCHash();
+
+      if (DOM.muteBtn) {
+        DOM.muteBtn.addEventListener('click', () => {
+          if (!ytPlayer) return;
+          if (ytPlayer.isMuted()) {
+            ytPlayer.unMute();
+            DOM.muteBtn.textContent = '🔊';
+          } else {
+            ytPlayer.mute();
+            DOM.muteBtn.textContent = '🔇';
+          }
+        });
+      }
 
       const welcome = document.createElement('li');
       welcome.className = 'p-2 rounded';
