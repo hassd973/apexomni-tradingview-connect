@@ -2295,7 +2295,6 @@
     });
   </script>
 <script>
-
 // === Live Logs ===
 async function loadLiveLogs() {
   try {
@@ -2339,9 +2338,9 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
   const data = await res.json();
   chat.innerHTML += `<div class='text-xs text-green-300'>GPT: ${data.response}</div>`;
 });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 <script>
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"><script>
-
 let walletAddress = null;
 let balanceVisible = true;
 
@@ -2424,53 +2423,8 @@ document.getElementById('open-trades').addEventListener('click', async (e) => {
     console.error('close trade error', err);
   }
 });
-<script>
-async function loadInverseFromCMC() {
-  const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false");
-  const coins = await response.json();
+</script>
 
-  const sorted = coins
-    .filter(coin => coin.price_change_percentage_24h !== null)
-    .sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h)
-    .slice(0, 10);
-
-  const labels = sorted.map(coin => coin.symbol.toUpperCase());
-  const values = sorted.map(coin => coin.price_change_percentage_24h);
-  const style = getComputedStyle(document.documentElement);
-  const blue = style.getPropertyValue('--primary-color').trim() || '#87CEEB';
-  const orange = style.getPropertyValue('--secondary-color').trim() || '#ffbb33';
-  const colors = values.map(v => v > 0 ? blue : orange);
-
-  const ctx = document.getElementById('inverseChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: '24h % Change (Inverse Movers)',
-        data: values,
-        backgroundColor: colors
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: {
-          ticks: { color: (ctx) => colors[ctx.index] },
-          grid: { color: 'rgba(255,255,255,0.1)' }
-        },
-        y: {
-          ticks: { color: '#ccc' },
-          grid: { color: 'rgba(255,255,255,0.1)' },
-          beginAtZero: true
-        }
-      }
-    }
-  });
-}
-
-window.addEventListener('load', loadInverseFromCMC);
 <script>
 let inverseChart;
 
