@@ -1161,7 +1161,10 @@
   </div>
 </div>
 <section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
-  <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
+  <div class="flex justify-between items-center">
+    <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
+    <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
+  </div>
   <div class="flex flex-col md:flex-row justify-center gap-4 mt-2">
     <div class="dj-track flex-1">
       <div class="mb-1 flex justify-center gap-2">
@@ -1255,6 +1258,7 @@
       trackBLoad: document.getElementById('track-b-load'),
       crossfader: document.getElementById('crossfader'),
       autoBlendBtn: document.getElementById('auto-blend'),
+      djDockBtn: document.getElementById('dj-dock-btn'),
       recordMixBtn: document.getElementById('record-mix'),
       downloadMixBtn: document.getElementById('download-mix'),
       surroundToggleBtn: document.getElementById('surround-toggle'),
@@ -1298,11 +1302,13 @@
         events: {
           onReady: (e) => {
             try {
+              e.target.mute();
               e.target.playVideo();
-              e.target.unMute();
-              e.target.setVolume(100);
-              setTimeout(() => e.target.playVideo(), 500);
-              setTimeout(() => e.target.playVideo(), 1000);
+              setTimeout(() => {
+                e.target.unMute();
+                e.target.setVolume(100);
+                e.target.playVideo();
+              }, 1000);
             } catch {}
           }
         }
@@ -2397,6 +2403,15 @@
       DOM.navMenuToggle.addEventListener('click', () => DOM.navMenu.classList.add('active'));
       DOM.navMenuClose.addEventListener('click', () => DOM.navMenu.classList.remove('active'));
 
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('dj') === '1') {
+        document.querySelector('header').style.display = 'none';
+        document.querySelectorAll('#module-grid section').forEach(sec => {
+          if (sec.id !== 'dj-dashboard') sec.style.display = 'none';
+        });
+        document.querySelector('footer').style.display = 'none';
+      }
+
       setupDragAndDrop();
       loadModuleOrder();
       setupModuleToggles();
@@ -2454,6 +2469,13 @@
         DOM.trackBLoad.addEventListener('click', () => {
           if (trackBPlayer) trackBPlayer.loadPlaylist({list: PLAYLIST_B});
           if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_B});
+        });
+      }
+
+      if (DOM.djDockBtn) {
+        DOM.djDockBtn.addEventListener('click', () => {
+          const url = window.location.pathname + '?dj=1';
+          window.open(url, 'djWindow', 'width=800,height=600');
         });
       }
 
