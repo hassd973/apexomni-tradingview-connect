@@ -1638,7 +1638,11 @@
 					<div class="data-warning" id="btc-hash-warning" style="display: none">
 						&gt; Live data from Dune API
 					</div>
-                                        <div class="btc-hash-svg" id="btc-hash-canvas"></div>
+        <div class="btc-hash-svg" id="btc-hash-canvas"></div>
+        <div class="flex justify-center gap-2 mt-2" id="btc-zoom-controls">
+          <button id="btc-zoom-in" class="px-2 py-1 rounded" data-tooltip="Zoom In" aria-label="Zoom in">+</button>
+          <button id="btc-zoom-out" class="px-2 py-1 rounded" data-tooltip="Zoom Out" aria-label="Zoom out">-</button>
+        </div>
 					<div id="btc-legend">
 						<span id="btc-price">Price: Loading...</span>
 						<span id="btc-time">Time: Loading...</span>
@@ -2398,7 +2402,7 @@
 				return hash;
 			}
 
-			function init3D() {
+function init3D() {
 				scene = new THREE.Scene();
 				camera = new THREE.PerspectiveCamera(
 					75,
@@ -2479,18 +2483,37 @@
 					}
 				});
 
-				function animate() {
-					requestAnimationFrame(animate);
-					controls.update();
-					renderer.render(scene, camera);
-				}
-				animate();
-			}
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+}
 
-                        async function updateBTCHash() {
-                                isBTCPriceMock = false;
+ function smoothZoom(direction) {
+   const steps = 30;
+   let count = 0;
+   function step() {
+     if (count < steps) {
+       if (direction === 'in') controls.dollyIn(1.02);
+       else controls.dollyOut(1.02);
+       controls.update();
+       renderer.render(scene, camera);
+       count++;
+       requestAnimationFrame(step);
+     }
+   }
+   step();
+ }
 
-                                const liveData = await fetchBTCPrice();
+    async function updateBTCHash() {
+      isBTCPriceMock = false;
+
+      const liveData = await fetchBTCPrice();
+      dotClouds.forEach(cloud => {
+        cloud.material.opacity *= 0.7;
+      });
 
                                 let historicalData;
 				try {
@@ -2594,7 +2617,7 @@
                                                 ], 3)
                                         );
                                         geometry.setAttribute('color', new THREE.Float32BufferAttribute([1, 0.5, 0, 1, 0.5, 0, 1, 0.5, 0], 3));
-                                        const material = new THREE.PointsMaterial({ size: 0.1, vertexColors: true });
+        const material = new THREE.PointsMaterial({ size: 0.1, vertexColors: true, transparent: true, opacity: 1 });
                                         const cloud = new THREE.Points(geometry, material);
                                         scene.add(cloud);
                                         dotClouds.push(cloud);
@@ -3441,9 +3464,12 @@
 					exportToCSV(balancesData, 'balances_data.csv');
 				});
 
-				DOM.exportTokenInsightsBtn.addEventListener('click', () => {
-					exportToCSV(tokenInsightsData, 'token_insights_data.csv');
-				});
+  DOM.exportTokenInsightsBtn.addEventListener('click', () => {
+    exportToCSV(tokenInsightsData, 'token_insights_data.csv');
+  });
+
+  document.getElementById('btc-zoom-in').addEventListener('click', () => smoothZoom('in'));
+  document.getElementById('btc-zoom-out').addEventListener('click', () => smoothZoom('out'));
 
 				const observer = new IntersectionObserver(
 					(entries) => {
