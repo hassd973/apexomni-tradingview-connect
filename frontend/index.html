@@ -93,7 +93,22 @@
     @media (max-width: 640px) {
       #mute-btn { padding: 0.25rem; font-size: 0.75rem; }
     }
-    #music-player { display: none; }
+    .playlist-container { position: relative; width: 100%; height: 200px; }
+    #music-player { width: 100%; height: 100%; }
+    .playlist-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--text-color);
+      pointer-events: none;
+      padding: 0.25rem;
+    }
     #music-mute-btn, #quantumi-sound-btn {
       background-color: var(--primary-color);
       color: #1e2727;
@@ -108,7 +123,25 @@
       background-color: var(--secondary-color);
       box-shadow: 0 0 8px var(--secondary-color);
     }
+    #skip-intro-btn {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: var(--primary-color);
+      color: #1e2727;
+      border: 1px solid var(--shadow-color);
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      z-index: 1001;
+    }
+    #skip-intro-btn:hover {
+      background-color: var(--secondary-color);
+      box-shadow: 0 0 8px var(--secondary-color);
+    }
     #loading-screen .title-box {
+      margin-top: 30vh;
       margin-bottom: 2rem;
     }
     header, main, footer, #module-grid section {
@@ -788,6 +821,7 @@
   <div class="loading-video">
     <div id="loading-video-player"></div>
     <button id="mute-btn" aria-label="Toggle mute">🔇</button>
+    <button id="skip-intro-btn" aria-label="Skip intro">Skip Intro</button>
   </div>
   <div class="title-box">
     <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
@@ -1093,7 +1127,15 @@
     <button id="music-mute-btn" aria-label="Toggle music mute">🔇</button>
     <button id="quantumi-sound-btn" aria-label="Toggle QuantumI sound">QuantumI Sound</button>
   </div>
-  <div id="music-player"></div>
+  <div class="playlist-container">
+    <div id="music-player"></div>
+    <div class="playlist-overlay">
+      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
+      <span id="playlist-price"></span>
+      <span id="playlist-time"></span>
+      <span id="playlist-date"></span>
+    </div>
+  </div>
 </div>
 <footer class="text-center text-gray-500 text-sm">
 <p class="typewriter">Powered by CoinGecko, Etherscan, Dune &amp; TradingView</p>
@@ -1138,7 +1180,11 @@
       tokenInsightsWarning: document.getElementById('token-insights-warning'),
       muteBtn: document.getElementById('mute-btn'),
       musicMuteBtn: document.getElementById('music-mute-btn'),
-      quantumiSoundBtn: document.getElementById('quantumi-sound-btn')
+      quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
+      skipIntroBtn: document.getElementById('skip-intro-btn'),
+      playlistPrice: document.getElementById('playlist-price'),
+      playlistTime: document.getElementById('playlist-time'),
+      playlistDate: document.getElementById('playlist-date')
     };
 
     let draggedModule = null;
@@ -1149,7 +1195,6 @@
     let ytPlayer;
     let bgMusicPlayer;
     let isQuantumSound = false;
-
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
     let currentEthPrice = 0;
     let isUsingMockLogs = true;
@@ -1235,19 +1280,21 @@
       "Riding the quantum wave to success!"
     ];
 
-    window.onload = function() {
+    function hideLoadingScreen() {
+      DOM.loadingScreen.style.opacity = '0';
       setTimeout(() => {
-        DOM.loadingScreen.style.opacity = '0';
-        setTimeout(() => {
-          DOM.loadingScreen.style.display = 'none';
-          document.querySelector('header').style.opacity = '1';
-          setTimeout(() => document.querySelector('main').style.opacity = '1', 300);
-          setTimeout(() => document.querySelector('footer').style.opacity = '1', 500);
-          document.querySelectorAll('#module-grid section').forEach((section, index) => {
-            setTimeout(() => section.style.opacity = '1', 700 + index * 200);
-          });
-        }, 500);
-      }, 23000); // allow intro video to finish
+        DOM.loadingScreen.style.display = 'none';
+        document.querySelector('header').style.opacity = '1';
+        setTimeout(() => document.querySelector('main').style.opacity = '1', 300);
+        setTimeout(() => document.querySelector('footer').style.opacity = '1', 500);
+        document.querySelectorAll('#module-grid section').forEach((section, index) => {
+          setTimeout(() => section.style.opacity = '1', 700 + index * 200);
+        });
+      }, 500);
+    }
+
+    window.onload = function() {
+      setTimeout(hideLoadingScreen, 23000);
     };
 
     for (let i = 0; i < 10; i++) {
@@ -1683,6 +1730,9 @@
 
         document.getElementById('btc-price').textContent = `Price: $${latestPrice.toLocaleString()}`;
         document.getElementById('btc-time').textContent = `Time: ${latestTime}`;
+        if (DOM.playlistPrice) DOM.playlistPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
+        if (DOM.playlistTime) DOM.playlistTime.textContent = `Time: ${latestTime}`;
+        if (DOM.playlistDate) DOM.playlistDate.textContent = new Date().toLocaleDateString();
 
         const hashId = generateHashFromPrice(latestPrice);
         addHashLog(hashId, latestTime);
@@ -2169,6 +2219,10 @@
           bgMusicPlayer.setPlaybackRate(isQuantumSound ? 1.25 : 1.0);
           DOM.quantumiSoundBtn.textContent = isQuantumSound ? 'Sound Off' : 'QuantumI Sound';
         });
+      }
+
+      if (DOM.skipIntroBtn) {
+        DOM.skipIntroBtn.addEventListener('click', hideLoadingScreen);
       }
 
       const welcome = document.createElement('li');
