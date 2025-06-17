@@ -697,6 +697,12 @@
     color: var(--secondary-color);
     text-decoration: underline;
 }
+.text-brand-blue {
+    color: var(--primary-color);
+}
+.text-brand-orange {
+    color: var(--secondary-color);
+}
 .zoom-btn {
     background-color: var(--primary-color);
     color: #000;
@@ -2209,18 +2215,29 @@
         addSystemLog('Exported BTC Hash Visualization as OBJ');
       });
 
-      DOM.zoomInBtn.addEventListener('click', () => {
-        if (camera) {
-          camera.position.multiplyScalar(0.8);
-          controls.update();
-        }
+      let zoomInterval;
+      function startZoom(dir) {
+        let speed = 0.02;
+        clearInterval(zoomInterval);
+        zoomInterval = setInterval(() => {
+          if (camera) {
+            const factor = dir === 'in' ? 1 - speed : 1 + speed;
+            camera.position.multiplyScalar(factor);
+            controls.update();
+            speed = Math.min(speed * 1.05, 0.15);
+          }
+        }, 50);
+      }
+      function stopZoom() {
+        clearInterval(zoomInterval);
+      }
+      ['mousedown','touchstart'].forEach(ev => {
+        DOM.zoomInBtn.addEventListener(ev, () => startZoom('in'));
+        DOM.zoomOutBtn.addEventListener(ev, () => startZoom('out'));
       });
-
-      DOM.zoomOutBtn.addEventListener('click', () => {
-        if (camera) {
-          camera.position.multiplyScalar(1.25);
-          controls.update();
-        }
+      ['mouseup','mouseleave','touchend'].forEach(ev => {
+        DOM.zoomInBtn.addEventListener(ev, stopZoom);
+        DOM.zoomOutBtn.addEventListener(ev, stopZoom);
       });
 
       DOM.exportHashLogBtn.addEventListener('click', () => {
@@ -2293,14 +2310,14 @@
     winners.forEach(token => {
       const li = document.createElement('li');
       li.textContent = `${token.symbol}: ${token.change}`;
-      li.className = "text-green-400";
+      li.className = "text-brand-blue";
       document.getElementById('inverse-winners-list').appendChild(li);
     });
 
     losers.forEach(token => {
       const li = document.createElement('li');
       li.textContent = `${token.symbol}: ${token.change}`;
-      li.className = "text-red-400";
+      li.className = "text-brand-orange";
       document.getElementById('inverse-losers-list').appendChild(li);
     });
   });
@@ -2351,14 +2368,14 @@
     winners.forEach(token => {
       const li = document.createElement('li');
       li.textContent = `${token.symbol}: ${token.change}`;
-      li.className = "text-green-400";
+      li.className = "text-brand-blue";
       document.getElementById('inverse-winners-list').appendChild(li);
     });
 
     losers.forEach(token => {
       const li = document.createElement('li');
       li.textContent = `${token.symbol}: ${token.change}`;
-      li.className = "text-red-400";
+      li.className = "text-brand-orange";
       document.getElementById('inverse-losers-list').appendChild(li);
     });
   });
@@ -2415,14 +2432,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (winList) winners.forEach(t => {
     const li = document.createElement("li");
     li.textContent = `${t.symbol}: ${t.change}`;
-    li.className = "text-blue-400";
+    li.className = "text-brand-blue";
     winList.appendChild(li);
   });
 
   if (loseList) losers.forEach(t => {
     const li = document.createElement("li");
     li.textContent = `${t.symbol}: ${t.change}`;
-    li.className = "text-red-500";
+    li.className = "text-brand-orange";
     loseList.appendChild(li);
   });
 
@@ -2534,7 +2551,10 @@ async function loadInverseFromCMC() {
 
   const labels = sorted.map(coin => coin.symbol.toUpperCase());
   const values = sorted.map(coin => coin.price_change_percentage_24h);
-  const colors = values.map(v => v > 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.7)');
+  const style = getComputedStyle(document.documentElement);
+  const blue = style.getPropertyValue('--primary-color').trim() || '#87CEEB';
+  const orange = style.getPropertyValue('--secondary-color').trim() || '#ffbb33';
+  const colors = values.map(v => v > 0 ? blue : orange);
 
   const ctx = document.getElementById('inverseChart').getContext('2d');
   new Chart(ctx, {
@@ -2552,7 +2572,7 @@ async function loadInverseFromCMC() {
       plugins: { legend: { display: false } },
       scales: {
         x: {
-          ticks: { color: '#ccc' },
+          ticks: { color: (ctx) => colors[ctx.index] },
           grid: { color: 'rgba(255,255,255,0.1)' }
         },
         y: {
@@ -2606,10 +2626,13 @@ async function loadInverseChart(topCount = 10) {
 
     const labels = filteredTokens.map(t => t.symbol.toUpperCase());
     const data = filteredTokens.map(t => t.price_change_percentage_24h);
+    const style = getComputedStyle(document.documentElement);
+    const blue = style.getPropertyValue('--primary-color').trim() || '#87CEEB';
+    const orange = style.getPropertyValue('--secondary-color').trim() || '#ffbb33';
     const bgColor = data.map(change =>
         isMarketDown
-            ? (change > 0 ? '#3b82f6' : '#ffbb33')
-            : (change < 0 ? '#ffbb33' : '#3b82f6')
+            ? (change > 0 ? blue : orange)
+            : (change < 0 ? orange : blue)
     );
 
     const ctx = document.getElementById('inverseChart').getContext('2d');
