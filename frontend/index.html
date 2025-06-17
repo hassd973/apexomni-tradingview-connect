@@ -129,6 +129,20 @@
       width: 100%;
       height: 200px;
     }
+    .dj-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      gap: 0.25rem;
+      background: rgba(0,0,0,0.3);
+      color: var(--text-color);
+      justify-content: center;
+      pointer-events: none;
+      font-size: 0.75rem;
+      padding: 0.25rem;
+    }
     .dj-btn {
       background-color: var(--primary-color);
       color: #1e2727;
@@ -580,6 +594,13 @@
     @media (min-width: 640px) {
       .title-box { font-size: 1.25rem; }
     }
+    header.shrink .title-box {
+      margin-top: 0;
+      padding: 0.5rem;
+      animation: none;
+    }
+    header.shrink .title-box h1 { font-size: 1.25rem; }
+    header.shrink p { display: none; }
     #chart-title-header, #chart-title-modal {
       text-align: center;
       padding: 0.5rem;
@@ -730,6 +751,7 @@
       cursor: pointer;
       z-index: 101;
     }
+    .nav-menu-toggle.hidden { display: none; }
     .nav-menu-close {
       position: absolute;
       top: 1rem;
@@ -821,7 +843,7 @@
 </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
-<button aria-label="Toggle navigation menu" class="nav-menu-toggle" id="nav-menu-toggle" role="button">☰</button>
+<button aria-label="Toggle navigation menu" class="nav-menu-toggle hidden" id="nav-menu-toggle" role="button">☰</button>
 <div class="nav-menu" id="nav-menu">
 <button aria-label="Close navigation menu" class="nav-menu-close" id="nav-menu-close" role="button">×</button>
 <div class="nav-menu-content">
@@ -1181,14 +1203,30 @@
         <input id="track-a-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2"/>
         <button id="track-a-load" class="dj-btn">Load A</button>
       </div>
-      <div id="track-a-player"></div>
+      <div class="playlist-container">
+        <div id="track-a-player"></div>
+        <div class="dj-overlay">
+          <span id="track-a-price"></span>
+          <span id="track-a-inverse"></span>
+          <span id="track-a-time"></span>
+          <span id="track-a-date"></span>
+        </div>
+      </div>
     </div>
     <div class="dj-track flex-1">
       <div class="mb-1 flex justify-center gap-2">
         <input id="track-b-url" class="p-1 rounded text-sm" value="https://www.youtube.com/watch?v=KCb5cgnHsQ8&list=LL"/>
         <button id="track-b-load" class="dj-btn">Load B</button>
       </div>
-      <div id="track-b-player"></div>
+      <div class="playlist-container">
+        <div id="track-b-player"></div>
+        <div class="dj-overlay">
+          <span id="track-b-price"></span>
+          <span id="track-b-inverse"></span>
+          <span id="track-b-time"></span>
+          <span id="track-b-date"></span>
+        </div>
+      </div>
     </div>
   </div>
   <div class="flex flex-col items-center mt-2">
@@ -1262,6 +1300,14 @@
       playlistPrice: document.getElementById('playlist-price'),
       playlistTime: document.getElementById('playlist-time'),
       playlistDate: document.getElementById('playlist-date'),
+      trackAPrice: document.getElementById('track-a-price'),
+      trackAInverse: document.getElementById('track-a-inverse'),
+      trackATime: document.getElementById('track-a-time'),
+      trackADate: document.getElementById('track-a-date'),
+      trackBPrice: document.getElementById('track-b-price'),
+      trackBInverse: document.getElementById('track-b-inverse'),
+      trackBTime: document.getElementById('track-b-time'),
+      trackBDate: document.getElementById('track-b-date'),
       trackAUrl: document.getElementById('track-a-url'),
       trackALoad: document.getElementById('track-a-load'),
       trackBUrl: document.getElementById('track-b-url'),
@@ -1357,8 +1403,6 @@
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
-            if (djCtx && djCtx.state === 'suspended') djCtx.resume();
-            ev.target.playVideo();
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
           }
         }
@@ -1372,8 +1416,6 @@
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
-            if (djCtx && djCtx.state === 'suspended') djCtx.resume();
-            ev.target.playVideo();
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_B});
           }
         }
@@ -1581,6 +1623,7 @@
       setTimeout(() => {
         DOM.loadingScreen.style.display = 'none';
         document.querySelector('header').style.opacity = '1';
+        shrinkHeader();
         setTimeout(() => document.querySelector('main').style.opacity = '1', 300);
         setTimeout(() => document.querySelector('footer').style.opacity = '1', 500);
         document.querySelectorAll('#module-grid section').forEach((section, index) => {
@@ -1592,6 +1635,16 @@
     window.onload = function() {
       setTimeout(hideLoadingScreen, 23000);
     };
+
+    function shrinkHeader() {
+      const header = document.querySelector('header');
+      if (header) header.classList.add('shrink');
+      if (DOM.navMenuToggle) DOM.navMenuToggle.classList.remove('hidden');
+    }
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) shrinkHeader();
+    });
 
     function resumePlayers() {
       try {
@@ -1839,6 +1892,17 @@
       }
     }
 
+    async function fetchTopInverseToken() {
+      try {
+        const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_change_percentage_24h.asc&per_page=1&page=1';
+        const data = await fetchWithRetry(url);
+        return data && data[0] ? data[0].symbol.toUpperCase() : 'N/A';
+      } catch (err) {
+        console.error('Failed to fetch inverse token:', err);
+        return 'N/A';
+      }
+    }
+
     async function fetchChainBalance(chainId, address = '0xb5d85cbf7cb3ee0d56b3bb207d5fc4b82f43f511') {
       const url = `https://api.etherscan.io/api?chainid=${chainId}&module=account&action=balance&address=${address}&tag=latest&apikey=${API_KEY}`;
       try {
@@ -2041,6 +2105,16 @@
         if (DOM.playlistPrice) DOM.playlistPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.playlistTime) DOM.playlistTime.textContent = `Time: ${latestTime}`;
         if (DOM.playlistDate) DOM.playlistDate.textContent = new Date().toLocaleDateString();
+        if (DOM.trackAPrice) DOM.trackAPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
+        if (DOM.trackATime) DOM.trackATime.textContent = latestTime;
+        if (DOM.trackADate) DOM.trackADate.textContent = new Date().toLocaleDateString();
+        if (DOM.trackBPrice) DOM.trackBPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
+        if (DOM.trackBTime) DOM.trackBTime.textContent = latestTime;
+        if (DOM.trackBDate) DOM.trackBDate.textContent = new Date().toLocaleDateString();
+
+        const inverse = await fetchTopInverseToken();
+        if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Top ⬇️: ${inverse}`;
+        if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Top ⬇️: ${inverse}`;
 
         const hashId = generateHashFromPrice(latestPrice);
         addHashLog(hashId, latestTime);
@@ -2528,9 +2602,11 @@
           if (bgMusicPlayer.isMuted()) {
             bgMusicPlayer.unMute();
             DOM.musicMuteBtn.textContent = '🔊';
+            DOM.musicMuteBtn.classList.add('active');
           } else {
             bgMusicPlayer.mute();
             DOM.musicMuteBtn.textContent = '🔇';
+            DOM.musicMuteBtn.classList.remove('active');
           }
         });
       }
@@ -2544,6 +2620,8 @@
             disableQuantumSound();
           }
           DOM.quantumiSoundBtn.textContent = isQuantumSound ? 'Sound Off' : 'QuantumI Sound';
+          if (isQuantumSound) DOM.quantumiSoundBtn.classList.add('active');
+          else DOM.quantumiSoundBtn.classList.remove('active');
         });
       }
 
