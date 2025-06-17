@@ -1197,6 +1197,7 @@
     let ytPlayer;
     let bgMusicPlayer;
     let isQuantumSound = false;
+    let audioCtx, audioSource, delayNode, convolverNode, filterNode, bitcrusherNode, gainNode;
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
     let currentEthPrice = 0;
     let isUsingMockLogs = true;
@@ -1242,6 +1243,54 @@
           }
         }
       });
+
+      function createImpulse(duration = 2, decay = 2) {
+        const rate = audioCtx.sampleRate;
+        const length = rate * duration;
+        const impulse = audioCtx.createBuffer(2, length, rate);
+        for (let c = 0; c < 2; c++) {
+          const channel = impulse.getChannelData(c);
+          for (let i = 0; i < length; i++) {
+            channel[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+          }
+        }
+        return impulse;
+      }
+
+      window.enableQuantumSound = function() {
+        if (!bgMusicPlayer || !bgMusicPlayer.getIframe || !bgMusicPlayer.getIframe().captureStream) return;
+        if (audioCtx) return;
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const stream = bgMusicPlayer.getIframe().captureStream();
+        if (!stream) return;
+        audioSource = audioCtx.createMediaStreamSource(stream);
+        delayNode = audioCtx.createDelay();
+        delayNode.delayTime.value = 0.25;
+        convolverNode = audioCtx.createConvolver();
+        convolverNode.buffer = createImpulse();
+        filterNode = audioCtx.createBiquadFilter();
+        filterNode.type = 'lowpass';
+        filterNode.frequency.value = 1200;
+        bitcrusherNode = audioCtx.createWaveShaper();
+        bitcrusherNode.curve = new Float32Array([-1,-0.5,0,0.5,1]);
+        bitcrusherNode.oversample = '4x';
+        gainNode = audioCtx.createGain();
+        audioSource.connect(filterNode);
+        filterNode.connect(delayNode);
+        delayNode.connect(convolverNode);
+        convolverNode.connect(bitcrusherNode);
+        bitcrusherNode.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        bgMusicPlayer.setPlaybackRate(1.25);
+      };
+
+      window.disableQuantumSound = function() {
+        if (audioCtx) {
+          audioCtx.close();
+          audioCtx = null;
+        }
+        bgMusicPlayer.setPlaybackRate(1.0);
+      };
     }
 
     const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
@@ -2220,7 +2269,11 @@
         DOM.quantumiSoundBtn.addEventListener('click', () => {
           if (!bgMusicPlayer) return;
           isQuantumSound = !isQuantumSound;
-          bgMusicPlayer.setPlaybackRate(isQuantumSound ? 1.25 : 1.0);
+          if (isQuantumSound) {
+            enableQuantumSound();
+          } else {
+            disableQuantumSound();
+          }
           DOM.quantumiSoundBtn.textContent = isQuantumSound ? 'Sound Off' : 'QuantumI Sound';
         });
       }
