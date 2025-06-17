@@ -1186,11 +1186,17 @@
       <a id="download-mix" class="dj-btn" style="display:none" href="#">Download</a>
       <button id="surround-toggle" class="dj-btn">Surround</button>
     </div>
-    <div class="mt-2 flex gap-2 items-center text-sm">
+    <div class="mt-2 flex flex-wrap gap-2 items-center text-sm justify-center">
       <label for="delay-knob">Delay</label>
       <input id="delay-knob" type="range" min="0" max="1" step="0.01" value="0.25"/>
       <label for="reverb-knob">Reverb</label>
       <input id="reverb-knob" type="range" min="0" max="1" step="0.01" value="0.5"/>
+      <label for="decimate-knob">Decimate</label>
+      <input id="decimate-knob" type="range" min="0" max="1" step="0.01" value="0.1"/>
+      <label for="lofi-knob">LoFi</label>
+      <input id="lofi-knob" type="range" min="0" max="1" step="0.01" value="0.5"/>
+      <label for="repeat-knob">Repeat</label>
+      <input id="repeat-knob" type="range" min="0" max="1" step="0.01" value="0"/>
     </div>
     <canvas id="wave-canvas" width="600" height="80" class="mt-2"></canvas>
   </div>
@@ -1254,6 +1260,9 @@
       surroundToggleBtn: document.getElementById('surround-toggle'),
       delayKnob: document.getElementById('delay-knob'),
       reverbKnob: document.getElementById('reverb-knob'),
+      decimateKnob: document.getElementById('decimate-knob'),
+      lofiKnob: document.getElementById('lofi-knob'),
+      repeatKnob: document.getElementById('repeat-knob'),
       waveCanvas: document.getElementById('wave-canvas')
     };
 
@@ -1358,6 +1367,15 @@
         return impulse;
       }
 
+      function createBitcrusherCurve(bits) {
+        const samples = 1 << bits;
+        const curve = new Float32Array(samples);
+        for (let i = 0; i < samples; i++) {
+          curve[i] = (i / (samples - 1)) * 2 - 1;
+        }
+        return curve;
+      }
+
       function attachTrack(player, which) {
         if (!djCtx) {
           djCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1428,7 +1446,11 @@
       };
     }
 
-    window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+    if (window.YT && window.YT.Player) {
+      onYouTubeIframeAPIReady();
+    } else {
+      window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+    }
 
     const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
     const DUNE_API_KEY = 'sim_166oiUHo2nJJgnWUrA1Qkq9n1MKzmDSZ';
@@ -2458,6 +2480,28 @@
           const v = parseFloat(DOM.reverbKnob.value);
           if (reverbNodeA) reverbNodeA.buffer = createImpulse(v * 2, 2);
           if (reverbNodeB) reverbNodeB.buffer = createImpulse(v * 2, 2);
+        });
+      }
+
+      if (DOM.decimateKnob) {
+        DOM.decimateKnob.addEventListener('input', () => {
+          const v = parseFloat(DOM.decimateKnob.value);
+          const bits = Math.max(1, Math.round(v * 8));
+          if (bitcrusherNode) bitcrusherNode.curve = createBitcrusherCurve(bits);
+        });
+      }
+
+      if (DOM.lofiKnob) {
+        DOM.lofiKnob.addEventListener('input', () => {
+          const v = parseFloat(DOM.lofiKnob.value);
+          if (filterNode) filterNode.frequency.value = 500 + (1 - v) * 5000;
+        });
+      }
+
+      if (DOM.repeatKnob) {
+        DOM.repeatKnob.addEventListener('input', () => {
+          const v = parseFloat(DOM.repeatKnob.value);
+          if (delayNode) delayNode.delayTime.value = v;
         });
       }
 
