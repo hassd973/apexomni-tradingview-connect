@@ -1885,7 +1885,12 @@
                                 dotClouds = [],
                                 colorLegend = [],
                                 hashLog = [];
-                        const siteColors = ['#ff0000', '#ffbb33', '#87CEEB'];
+                        const siteColors = [
+                                'rgba(135,206,235,0.9)', // light blue default
+                                'rgba(0,0,255,0.8)',    // blue
+                                'rgba(255,0,0,0.7)',    // red
+                                'rgba(255,187,51,0.6)'  // yellow/orange
+                        ];
 			let currentEthPrice = 0;
 			let isUsingMockLogs = true;
 			let gasHistory = [];
@@ -3051,7 +3056,7 @@
             <div class="token-row">
               <span class="token-name">${token.name} (${token.symbol})</span>
               <div class="flex gap-2 items-center">
-                <a href="https://coinmarketcap.com/currencies/${cmcSlug}/" target="_blank" rel="noopener" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
+                <a href="https://coinmarketcap.com/search/?q=${encodeURIComponent(token.name)}" target="_blank" rel="noopener" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
               </div>
             </div>
@@ -3449,22 +3454,37 @@
                                         addSystemLog('Exported BTC Hash Visualization as OBJ');
                                 });
 
-                                function smoothZoom(direction) {
-                                        const steps = 20;
-                                        let count = 0;
+                                let zoomInterval;
+
+                                function smoothZoomStep(direction) {
                                         const zoom = direction > 0 ? controls.dollyIn.bind(controls) : controls.dollyOut.bind(controls);
                                         const factor = direction > 0 ? 0.95 : 1.05;
-                                        const interval = setInterval(() => {
-                                                zoom(factor);
-                                                controls.update();
-                                                renderer.render(scene, camera);
-                                                count++;
-                                                if (count >= steps) clearInterval(interval);
-                                        }, 30);
+                                        zoom(factor);
+                                        controls.update();
+                                        renderer.render(scene, camera);
                                 }
 
-                                DOM.zoomInBtn.addEventListener('click', () => smoothZoom(1));
-                                DOM.zoomOutBtn.addEventListener('click', () => smoothZoom(-1));
+                                function startContinuousZoom(dir) {
+                                        stopContinuousZoom();
+                                        smoothZoomStep(dir);
+                                        zoomInterval = setInterval(() => smoothZoomStep(dir), 100);
+                                }
+
+                                function stopContinuousZoom() {
+                                        if (zoomInterval) {
+                                                clearInterval(zoomInterval);
+                                                zoomInterval = null;
+                                        }
+                                }
+
+                                ['mousedown', 'touchstart'].forEach(evt => {
+                                        DOM.zoomInBtn.addEventListener(evt, e => { e.preventDefault(); startContinuousZoom(1); });
+                                        DOM.zoomOutBtn.addEventListener(evt, e => { e.preventDefault(); startContinuousZoom(-1); });
+                                });
+                                ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(evt => {
+                                        DOM.zoomInBtn.addEventListener(evt, stopContinuousZoom);
+                                        DOM.zoomOutBtn.addEventListener(evt, stopContinuousZoom);
+                                });
 
 				DOM.exportHashLogBtn.addEventListener('click', () => {
 					exportToCSV(hashLog, 'hash_log.csv');
@@ -4029,11 +4049,11 @@
 						onClick: (evt, elements) => {
 							if (elements.length > 0) {
 								const token = labels[elements[0].index];
-								const cmcSlug = token.toLowerCase().replace(/\s+/g, '-');
-								window.open(
-									`https://coinmarketcap.com/currencies/${cmcSlug}/`,
-									'_blank'
-								);
+                                const cmcQuery = encodeURIComponent(token);
+                                window.open(
+                                        `https://coinmarketcap.com/search/?q=${cmcQuery}`,
+                                        '_blank'
+                                );
 							}
 						},
 						plugins: {
