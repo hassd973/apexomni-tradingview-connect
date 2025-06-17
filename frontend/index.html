@@ -93,7 +93,21 @@
     @media (max-width: 640px) {
       #mute-btn { padding: 0.25rem; font-size: 0.75rem; }
     }
-
+    #music-player { display: none; }
+    #music-mute-btn, #quantumi-sound-btn {
+      background-color: var(--primary-color);
+      color: #1e2727;
+      border: 1px solid var(--shadow-color);
+      font-size: 0.875rem;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+    #music-mute-btn:hover, #quantumi-sound-btn:hover {
+      background-color: var(--secondary-color);
+      box-shadow: 0 0 8px var(--secondary-color);
+    }
     #loading-screen .title-box {
       margin-bottom: 2rem;
     }
@@ -506,6 +520,7 @@
       animation: pulse 4s infinite;
       box-shadow: 0 0 4px var(--shadow-color);
     }
+    header .title-box { margin-top: 200px; }
     @media (min-width: 640px) {
       .title-box { font-size: 1.25rem; }
     }
@@ -775,7 +790,7 @@
     <button id="mute-btn" aria-label="Toggle mute">🔇</button>
   </div>
   <div class="title-box">
-    <h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
+    <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
   </div>
 </div>
 <div class="spline-bg" id="spline-bg">
@@ -786,7 +801,7 @@
 <header class="w-full flex justify-center items-center">
 <div class="w-full max-w-[98vw] mx-auto px-4">
 <div class="title-box">
-<h1 class="text-3xl md:text-4xl main-title">⚛️ QUANTUMI 🌌</h1>
+<h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
 </div>
 <p class="text-base text-center">Real-time cryptocurrency market data and analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains.</p>
 <div class="chart-wrapper w-full">
@@ -1073,6 +1088,13 @@
 </div>
 </div>
 </div>
+<div class="music-module w-full max-w-[98vw] mx-auto text-center mt-4">
+  <div class="flex justify-center gap-2 mb-2">
+    <button id="music-mute-btn" aria-label="Toggle music mute">🔇</button>
+    <button id="quantumi-sound-btn" aria-label="Toggle QuantumI sound">QuantumI Sound</button>
+  </div>
+  <div id="music-player"></div>
+</div>
 <footer class="text-center text-gray-500 text-sm">
 <p class="typewriter">Powered by CoinGecko, Etherscan, Dune &amp; TradingView</p>
 </footer>
@@ -1114,7 +1136,9 @@
       tokenInsightsList: document.getElementById('token-insights-list'),
       loaderTokenInsights: document.getElementById('loader-token-insights'),
       tokenInsightsWarning: document.getElementById('token-insights-warning'),
-      muteBtn: document.getElementById('mute-btn')
+      muteBtn: document.getElementById('mute-btn'),
+      musicMuteBtn: document.getElementById('music-mute-btn'),
+      quantumiSoundBtn: document.getElementById('quantumi-sound-btn')
     };
 
     let draggedModule = null;
@@ -1123,6 +1147,9 @@
     const chartCache = {};
     let scene, camera, renderer, controls, dotClouds = [], colorLegend = [], hashLog = [];
     let ytPlayer;
+    let bgMusicPlayer;
+    let isQuantumSound = false;
+
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
     let currentEthPrice = 0;
     let isUsingMockLogs = true;
@@ -1137,7 +1164,33 @@
         videoId: 'RkQ3m_uGwXE',
         playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
         events: {
-          onReady: (e) => e.target.mute()
+          onReady: (e) => {
+            try {
+              e.target.playVideo();
+              e.target.unMute();
+              e.target.setVolume(100);
+            } catch {}
+          }
+        }
+      });
+
+      bgMusicPlayer = new YT.Player('music-player', {
+        videoId: 'RkQ3m_uGwXE',
+        playerVars: {
+          listType: 'playlist',
+          list: 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2',
+          autoplay: 1,
+          loop: 1,
+          controls: 0,
+          rel: 0,
+          modestbranding: 1
+        },
+        events: {
+          onReady: (e) => {
+            e.target.setVolume(100);
+            e.target.mute();
+            e.target.playVideo();
+          }
         }
       });
     }
@@ -2093,6 +2146,28 @@
             ytPlayer.mute();
             DOM.muteBtn.textContent = '🔇';
           }
+        });
+      }
+
+      if (DOM.musicMuteBtn) {
+        DOM.musicMuteBtn.addEventListener('click', () => {
+          if (!bgMusicPlayer) return;
+          if (bgMusicPlayer.isMuted()) {
+            bgMusicPlayer.unMute();
+            DOM.musicMuteBtn.textContent = '🔊';
+          } else {
+            bgMusicPlayer.mute();
+            DOM.musicMuteBtn.textContent = '🔇';
+          }
+        });
+      }
+
+      if (DOM.quantumiSoundBtn) {
+        DOM.quantumiSoundBtn.addEventListener('click', () => {
+          if (!bgMusicPlayer) return;
+          isQuantumSound = !isQuantumSound;
+          bgMusicPlayer.setPlaybackRate(isQuantumSound ? 1.25 : 1.0);
+          DOM.quantumiSoundBtn.textContent = isQuantumSound ? 'Sound Off' : 'QuantumI Sound';
         });
       }
 
