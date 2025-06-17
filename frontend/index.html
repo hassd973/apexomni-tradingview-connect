@@ -71,11 +71,11 @@
       overflow: hidden;
       z-index: -1;
     }
-    #loading-video-player iframe {
+    #loading-video-player {
       pointer-events: none;
     }
-    #loading-screen .loading-video iframe,
-    #loading-screen #loading-video-player {
+    #loading-screen #loading-video-player,
+    #loading-screen .loading-video iframe {
       width: 100%;
       height: 100%;
     }
@@ -842,7 +842,17 @@
 </div>
 <div id="loading-screen">
   <div class="loading-video">
-    <div id="loading-video-player"></div>
+    <iframe
+      id="loading-video-player"
+      width="560"
+      height="315"
+      src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&loop=1&playlist=RkQ3m_uGwXE&playsinline=1"
+      title="QuantumI Intro"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+    ></iframe>
     <button id="mute-btn" aria-label="Toggle mute">🔇</button>
     <button id="skip-intro-btn" aria-label="Skip intro">Skip Intro</button>
   </div>
@@ -1293,12 +1303,13 @@
     let isBTCPriceMock = false;
 
     const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
-    const PLAYLIST_B = 'LL';
+    const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
 
     function onYouTubeIframeAPIReady() {
       ytPlayer = new YT.Player('loading-video-player', {
+        host: 'https://www.youtube-nocookie.com',
         videoId: 'RkQ3m_uGwXE',
-        playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
+        playerVars: { autoplay: 1, mute: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
         events: {
           onReady: (e) => {
             try {
@@ -1315,11 +1326,13 @@
       });
 
       bgMusicPlayer = new YT.Player('music-player', {
+        host: 'https://www.youtube-nocookie.com',
         videoId: 'RkQ3m_uGwXE',
         playerVars: {
           listType: 'playlist',
           list: PLAYLIST_A,
           autoplay: 1,
+          mute: 1,
           loop: 1,
           controls: 0,
           rel: 0,
@@ -1335,9 +1348,10 @@
       });
 
       trackAPlayer = new YT.Player('track-a-player', {
+        host: 'https://www.youtube-nocookie.com',
         height: '200',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_A },
+        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 1, mute: 1 },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
@@ -1348,9 +1362,10 @@
       });
 
       trackBPlayer = new YT.Player('track-b-player', {
+        host: 'https://www.youtube-nocookie.com',
         height: '200',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_B },
+        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 1, mute: 1 },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
@@ -1395,13 +1410,32 @@
           gainB.connect(analyser);
           if (!waveAnim) drawWave();
         }
-        const stream = player.getIframe().captureStream && player.getIframe().captureStream();
+        const iframe = player.getIframe && player.getIframe();
+        let stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
+        if (!stream && iframe) {
+          const audioProxy = document.createElement('audio');
+          audioProxy.crossOrigin = 'anonymous';
+          audioProxy.src = iframe.src;
+          audioProxy.loop = true;
+          audioProxy.muted = true;
+          audioProxy.play().catch(() => {});
+          stream = audioProxy.captureStream ? audioProxy.captureStream() : null;
+        }
         if (stream) {
           const src = djCtx.createMediaStreamSource(stream);
+          const filter = djCtx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.value = 400;
+          const distortion = djCtx.createWaveShaper();
+          distortion.curve = createDistortionCurve(250);
+          distortion.oversample = '4x';
           const delay = djCtx.createDelay();
+          delay.delayTime.value = 0.3;
           const convolver = djCtx.createConvolver();
           convolver.buffer = createImpulse();
-          src.connect(delay);
+          src.connect(filter);
+          filter.connect(distortion);
+          distortion.connect(delay);
           delay.connect(convolver);
           if (which === 'A') {
             delayNodeA = delay;
@@ -1416,20 +1450,44 @@
         if (DOM.crossfader) DOM.crossfader.dispatchEvent(new Event('input'));
       }
 
+      function createDistortionCurve(amount = 50) {
+        const k = typeof amount === 'number' ? amount : 50;
+        const n = 44100;
+        const curve = new Float32Array(n);
+        const deg = Math.PI / 180;
+        for (let i = 0; i < n; ++i) {
+          const x = (i * 2) / n - 1;
+          curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+      }
+
       window.enableQuantumSound = function() {
-        if (!bgMusicPlayer || !bgMusicPlayer.getIframe || !bgMusicPlayer.getIframe().captureStream) return;
+        if (!bgMusicPlayer || !bgMusicPlayer.getIframe) return;
         if (audioCtx) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const stream = bgMusicPlayer.getIframe().captureStream();
+        let stream = null;
+        try {
+          stream = bgMusicPlayer.getIframe().captureStream();
+        } catch {}
+        if (!stream) {
+          const tmp = document.createElement('audio');
+          tmp.crossOrigin = 'anonymous';
+          tmp.src = bgMusicPlayer.getIframe().src;
+          tmp.loop = true;
+          tmp.muted = true;
+          tmp.play().catch(() => {});
+          stream = tmp.captureStream ? tmp.captureStream() : null;
+        }
         if (!stream) return;
         audioSource = audioCtx.createMediaStreamSource(stream);
-        delayNode = audioCtx.createDelay();
-        delayNode.delayTime.value = 0.25;
-        convolverNode = audioCtx.createConvolver();
-        convolverNode.buffer = createImpulse();
         filterNode = audioCtx.createBiquadFilter();
         filterNode.type = 'lowpass';
         filterNode.frequency.value = 1200;
+        delayNode = audioCtx.createDelay();
+        delayNode.delayTime.value = 0.35;
+        convolverNode = audioCtx.createConvolver();
+        convolverNode.buffer = createImpulse();
         bitcrusherNode = audioCtx.createWaveShaper();
         bitcrusherNode.curve = new Float32Array([-1,-0.5,0,0.5,1]);
         bitcrusherNode.oversample = '4x';
@@ -1514,6 +1572,18 @@
     window.onload = function() {
       setTimeout(hideLoadingScreen, 23000);
     };
+
+    function resumePlayers() {
+      try {
+        if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+        if (bgMusicPlayer && bgMusicPlayer.playVideo) bgMusicPlayer.playVideo();
+        if (trackAPlayer && trackAPlayer.playVideo) trackAPlayer.playVideo();
+        if (trackBPlayer && trackBPlayer.playVideo) trackBPlayer.playVideo();
+        document.removeEventListener('click', resumePlayers);
+      } catch {}
+    }
+
+    document.addEventListener('click', resumePlayers, { once: true });
 
     for (let i = 0; i < 10; i++) {
       const particle = document.createElement('div');
