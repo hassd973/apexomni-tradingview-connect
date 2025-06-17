@@ -681,7 +681,6 @@
   }
 </style>
 <style>
-
 #refreshWalletData, #chart-export-btn, #connectWallet, #toggleBalance {
     background-color: var(--primary-color) !important;
     color: #000 !important;
@@ -750,7 +749,7 @@
 <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 <div class="particles" id="particles"></div>
-<div id="beta-banner">QuantumI Alpha ⚡ Beta Pro Release</div>
+<div id="beta-banner">QuantumI Alpha Beta Pro Release</div>
 <header class="w-full flex justify-center items-center">
 <div class="w-full max-w-[98vw] mx-auto px-4">
 <div class="title-box">
@@ -2253,28 +2252,6 @@
         link.download = 'btc_hash_visualization.obj';
         link.click();
         addSystemLog('Exported BTC Hash Visualization as OBJ');
-      });
-      let zoomDirection = 0;
-      let zoomSpeed = 0;
-      function zoomLoop() {
-        if (zoomDirection !== 0 && camera) {
-          zoomSpeed = Math.min(zoomSpeed + 0.0008, 0.04);
-          const factor = zoomDirection > 0 ? 1 - zoomSpeed : 1 + zoomSpeed;
-          camera.position.multiplyScalar(factor);
-          controls.update();
-        } else {
-          zoomSpeed = 0;
-        }
-        requestAnimationFrame(zoomLoop);
-      }
-      zoomLoop();
-      ['mousedown','touchstart'].forEach(ev => {
-        DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 1; });
-        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = -1; });
-      });
-      ['mouseup','mouseleave','touchend'].forEach(ev => {
-        DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 0; });
-        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = 0; });
       });
 
       let zoomDirection = 0;
