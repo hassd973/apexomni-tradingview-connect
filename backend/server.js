@@ -74,8 +74,7 @@ const mockCryptoData = [
 
 // Function to fetch ETH gas prices from Etherscan
 async function fetchGasPrices() {
-  try {
-    console.log('Fetching gas prices from Etherscan');
+@@ -75,93 +79,149 @@ async function fetchGasPrices() {
     const response = await axios.get(ETHERSCAN_API_URL, {
       params: {
         module: 'gastracker',
@@ -225,32 +224,7 @@ async function fetchLiveLogs(query = '', batch = 100, sourceId = '1303816') {
       timeout: 15000
     });
 
-    const logs = response.data.rows.map(log => ({
-      timestamp: log.timestamp || new Date().toISOString(),
-      message: log.message || log.raw || 'No message available',
-      level: log.level || (log.message?.includes('error') ? 'error' : 
-             log.message?.includes('warn') ? 'warn' : 'info')
-    }));
-
-    return logs.length > 0 ? logs : fallbackLogs;
-  } catch (error) {
-    console.error('Failed to fetch live logs:', error.message);
-    return fallbackLogs;
-  }
-}
-
-// API endpoint for live logs
-app.get('/api/live-logs', async (req, res) => {
-  try {
-    const { query = '', batch = 50 } = req.query;
-    const logs = await fetchLiveLogs(query, parseInt(batch));
-    res.json({
-      success: true,
-      logs: logs.map(log => ({
-        timestamp: log.timestamp,
-        message: log.message,
-        level: log.level || 'info'
-      }))
+@@ -194,50 +254,101 @@ app.get('/api/live-logs', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching live logs:', error);
@@ -352,52 +326,3 @@ app.get('/api/logs', async (req, res) => {
 app.get('/health', (req, res) => {
   console.log('Health check requested');
   res.status(200).json({ status: 'OK' });
-});
-
-// Grok AI Interaction Endpoint
-async function queryGrokAI(prompt) {
-  try {
-    const response = await axios.post('https://api.groq.com/openai/v1/chat/completions', {
-      model: 'mixtral-8x7b-32768',
-      messages: [
-        { role: 'system', content: 'You are a helpful crypto trading assistant.' },
-        { role: 'user', content: prompt }
-      ],
-      max_tokens: 300,
-      temperature: 0.7
-    }, {
-      headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    return response.data.choices[0].message.content;
-  } catch (error) {
-    console.error('Grok AI Query Error:', error.response?.data || error.message);
-    return 'Sorry, I could not process your request at the moment.';
-  }
-}
-
-// Grok AI endpoint
-app.post('/api/grok', express.json(), async (req, res) => {
-  try {
-    const { prompt } = req.body;
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required' });
-    }
-
-    console.log('Received Grok AI request:', prompt);
-    const response = await queryGrokAI(prompt);
-    
-    res.json({ response });
-  } catch (error) {
-    console.error('Error in /api/grok endpoint:', error.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Start the server
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
