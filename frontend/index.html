@@ -801,8 +801,6 @@
 				box-shadow: 0 0 4px var(--shadow-color);
 				text-align: center;
 			}
-
-
                         .hash-box {
                                 font-family: monospace;
                                 word-break: break-all;
@@ -814,7 +812,6 @@
                                 border-radius: 6px;
                                 padding: 0.5rem;
                         }
-
 			@media (max-width: 640px) {
 				#chat-list {
 					max-height: 30vh;
@@ -1683,7 +1680,6 @@
                                                 Export OBJ
                                         </button>
                                         <div class="mt-4" id="btc-hash-log">
-
 						<h3 class="text-base md:text-lg mb-2">Hash Log</h3>
 						<ul class="space-y-2 text-sm" id="hash-log-list"></ul>
 						<button
@@ -1849,7 +1845,6 @@
                                 exportObjBtn: document.getElementById('export-obj'),
                                 zoomInBtn: document.getElementById('zoom-in'),
                                 zoomOutBtn: document.getElementById('zoom-out'),
-
                                 undockBackgroundLink: document.getElementById('undock-background-link'),
 				exportHashLogBtn: document.getElementById('export-hash-log'),
 				exportBalancesBtn: document.getElementById('export-balances'),
@@ -2505,7 +2500,7 @@
 					historicalData = null;
 				}
 
-				if (historicalData) {
+                                if (historicalData) {
 					const prices = historicalData.prices;
 					const volumes = historicalData.total_volumes;
 					const timestamps = prices.map((p) => p[0]);
@@ -2554,8 +2549,12 @@
 						vertexColors: true
 					});
 					const newDotCloud = new THREE.Points(geometry, material);
-					scene.add(newDotCloud);
-					dotClouds.push(newDotCloud);
+                                        scene.add(newDotCloud);
+                                        dotClouds.push(newDotCloud);
+                                        if (dotClouds.length > 5) {
+                                                const old = dotClouds.shift();
+                                                scene.remove(old);
+                                        }
 
 					const latestPrice = prices[prices.length - 1][1];
 					const latestVolume = volumes[volumes.length - 1][1];
@@ -2577,11 +2576,35 @@
 
 					const hashId = generateHashFromPrice(latestPrice);
 					addHashLog(hashId, latestTime);
-				} else {
-					document.getElementById('btc-hash-warning').style.display = 'block';
-					document.getElementById('btc-hash-warning').textContent =
-						'> Live data from Dune API';
-				}
+                                } else {
+                                        document.getElementById('btc-hash-warning').style.display = 'block';
+                                        document.getElementById('btc-hash-warning').textContent =
+                                                '> Live data from Dune API';
+
+                                        const latestPrice = currentEthPrice || Math.random() * 60000;
+                                        const latestTime = new Date().toLocaleTimeString();
+                                        const hashId = generateHashFromPrice(latestPrice);
+                                        addHashLog(hashId, latestTime);
+
+                                        const geometry = new THREE.BufferGeometry();
+                                        geometry.setAttribute(
+                                                'position',
+                                                new THREE.Float32BufferAttribute([
+                                                        0, 0, 0,
+                                                        1, 1, 1,
+                                                        -1, -1, -1
+                                                ], 3)
+                                        );
+                                        geometry.setAttribute('color', new THREE.Float32BufferAttribute([1, 0.5, 0, 1, 0.5, 0, 1, 0.5, 0], 3));
+                                        const material = new THREE.PointsMaterial({ size: 0.1, vertexColors: true });
+                                        const cloud = new THREE.Points(geometry, material);
+                                        scene.add(cloud);
+                                        dotClouds.push(cloud);
+                                        if (dotClouds.length > 5) {
+                                                const old = dotClouds.shift();
+                                                scene.remove(old);
+                                        }
+                                }
 			}
 
 			function addHashLog(hashId, time) {
@@ -3012,7 +3035,6 @@
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="token-row">
               <span class="token-name">${token.name} (${token.symbol})</span>
-
               <div class="flex gap-2 items-center">
                 <a href="https://coinmarketcap.com/currencies/${cmcSlug}/" target="_blank" rel="noopener" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
@@ -3415,9 +3437,12 @@
                                 function smoothZoom(delta) {
                                         const steps = 10;
                                         let count = 0;
-                                        const step = delta / steps;
+                                        const scale = 1 + Math.abs(delta) / 20;
+                                        const zoomMethod = delta < 0 ? controls.dollyIn.bind(controls) : controls.dollyOut.bind(controls);
                                         const interval = setInterval(() => {
-                                                camera.position.z = Math.max(10, Math.min(40, camera.position.z + step));
+                                                zoomMethod(scale);
+                                                controls.update();
+                                                renderer.render(scene, camera);
                                                 count++;
                                                 if (count >= steps) clearInterval(interval);
                                         }, 50);
@@ -4023,7 +4048,6 @@
                                                                         autoSkip: false
                                                                 }
                                                         }
-
 						}
 					}
 				});
