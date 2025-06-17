@@ -682,11 +682,31 @@
 </style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 #refreshWalletData, #chart-export-btn, #connectWallet {
-    background-color: #2563EB !important; /* blue-600 */
+    background-color: var(--primary-color) !important;
+    color: #000 !important;
     transition: background-color 0.3s ease;
 }
 #refreshWalletData:hover, #chart-export-btn:hover, #connectWallet:hover {
-    background-color: #1D4ED8 !important; /* blue-700 */
+    background-color: #6fc8e9 !important;
+}
+.cmc-link {
+    color: var(--primary-color);
+    cursor: pointer;
+}
+.cmc-link:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+.zoom-btn {
+    background-color: var(--primary-color);
+    color: #000;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.zoom-btn:hover {
+    background-color: #6fc8e9;
 }
 </style>
 </head>
@@ -935,7 +955,7 @@
 <option value="10">Top 10</option>
 <option value="20">Top 20</option>
 </select>
-<button class="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" onclick="exportChart()">📤 Export</button>
+        <button class="ml-4 text-white px-3 py-1 rounded text-sm" id="chart-export-btn" onclick="exportChart()">📤 Export</button>
 </div>
 </div>
 <canvas class="w-full max-w-3xl mx-auto h-72 md:h-96" id="inverseChart"></canvas>
@@ -944,7 +964,7 @@
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
 <div class="module-header flex justify-between items-center">
 <h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
-<button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
+<button class="text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
 </div>
 <div class="module-content text-white">
 <div class="wallet-info my-2">
@@ -974,6 +994,10 @@
 <span id="btc-momentum">Momentum: Loading...</span>
 </div>
 <div class="mt-2 flex justify-center gap-2" id="btc-color-legend"></div>
+<div class="mt-2 flex justify-center gap-2" id="btc-zoom-controls">
+  <button class="zoom-btn" id="btc-zoom-in" aria-label="Zoom in">+</button>
+  <button class="zoom-btn" id="btc-zoom-out" aria-label="Zoom out">-</button>
+</div>
 <div class="mt-4 text-sm" id="btc-legend-explanation">
 <h3 class="text-base md:text-lg mb-2">Legend</h3>
 <p>Each particle cloud represents a snapshot of BTC price and volume data over the last 24 hours.</p>
@@ -1043,6 +1067,8 @@
       exportGasBtn: document.getElementById('export-gas'),
       tokenPerformanceChart: document.getElementById('token-performance-chart'),
       exportObjBtn: document.getElementById('export-obj'),
+      zoomInBtn: document.getElementById('btc-zoom-in'),
+      zoomOutBtn: document.getElementById('btc-zoom-out'),
       undockBackgroundLink: document.getElementById('undock-background-link'),
       exportHashLogBtn: document.getElementById('export-hash-log'),
       exportBalancesBtn: document.getElementById('export-balances'),
@@ -1888,7 +1914,7 @@
               <span>${token.name} (${token.symbol})</span>
               <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
             </div>
-            <button class="cmc-btn mt-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-0.5 rounded" data-cmc="${token.id}" aria-label="Open CoinMarketCap page">CMC</button>
+            <span class="cmc-link mt-1 text-xs" data-cmc="${token.id}" aria-label="Open CoinMarketCap page">CMC</span>
             <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
             <div class="metric">Supply: ${token.circulating_supply.toLocaleString()}</div>
@@ -2043,7 +2069,7 @@
       });
 
       DOM.tokenList.addEventListener('click', (e) => {
-        const cmcBtn = e.target.closest('.cmc-btn');
+        const cmcBtn = e.target.closest('.cmc-link');
         if (cmcBtn) {
           e.stopPropagation();
           const cmc = cmcBtn.getAttribute('data-cmc');
@@ -2181,6 +2207,20 @@
         link.download = 'btc_hash_visualization.obj';
         link.click();
         addSystemLog('Exported BTC Hash Visualization as OBJ');
+      });
+
+      DOM.zoomInBtn.addEventListener('click', () => {
+        if (camera) {
+          camera.position.multiplyScalar(0.8);
+          controls.update();
+        }
+      });
+
+      DOM.zoomOutBtn.addEventListener('click', () => {
+        if (camera) {
+          camera.position.multiplyScalar(1.25);
+          controls.update();
+        }
       });
 
       DOM.exportHashLogBtn.addEventListener('click', () => {
