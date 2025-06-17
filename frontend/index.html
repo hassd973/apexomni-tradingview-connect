@@ -1433,7 +1433,8 @@
     let trackAPlayer;
     let trackBPlayer;
     let djCtx, gainA, gainB, recorder, autoBlendInterval;
-    let delayNodeA, delayNodeB, reverbNodeA, reverbNodeB, analyser, waveAnim;
+    let delayNodeA, delayNodeB, reverbNodeA, reverbNodeB, filterNodeA, filterNodeB,
+        bitcrusherNodeA, bitcrusherNodeB, analyser, waveAnim;
     let isQuantumSound = false;
     let audioCtx, audioSource, delayNode, convolverNode, filterNode, bitcrusherNode, gainNode;
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
@@ -1462,6 +1463,7 @@
                 e.target.unMute();
                 e.target.setVolume(100);
                 e.target.playVideo();
+                routeYTSignal();
               }, 1000);
               e.target.getIframe().setAttribute('loading','lazy');
             } catch {}
@@ -1496,7 +1498,7 @@
         host: 'https://www.youtube-nocookie.com',
         height: '200',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_A },
+        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 1, mute: 1 },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
@@ -1510,7 +1512,7 @@
         host: 'https://www.youtube-nocookie.com',
         height: '200',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_B },
+        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 1, mute: 1 },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
@@ -1519,6 +1521,8 @@
           }
         }
       });
+
+      enableQuantumSound();
 
       function createImpulse(duration = 2, decay = 2) {
         const rate = audioCtx.sampleRate;
@@ -1545,6 +1549,7 @@
       function attachTrack(player, which) {
         if (!djCtx) {
           djCtx = new (window.AudioContext || window.webkitAudioContext)();
+          djCtx.resume();
           gainA = djCtx.createGain();
           gainB = djCtx.createGain();
           gainA.connect(djCtx.destination);
@@ -1583,14 +1588,20 @@
           filter.connect(distortion);
           distortion.connect(delay);
           delay.connect(convolver);
+          convolver.connect(filter);
+          filter.connect(crusher);
           if (which === 'A') {
             delayNodeA = delay;
             reverbNodeA = convolver;
-            convolver.connect(gainA);
+            filterNodeA = filter;
+            bitcrusherNodeA = crusher;
+            crusher.connect(gainA);
           } else {
             delayNodeB = delay;
             reverbNodeB = convolver;
-            convolver.connect(gainB);
+            filterNodeB = filter;
+            bitcrusherNodeB = crusher;
+            crusher.connect(gainB);
           }
         }
         if (DOM.crossfader) DOM.crossfader.dispatchEvent(new Event('input'));
@@ -1611,6 +1622,8 @@
       window.enableQuantumSound = function() {
         if (!bgMusicPlayer || !bgMusicPlayer.getIframe) return;
         if (audioCtx) return;
+        const players = [bgMusicPlayer, ytPlayer].filter(p => p && p.getIframe && p.getIframe().captureStream);
+        if (!players.length) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let stream = null;
         try {
@@ -1645,7 +1658,7 @@
         convolverNode.connect(bitcrusherNode);
         bitcrusherNode.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-        bgMusicPlayer.setPlaybackRate(1.25);
+        if (bgMusicPlayer) bgMusicPlayer.setPlaybackRate(1.25);
       };
 
       window.disableQuantumSound = function() {
@@ -1653,7 +1666,12 @@
           audioCtx.close();
           audioCtx = null;
         }
-        bgMusicPlayer.setPlaybackRate(1.0);
+        if (bgMusicPlayer) bgMusicPlayer.setPlaybackRate(1.0);
+      };
+
+      window.routeYTSignal = function() {
+        if (!ytPlayer) return;
+        if (!isQuantumSound) enableQuantumSound();
       };
     }
 
@@ -2700,7 +2718,6 @@
 
       if (DOM.quantumiSoundBtn) {
         DOM.quantumiSoundBtn.addEventListener('click', () => {
-          if (!bgMusicPlayer) return;
           isQuantumSound = !isQuantumSound;
           if (isQuantumSound) {
             enableQuantumSound();
@@ -2736,6 +2753,7 @@
 
       if (DOM.crossfader) {
         DOM.crossfader.addEventListener('input', () => {
+          if (djCtx && djCtx.state === 'suspended') djCtx.resume();
           const val = parseFloat(DOM.crossfader.value);
           if (gainA && gainB) {
             gainA.gain.value = 1 - val;
@@ -2779,13 +2797,18 @@
           const v = parseFloat(DOM.decimateKnob.value);
           const bits = Math.max(1, Math.round(v * 8));
           if (bitcrusherNode) bitcrusherNode.curve = createBitcrusherCurve(bits);
+          if (bitcrusherNodeA) bitcrusherNodeA.curve = createBitcrusherCurve(bits);
+          if (bitcrusherNodeB) bitcrusherNodeB.curve = createBitcrusherCurve(bits);
         });
       }
 
       if (DOM.lofiKnob) {
         DOM.lofiKnob.addEventListener('input', () => {
           const v = parseFloat(DOM.lofiKnob.value);
-          if (filterNode) filterNode.frequency.value = 500 + (1 - v) * 5000;
+          const freq = 500 + (1 - v) * 5000;
+          if (filterNode) filterNode.frequency.value = freq;
+          if (filterNodeA) filterNodeA.frequency.value = freq;
+          if (filterNodeB) filterNodeB.frequency.value = freq;
         });
       }
 
