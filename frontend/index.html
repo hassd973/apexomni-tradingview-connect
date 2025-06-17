@@ -68,6 +68,14 @@
       opacity: 0;
       transition: opacity 0.5s ease-in;
     }
+    #beta-banner {
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      color: #000;
+      text-align: center;
+      padding: 0.25rem 0;
+      font-weight: bold;
+      font-size: 0.875rem;
+    }
     .spline-bg {
       position: fixed;
       top: 0;
@@ -674,11 +682,31 @@
 </style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
 #refreshWalletData, #chart-export-btn, #connectWallet {
-    background-color: #2563EB !important; /* blue-600 */
+    background-color: var(--primary-color) !important;
+    color: #000 !important;
     transition: background-color 0.3s ease;
 }
 #refreshWalletData:hover, #chart-export-btn:hover, #connectWallet:hover {
-    background-color: #1D4ED8 !important; /* blue-700 */
+    background-color: #6fc8e9 !important;
+}
+.cmc-link {
+    color: var(--primary-color);
+    cursor: pointer;
+}
+.cmc-link:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
+.zoom-btn {
+    background-color: var(--primary-color);
+    color: #000;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.zoom-btn:hover {
+    background-color: #6fc8e9;
 }
 </style>
 </head>
@@ -715,6 +743,7 @@
 <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 <div class="particles" id="particles"></div>
+<div id="beta-banner">⚡ QuantumI Beta Pro Release</div>
 <header class="w-full flex justify-center items-center">
 <div class="w-full max-w-[98vw] mx-auto px-4">
 <div class="title-box">
@@ -805,7 +834,7 @@
 <div class="module-content">
 <div class="loader text-center text-gray-500 text-sm" id="loader-tokens">&gt; Loading...</div>
 <div class="data-warning" id="token-warning" style="display: none;">&gt; Live data from Dune API</div>
-<ul class="space-y-2 text-sm" id="token-list" onclick="openCMC(event)"></ul>
+<ul class="space-y-2 text-sm" id="token-list"></ul>
 <div class="mt-4">
 <h3 class="text-base md:text-lg mb-2 typewriter">&gt; Performers</h3>
 <ul class="space-y-2 text-sm" id="profit-pairs"></ul>
@@ -926,7 +955,7 @@
 <option value="10">Top 10</option>
 <option value="20">Top 20</option>
 </select>
-<button class="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" onclick="exportChart()">📤 Export</button>
+        <button class="ml-4 text-white px-3 py-1 rounded text-sm" id="chart-export-btn" onclick="exportChart()">📤 Export</button>
 </div>
 </div>
 <canvas class="w-full max-w-3xl mx-auto h-72 md:h-96" id="inverseChart"></canvas>
@@ -935,7 +964,7 @@
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
 <div class="module-header flex justify-between items-center">
 <h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
-<button class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
+<button class="text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
 </div>
 <div class="module-content text-white">
 <div class="wallet-info my-2">
@@ -965,6 +994,10 @@
 <span id="btc-momentum">Momentum: Loading...</span>
 </div>
 <div class="mt-2 flex justify-center gap-2" id="btc-color-legend"></div>
+<div class="mt-2 flex justify-center gap-2" id="btc-zoom-controls">
+  <button class="zoom-btn" id="btc-zoom-in" aria-label="Zoom in">+</button>
+  <button class="zoom-btn" id="btc-zoom-out" aria-label="Zoom out">-</button>
+</div>
 <div class="mt-4 text-sm" id="btc-legend-explanation">
 <h3 class="text-base md:text-lg mb-2">Legend</h3>
 <p>Each particle cloud represents a snapshot of BTC price and volume data over the last 24 hours.</p>
@@ -1034,6 +1067,8 @@
       exportGasBtn: document.getElementById('export-gas'),
       tokenPerformanceChart: document.getElementById('token-performance-chart'),
       exportObjBtn: document.getElementById('export-obj'),
+      zoomInBtn: document.getElementById('btc-zoom-in'),
+      zoomOutBtn: document.getElementById('btc-zoom-out'),
       undockBackgroundLink: document.getElementById('undock-background-link'),
       exportHashLogBtn: document.getElementById('export-hash-log'),
       exportBalancesBtn: document.getElementById('export-balances'),
@@ -1875,10 +1910,11 @@
         const symbol = `BINANCE:${token.symbol}USDT`;
         return `
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
-            <div class="flex justify-between">
+            <div class="flex justify-between items-center">
               <span>${token.name} (${token.symbol})</span>
               <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
             </div>
+            <span class="cmc-link mt-1 text-xs" data-cmc="${token.id}" aria-label="Open CoinMarketCap page">CMC</span>
             <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
             <div class="metric">Supply: ${token.circulating_supply.toLocaleString()}</div>
@@ -2033,6 +2069,14 @@
       });
 
       DOM.tokenList.addEventListener('click', (e) => {
+        const cmcBtn = e.target.closest('.cmc-link');
+        if (cmcBtn) {
+          e.stopPropagation();
+          const cmc = cmcBtn.getAttribute('data-cmc');
+          window.open(`https://coinmarketcap.com/currencies/${cmc}/`, '_blank');
+          return;
+        }
+
         const li = e.target.closest('li');
         if (li && li.dataset.symbol) {
           const symbol = li.dataset.symbol;
@@ -2163,6 +2207,20 @@
         link.download = 'btc_hash_visualization.obj';
         link.click();
         addSystemLog('Exported BTC Hash Visualization as OBJ');
+      });
+
+      DOM.zoomInBtn.addEventListener('click', () => {
+        if (camera) {
+          camera.position.multiplyScalar(0.8);
+          controls.update();
+        }
+      });
+
+      DOM.zoomOutBtn.addEventListener('click', () => {
+        if (camera) {
+          camera.position.multiplyScalar(1.25);
+          controls.update();
+        }
       });
 
       DOM.exportHashLogBtn.addEventListener('click', () => {
@@ -2429,24 +2487,6 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
   chat.innerHTML += `<div class='text-xs text-green-300'>GPT: ${data.response}</div>`;
 });
 </script><script>
-function openCMC(event) {
-    const tokenSymbol = event.target.closest('li')?.querySelector('.token-symbol')?.textContent?.trim().toLowerCase();
-    const tokenNameMap = {
-        eth: 'ethereum',
-        btc: 'bitcoin',
-        xrp: 'xrp',
-        ada: 'cardano',
-        bnb: 'binancecoin',
-        ltc: 'litecoin',
-        link: 'chainlink',
-        dot: 'polkadot',
-        sol: 'solana',
-        usdt: 'tether'
-    };
-    const cmcToken = tokenNameMap[tokenSymbol] || tokenSymbol;
-    window.open(`https://coinmarketcap.com/currencies/${cmcToken}/`, '_blank');
-}
-document.getElementById('token-list').addEventListener('click', openCMC);
 </script><script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script><script>
 async function connectWalletAndLoadOmniData() {
   if (typeof window.ethereum === 'undefined') {
@@ -2566,7 +2606,11 @@ async function loadInverseChart(topCount = 10) {
 
     const labels = filteredTokens.map(t => t.symbol.toUpperCase());
     const data = filteredTokens.map(t => t.price_change_percentage_24h);
-    const bgColor = data.map(change => isMarketDown ? (change > 0 ? '#3b82f6' : '#ef4444') : (change < 0 ? '#ef4444' : '#3b82f6'));
+    const bgColor = data.map(change =>
+        isMarketDown
+            ? (change > 0 ? '#3b82f6' : '#ffbb33')
+            : (change < 0 ? '#ffbb33' : '#3b82f6')
+    );
 
     const ctx = document.getElementById('inverseChart').getContext('2d');
     if (inverseChart) inverseChart.destroy();
@@ -2594,7 +2638,9 @@ async function loadInverseChart(topCount = 10) {
                     ticks: { color: '#ffffff' }
                 },
                 x: {
-                    ticks: { color: '#ffffff' }
+                    ticks: {
+                        color: (ctx) => bgColor[ctx.index]
+                    }
                 }
             }
         }
