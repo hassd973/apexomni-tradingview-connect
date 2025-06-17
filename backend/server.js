@@ -1,6 +1,3 @@
-+154
--43
-
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
@@ -303,29 +300,3 @@ app.get('/api/wallet', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch wallet data' });
   }
 });
-
-// API endpoint to get live logs from Better Stack
-app.get('/api/logs', async (req, res) => {
-  try {
-    const { query, batch } = req.query;
-    console.log('Received request for /api/logs with query:', query);
-    
-    const logs = await fetchLiveLogs(query, batch);
-    
-    if (logs.length === 0) {
-      console.warn('No logs available');
-      res.status(404).json({ error: 'No logs found' });
-      return;
-    }
-    
-    res.json(logs);
-  } catch (error) {
-    console.error('Error in /api/logs endpoint:', error.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  console.log('Health check requested');
-  res.status(200).json({ status: 'OK' });
