@@ -98,10 +98,30 @@
     .playlist-container { position: relative; width: 100%; height: 200px; }
     .video-container {
       position: relative;
-      border: 2px solid var(--primary-color);
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 50px;
       overflow: hidden;
-      box-shadow: inset 0 0 8px var(--secondary-color), 0 0 6px var(--shadow-color);
+      box-shadow: inset 0 0 4px rgba(255,255,255,0.3), 0 0 4px var(--shadow-color);
+    }
+    .video-container::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.2);
+      pointer-events: none;
+    }
+    .video-container iframe,
+    .video-container > div {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      object-fit: cover;
     }
     #music-player { width: 100%; height: 100%; }
     .video-overlay,
@@ -198,25 +218,26 @@
       background: var(--text-color);
       cursor: pointer;
     }
+    .dj-controls { position: relative; }
     .vinyl {
       position: absolute;
       bottom: 0.5rem;
       right: 0.5rem;
       width: 60px;
       height: 60px;
-      border: 2px solid var(--primary-color);
+      border: 2px solid var(--secondary-color);
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.8) 70%);
-      box-shadow: 0 0 8px var(--secondary-color);
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.8) 70%);
+      box-shadow: 0 0 6px var(--secondary-color);
       animation: spin 4s linear infinite;
-      opacity: 0.6;
+      opacity: 0.8;
       pointer-events: none;
+      z-index: 1;
     }
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-
     #skip-intro-btn {
       position: absolute;
       bottom: 1rem;
@@ -1296,7 +1317,7 @@
       </div>
     </div>
   </div>
-  <div class="flex flex-col items-center mt-2">
+  <div class="flex flex-col items-center mt-2 dj-controls">
     <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full md:w-2/3"/>
     <div class="mt-2 flex gap-2">
       <button id="dj-play" class="dj-btn">Play Both</button>
@@ -2184,6 +2205,7 @@
         document.getElementById('btc-time').textContent = `Time: ${latestTime}`;
         if (DOM.playlistPrice) DOM.playlistPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.playlistTime) DOM.playlistTime.textContent = `Time: ${latestTime}`;
+        if (DOM.playlistDate) DOM.playlistDate.textContent = new Date().toLocaleDateString();
         if (DOM.loadingPrice) DOM.loadingPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.loadingTime) DOM.loadingTime.textContent = latestTime;
         if (DOM.loadingDate) DOM.loadingDate.textContent = new Date().toLocaleDateString();
