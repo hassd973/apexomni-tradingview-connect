@@ -1886,10 +1886,9 @@
                                 colorLegend = [],
                                 hashLog = [];
                         const siteColors = [
-                                'rgba(135,206,235,0.9)', // light blue default
-                                'rgba(0,0,255,0.8)',    // blue
-                                'rgba(255,0,0,0.7)',    // red
-                                'rgba(255,187,51,0.6)'  // yellow/orange
+                                '#87CEEB', // light blue
+                                '#ffbb33', // orange
+                                '#ff0000'  // red
                         ];
 			let currentEthPrice = 0;
 			let isUsingMockLogs = true;
@@ -3454,37 +3453,18 @@
                                         addSystemLog('Exported BTC Hash Visualization as OBJ');
                                 });
 
-                                let zoomInterval;
-
-                                function smoothZoomStep(direction) {
-                                        const zoom = direction > 0 ? controls.dollyIn.bind(controls) : controls.dollyOut.bind(controls);
+                                function smoothZoom(direction) {
+                                        const fn = direction > 0 ? controls.dollyIn.bind(controls) : controls.dollyOut.bind(controls);
                                         const factor = direction > 0 ? 0.95 : 1.05;
-                                        zoom(factor);
+                                        fn(factor);
+
                                         controls.update();
                                         renderer.render(scene, camera);
                                 }
 
-                                function startContinuousZoom(dir) {
-                                        stopContinuousZoom();
-                                        smoothZoomStep(dir);
-                                        zoomInterval = setInterval(() => smoothZoomStep(dir), 100);
-                                }
+                                DOM.zoomInBtn.addEventListener('click', () => smoothZoom(1));
+                                DOM.zoomOutBtn.addEventListener('click', () => smoothZoom(-1));
 
-                                function stopContinuousZoom() {
-                                        if (zoomInterval) {
-                                                clearInterval(zoomInterval);
-                                                zoomInterval = null;
-                                        }
-                                }
-
-                                ['mousedown', 'touchstart'].forEach(evt => {
-                                        DOM.zoomInBtn.addEventListener(evt, e => { e.preventDefault(); startContinuousZoom(1); });
-                                        DOM.zoomOutBtn.addEventListener(evt, e => { e.preventDefault(); startContinuousZoom(-1); });
-                                });
-                                ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(evt => {
-                                        DOM.zoomInBtn.addEventListener(evt, stopContinuousZoom);
-                                        DOM.zoomOutBtn.addEventListener(evt, stopContinuousZoom);
-                                });
 
 				DOM.exportHashLogBtn.addEventListener('click', () => {
 					exportToCSV(hashLog, 'hash_log.csv');
