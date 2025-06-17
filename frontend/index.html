@@ -813,6 +813,18 @@
                                 border-radius: 6px;
                                 padding: 0.5rem;
                         }
+                        #btc-zoom-controls button {
+                                width: 2rem;
+                                height: 2rem;
+                                border-radius: 9999px;
+                                background: rgba(255, 187, 51, 0.2);
+                                color: var(--text-color);
+                                transition: box-shadow 0.3s ease;
+                        }
+                        #btc-zoom-controls button:hover {
+                                box-shadow: 0 0 6px var(--secondary-color);
+                        }
+
 			@media (max-width: 640px) {
 				#chat-list {
 					max-height: 30vh;
@@ -2491,26 +2503,23 @@ function init3D() {
   animate();
 }
 
- function smoothZoom(direction) {
+function smoothZoom(direction) {
+  controls.target.set(0, 0, 0);
+  const factor = direction === 'in' ? 0.96 : 1.04;
+  const steps = 20;
+  let i = 0;
+  function step() {
+    if (i < steps) {
+      camera.position.multiplyScalar(factor);
+      controls.update();
+      renderer.render(scene, camera);
+      i++;
+      requestAnimationFrame(step);
+    }
+  }
+  step();
+}
 
-   controls.target.set(0, 0, 0);
-   const steps = 30;
-   let count = 0;
-   function step() {
-     if (count < steps) {
-       if (direction === 'in') {
-         controls.dollyIn(1.02);
-       } else {
-         controls.dollyOut(1.02);
-       }
-       controls.update();
-       renderer.render(scene, camera);
-       count++;
-       requestAnimationFrame(step);
-     }
-   }
-   step();
- }
 
     async function updateBTCHash() {
       isBTCPriceMock = false;
@@ -3893,7 +3902,6 @@ function init3D() {
                                 if (typeof window.ethereum === 'undefined') {
                                         if (/Mobi|Android/i.test(navigator.userAgent)) {
                                                 window.location.href = 'https://metamask.app.link/dapp/quantumi.sspace';
-
                                         } else {
                                                 alert('MetaMask not found');
                                         }
