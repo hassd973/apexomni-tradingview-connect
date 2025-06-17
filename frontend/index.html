@@ -1997,8 +1997,9 @@
 
 			document.addEventListener('DOMContentLoaded', () => {
 				DOM.loadingScreen.style.opacity = '0';
-				setTimeout(() => {
-					DOM.loadingScreen.style.display = 'none';
+                                setTimeout(() => {
+                                        DOM.loadingScreen.style.display = 'none';
+                                        DOM.loadingScreen.style.pointerEvents = 'none';
 					document.querySelector('header').style.opacity = '1';
 					setTimeout(
 						() => (document.querySelector('main').style.opacity = '1'),
@@ -2504,10 +2505,10 @@ function init3D() {
 }
 
 function smoothZoom(direction) {
-  const factor = direction === 'in' ? 0.95 : 1.05;
+  const factor = direction === 'in' ? 0.9 : 1.1;
   let count = 0;
   function step() {
-    if (count < 30) {
+    if (count < 20) {
       if (direction === 'in') {
         controls.dollyIn(1 / factor);
       } else {
@@ -2918,15 +2919,16 @@ function smoothZoom(direction) {
                                 if (!data || data.length === 0) return;
                                 const csv = data.map((row) => Object.values(row).join(',')).join('\n');
                                 const headers = Object.keys(data[0]).join(',');
-				const blob = new Blob([headers + '\n' + csv], { type: 'text/csv' });
-				const url = window.URL.createObjectURL(blob);
+                                const blob = new Blob([headers + '\n' + csv], { type: 'text/csv' });
+                                const url = window.URL.createObjectURL(blob);
                                 const a = document.createElement('a');
                                 a.href = url;
                                 a.download = filename;
+                                document.body.appendChild(a);
                                 a.click();
                                 a.remove();
                                 window.URL.revokeObjectURL(url);
-			}
+                        }
 
 			function notifyUser(message) {
 				if (Notification.permission === 'granted') {
@@ -3463,12 +3465,14 @@ function smoothZoom(direction) {
                                         const exporter = new THREE.OBJExporter();
                                         const result = exporter.parse(exportGroup);
                                         const blob = new Blob([result], { type: 'text/plain' });
+                                        const url = URL.createObjectURL(blob);
                                         const link = document.createElement('a');
-                                        link.href = URL.createObjectURL(blob);
+                                        link.href = url;
                                         link.download = 'btc_hash_visualization.obj';
+                                        document.body.appendChild(link);
                                         link.click();
                                         link.remove();
-                                        URL.revokeObjectURL(link.href);
+                                        URL.revokeObjectURL(url);
                                         addSystemLog('Exported BTC Hash Visualization as OBJ');
                                 });
 
