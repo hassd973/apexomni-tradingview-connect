@@ -940,13 +940,14 @@
 			}
 		</style>
 		<style>
-			.pro-banner {
-				background: linear-gradient(
-					90deg,
-					var(--primary-color),
-					var(--secondary-color)
-				);
-			}
+                        .pro-banner {
+                                background: linear-gradient(
+                                        90deg,
+                                        var(--primary-color) 0%,
+                                        var(--secondary-color) 50%,
+                                        #ff0000 100%
+                                );
+                        }
 			.cmc-link {
 				font-size: 0.75rem;
 				color: var(--primary-color);
@@ -2500,7 +2501,6 @@ function init3D() {
     renderer.render(scene, camera);
   }
   animate();
-
 }
 
 function smoothZoom(direction) {
@@ -2924,7 +2924,6 @@ function smoothZoom(direction) {
                                 a.click();
                                 a.remove();
                                 window.URL.revokeObjectURL(url);
-
 			}
 
 			function notifyUser(message) {
@@ -3470,7 +3469,6 @@ function smoothZoom(direction) {
                                         link.click();
                                         link.remove();
                                         URL.revokeObjectURL(link.href);
-
                                         addSystemLog('Exported BTC Hash Visualization as OBJ');
                                 });
 
