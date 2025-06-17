@@ -330,8 +330,8 @@
                                 box-shadow: 0 0 8px var(--secondary-color);
                         }
                         .zoom-btn {
-                                width: 2rem;
-                                height: 2rem;
+                                width: 2.5rem;
+                                height: 2.5rem;
                                 display: flex;
                                 align-items: center;
                                 justify-content: center;
@@ -2504,10 +2504,12 @@
 				animate();
 			}
 
-			async function updateBTCHash() {
-				isBTCPriceMock = false;
+                        async function updateBTCHash() {
+                                isBTCPriceMock = false;
 
-				let historicalData;
+                                const liveData = await fetchBTCPrice();
+
+                                let historicalData;
 				try {
 					historicalData = await fetchBTCHistoricalData();
 				} catch (error) {
@@ -2571,11 +2573,9 @@
                                                 scene.remove(old);
                                         }
 
-					const latestPrice = prices[prices.length - 1][1];
-					const latestVolume = volumes[volumes.length - 1][1];
-					const latestTime = new Date(
-						timestamps[timestamps.length - 1]
-					).toLocaleTimeString();
+                                        const latestPrice = liveData.price;
+                                        const latestVolume = liveData.volume;
+                                        const latestTime = new Date().toLocaleTimeString();
 					colorLegend.push({
 						color: siteColors[colorIndex],
 						price: latestPrice,
@@ -2596,7 +2596,7 @@
                                         document.getElementById('btc-hash-warning').textContent =
                                                 '> Live data from Dune API';
 
-                                        const latestPrice = currentEthPrice || Math.random() * 60000;
+                                        const latestPrice = liveData.price;
                                         const latestTime = new Date().toLocaleTimeString();
                                         const hashId = generateHashFromPrice(latestPrice);
                                         addHashLog(hashId, latestTime);
@@ -3452,17 +3452,19 @@
                                 function smoothZoom(direction) {
                                         const steps = 20;
                                         let count = 0;
-                                        const zoom = direction < 0 ? controls.dollyIn.bind(controls) : controls.dollyOut.bind(controls);
+                                        const zoom = direction > 0 ? controls.dollyIn.bind(controls) : controls.dollyOut.bind(controls);
+                                        const factor = direction > 0 ? 0.95 : 1.05;
                                         const interval = setInterval(() => {
-                                                zoom(1.05);
+                                                zoom(factor);
                                                 controls.update();
+                                                renderer.render(scene, camera);
                                                 count++;
                                                 if (count >= steps) clearInterval(interval);
-                                        }, 40);
+                                        }, 30);
                                 }
 
-                                DOM.zoomInBtn.addEventListener('click', () => smoothZoom(-2));
-                                DOM.zoomOutBtn.addEventListener('click', () => smoothZoom(2));
+                                DOM.zoomInBtn.addEventListener('click', () => smoothZoom(1));
+                                DOM.zoomOutBtn.addEventListener('click', () => smoothZoom(-1));
 
 				DOM.exportHashLogBtn.addEventListener('click', () => {
 					exportToCSV(hashLog, 'hash_log.csv');
