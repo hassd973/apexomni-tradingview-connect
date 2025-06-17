@@ -69,7 +69,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      z-index: -1;
+      z-index: 0;
     }
     #loading-video-player {
       pointer-events: none;
@@ -121,13 +121,36 @@
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
       cursor: pointer;
     }
-    #music-mute-btn:hover, #quantumi-sound-btn:hover {
+    #music-mute-btn:hover, #quantumi-sound-btn:hover,
+    #music-mute-btn.active, #quantumi-sound-btn.active {
       background-color: var(--secondary-color);
       box-shadow: 0 0 8px var(--secondary-color);
+    }
+    .dj-track {
+      background: linear-gradient(135deg, rgba(135,206,235,0.1), rgba(0,0,0,0.2));
+      border: 1px solid var(--shadow-color);
+      border-radius: 8px;
+      padding: 0.5rem;
+      position: relative;
     }
     .dj-track iframe {
       width: 100%;
       height: 200px;
+      border-radius: 6px;
+    }
+    .dj-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      gap: 0.25rem;
+      background: rgba(0,0,0,0.3);
+      color: var(--text-color);
+      justify-content: center;
+      pointer-events: none;
+      font-size: 0.75rem;
+      padding: 0.25rem;
     }
     .dj-overlay {
       position: absolute;
@@ -159,6 +182,27 @@
     }
     #wave-canvas {
       background: rgba(35,46,46,0.5);
+    }
+    #crossfader {
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      border-radius: 4px;
+      height: 6px;
+      appearance: none;
+    }
+    #crossfader::-webkit-slider-thumb {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--text-color);
+      cursor: pointer;
+    }
+    #crossfader::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--text-color);
+      cursor: pointer;
     }
     #skip-intro-btn {
       position: absolute;
@@ -876,7 +920,7 @@
       allowfullscreen
     ></iframe>
     <button id="mute-btn" aria-label="Toggle mute">🔇</button>
-    <button id="skip-intro-btn" aria-label="Skip intro">Skip Intro</button>
+    <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
   </div>
   <div class="title-box">
     <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
@@ -1197,7 +1241,7 @@
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
-  <div class="flex flex-col md:flex-row justify-center gap-4 mt-2">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1">
       <div class="mb-1 flex justify-center gap-2">
         <input id="track-a-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2"/>
@@ -1230,7 +1274,7 @@
     </div>
   </div>
   <div class="flex flex-col items-center mt-2">
-    <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-1/2"/>
+    <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full md:w-2/3"/>
     <div class="mt-2 flex gap-2">
       <button id="auto-blend" class="dj-btn">Auto Blend</button>
       <button id="record-mix" class="dj-btn">Record</button>
@@ -1462,9 +1506,11 @@
         const iframe = player.getIframe && player.getIframe();
         let stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
         if (!stream && iframe) {
+          const vid = player.getVideoData().video_id;
           const audioProxy = document.createElement('audio');
           audioProxy.crossOrigin = 'anonymous';
-          audioProxy.src = iframe.src;
+          audioProxy.src = `/api/youtube-audio?videoId=${vid}`;
+
           audioProxy.loop = true;
           audioProxy.muted = true;
           audioProxy.play().catch(() => {});
@@ -1528,9 +1574,11 @@
           stream = bgMusicPlayer.getIframe().captureStream();
         } catch {}
         if (!stream) {
+          const vid = bgMusicPlayer.getVideoData().video_id;
           const tmp = document.createElement('audio');
           tmp.crossOrigin = 'anonymous';
-          tmp.src = bgMusicPlayer.getIframe().src;
+          tmp.src = `/api/youtube-audio?videoId=${vid}`;
+
           tmp.loop = true;
           tmp.muted = true;
           tmp.play().catch(() => {});
