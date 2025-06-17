@@ -96,7 +96,15 @@
       #mute-btn { padding: 0.25rem; font-size: 0.75rem; }
     }
     .playlist-container { position: relative; width: 100%; height: 200px; }
+    .video-container {
+      position: relative;
+      border: 2px solid var(--primary-color);
+      border-radius: 50px;
+      overflow: hidden;
+      box-shadow: inset 0 0 8px var(--secondary-color), 0 0 6px var(--shadow-color);
+    }
     #music-player { width: 100%; height: 100%; }
+    .video-overlay,
     .playlist-overlay {
       position: absolute;
       top: 0;
@@ -152,20 +160,6 @@
       font-size: 0.75rem;
       padding: 0.25rem;
     }
-    .dj-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      display: flex;
-      gap: 0.25rem;
-      background: rgba(0,0,0,0.3);
-      color: var(--text-color);
-      justify-content: center;
-      pointer-events: none;
-      font-size: 0.75rem;
-      padding: 0.25rem;
-    }
     .dj-btn {
       background-color: var(--primary-color);
       color: #1e2727;
@@ -204,6 +198,25 @@
       background: var(--text-color);
       cursor: pointer;
     }
+    .vinyl {
+      position: absolute;
+      bottom: 0.5rem;
+      right: 0.5rem;
+      width: 60px;
+      height: 60px;
+      border: 2px solid var(--primary-color);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.8) 70%);
+      box-shadow: 0 0 8px var(--secondary-color);
+      animation: spin 4s linear infinite;
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     #skip-intro-btn {
       position: absolute;
       bottom: 1rem;
@@ -908,17 +921,27 @@
 </div>
 <div id="loading-screen">
   <div class="loading-video">
-    <iframe
-      id="loading-video-player"
-      width="560"
-      height="315"
-      src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&loop=1&playlist=RkQ3m_uGwXE&playsinline=1"
-      title="QuantumI Intro"
-      frameborder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      referrerpolicy="strict-origin-when-cross-origin"
-      allowfullscreen
-    ></iframe>
+    <div class="video-container">
+      <iframe
+        id="loading-video-player"
+        loading="lazy"
+        width="560"
+        height="315"
+        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1"
+        title="QuantumI Intro"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+      ></iframe>
+      <div class="video-overlay">
+        <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
+        <span id="loading-price"></span>
+        <span id="loading-inverse"></span>
+        <span id="loading-time"></span>
+        <span id="loading-date"></span>
+      </div>
+    </div>
     <button id="mute-btn" aria-label="Toggle mute">🔇</button>
     <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
   </div>
@@ -1226,7 +1249,7 @@
     <button id="music-mute-btn" aria-label="Toggle music mute">🔇</button>
     <button id="quantumi-sound-btn" aria-label="Toggle QuantumI sound">QuantumI Sound</button>
   </div>
-  <div class="playlist-container">
+  <div class="playlist-container video-container">
     <div id="music-player"></div>
     <div class="playlist-overlay">
       <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
@@ -1247,7 +1270,7 @@
         <input id="track-a-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2"/>
         <button id="track-a-load" class="dj-btn">Load A</button>
       </div>
-      <div class="playlist-container">
+      <div class="playlist-container video-container">
         <div id="track-a-player"></div>
         <div class="dj-overlay">
           <span id="track-a-price"></span>
@@ -1259,10 +1282,10 @@
     </div>
     <div class="dj-track flex-1">
       <div class="mb-1 flex justify-center gap-2">
-        <input id="track-b-url" class="p-1 rounded text-sm" value="https://www.youtube.com/watch?v=KCb5cgnHsQ8&list=LL"/>
+        <input id="track-b-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj"/>
         <button id="track-b-load" class="dj-btn">Load B</button>
       </div>
-      <div class="playlist-container">
+      <div class="playlist-container video-container">
         <div id="track-b-player"></div>
         <div class="dj-overlay">
           <span id="track-b-price"></span>
@@ -1276,6 +1299,8 @@
   <div class="flex flex-col items-center mt-2">
     <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full md:w-2/3"/>
     <div class="mt-2 flex gap-2">
+      <button id="dj-play" class="dj-btn">Play Both</button>
+      <button id="dj-shuffle" class="dj-btn">Shuffle</button>
       <button id="auto-blend" class="dj-btn">Auto Blend</button>
       <button id="record-mix" class="dj-btn">Record</button>
       <a id="download-mix" class="dj-btn" style="display:none" href="#">Download</a>
@@ -1294,6 +1319,7 @@
       <input id="repeat-knob" type="range" min="0" max="1" step="0.01" value="0"/>
     </div>
     <canvas id="wave-canvas" width="600" height="80" class="mt-2"></canvas>
+    <div class="vinyl" id="vinyl-visual"></div>
   </div>
 </section>
 <footer class="text-center text-gray-500 text-sm">
@@ -1341,6 +1367,10 @@
       musicMuteBtn: document.getElementById('music-mute-btn'),
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
       skipIntroBtn: document.getElementById('skip-intro-btn'),
+      loadingPrice: document.getElementById('loading-price'),
+      loadingInverse: document.getElementById('loading-inverse'),
+      loadingTime: document.getElementById('loading-time'),
+      loadingDate: document.getElementById('loading-date'),
       playlistPrice: document.getElementById('playlist-price'),
       playlistTime: document.getElementById('playlist-time'),
       playlistDate: document.getElementById('playlist-date'),
@@ -1362,6 +1392,8 @@
       recordMixBtn: document.getElementById('record-mix'),
       downloadMixBtn: document.getElementById('download-mix'),
       surroundToggleBtn: document.getElementById('surround-toggle'),
+      djPlayBtn: document.getElementById('dj-play'),
+      djShuffleBtn: document.getElementById('dj-shuffle'),
       delayKnob: document.getElementById('delay-knob'),
       reverbKnob: document.getElementById('reverb-knob'),
       decimateKnob: document.getElementById('decimate-knob'),
@@ -1412,6 +1444,7 @@
                 e.target.playVideo();
                 routeYTSignal();
               }, 1000);
+              e.target.getIframe().setAttribute('loading','lazy');
             } catch {}
           }
         }
@@ -1435,6 +1468,7 @@
             e.target.setVolume(100);
             e.target.mute();
             e.target.playVideo();
+            e.target.getIframe().setAttribute('loading','lazy');
           }
         }
       });
@@ -1448,6 +1482,7 @@
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
+            ev.target.getIframe().setAttribute('loading','lazy');
           }
         }
       });
@@ -1461,6 +1496,7 @@
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_B});
+            ev.target.getIframe().setAttribute('loading','lazy');
           }
         }
       });
@@ -1510,7 +1546,6 @@
           const audioProxy = document.createElement('audio');
           audioProxy.crossOrigin = 'anonymous';
           audioProxy.src = `/api/youtube-audio?videoId=${vid}`;
-
           audioProxy.loop = true;
           audioProxy.muted = true;
           audioProxy.play().catch(() => {});
@@ -1578,7 +1613,6 @@
           const tmp = document.createElement('audio');
           tmp.crossOrigin = 'anonymous';
           tmp.src = `/api/youtube-audio?videoId=${vid}`;
-
           tmp.loop = true;
           tmp.muted = true;
           tmp.play().catch(() => {});
@@ -1698,8 +1732,6 @@
       try {
         if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
         if (bgMusicPlayer && bgMusicPlayer.playVideo) bgMusicPlayer.playVideo();
-        if (trackAPlayer && trackAPlayer.playVideo) trackAPlayer.playVideo();
-        if (trackBPlayer && trackBPlayer.playVideo) trackBPlayer.playVideo();
         document.removeEventListener('click', resumePlayers);
       } catch {}
     }
@@ -2152,7 +2184,9 @@
         document.getElementById('btc-time').textContent = `Time: ${latestTime}`;
         if (DOM.playlistPrice) DOM.playlistPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.playlistTime) DOM.playlistTime.textContent = `Time: ${latestTime}`;
-        if (DOM.playlistDate) DOM.playlistDate.textContent = new Date().toLocaleDateString();
+        if (DOM.loadingPrice) DOM.loadingPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
+        if (DOM.loadingTime) DOM.loadingTime.textContent = latestTime;
+        if (DOM.loadingDate) DOM.loadingDate.textContent = new Date().toLocaleDateString();
         if (DOM.trackAPrice) DOM.trackAPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.trackATime) DOM.trackATime.textContent = latestTime;
         if (DOM.trackADate) DOM.trackADate.textContent = new Date().toLocaleDateString();
@@ -2163,6 +2197,7 @@
         const inverse = await fetchTopInverseToken();
         if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Top ⬇️: ${inverse}`;
         if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Top ⬇️: ${inverse}`;
+        if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Top ⬇️: ${inverse}`;
 
         const hashId = generateHashFromPrice(latestPrice);
         addHashLog(hashId, latestTime);
@@ -2702,6 +2737,20 @@
             gainA.gain.value = 1 - val;
             gainB.gain.value = val;
           }
+        });
+      }
+
+      if (DOM.djPlayBtn) {
+        DOM.djPlayBtn.addEventListener('click', () => {
+          trackAPlayer && trackAPlayer.playVideo();
+          trackBPlayer && trackBPlayer.playVideo();
+        });
+      }
+
+      if (DOM.djShuffleBtn) {
+        DOM.djShuffleBtn.addEventListener('click', () => {
+          trackAPlayer && trackAPlayer.nextVideo();
+          trackBPlayer && trackBPlayer.nextVideo();
         });
       }
 
