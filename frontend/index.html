@@ -69,8 +69,10 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      pointer-events: none;
       z-index: -1;
+    }
+    #loading-video-player iframe {
+      pointer-events: none;
     }
     #loading-screen .loading-video iframe,
     #loading-screen #loading-video-player {
@@ -1213,6 +1215,8 @@
               e.target.playVideo();
               e.target.unMute();
               e.target.setVolume(100);
+              setTimeout(() => e.target.playVideo(), 500);
+              setTimeout(() => e.target.playVideo(), 1000);
             } catch {}
           }
         }
