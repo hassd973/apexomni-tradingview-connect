@@ -679,7 +679,7 @@
   .custom-scroll::-webkit-scrollbar-track {
     background: #1e293b;
   }
-</style><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</style>
 <style>
 #refreshWalletData, #chart-export-btn, #connectWallet {
     background-color: var(--primary-color) !important;
@@ -749,7 +749,7 @@
 <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 <div class="particles" id="particles"></div>
-<div id="beta-banner">⚡ QuantumI Beta Pro Release</div>
+<div id="beta-banner">QuantumI Alpha Beta Pro Release</div>
 <header class="w-full flex justify-center items-center">
 <div class="w-full max-w-[98vw] mx-auto px-4">
 <div class="title-box">
@@ -933,7 +933,7 @@
 </section>
 <section class="rounded-lg" draggable="true" id="inverse-winners-module">
 <div class="module-header">
-<h2 class="text-lg md:text-xl typewriter">📊 Inverse Metrics</h2>
+<h2 class="text-lg md:text-xl typewriter">Inverse Metrics</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
 <div class="module-content">
@@ -1154,7 +1154,7 @@
       }, 500);
     };
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 10; i++) {
       const particle = document.createElement('div');
       particle.className = 'star';
       particle.style.left = `${Math.random() * 100}%`;
@@ -1163,7 +1163,7 @@
       DOM.particleContainer.appendChild(particle);
     }
 
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 10; i++) {
       const snowflake = document.createElement('div');
       snowflake.className = 'snowflake';
       snowflake.textContent = '❄️';
@@ -2215,29 +2215,27 @@
         addSystemLog('Exported BTC Hash Visualization as OBJ');
       });
 
-      let zoomInterval;
-      function startZoom(dir) {
-        let speed = 0.02;
-        clearInterval(zoomInterval);
-        zoomInterval = setInterval(() => {
-          if (camera) {
-            const factor = dir === 'in' ? 1 - speed : 1 + speed;
-            camera.position.multiplyScalar(factor);
-            controls.update();
-            speed = Math.min(speed * 1.05, 0.15);
-          }
-        }, 50);
+      let zoomDirection = 0;
+      let zoomSpeed = 0;
+      function zoomLoop() {
+        if (zoomDirection !== 0 && camera) {
+          zoomSpeed = Math.min(zoomSpeed + 0.0008, 0.04);
+          const factor = zoomDirection > 0 ? 1 - zoomSpeed : 1 + zoomSpeed;
+          camera.position.multiplyScalar(factor);
+          controls.update();
+        } else {
+          zoomSpeed = 0;
+        }
+        requestAnimationFrame(zoomLoop);
       }
-      function stopZoom() {
-        clearInterval(zoomInterval);
-      }
+      zoomLoop();
       ['mousedown','touchstart'].forEach(ev => {
-        DOM.zoomInBtn.addEventListener(ev, () => startZoom('in'));
-        DOM.zoomOutBtn.addEventListener(ev, () => startZoom('out'));
+        DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 1; });
+        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = -1; });
       });
       ['mouseup','mouseleave','touchend'].forEach(ev => {
-        DOM.zoomInBtn.addEventListener(ev, stopZoom);
-        DOM.zoomOutBtn.addEventListener(ev, stopZoom);
+        DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 0; });
+        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = 0; });
       });
 
       DOM.exportHashLogBtn.addEventListener('click', () => {
