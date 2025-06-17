@@ -1,24 +1,11 @@
 require('dotenv').config();
-try {
-  require('ts-node/register');
-} catch (err) {
-  console.warn('ts-node/register not found, continuing with plain Node.js');
-}
+require('ts-node/register');
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-let apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill;
-try {
-  ({ apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../src/services'));
-} catch (err) {
-  console.warn('Optional services not loaded:', err.message);
-  apexomniBuildOrderParams = async () => { throw new Error('Service unavailable'); };
-  apexomniCreateOrder = async () => { throw new Error('Service unavailable'); };
-  getOrder = async () => { throw new Error('Service unavailable'); };
-  getFill = async () => { throw new Error('Service unavailable'); };
-}
+const { apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../src/services');
 
 const app = express();
 const port = process.env.PORT || 3001;
