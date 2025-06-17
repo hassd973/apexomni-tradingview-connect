@@ -845,7 +845,7 @@
     <iframe
       id="loading-video-player"
       src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?autoplay=1&mute=1&controls=0&rel=0&modestbranding=1&playsinline=1&enablejsapi=1"
-      title="YouTube video player" frameborder="0"
+      title="YouTube video player" frameborder="0" muted
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
     <button id="mute-btn" aria-label="Toggle mute">🔇</button>
@@ -1314,6 +1314,7 @@
                 e.target.unMute();
                 e.target.setVolume(100);
                 e.target.playVideo();
+                routeYTSignal();
               }, 1000);
             } catch {}
           }
@@ -1475,6 +1476,11 @@
           audioCtx = null;
         }
         if (bgMusicPlayer) bgMusicPlayer.setPlaybackRate(1.0);
+      };
+
+      window.routeYTSignal = function() {
+        if (!ytPlayer) return;
+        if (!isQuantumSound) enableQuantumSound();
       };
     }
 
