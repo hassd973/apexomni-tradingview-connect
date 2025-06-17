@@ -69,13 +69,13 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      z-index: -1;
+      z-index: 0;
     }
-    #loading-video-player iframe {
+    #loading-video-player {
       pointer-events: none;
     }
-    #loading-screen .loading-video iframe,
-    #loading-screen #loading-video-player {
+    #loading-screen #loading-video-player,
+    #loading-screen .loading-video iframe {
       width: 100%;
       height: 100%;
     }
@@ -121,13 +121,36 @@
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
       cursor: pointer;
     }
-    #music-mute-btn:hover, #quantumi-sound-btn:hover {
+    #music-mute-btn:hover, #quantumi-sound-btn:hover,
+    #music-mute-btn.active, #quantumi-sound-btn.active {
       background-color: var(--secondary-color);
       box-shadow: 0 0 8px var(--secondary-color);
+    }
+    .dj-track {
+      background: linear-gradient(135deg, rgba(135,206,235,0.1), rgba(0,0,0,0.2));
+      border: 1px solid var(--shadow-color);
+      border-radius: 8px;
+      padding: 0.5rem;
+      position: relative;
     }
     .dj-track iframe {
       width: 100%;
       height: 200px;
+      border-radius: 6px;
+    }
+    .dj-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      display: flex;
+      gap: 0.25rem;
+      background: rgba(0,0,0,0.3);
+      color: var(--text-color);
+      justify-content: center;
+      pointer-events: none;
+      font-size: 0.75rem;
+      padding: 0.25rem;
     }
     .dj-btn {
       background-color: var(--primary-color);
@@ -145,6 +168,27 @@
     }
     #wave-canvas {
       background: rgba(35,46,46,0.5);
+    }
+    #crossfader {
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      border-radius: 4px;
+      height: 6px;
+      appearance: none;
+    }
+    #crossfader::-webkit-slider-thumb {
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--text-color);
+      cursor: pointer;
+    }
+    #crossfader::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--text-color);
+      cursor: pointer;
     }
     #skip-intro-btn {
       position: absolute;
@@ -580,6 +624,13 @@
     @media (min-width: 640px) {
       .title-box { font-size: 1.25rem; }
     }
+    header.shrink .title-box {
+      margin-top: 0;
+      padding: 0.5rem;
+      animation: none;
+    }
+    header.shrink .title-box h1 { font-size: 1.25rem; }
+    header.shrink p { display: none; }
     #chart-title-header, #chart-title-modal {
       text-align: center;
       padding: 0.5rem;
@@ -730,6 +781,7 @@
       cursor: pointer;
       z-index: 101;
     }
+    .nav-menu-toggle.hidden { display: none; }
     .nav-menu-close {
       position: absolute;
       top: 1rem;
@@ -821,7 +873,7 @@
 </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
-<button aria-label="Toggle navigation menu" class="nav-menu-toggle" id="nav-menu-toggle" role="button">☰</button>
+<button aria-label="Toggle navigation menu" class="nav-menu-toggle hidden" id="nav-menu-toggle" role="button">☰</button>
 <div class="nav-menu" id="nav-menu">
 <button aria-label="Close navigation menu" class="nav-menu-close" id="nav-menu-close" role="button">×</button>
 <div class="nav-menu-content">
@@ -842,9 +894,19 @@
 </div>
 <div id="loading-screen">
   <div class="loading-video">
-    <div id="loading-video-player"></div>
+    <iframe
+      id="loading-video-player"
+      width="560"
+      height="315"
+      src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&loop=1&playlist=RkQ3m_uGwXE&playsinline=1"
+      title="QuantumI Intro"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen
+    ></iframe>
     <button id="mute-btn" aria-label="Toggle mute">🔇</button>
-    <button id="skip-intro-btn" aria-label="Skip intro">Skip Intro</button>
+    <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
   </div>
   <div class="title-box">
     <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
@@ -1165,24 +1227,40 @@
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
-  <div class="flex flex-col md:flex-row justify-center gap-4 mt-2">
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1">
       <div class="mb-1 flex justify-center gap-2">
         <input id="track-a-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2"/>
         <button id="track-a-load" class="dj-btn">Load A</button>
       </div>
-      <div id="track-a-player"></div>
+      <div class="playlist-container">
+        <div id="track-a-player"></div>
+        <div class="dj-overlay">
+          <span id="track-a-price"></span>
+          <span id="track-a-inverse"></span>
+          <span id="track-a-time"></span>
+          <span id="track-a-date"></span>
+        </div>
+      </div>
     </div>
     <div class="dj-track flex-1">
       <div class="mb-1 flex justify-center gap-2">
         <input id="track-b-url" class="p-1 rounded text-sm" value="https://www.youtube.com/watch?v=KCb5cgnHsQ8&list=LL"/>
         <button id="track-b-load" class="dj-btn">Load B</button>
       </div>
-      <div id="track-b-player"></div>
+      <div class="playlist-container">
+        <div id="track-b-player"></div>
+        <div class="dj-overlay">
+          <span id="track-b-price"></span>
+          <span id="track-b-inverse"></span>
+          <span id="track-b-time"></span>
+          <span id="track-b-date"></span>
+        </div>
+      </div>
     </div>
   </div>
   <div class="flex flex-col items-center mt-2">
-    <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-1/2"/>
+    <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full md:w-2/3"/>
     <div class="mt-2 flex gap-2">
       <button id="auto-blend" class="dj-btn">Auto Blend</button>
       <button id="record-mix" class="dj-btn">Record</button>
@@ -1252,6 +1330,14 @@
       playlistPrice: document.getElementById('playlist-price'),
       playlistTime: document.getElementById('playlist-time'),
       playlistDate: document.getElementById('playlist-date'),
+      trackAPrice: document.getElementById('track-a-price'),
+      trackAInverse: document.getElementById('track-a-inverse'),
+      trackATime: document.getElementById('track-a-time'),
+      trackADate: document.getElementById('track-a-date'),
+      trackBPrice: document.getElementById('track-b-price'),
+      trackBInverse: document.getElementById('track-b-inverse'),
+      trackBTime: document.getElementById('track-b-time'),
+      trackBDate: document.getElementById('track-b-date'),
       trackAUrl: document.getElementById('track-a-url'),
       trackALoad: document.getElementById('track-a-load'),
       trackBUrl: document.getElementById('track-b-url'),
@@ -1293,12 +1379,13 @@
     let isBTCPriceMock = false;
 
     const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
-    const PLAYLIST_B = 'LL';
+    const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
 
     function onYouTubeIframeAPIReady() {
       ytPlayer = new YT.Player('loading-video-player', {
+        host: 'https://www.youtube-nocookie.com',
         videoId: 'RkQ3m_uGwXE',
-        playerVars: { autoplay: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
+        playerVars: { autoplay: 1, mute: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
         events: {
           onReady: (e) => {
             try {
@@ -1315,11 +1402,13 @@
       });
 
       bgMusicPlayer = new YT.Player('music-player', {
+        host: 'https://www.youtube-nocookie.com',
         videoId: 'RkQ3m_uGwXE',
         playerVars: {
           listType: 'playlist',
           list: PLAYLIST_A,
           autoplay: 1,
+          mute: 1,
           loop: 1,
           controls: 0,
           rel: 0,
@@ -1335,26 +1424,26 @@
       });
 
       trackAPlayer = new YT.Player('track-a-player', {
+        host: 'https://www.youtube-nocookie.com',
         height: '200',
         width: '100%',
         playerVars: { listType: 'playlist', list: PLAYLIST_A },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
-            ev.target.playVideo();
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
           }
         }
       });
 
       trackBPlayer = new YT.Player('track-b-player', {
+        host: 'https://www.youtube-nocookie.com',
         height: '200',
         width: '100%',
         playerVars: { listType: 'playlist', list: PLAYLIST_B },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
-            ev.target.playVideo();
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_B});
           }
         }
@@ -1395,13 +1484,33 @@
           gainB.connect(analyser);
           if (!waveAnim) drawWave();
         }
-        const stream = player.getIframe().captureStream && player.getIframe().captureStream();
+        const iframe = player.getIframe && player.getIframe();
+        let stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
+        if (!stream && iframe) {
+          const vid = player.getVideoData().video_id;
+          const audioProxy = document.createElement('audio');
+          audioProxy.crossOrigin = 'anonymous';
+          audioProxy.src = `/api/youtube-audio?videoId=${vid}`;
+          audioProxy.loop = true;
+          audioProxy.muted = true;
+          audioProxy.play().catch(() => {});
+          stream = audioProxy.captureStream ? audioProxy.captureStream() : null;
+        }
         if (stream) {
           const src = djCtx.createMediaStreamSource(stream);
+          const filter = djCtx.createBiquadFilter();
+          filter.type = 'highpass';
+          filter.frequency.value = 400;
+          const distortion = djCtx.createWaveShaper();
+          distortion.curve = createDistortionCurve(250);
+          distortion.oversample = '4x';
           const delay = djCtx.createDelay();
+          delay.delayTime.value = 0.3;
           const convolver = djCtx.createConvolver();
           convolver.buffer = createImpulse();
-          src.connect(delay);
+          src.connect(filter);
+          filter.connect(distortion);
+          distortion.connect(delay);
           delay.connect(convolver);
           if (which === 'A') {
             delayNodeA = delay;
@@ -1416,20 +1525,45 @@
         if (DOM.crossfader) DOM.crossfader.dispatchEvent(new Event('input'));
       }
 
+      function createDistortionCurve(amount = 50) {
+        const k = typeof amount === 'number' ? amount : 50;
+        const n = 44100;
+        const curve = new Float32Array(n);
+        const deg = Math.PI / 180;
+        for (let i = 0; i < n; ++i) {
+          const x = (i * 2) / n - 1;
+          curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+        }
+        return curve;
+      }
+
       window.enableQuantumSound = function() {
-        if (!bgMusicPlayer || !bgMusicPlayer.getIframe || !bgMusicPlayer.getIframe().captureStream) return;
+        if (!bgMusicPlayer || !bgMusicPlayer.getIframe) return;
         if (audioCtx) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const stream = bgMusicPlayer.getIframe().captureStream();
+        let stream = null;
+        try {
+          stream = bgMusicPlayer.getIframe().captureStream();
+        } catch {}
+        if (!stream) {
+          const vid = bgMusicPlayer.getVideoData().video_id;
+          const tmp = document.createElement('audio');
+          tmp.crossOrigin = 'anonymous';
+          tmp.src = `/api/youtube-audio?videoId=${vid}`;
+          tmp.loop = true;
+          tmp.muted = true;
+          tmp.play().catch(() => {});
+          stream = tmp.captureStream ? tmp.captureStream() : null;
+        }
         if (!stream) return;
         audioSource = audioCtx.createMediaStreamSource(stream);
-        delayNode = audioCtx.createDelay();
-        delayNode.delayTime.value = 0.25;
-        convolverNode = audioCtx.createConvolver();
-        convolverNode.buffer = createImpulse();
         filterNode = audioCtx.createBiquadFilter();
         filterNode.type = 'lowpass';
         filterNode.frequency.value = 1200;
+        delayNode = audioCtx.createDelay();
+        delayNode.delayTime.value = 0.35;
+        convolverNode = audioCtx.createConvolver();
+        convolverNode.buffer = createImpulse();
         bitcrusherNode = audioCtx.createWaveShaper();
         bitcrusherNode.curve = new Float32Array([-1,-0.5,0,0.5,1]);
         bitcrusherNode.oversample = '4x';
@@ -1503,6 +1637,7 @@
       setTimeout(() => {
         DOM.loadingScreen.style.display = 'none';
         document.querySelector('header').style.opacity = '1';
+        shrinkHeader();
         setTimeout(() => document.querySelector('main').style.opacity = '1', 300);
         setTimeout(() => document.querySelector('footer').style.opacity = '1', 500);
         document.querySelectorAll('#module-grid section').forEach((section, index) => {
@@ -1514,6 +1649,28 @@
     window.onload = function() {
       setTimeout(hideLoadingScreen, 23000);
     };
+
+    function shrinkHeader() {
+      const header = document.querySelector('header');
+      if (header) header.classList.add('shrink');
+      if (DOM.navMenuToggle) DOM.navMenuToggle.classList.remove('hidden');
+    }
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) shrinkHeader();
+    });
+
+    function resumePlayers() {
+      try {
+        if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+        if (bgMusicPlayer && bgMusicPlayer.playVideo) bgMusicPlayer.playVideo();
+        if (trackAPlayer && trackAPlayer.playVideo) trackAPlayer.playVideo();
+        if (trackBPlayer && trackBPlayer.playVideo) trackBPlayer.playVideo();
+        document.removeEventListener('click', resumePlayers);
+      } catch {}
+    }
+
+    document.addEventListener('click', resumePlayers, { once: true });
 
     for (let i = 0; i < 10; i++) {
       const particle = document.createElement('div');
@@ -1749,6 +1906,17 @@
       }
     }
 
+    async function fetchTopInverseToken() {
+      try {
+        const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_change_percentage_24h.asc&per_page=1&page=1';
+        const data = await fetchWithRetry(url);
+        return data && data[0] ? data[0].symbol.toUpperCase() : 'N/A';
+      } catch (err) {
+        console.error('Failed to fetch inverse token:', err);
+        return 'N/A';
+      }
+    }
+
     async function fetchChainBalance(chainId, address = '0xb5d85cbf7cb3ee0d56b3bb207d5fc4b82f43f511') {
       const url = `https://api.etherscan.io/api?chainid=${chainId}&module=account&action=balance&address=${address}&tag=latest&apikey=${API_KEY}`;
       try {
@@ -1951,6 +2119,16 @@
         if (DOM.playlistPrice) DOM.playlistPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.playlistTime) DOM.playlistTime.textContent = `Time: ${latestTime}`;
         if (DOM.playlistDate) DOM.playlistDate.textContent = new Date().toLocaleDateString();
+        if (DOM.trackAPrice) DOM.trackAPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
+        if (DOM.trackATime) DOM.trackATime.textContent = latestTime;
+        if (DOM.trackADate) DOM.trackADate.textContent = new Date().toLocaleDateString();
+        if (DOM.trackBPrice) DOM.trackBPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
+        if (DOM.trackBTime) DOM.trackBTime.textContent = latestTime;
+        if (DOM.trackBDate) DOM.trackBDate.textContent = new Date().toLocaleDateString();
+
+        const inverse = await fetchTopInverseToken();
+        if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Top ⬇️: ${inverse}`;
+        if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Top ⬇️: ${inverse}`;
 
         const hashId = generateHashFromPrice(latestPrice);
         addHashLog(hashId, latestTime);
@@ -2438,9 +2616,11 @@
           if (bgMusicPlayer.isMuted()) {
             bgMusicPlayer.unMute();
             DOM.musicMuteBtn.textContent = '🔊';
+            DOM.musicMuteBtn.classList.add('active');
           } else {
             bgMusicPlayer.mute();
             DOM.musicMuteBtn.textContent = '🔇';
+            DOM.musicMuteBtn.classList.remove('active');
           }
         });
       }
@@ -2455,6 +2635,8 @@
             disableQuantumSound();
           }
           DOM.quantumiSoundBtn.textContent = isQuantumSound ? 'Sound Off' : 'QuantumI Sound';
+          if (isQuantumSound) DOM.quantumiSoundBtn.classList.add('active');
+          else DOM.quantumiSoundBtn.classList.remove('active');
         });
       }
 
