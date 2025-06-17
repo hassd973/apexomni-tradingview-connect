@@ -8,8 +8,11 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Determine the correct frontend path
-const frontendPath = process.env.FRONTEND_PATH || path.join(__dirname, 'frontend');
+// Determine the correct frontend path. Default to the frontend directory one
+// level up from the backend folder so running the server from the project root
+// works out of the box.
+const frontendPath = process.env.FRONTEND_PATH ||
+  path.join(__dirname, '..', 'frontend');
 console.log('Frontend Path:', frontendPath);
 
 // Serve static files from the frontend directory
@@ -36,15 +39,16 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Better Stack configuration
-const BETTER_STACK_USERNAME = 'uJDSRvXdjN0eT2afRJ88m24R6YZiEwGcJ';
-const BETTER_STACK_PASSWORD = '2WT0nhxDRzsw3KxyNJx9sOCmvajKzjaW3VTIRaY1vwPvHdTvGk3TVubeUFHPrEve';
-const BETTER_STACK_HOST = 'eu-nbg-2-connect.betterstackdata.com';
+// Credentials are expected via environment variables to avoid hard coding
+// sensitive values in the repository.
+const BETTER_STACK_HOST = process.env.BETTER_STACK_HOST ||
+  'eu-nbg-2-connect.betterstackdata.com';
 const BETTER_STACK_PORT = 443;
 const BETTER_STACK_API_URL = `https://${BETTER_STACK_HOST}:${BETTER_STACK_PORT}`;
-const BETTER_STACK_TOKEN = 'WGdCT5KhHtg4kiGWAbdXRaSL';
+const BETTER_STACK_TOKEN = process.env.BETTER_STACK_TOKEN;
 
 // Etherscan API configuration
-const ETHERSCAN_API_KEY = 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || 'K3I98GFINF6K4EYRQNZCZD6KIIQ3BAAQ5T';
 const ETHERSCAN_API_URL = 'https://api.etherscan.io/api';
 
 // Specific log collections
@@ -97,49 +101,105 @@ async function fetchGasPrices() {
 }
 
 // Function to fetch crypto data from CoinMarketCap
+// Fetch crypto data from CoinMarketCap
+async function fetchCryptoDataFromCMC() {
+  console.log('Fetching crypto data from CoinMarketCap');
+  const response = await axios.get(CMC_API_URL, {
+    headers: {
+      'X-CMC_PRO_API_KEY': CMC_API_KEY,
+    },
+    params: {
+      start: 1,
+      limit: 50,
+      convert: 'USD',
+    },
+    timeout: 10000,
+  });
+
+  const gasData = await fetchGasPrices();
+  return response.data.data.map(coin => {
+    const usdQuote = coin.quote.USD;
+    const tokenData = {
+      id: coin.slug,
+      name: coin.name,
+      symbol: coin.symbol.toUpperCase(),
+      current_price: parseFloat(usdQuote.price),
+      total_volume: parseFloat(usdQuote.volume_24h),
+      price_change_percentage_24h: parseFloat(usdQuote.percent_change_24h),
+      market_cap: parseFloat(usdQuote.market_cap),
+      circulating_supply: parseFloat(coin.circulating_supply),
+      source: 'CoinMarketCap',
+      high_24h: null,
+      low_24h: null,
+      market_cap_rank: coin.cmc_rank
+    };
+    if (coin.symbol.toUpperCase() === 'ETH' && gasData) {
+      tokenData.gasPrice = gasData.proposeGasPrice;
+    }
+    return tokenData;
+  }).filter(token => token.current_price > 0);
+}
+
+// Fetch crypto data from CoinGecko
+async function fetchCryptoDataFromGecko() {
+  console.log('Fetching crypto data from CoinGecko');
+  const response = await axios.get(COINGECKO_API_URL, {
+    params: {
+      vs_currency: 'usd',
+      order: 'market_cap_desc',
+      per_page: 50,
+      page: 1,
+      price_change_percentage: '24h'
+    },
+    timeout: 10000,
+    headers: COINGECKO_API_KEY ? { 'x-cg-pro-api-key': COINGECKO_API_KEY } : {}
+  });
+  return response.data.map(coin => ({
+    id: coin.id,
+    name: coin.name,
+    symbol: coin.symbol.toUpperCase(),
+    current_price: coin.current_price,
+    total_volume: coin.total_volume,
+    price_change_percentage_24h: coin.price_change_percentage_24h,
+    market_cap: coin.market_cap,
+    circulating_supply: coin.circulating_supply,
+    source: 'CoinGecko',
+    high_24h: coin.high_24h,
+    low_24h: coin.low_24h,
+    market_cap_rank: coin.market_cap_rank
+  }));
+}
+
+// Unified function with fallback and caching
+let cachedCryptoData = null;
+let cachedAt = 0;
 async function fetchCryptoData() {
+  const now = Date.now();
+  if (cachedCryptoData && now - cachedAt < 5 * 60 * 1000) {
+    return cachedCryptoData;
+  }
   try {
-    console.log('Fetching crypto data from CoinMarketCap');
-    const response = await axios.get(CMC_API_URL, {
-      headers: {
-        'X-CMC_PRO_API_KEY': CMC_API_KEY,
-      },
-      params: {
-        start: 1,
-        limit: 50,
-        convert: 'USD',
-      },
-      timeout: 10000,
-    });
-
-    const gasData = await fetchGasPrices();
-    const data = response.data.data.map(coin => {
-      const usdQuote = coin.quote.USD;
-      const tokenData = {
-        id: coin.slug,
-        name: coin.name,
-        symbol: coin.symbol.toUpperCase(),
-        current_price: parseFloat(usdQuote.price),
-        total_volume: parseFloat(usdQuote.volume_24h),
-        price_change_percentage_24h: parseFloat(usdQuote.percent_change_24h),
-        market_cap: parseFloat(usdQuote.market_cap),
-        circulating_supply: parseFloat(coin.circulating_supply),
-        source: 'CoinMarketCap',
-        high_24h: null, // CMC doesn't provide high_24h
-        low_24h: null, // CMC doesn't provide low_24h
-        market_cap_rank: coin.cmc_rank
-      };
-      if (coin.symbol.toUpperCase() === 'ETH' && gasData) {
-        tokenData.gasPrice = gasData.proposeGasPrice;
-      }
-      return tokenData;
-    }).filter(token => token.current_price > 0);
-
+    const data = await fetchCryptoDataFromCMC();
+    cachedCryptoData = data;
+    cachedAt = now;
     console.log(`Successfully fetched crypto data, count: ${data.length}`, data.slice(0, 2));
     return data;
   } catch (error) {
     console.error('Failed to fetch crypto data from CoinMarketCap:', error.message, error.response?.data || error.response?.status);
+    console.warn('Trying CoinGecko as fallback');
+    try {
+      const geckoData = await fetchCryptoDataFromGecko();
+      if (geckoData.length > 0) {
+        cachedCryptoData = geckoData;
+        cachedAt = now;
+        return geckoData;
+      }
+    } catch (geckoErr) {
+      console.error('Failed to fetch crypto data from CoinGecko:', geckoErr.message);
+    }
     console.warn('Falling back to mock data');
+    cachedCryptoData = mockCryptoData;
+    cachedAt = now;
     return mockCryptoData;
   }
 }
@@ -213,6 +273,57 @@ app.get('/api/crypto', async (req, res) => {
   } catch (error) {
     console.error('Error in /api/crypto endpoint:', error.message);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// API endpoint to fetch wallet details and open trades
+app.get('/api/wallet', async (req, res) => {
+  const { address } = req.query;
+  if (!address) {
+    return res.status(400).json({ error: 'Address is required' });
+  }
+  try {
+    const balResp = await axios.get(ETHERSCAN_API_URL, {
+      params: {
+        module: 'account',
+        action: 'balance',
+        address,
+        tag: 'latest',
+        apikey: ETHERSCAN_API_KEY
+      }
+    });
+    const balanceEth = parseFloat(balResp.data.result) / 1e18;
+
+    const omniUrl = `https://api.omnidex.finance/v1/user/${address}/positions`;
+    const omniResp = await axios.get(omniUrl);
+    const omniData = omniResp.data || {};
+
+    const tokenResp = await axios.get(`https://api.ethplorer.io/getAddressInfo/${address}?apiKey=freekey`);
+    const tokenCount = tokenResp.data.tokens ? tokenResp.data.tokens.length : 0;
+
+    const txResp = await axios.get(ETHERSCAN_API_URL, {
+      params: {
+        module: 'account',
+        action: 'txlist',
+        address,
+        page: 1,
+        sort: 'desc',
+        apikey: ETHERSCAN_API_KEY
+      }
+    });
+    const lastTx = txResp.data.result && txResp.data.result[0] ? txResp.data.result[0].hash : 'N/A';
+
+    res.json({
+      balanceEth,
+      dex: omniData.exchange || omniData.account?.exchange || 'Unknown DEX',
+      accountBalance: omniData.account?.balanceUsd || 'N/A',
+      positions: omniData.positions || [],
+      tokenCount,
+      lastTx
+    });
+  } catch (error) {
+    console.error('Wallet API error:', error.message);
+    res.status(500).json({ error: 'Failed to fetch wallet data' });
   }
 });
 
