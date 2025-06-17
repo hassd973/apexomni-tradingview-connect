@@ -3457,12 +3457,14 @@
                                         const fn = direction > 0 ? controls.dollyIn.bind(controls) : controls.dollyOut.bind(controls);
                                         const factor = direction > 0 ? 0.95 : 1.05;
                                         fn(factor);
+
                                         controls.update();
                                         renderer.render(scene, camera);
                                 }
 
                                 DOM.zoomInBtn.addEventListener('click', () => smoothZoom(1));
                                 DOM.zoomOutBtn.addEventListener('click', () => smoothZoom(-1));
+
 
 				DOM.exportHashLogBtn.addEventListener('click', () => {
 					exportToCSV(hashLog, 'hash_log.csv');
