@@ -329,21 +329,7 @@
                                 background-color: var(--secondary-color);
                                 box-shadow: 0 0 8px var(--secondary-color);
                         }
-                        .zoom-btn {
-                                width: 2.5rem;
-                                height: 2.5rem;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                border-radius: 9999px;
-                                background: rgba(35, 46, 46, 0.8);
-                                border: 1px solid var(--shadow-color);
-                                transition: background-color 0.3s ease, box-shadow 0.3s ease;
-                        }
-                        .zoom-btn:hover {
-                                background-color: var(--secondary-color);
-                                box-shadow: 0 0 8px var(--secondary-color);
-                        }
+
 			.spline-modal-close {
 				position: absolute;
 				top: 1rem;
@@ -1654,10 +1640,6 @@
 						&gt; Live data from Dune API
 					</div>
                                         <div class="btc-hash-svg" id="btc-hash-canvas"></div>
-                                        <div class="mt-2 flex justify-center gap-2" id="zoom-controls">
-                                                <button class="zoom-btn text-sm" id="zoom-in" aria-label="Zoom in">➕</button>
-                                                <button class="zoom-btn text-sm" id="zoom-out" aria-label="Zoom out">➖</button>
-                                        </div>
 					<div id="btc-legend">
 						<span id="btc-price">Price: Loading...</span>
 						<span id="btc-time">Time: Loading...</span>
@@ -1858,8 +1840,6 @@
 					'token-performance-chart'
 				),
                                 exportObjBtn: document.getElementById('export-obj'),
-                                zoomInBtn: document.getElementById('zoom-in'),
-                                zoomOutBtn: document.getElementById('zoom-out'),
                                 undockBackgroundLink: document.getElementById('undock-background-link'),
 				exportHashLogBtn: document.getElementById('export-hash-log'),
 				exportBalancesBtn: document.getElementById('export-balances'),
@@ -3452,18 +3432,6 @@
                                         link.click();
                                         addSystemLog('Exported BTC Hash Visualization as OBJ');
                                 });
-
-                                function smoothZoom(direction) {
-                                        const fn = direction > 0 ? controls.dollyIn.bind(controls) : controls.dollyOut.bind(controls);
-                                        const factor = direction > 0 ? 0.95 : 1.05;
-                                        fn(factor);
-
-                                        controls.update();
-                                        renderer.render(scene, camera);
-                                }
-
-                                DOM.zoomInBtn.addEventListener('click', () => smoothZoom(1));
-                                DOM.zoomOutBtn.addEventListener('click', () => smoothZoom(-1));
 
 
 				DOM.exportHashLogBtn.addEventListener('click', () => {
