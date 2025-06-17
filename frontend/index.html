@@ -944,28 +944,32 @@
                                 background: linear-gradient(
                                         90deg,
                                         var(--primary-color) 0%,
-                                        var(--secondary-color) 50%,
-                                        #ff0000 100%
+                                        var(--secondary-color) 100%
                                 );
                         }
-			.cmc-link {
-				font-size: 0.75rem;
-				color: var(--primary-color);
-				text-decoration: none;
-			}
-			.cmc-link:hover {
-				text-decoration: underline;
-			}
+                        .cmc-link {
+                                font-size: 0.75rem;
+                                color: #1e2727;
+                                background-color: var(--primary-color);
+                                border: 1px solid var(--shadow-color);
+                                border-radius: 4px;
+                                padding: 0.2rem 0.4rem;
+                                text-decoration: none;
+                        }
+                        .cmc-link:hover {
+                                background-color: var(--secondary-color);
+                                text-decoration: none;
+                        }
 		</style>
 	</head>
 	<body
 		class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600"
 	>
-		<div
-			class="pro-banner text-black text-center text-xs py-1 uppercase w-full"
-		>
-			PRO ALPHA BETA
-		</div>
+                <div
+                        class="pro-banner text-black text-center text-xs py-1 uppercase w-full"
+                >
+                        QUANTUMI BETA PRO RELEASE
+                </div>
 		<button
 			aria-label="Toggle navigation menu"
 			class="nav-menu-toggle"
@@ -1997,8 +2001,9 @@
 
 			document.addEventListener('DOMContentLoaded', () => {
 				DOM.loadingScreen.style.opacity = '0';
-				setTimeout(() => {
-					DOM.loadingScreen.style.display = 'none';
+                                setTimeout(() => {
+                                        DOM.loadingScreen.style.display = 'none';
+                                        DOM.loadingScreen.style.pointerEvents = 'none';
 					document.querySelector('header').style.opacity = '1';
 					setTimeout(
 						() => (document.querySelector('main').style.opacity = '1'),
@@ -2504,10 +2509,10 @@ function init3D() {
 }
 
 function smoothZoom(direction) {
-  const factor = direction === 'in' ? 0.95 : 1.05;
+  const factor = direction === 'in' ? 0.9 : 1.1;
   let count = 0;
   function step() {
-    if (count < 30) {
+    if (count < 20) {
       if (direction === 'in') {
         controls.dollyIn(1 / factor);
       } else {
@@ -2918,15 +2923,16 @@ function smoothZoom(direction) {
                                 if (!data || data.length === 0) return;
                                 const csv = data.map((row) => Object.values(row).join(',')).join('\n');
                                 const headers = Object.keys(data[0]).join(',');
-				const blob = new Blob([headers + '\n' + csv], { type: 'text/csv' });
-				const url = window.URL.createObjectURL(blob);
+                                const blob = new Blob([headers + '\n' + csv], { type: 'text/csv' });
+                                const url = window.URL.createObjectURL(blob);
                                 const a = document.createElement('a');
                                 a.href = url;
                                 a.download = filename;
+                                document.body.appendChild(a);
                                 a.click();
                                 a.remove();
                                 window.URL.revokeObjectURL(url);
-			}
+                        }
 
 			function notifyUser(message) {
 				if (Notification.permission === 'granted') {
@@ -3463,12 +3469,14 @@ function smoothZoom(direction) {
                                         const exporter = new THREE.OBJExporter();
                                         const result = exporter.parse(exportGroup);
                                         const blob = new Blob([result], { type: 'text/plain' });
+                                        const url = URL.createObjectURL(blob);
                                         const link = document.createElement('a');
-                                        link.href = URL.createObjectURL(blob);
+                                        link.href = url;
                                         link.download = 'btc_hash_visualization.obj';
+                                        document.body.appendChild(link);
                                         link.click();
                                         link.remove();
-                                        URL.revokeObjectURL(link.href);
+                                        URL.revokeObjectURL(url);
                                         addSystemLog('Exported BTC Hash Visualization as OBJ');
                                 });
 
@@ -3831,39 +3839,39 @@ function smoothZoom(direction) {
 
 				const labels = sorted.map((coin) => coin.symbol.toUpperCase());
 				const values = sorted.map((coin) => coin.price_change_percentage_24h);
-				const colors = values.map((v) =>
-					v > 0 ? 'rgba(34,197,94,0.6)' : 'rgba(239,68,68,0.7)'
-				);
+                                const colors = values.map((v) =>
+                                        v > 0 ? '#87CEEB' : '#ffbb33'
+                                );
 
-				const ctx = document.getElementById('inverseChart').getContext('2d');
-				new Chart(ctx, {
-					type: 'bar',
-					data: {
-						labels,
-						datasets: [
-							{
-								label: '24h % Change (Inverse Movers)',
-								data: values,
-								backgroundColor: colors
-							}
-						]
-					},
-					options: {
-						responsive: true,
-						plugins: { legend: { display: false } },
-						scales: {
-							x: {
-								ticks: { color: '#ccc' },
-								grid: { color: 'rgba(255,255,255,0.1)' }
-							},
-							y: {
-								ticks: { color: '#ccc' },
-								grid: { color: 'rgba(255,255,255,0.1)' },
-								beginAtZero: true
-							}
-						}
-					}
-				});
+                                const ctx = document.getElementById('inverseChart').getContext('2d');
+                                new Chart(ctx, {
+                                        type: 'bar',
+                                        data: {
+                                                labels,
+                                                datasets: [
+                                                        {
+                                                                label: '24h % Change (Inverse Movers)',
+                                                                data: values,
+                                                                backgroundColor: colors
+                                                        }
+                                                ]
+                                        },
+                                        options: {
+                                                responsive: true,
+                                                plugins: { legend: { display: false } },
+                                                scales: {
+                                                        x: {
+                                                                ticks: { color: (ctx) => colors[ctx.index] },
+                                                                grid: { color: 'rgba(255,255,255,0.1)' }
+                                                        },
+                                                        y: {
+                                                                ticks: { color: '#ccc' },
+                                                                grid: { color: 'rgba(255,255,255,0.1)' },
+                                                                beginAtZero: true
+                                                        }
+                                                }
+                                        }
+                                });
 			}
 
 			document.addEventListener('DOMContentLoaded', loadInverseFromCMC);
@@ -4018,7 +4026,7 @@ function smoothZoom(direction) {
 
 				const labels = processed.map((x) => x.id);
 				const values = processed.map((x) => x.change);
-                                const bgColor = values.map((v) => (v > 0 ? '#3b82f6' : '#ffbb33'));
+                                const bgColor = values.map((v) => (v > 0 ? '#87CEEB' : '#ffbb33'));
 
 				if (inverseChart) inverseChart.destroy();
 
