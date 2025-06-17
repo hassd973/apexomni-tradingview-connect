@@ -143,6 +143,9 @@
       background-color: var(--secondary-color);
       box-shadow: 0 0 8px var(--secondary-color);
     }
+    #wave-canvas {
+      background: rgba(35,46,46,0.5);
+    }
     #skip-intro-btn {
       position: absolute;
       bottom: 1rem;
@@ -1162,14 +1165,14 @@
   <div class="flex flex-col md:flex-row justify-center gap-4 mt-2">
     <div class="dj-track flex-1">
       <div class="mb-1 flex justify-center gap-2">
-        <input id="track-a-url" class="p-1 rounded text-sm" placeholder="Track A URL"/>
+        <input id="track-a-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2"/>
         <button id="track-a-load" class="dj-btn">Load A</button>
       </div>
       <div id="track-a-player"></div>
     </div>
     <div class="dj-track flex-1">
       <div class="mb-1 flex justify-center gap-2">
-        <input id="track-b-url" class="p-1 rounded text-sm" placeholder="Track B URL"/>
+        <input id="track-b-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2"/>
         <button id="track-b-load" class="dj-btn">Load B</button>
       </div>
       <div id="track-b-player"></div>
@@ -1180,8 +1183,16 @@
     <div class="mt-2 flex gap-2">
       <button id="auto-blend" class="dj-btn">Auto Blend</button>
       <button id="record-mix" class="dj-btn">Record</button>
+      <a id="download-mix" class="dj-btn" style="display:none" href="#">Download</a>
       <button id="surround-toggle" class="dj-btn">Surround</button>
     </div>
+    <div class="mt-2 flex gap-2 items-center text-sm">
+      <label for="delay-knob">Delay</label>
+      <input id="delay-knob" type="range" min="0" max="1" step="0.01" value="0.25"/>
+      <label for="reverb-knob">Reverb</label>
+      <input id="reverb-knob" type="range" min="0" max="1" step="0.01" value="0.5"/>
+    </div>
+    <canvas id="wave-canvas" width="600" height="80" class="mt-2"></canvas>
   </div>
 </section>
 <footer class="text-center text-gray-500 text-sm">
@@ -1239,8 +1250,11 @@
       crossfader: document.getElementById('crossfader'),
       autoBlendBtn: document.getElementById('auto-blend'),
       recordMixBtn: document.getElementById('record-mix'),
-      surroundToggleBtn: document.getElementById('surround-toggle')
-
+      downloadMixBtn: document.getElementById('download-mix'),
+      surroundToggleBtn: document.getElementById('surround-toggle'),
+      delayKnob: document.getElementById('delay-knob'),
+      reverbKnob: document.getElementById('reverb-knob'),
+      waveCanvas: document.getElementById('wave-canvas')
     };
 
     let draggedModule = null;
@@ -1253,6 +1267,7 @@
     let trackAPlayer;
     let trackBPlayer;
     let djCtx, gainA, gainB, recorder, autoBlendInterval;
+    let delayNodeA, delayNodeB, reverbNodeA, reverbNodeB, analyser, waveAnim;
     let isQuantumSound = false;
     let audioCtx, audioSource, delayNode, convolverNode, filterNode, bitcrusherNode, gainNode;
     const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
@@ -1263,6 +1278,9 @@
     let balancesData = [];
     let tokenInsightsData = [];
     let isBTCPriceMock = false;
+
+    const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
+    const PLAYLIST_B = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
 
     function onYouTubeIframeAPIReady() {
       ytPlayer = new YT.Player('loading-video-player', {
@@ -1285,7 +1303,7 @@
         videoId: 'RkQ3m_uGwXE',
         playerVars: {
           listType: 'playlist',
-          list: 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2',
+          list: PLAYLIST_A,
           autoplay: 1,
           loop: 1,
           controls: 0,
@@ -1304,18 +1322,25 @@
       trackAPlayer = new YT.Player('track-a-player', {
         height: '200',
         width: '100%',
-        videoId: '',
+        playerVars: { listType: 'playlist', list: PLAYLIST_A },
         events: {
-          onReady: (ev) => attachTrack(ev.target, 'A')
+          onReady: (ev) => {
+            attachTrack(ev.target, 'A');
+            ev.target.playVideo();
+            if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
+          }
         }
       });
 
       trackBPlayer = new YT.Player('track-b-player', {
         height: '200',
         width: '100%',
-        videoId: '',
+        playerVars: { listType: 'playlist', list: PLAYLIST_B },
         events: {
-          onReady: (ev) => attachTrack(ev.target, 'B')
+          onReady: (ev) => {
+            attachTrack(ev.target, 'B');
+            ev.target.playVideo();
+          }
         }
       });
 
@@ -1343,8 +1368,20 @@
         const stream = player.getIframe().captureStream && player.getIframe().captureStream();
         if (stream) {
           const src = djCtx.createMediaStreamSource(stream);
-          if (which === 'A') src.connect(gainA);
-          else src.connect(gainB);
+          const delay = djCtx.createDelay();
+          const convolver = djCtx.createConvolver();
+          convolver.buffer = createImpulse();
+          src.connect(delay);
+          delay.connect(convolver);
+          if (which === 'A') {
+            delayNodeA = delay;
+            reverbNodeA = convolver;
+            convolver.connect(gainA);
+          } else {
+            delayNodeB = delay;
+            reverbNodeB = convolver;
+            convolver.connect(gainB);
+          }
         }
         if (DOM.crossfader) DOM.crossfader.dispatchEvent(new Event('input'));
       }
@@ -2378,17 +2415,14 @@
 
       if (DOM.trackALoad) {
         DOM.trackALoad.addEventListener('click', () => {
-          const url = DOM.trackAUrl.value.trim();
-          const id = extractVideoId(url);
-          if (id && trackAPlayer) trackAPlayer.loadVideoById(id);
+          if (trackAPlayer) trackAPlayer.loadPlaylist({list: PLAYLIST_A});
+          if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
         });
       }
 
       if (DOM.trackBLoad) {
         DOM.trackBLoad.addEventListener('click', () => {
-          const url = DOM.trackBUrl.value.trim();
-          const id = extractVideoId(url);
-          if (id && trackBPlayer) trackBPlayer.loadVideoById(id);
+          if (trackBPlayer) trackBPlayer.loadPlaylist({list: PLAYLIST_B});
         });
       }
 
@@ -2399,6 +2433,22 @@
             gainA.gain.value = 1 - val;
             gainB.gain.value = val;
           }
+        });
+      }
+
+      if (DOM.delayKnob) {
+        DOM.delayKnob.addEventListener('input', () => {
+          const v = parseFloat(DOM.delayKnob.value);
+          if (delayNodeA) delayNodeA.delayTime.value = v;
+          if (delayNodeB) delayNodeB.delayTime.value = v;
+        });
+      }
+
+      if (DOM.reverbKnob) {
+        DOM.reverbKnob.addEventListener('input', () => {
+          const v = parseFloat(DOM.reverbKnob.value);
+          if (reverbNodeA) reverbNodeA.buffer = createImpulse(v * 2, 2);
+          if (reverbNodeB) reverbNodeB.buffer = createImpulse(v * 2, 2);
         });
       }
 
@@ -2428,25 +2478,60 @@
           if (recorder && recorder.state === 'recording') {
             recorder.stop();
             DOM.recordMixBtn.classList.remove('active');
+            if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
+            cancelAnimationFrame(waveAnim);
           } else {
             const dest = djCtx.createMediaStreamDestination();
             gainA.connect(dest);
             gainB.connect(dest);
+            analyser = djCtx.createAnalyser();
+            const src = djCtx.createMediaStreamSource(dest.stream);
+            src.connect(analyser);
+            analyser.fftSize = 2048;
             recorder = new MediaRecorder(dest.stream);
             const chunks = [];
             recorder.ondataavailable = e => chunks.push(e.data);
             recorder.onstop = () => {
-              const blob = new Blob(chunks, {type:'audio/webm'});
+              const blob = new Blob(chunks, { type: 'audio/webm' });
               const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = 'mix.webm';
-              a.click();
+              if (DOM.downloadMixBtn) {
+                DOM.downloadMixBtn.href = url;
+                DOM.downloadMixBtn.download = 'mix.webm';
+              }
             };
             recorder.start();
             DOM.recordMixBtn.classList.add('active');
+            drawWave();
           }
         });
+      }
+
+      if (DOM.downloadMixBtn) {
+        DOM.downloadMixBtn.addEventListener('click', () => {
+          DOM.downloadMixBtn.style.display = 'none';
+        });
+      }
+
+      function drawWave() {
+        if (!analyser || !DOM.waveCanvas) return;
+        const ctx = DOM.waveCanvas.getContext('2d');
+        const buffer = new Uint8Array(analyser.fftSize);
+        const draw = () => {
+          analyser.getByteTimeDomainData(buffer);
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0,0,DOM.waveCanvas.width,DOM.waveCanvas.height);
+          ctx.strokeStyle = '#87CEEB';
+          ctx.beginPath();
+          const step = DOM.waveCanvas.width / buffer.length;
+          for (let i=0;i<buffer.length;i++) {
+            const v = buffer[i]/128.0;
+            const y = v * DOM.waveCanvas.height/2;
+            if(i===0) ctx.moveTo(0,y); else ctx.lineTo(i*step,y);
+          }
+          ctx.stroke();
+          waveAnim = requestAnimationFrame(draw);
+        };
+        draw();
       }
 
       if (DOM.surroundToggleBtn) {
