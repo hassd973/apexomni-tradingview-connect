@@ -6,6 +6,7 @@ const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
+const ytdl = require('ytdl-core');
 const { apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../src/services');
 
 const app = express();
@@ -373,6 +374,19 @@ app.get('/api/logs', async (req, res) => {
   } catch (error) {
     console.error('Error in /api/logs endpoint:', error.message);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Stream audio from YouTube for DJ effects
+app.get('/api/youtube-audio', async (req, res) => {
+  const { videoId } = req.query;
+  if (!videoId) return res.status(400).send('videoId required');
+  try {
+    res.setHeader('Content-Type', 'audio/mp4');
+    ytdl(videoId, { filter: 'audioonly', quality: 'highestaudio' }).pipe(res);
+  } catch (err) {
+    console.error('ytdl error:', err.message);
+    res.status(500).send('Failed to fetch audio');
   }
 });
 
