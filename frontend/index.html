@@ -3074,7 +3074,7 @@ function smoothZoom(direction) {
             <div class="token-row">
               <span class="token-name">${token.name} (${token.symbol})</span>
               <div class="flex gap-2 items-center">
-                <a href="https://coinmarketcap.com/search/?q=${encodeURIComponent(token.name)}" target="_blank" rel="noopener" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
+                <a href="https://coinmarketcap.com/currencies/${cmcSlug}" target="_blank" rel="noopener" class="cmc-link" onclick="event.stopPropagation();" title="Open on CoinMarketCap">CMC</a>
                 <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
               </div>
             </div>
@@ -3261,11 +3261,10 @@ function smoothZoom(direction) {
 
 					if (headerBtn) {
 						headerBtn.addEventListener('click', () => {
-							document
-								.querySelectorAll(
-									'#header-timeframe-' +
-										timeframes.map((t) => `#header-timeframe-${t}`).join(',')
-								)
+                                                        document
+                                                                .querySelectorAll(
+                                                                        timeframes.map((t) => `#header-timeframe-${t}`).join(',')
+                                                                )
 								.forEach((btn) => btn.classList.remove('active'));
 							headerBtn.classList.add('active');
 							const symbol = document
@@ -3276,11 +3275,10 @@ function smoothZoom(direction) {
 					}
 					if (modalBtn) {
 						modalBtn.addEventListener('click', () => {
-							document
-								.querySelectorAll(
-									'#modal-timeframe-' +
-										timeframes.map((t) => `#modal-timeframe-${t}`).join(',')
-								)
+                                                        document
+                                                                .querySelectorAll(
+                                                                        timeframes.map((t) => `#modal-timeframe-${t}`).join(',')
+                                                                )
 								.forEach((btn) => btn.classList.remove('active'));
 							modalBtn.classList.add('active');
 							const symbol = document
@@ -4041,9 +4039,9 @@ function smoothZoom(direction) {
 						onClick: (evt, elements) => {
 							if (elements.length > 0) {
 								const token = labels[elements[0].index];
-                                const cmcQuery = encodeURIComponent(token);
+                                const cmcSlug = encodeURIComponent(token.toLowerCase());
                                 window.open(
-                                        `https://coinmarketcap.com/search/?q=${cmcQuery}`,
+                                        `https://coinmarketcap.com/currencies/${cmcSlug}/`,
                                         '_blank'
                                 );
 							}
