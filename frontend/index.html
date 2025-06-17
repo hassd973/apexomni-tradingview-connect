@@ -68,6 +68,14 @@
       opacity: 0;
       transition: opacity 0.5s ease-in;
     }
+    #beta-banner {
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      color: #000;
+      text-align: center;
+      padding: 0.25rem 0;
+      font-weight: bold;
+      font-size: 0.875rem;
+    }
     .spline-bg {
       position: fixed;
       top: 0;
@@ -715,6 +723,7 @@
 <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 <div class="particles" id="particles"></div>
+<div id="beta-banner">⚡ QuantumI Beta Pro Release</div>
 <header class="w-full flex justify-center items-center">
 <div class="w-full max-w-[98vw] mx-auto px-4">
 <div class="title-box">
@@ -805,7 +814,7 @@
 <div class="module-content">
 <div class="loader text-center text-gray-500 text-sm" id="loader-tokens">&gt; Loading...</div>
 <div class="data-warning" id="token-warning" style="display: none;">&gt; Live data from Dune API</div>
-<ul class="space-y-2 text-sm" id="token-list" onclick="openCMC(event)"></ul>
+<ul class="space-y-2 text-sm" id="token-list"></ul>
 <div class="mt-4">
 <h3 class="text-base md:text-lg mb-2 typewriter">&gt; Performers</h3>
 <ul class="space-y-2 text-sm" id="profit-pairs"></ul>
@@ -1875,10 +1884,11 @@
         const symbol = `BINANCE:${token.symbol}USDT`;
         return `
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
-            <div class="flex justify-between">
+            <div class="flex justify-between items-center">
               <span>${token.name} (${token.symbol})</span>
               <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
             </div>
+            <button class="cmc-btn mt-1 bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-0.5 rounded" data-cmc="${token.id}" aria-label="Open CoinMarketCap page">CMC</button>
             <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
             <div class="metric">Supply: ${token.circulating_supply.toLocaleString()}</div>
@@ -2033,6 +2043,14 @@
       });
 
       DOM.tokenList.addEventListener('click', (e) => {
+        const cmcBtn = e.target.closest('.cmc-btn');
+        if (cmcBtn) {
+          e.stopPropagation();
+          const cmc = cmcBtn.getAttribute('data-cmc');
+          window.open(`https://coinmarketcap.com/currencies/${cmc}/`, '_blank');
+          return;
+        }
+
         const li = e.target.closest('li');
         if (li && li.dataset.symbol) {
           const symbol = li.dataset.symbol;
@@ -2429,24 +2447,6 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
   chat.innerHTML += `<div class='text-xs text-green-300'>GPT: ${data.response}</div>`;
 });
 </script><script>
-function openCMC(event) {
-    const tokenSymbol = event.target.closest('li')?.querySelector('.token-symbol')?.textContent?.trim().toLowerCase();
-    const tokenNameMap = {
-        eth: 'ethereum',
-        btc: 'bitcoin',
-        xrp: 'xrp',
-        ada: 'cardano',
-        bnb: 'binancecoin',
-        ltc: 'litecoin',
-        link: 'chainlink',
-        dot: 'polkadot',
-        sol: 'solana',
-        usdt: 'tether'
-    };
-    const cmcToken = tokenNameMap[tokenSymbol] || tokenSymbol;
-    window.open(`https://coinmarketcap.com/currencies/${cmcToken}/`, '_blank');
-}
-document.getElementById('token-list').addEventListener('click', openCMC);
 </script><script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script><script>
 async function connectWalletAndLoadOmniData() {
   if (typeof window.ethereum === 'undefined') {
@@ -2566,7 +2566,11 @@ async function loadInverseChart(topCount = 10) {
 
     const labels = filteredTokens.map(t => t.symbol.toUpperCase());
     const data = filteredTokens.map(t => t.price_change_percentage_24h);
-    const bgColor = data.map(change => isMarketDown ? (change > 0 ? '#3b82f6' : '#ef4444') : (change < 0 ? '#ef4444' : '#3b82f6'));
+    const bgColor = data.map(change =>
+        isMarketDown
+            ? (change > 0 ? '#3b82f6' : '#ffbb33')
+            : (change < 0 ? '#ffbb33' : '#3b82f6')
+    );
 
     const ctx = document.getElementById('inverseChart').getContext('2d');
     if (inverseChart) inverseChart.destroy();
@@ -2594,7 +2598,9 @@ async function loadInverseChart(topCount = 10) {
                     ticks: { color: '#ffffff' }
                 },
                 x: {
-                    ticks: { color: '#ffffff' }
+                    ticks: {
+                        color: (ctx) => bgColor[ctx.index]
+                    }
                 }
             }
         }
