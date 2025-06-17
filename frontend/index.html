@@ -318,17 +318,32 @@
 					background-color 0.3s ease,
 					box-shadow 0.3s ease;
 			}
-			.spline-modal-close:hover,
-			.spline-fullscreen-btn:hover,
-			button:hover,
-			#chat-send:hover,
-			#toggle-indicator-header:hover,
-			#toggle-indicator-modal:hover,
-			#toggle-background:hover,
-			#toggle-background-dock:hover {
-				background-color: var(--secondary-color);
-				box-shadow: 0 0 8px var(--secondary-color);
-			}
+                        .spline-modal-close:hover,
+                        .spline-fullscreen-btn:hover,
+                        button:hover,
+                        #chat-send:hover,
+                        #toggle-indicator-header:hover,
+                        #toggle-indicator-modal:hover,
+                        #toggle-background:hover,
+                        #toggle-background-dock:hover {
+                                background-color: var(--secondary-color);
+                                box-shadow: 0 0 8px var(--secondary-color);
+                        }
+                        .zoom-btn {
+                                width: 2rem;
+                                height: 2rem;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                border-radius: 9999px;
+                                background: rgba(35, 46, 46, 0.8);
+                                border: 1px solid var(--shadow-color);
+                                transition: background-color 0.3s ease, box-shadow 0.3s ease;
+                        }
+                        .zoom-btn:hover {
+                                background-color: var(--secondary-color);
+                                box-shadow: 0 0 8px var(--secondary-color);
+                        }
 			.spline-modal-close {
 				position: absolute;
 				top: 1rem;
@@ -803,6 +818,7 @@
 			}
                         .hash-box {
                                 font-family: monospace;
+                                font-size: 0.75rem;
                                 word-break: break-all;
                                 white-space: pre-wrap;
                                 overflow-wrap: anywhere;
@@ -1509,7 +1525,7 @@
 					</button>
 				</div>
 			</section>
-                        <section class="rounded-lg order-first sm:order-none" draggable="true" id="inverse-winners-module">
+                        <section class="rounded-lg sm:order-none" draggable="true" id="inverse-winners-module">
 				<div class="module-header">
 					<h2 class="text-lg md:text-xl typewriter">📊 Inverse Metrics</h2>
 					<button
@@ -1560,7 +1576,7 @@
 				</div>
 			</section>
                         <section
-                                class="rounded-lg col-span-full order-first sm:order-none"
+                                class="rounded-lg col-span-full sm:order-none"
                                 draggable="true"
                                 id="live-logs-module"
 			>
@@ -1639,8 +1655,8 @@
 					</div>
                                         <div class="btc-hash-svg" id="btc-hash-canvas"></div>
                                         <div class="mt-2 flex justify-center gap-2" id="zoom-controls">
-                                                <button class="px-3 py-1 rounded text-sm" id="zoom-in" aria-label="Zoom in">➕</button>
-                                                <button class="px-3 py-1 rounded text-sm" id="zoom-out" aria-label="Zoom out">➖</button>
+                                                <button class="zoom-btn text-sm" id="zoom-in" aria-label="Zoom in">➕</button>
+                                                <button class="zoom-btn text-sm" id="zoom-out" aria-label="Zoom out">➖</button>
                                         </div>
 					<div id="btc-legend">
 						<span id="btc-price">Price: Loading...</span>
@@ -1844,7 +1860,7 @@
 				),
                                 exportObjBtn: document.getElementById('export-obj'),
                                 zoomInBtn: document.getElementById('zoom-in'),
-                                zoomOutBtn: document.getElementById('zoom-out'),
+                        const siteColors = ['#3b82f6', '#ffbb33', '#16a34a', '#ff007f', '#87CEEB'];
                                 undockBackgroundLink: document.getElementById('undock-background-link'),
 				exportHashLogBtn: document.getElementById('export-hash-log'),
 				exportBalancesBtn: document.getElementById('export-balances'),
@@ -3367,7 +3383,7 @@
 				});
 
 				const handleFullscreenChange = () => {
-					DOM.splineFullscreenBtn.textContent = document.fullscreenElement
+                                                        body: JSON.stringify({ prompt: input })
 						? 'Exit Fullscreen'
 						: 'Fullscreen';
 				};
