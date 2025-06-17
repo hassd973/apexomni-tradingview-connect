@@ -681,12 +681,13 @@
   }
 </style>
 <style>
-#refreshWalletData, #chart-export-btn, #connectWallet {
+
+#refreshWalletData, #chart-export-btn, #connectWallet, #toggleBalance {
     background-color: var(--primary-color) !important;
     color: #000 !important;
     transition: background-color 0.3s ease;
 }
-#refreshWalletData:hover, #chart-export-btn:hover, #connectWallet:hover {
+#refreshWalletData:hover, #chart-export-btn:hover, #connectWallet:hover, #toggleBalance:hover {
     background-color: #6fc8e9 !important;
 }
 .cmc-link {
@@ -749,7 +750,7 @@
 <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 <div class="particles" id="particles"></div>
-<div id="beta-banner">QuantumI Alpha Beta Pro Release⚡</div>
+<div id="beta-banner">QuantumI Alpha ⚡ Beta Pro Release</div>
 <header class="w-full flex justify-center items-center">
 <div class="w-full max-w-[98vw] mx-auto px-4">
 <div class="title-box">
@@ -970,7 +971,11 @@
 <section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
 <div class="module-header flex justify-between items-center">
 <h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
+<div class="flex gap-2">
+<button class="text-white py-1 px-4 rounded text-sm" id="connectWallet">🔌 Connect Wallet</button>
 <button class="text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
+<button class="text-white py-1 px-2 rounded text-xs" id="toggleBalance">Hide Balance</button>
+</div>
 </div>
 <div class="module-content text-white">
 <div class="wallet-info my-2">
@@ -1822,6 +1827,14 @@
       window.URL.revokeObjectURL(url);
     }
 
+    function exportChart() {
+      if (!window.inverseChart) return;
+      const link = document.createElement('a');
+      link.href = window.inverseChart.toBase64Image();
+      link.download = 'inverse_metrics.png';
+      link.click();
+    }
+
     function notifyUser(message) {
       if (Notification.permission === 'granted') {
         new Notification('QuantumI Alert', { body: message });
@@ -2032,6 +2045,11 @@
       init3D();
       updateBTCHash();
 
+      const welcome = document.createElement('li');
+      welcome.className = 'p-2 rounded';
+      welcome.innerHTML = '<div>QuantGpt: Welcome to QuantumI! Ask me for insights.</div>';
+      DOM.chatList.appendChild(welcome);
+
       setInterval(updateBTCHash, 60000);
 
       DOM.toggleIndicatorHeaderBtn.addEventListener('click', () => {
@@ -2170,25 +2188,47 @@
         userMessage.className = 'p-2 rounded';
         userMessage.innerHTML = `<div>User: ${input}</div>`;
         DOM.chatList.appendChild(userMessage);
-        try {
-          const response = await fetch('https://x.ai/api/grok', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: input })
-          });
-          if (!response.ok) throw new Error('ChatGPT API request failed');
-          const data = await response.json();
+
+        const lower = input.toLowerCase();
+        let quickAnswer = '';
+        if (tokensData.length) {
+          const sorted = [...tokensData].sort((a,b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+          if (lower.includes('top') && lower.includes('winner')) {
+            const t = sorted[0];
+            quickAnswer = `The top performer today is ${t.name} (${t.symbol}) up ${t.price_change_percentage_24h.toFixed(2)}%.`;
+          } else if (lower.includes('top') && lower.includes('loser')) {
+            const t = sorted[sorted.length-1];
+            quickAnswer = `The biggest loser today is ${t.name} (${t.symbol}) down ${t.price_change_percentage_24h.toFixed(2)}%.`;
+          }
+        }
+
+        if (quickAnswer) {
           const botMessage = document.createElement('li');
           botMessage.className = 'p-2 rounded';
-          botMessage.innerHTML = `<div>ChatGPT: ${data.response || 'No response received'}</div>`;
+          botMessage.innerHTML = `<div>QuantGpt: ${quickAnswer}</div>`;
           DOM.chatList.appendChild(botMessage);
           DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
-        } catch (error) {
-          console.error('ChatGPT API error:', error);
-          const errorMessage = document.createElement('li');
-          errorMessage.className = 'p-2 rounded text-orange-400';
-          errorMessage.innerHTML = `<div>ChatGPT: Error processing request - ${error.message}</div>`;
-          DOM.chatList.appendChild(errorMessage);
+        } else {
+          try {
+            const response = await fetch('https://x.ai/api/grok', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: input })
+            });
+            if (!response.ok) throw new Error('ChatGPT API request failed');
+            const data = await response.json();
+            const botMessage = document.createElement('li');
+            botMessage.className = 'p-2 rounded';
+            botMessage.innerHTML = `<div>QuantGpt: ${data.response || 'No response received'}</div>`;
+            DOM.chatList.appendChild(botMessage);
+            DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
+          } catch (error) {
+            console.error('ChatGPT API error:', error);
+            const errorMessage = document.createElement('li');
+            errorMessage.className = 'p-2 rounded text-orange-400';
+            errorMessage.innerHTML = `<div>QuantGpt: Error processing request - ${error.message}</div>`;
+            DOM.chatList.appendChild(errorMessage);
+          }
         }
         DOM.chatInput.value = '';
         DOM.loaderChat.style.display = 'none';
@@ -2214,6 +2254,29 @@
         link.click();
         addSystemLog('Exported BTC Hash Visualization as OBJ');
       });
+      let zoomDirection = 0;
+      let zoomSpeed = 0;
+      function zoomLoop() {
+        if (zoomDirection !== 0 && camera) {
+          zoomSpeed = Math.min(zoomSpeed + 0.0008, 0.04);
+          const factor = zoomDirection > 0 ? 1 - zoomSpeed : 1 + zoomSpeed;
+          camera.position.multiplyScalar(factor);
+          controls.update();
+        } else {
+          zoomSpeed = 0;
+        }
+        requestAnimationFrame(zoomLoop);
+      }
+      zoomLoop();
+      ['mousedown','touchstart'].forEach(ev => {
+        DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 1; });
+        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = -1; });
+      });
+      ['mouseup','mouseleave','touchend'].forEach(ev => {
+        DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 0; });
+        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = 0; });
+      });
+
       let zoomDirection = 0;
       let zoomSpeed = 0;
       function zoomLoop() {
@@ -2502,40 +2565,88 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
 });
 </script><script>
 </script><script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script><script>
-async function connectWalletAndLoadOmniData() {
+let walletAddress = null;
+let balanceVisible = true;
+
+async function connectWallet() {
   if (typeof window.ethereum === 'undefined') {
-    alert('MetaMask not detected');
+    if (/Mobi|Android/i.test(navigator.userAgent)) {
+      window.location.href = 'https://metamask.app.link/dapp/' + location.href.replace(/^https?:\/\//, '');
+    } else {
+      alert('MetaMask not detected');
+    }
     return;
   }
-
-  const provider = new ethers.providers.Web3Provider(window.ethereum);
-  await provider.send("eth_requestAccounts", []);
-  const signer = provider.getSigner();
-  const address = await signer.getAddress();
-
-  document.getElementById("wallet-address").innerText = address;
-
-  // Simulated fetch using connected address directly
-  const omniApiUrl = `https://api.omnidex.finance/v1/user/${address}/positions`; // Replace with valid endpoint when known
-
   try {
-    const response = await fetch(omniApiUrl);
-    const data = await response.json();
-
-    const balance = data?.account?.balanceUsd || 'N/A';
-    const positions = data?.positions || [];
-
-    document.getElementById("wallet-balance").innerText = balance;
-
-    const positionsEl = document.getElementById("open-trades");
-    positionsEl.innerHTML = positions.map(p =>
-      `<li>${p.symbol.toUpperCase()} | Size: ${p.size} | PnL: ${p.pnlPercent}%</li>`
-    ).join('');
-  } catch (e) {
-    console.error("Omni fetch failed:", e);
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send('eth_requestAccounts', []);
+    const signer = provider.getSigner();
+    walletAddress = await signer.getAddress();
+    document.getElementById('wallet-address').innerText = walletAddress;
+    await refreshWalletData();
+  } catch (err) {
+    console.error('Wallet connection failed:', err);
   }
 }
-window.addEventListener("load", connectWalletAndLoadOmniData);
+
+async function refreshWalletData() {
+  if (!walletAddress) {
+    document.getElementById('open-trades').innerHTML = '<li>Connect wallet first</li>';
+    return;
+  }
+  try {
+    const res = await fetch(`/api/wallet?address=${walletAddress}`);
+    const data = await res.json();
+    const balanceTxt = parseFloat(data.balanceEth).toFixed(4) + ' ETH';
+    const balEl = document.getElementById('wallet-balance');
+    balEl.dataset.full = balanceTxt;
+    balEl.innerText = balanceVisible ? balanceTxt : '****';
+    document.getElementById('detected-exchange').innerText = data.dex + (data.accountBalance ? ` (${data.accountBalance} USD)` : '');
+
+    const tradesEl = document.getElementById('open-trades');
+    tradesEl.innerHTML = '';
+    data.positions.forEach(p => {
+      const li = document.createElement('li');
+      li.innerHTML = `${p.symbol} | Size: ${p.size} <button class="close-trade" data-symbol="${p.symbol}" data-size="${p.size}">Close</button>`;
+      tradesEl.appendChild(li);
+    });
+  } catch (e) {
+    console.error('refreshWalletData error', e);
+  }
+}
+
+document.getElementById('connectWallet').addEventListener('click', connectWallet);
+document.getElementById('refreshWalletData').addEventListener('click', refreshWalletData);
+document.getElementById('toggleBalance').addEventListener('click', () => {
+  balanceVisible = !balanceVisible;
+  const el = document.getElementById('wallet-balance');
+  if (balanceVisible) {
+    el.innerText = el.dataset.full || el.innerText;
+    document.getElementById('toggleBalance').innerText = 'Hide Balance';
+  } else {
+    el.dataset.full = el.innerText;
+    el.innerText = '****';
+    document.getElementById('toggleBalance').innerText = 'Show Balance';
+  }
+});
+
+document.getElementById('open-trades').addEventListener('click', async (e) => {
+  const btn = e.target.closest('.close-trade');
+  if (!btn) return;
+  const symbol = btn.dataset.symbol;
+  const size = Math.abs(parseFloat(btn.dataset.size));
+  const side = parseFloat(btn.dataset.size) > 0 ? 'SELL' : 'BUY';
+  try {
+    await fetch('/api/order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbol, side, size })
+    });
+    refreshWalletData();
+  } catch (err) {
+    console.error('close trade error', err);
+  }
+});
 </script><script>
 async function loadInverseFromCMC() {
   const response = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false");
@@ -2583,32 +2694,6 @@ async function loadInverseFromCMC() {
 }
 
 window.addEventListener('load', loadInverseFromCMC);
-</script><script>
-async function connectWalletAndExtractData() {
-  if (typeof window.ethereum === 'undefined') {
-    alert('MetaMask not detected');
-    return;
-  }
-
-  try {
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = provider.getSigner();
-    const address = await signer.getAddress();
-    const balanceWei = await provider.getBalance(address);
-    const balanceEth = ethers.utils.formatEther(balanceWei);
-
-    document.getElementById("wallet-address").innerText = address;
-    document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
-    document.getElementById("open-trades").innerHTML = "<li>📍 No Omni positions fetched (wallet only)</li>";
-  } catch (err) {
-    console.error("Wallet connection failed:", err);
-    document.getElementById("wallet-address").innerText = "Error";
-    document.getElementById("wallet-balance").innerText = "Error";
-    document.getElementById("open-trades").innerHTML = "<li>❌ Failed to read wallet data</li>";
-  }
-}
-window.addEventListener("load", connectWalletAndExtractData);
 </script><script>
 let inverseChart;
 
@@ -2665,6 +2750,7 @@ async function loadInverseChart(topCount = 10) {
             }
         }
     });
+    window.inverseChart = inverseChart;
 }
 
 // Add event listeners to toggle buttons for responsiveness
@@ -2673,24 +2759,5 @@ document.getElementById('topCount').addEventListener('change', (e) => {
 });
 
 window.addEventListener('load', () => loadInverseChart(10));
-</script><script>
-async function refreshWalletData() {
-    if (!window.ethereum) return alert('MetaMask not detected');
-    const provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const signer = provider.getSigner();
-    const address = await signer.getAddress();
-    const balanceWei = await provider.getBalance(address);
-    const balanceEth = ethers.utils.formatEther(balanceWei);
-
-    document.getElementById("wallet-address").innerText = address;
-    document.getElementById("wallet-balance").innerText = parseFloat(balanceEth).toFixed(4) + ' ETH';
-
-    // Realistic placeholder (in production, backend fetch needed)
-    document.getElementById("detected-exchange").innerText = "MetaMask Wallet Direct";
-    document.getElementById("open-trades").innerHTML = "<li>No direct open trades detected via wallet alone</li>";
-}
-document.getElementById("refreshWalletData").addEventListener("click", refreshWalletData);
-window.addEventListener("load", refreshWalletData);
 </script></body>
 </html>
