@@ -2000,6 +2000,7 @@
 			];
 
                         function hideLoadingScreen() {
+                                if (DOM.loadingScreen.style.display === 'none') return;
                                 DOM.loadingScreen.style.opacity = '0';
                                 setTimeout(() => {
                                         DOM.loadingScreen.style.display = 'none';
@@ -2025,6 +2026,7 @@
                         }
                         document.addEventListener('DOMContentLoaded', hideLoadingScreen);
                         window.addEventListener('load', hideLoadingScreen);
+                        setTimeout(hideLoadingScreen, 5000);
 
 			for (let i = 0; i < 20; i++) {
 				const particle = document.createElement('div');
