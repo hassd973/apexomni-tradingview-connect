@@ -2313,7 +2313,8 @@
   });
 </script>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
+</script>
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     document.getElementById('btc-time').textContent = "Time: " + new Date().toLocaleTimeString();
     document.getElementById('btc-date').textContent = "Date: " + new Date().toLocaleDateString();
     document.getElementById('btc-price').textContent = "Price: $66,420";
@@ -2397,53 +2398,7 @@
 
     winners.forEach(token => {
       const li = document.createElement('li');
-      li.textContent = `${token.symbol}: ${token.change}`;
-      li.className = "text-brand-blue";
-      document.getElementById('inverse-winners-list').appendChild(li);
-    });
-
-    losers.forEach(token => {
-      const li = document.createElement('li');
-      li.textContent = `${token.symbol}: ${token.change}`;
-      li.className = "text-brand-orange";
-      document.getElementById('inverse-losers-list').appendChild(li);
-    });
-  });
-
-  // Webhook Live Logs
-  async function pollWebhook() {
-    try {
-      const res = await fetch('https://www.quantumi.site/webhook-logs');
-      if (!res.ok) throw new Error("Non-200");
-      const data = await res.json();
-      const logList = document.getElementById('live-logs-list');
-      logList.innerHTML = "";
-      data.forEach(entry => {
-        const li = document.createElement('li');
-        li.textContent = `[${entry.timestamp}] ${entry.token}: ${entry.message}`;
-        logList.appendChild(li);
-      });
-    } catch (e) {
-      const logList = document.getElementById('live-logs-list');
-      logList.innerHTML = "<li class='text-red-400'>Error loading logs. Please check backend.</li>";
-    }
-  }
-  setInterval(pollWebhook, 7000);
-
-  // ChatGPT fallback
-  async function askChatGPT(query) {
-    try {
-      const res = await fetch('https://www.quantumi.site/chat', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({ query })
-      });
-      if (!res.ok) throw new Error("ChatGPT offline");
-      const result = await res.json();
-      return result.answer;
-    } catch (e) {
-      return "ChatGPT is currently offline or unreachable.";
-    }
+</script>
   }
 </script>
 <script>
