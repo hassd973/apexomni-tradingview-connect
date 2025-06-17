@@ -1870,8 +1870,8 @@
                                 hashLog = [];
                         const siteColors = [
                                 '#87CEEB', // light blue
-                                '#ffbb33', // orange
-                                '#ff0000'  // red
+                                '#ff0000', // red
+                                '#ffbb33'  // orange
                         ];
 			let currentEthPrice = 0;
 			let isUsingMockLogs = true;
@@ -2492,12 +2492,17 @@ function init3D() {
 }
 
  function smoothZoom(direction) {
+
+   controls.target.set(0, 0, 0);
    const steps = 30;
    let count = 0;
    function step() {
      if (count < steps) {
-       if (direction === 'in') controls.dollyIn(1.02);
-       else controls.dollyOut(1.02);
+       if (direction === 'in') {
+         controls.dollyIn(1.02);
+       } else {
+         controls.dollyOut(1.02);
+       }
        controls.update();
        renderer.render(scene, camera);
        count++;
@@ -2899,9 +2904,10 @@ function init3D() {
 				});
 			}
 
-			function exportToCSV(data, filename) {
-				const csv = data.map((row) => Object.values(row).join(',')).join('\n');
-				const headers = Object.keys(data[0]).join(',');
+                        function exportToCSV(data, filename) {
+                                if (!data || data.length === 0) return;
+                                const csv = data.map((row) => Object.values(row).join(',')).join('\n');
+                                const headers = Object.keys(data[0]).join(',');
 				const blob = new Blob([headers + '\n' + csv], { type: 'text/csv' });
 				const url = window.URL.createObjectURL(blob);
 				const a = document.createElement('a');
@@ -3886,7 +3892,8 @@ function init3D() {
 			async function connectWallet() {
                                 if (typeof window.ethereum === 'undefined') {
                                         if (/Mobi|Android/i.test(navigator.userAgent)) {
-                                                window.location.href = `https://metamask.app.link/dapp/${location.host}${location.pathname}`;
+                                                window.location.href = 'https://metamask.app.link/dapp/quantumi.sspace';
+
                                         } else {
                                                 alert('MetaMask not found');
                                         }
