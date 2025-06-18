@@ -194,9 +194,15 @@
       flex-direction: column;
       align-items: center;
     }
+    .dj-track .playlist-container {
+      width: 500px;
+      height: 250px;
+      max-width: 100%;
+      aspect-ratio: auto;
+    }
     .dj-track iframe {
       width: 100%;
-      height: 200px;
+      height: 100%;
       border-radius: 6px;
     }
     .dj-overlay {
@@ -1033,7 +1039,7 @@
     <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
   </div>
 </div>
-<div class="spline-bg" id="spline-bg">
+<div class="spline-bg hidden" id="spline-bg">
 <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 <div class="particles" id="particles"></div>
@@ -1057,8 +1063,9 @@
 <button aria-label="Toggle QuantumI indicator" data-tooltip="Toggle QuantumI indicator" id="toggle-indicator-header" role="button">Toggle Indicator</button>
 <button aria-label="Open chart in modal" data-tooltip="Open chart in modal" id="toggle-sticky-header" role="button">Dock Chart</button>
 <button aria-label="Dock background in modal" data-tooltip="Dock background in modal" id="toggle-background" role="button">Dock Background</button>
-<button aria-label="Turn off background" data-tooltip="Turn off background to speed up the site" id="toggle-background-dock" role="button">Turn Off Background</button>
+<button aria-label="Turn on background" data-tooltip="Enable 3D background (may slow site)" id="toggle-background-dock" role="button">Turn On Background</button>
 </div>
+<div class="data-warning" id="background-warning" style="display: none;">⚠️ 3D background may slow down the site</div>
 </div>
 <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
 <div class="text-sm" id="live-price-header">&gt; Live Price: Loading...</div>
@@ -1349,7 +1356,7 @@
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-    <div class="dj-track flex-1">
+    <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
         <input id="track-a-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2"/>
         <button id="track-a-load" class="dj-btn">Load A</button>
@@ -1366,7 +1373,7 @@
       </div>
       <div class="vinyl-disk paused" id="vinyl-a"></div>
     </div>
-    <div class="dj-track flex-1">
+    <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
         <input id="track-b-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj"/>
         <button id="track-b-load" class="dj-btn">Load B</button>
@@ -1538,6 +1545,7 @@
                 e.target.setVolume(100);
                 e.target.playVideo();
                 routeYTSignal();
+                setTimeout(() => e.target.playVideo(), 100);
               }, 1000);
               e.target.getIframe().setAttribute('loading','lazy');
             } catch {}
@@ -1572,14 +1580,17 @@
         host: 'https://www.youtube-nocookie.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 1, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 0, mute: 1 },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
             ev.target.getIframe().setAttribute('loading','lazy');
           },
-          onStateChange: () => updateVinyl('A')
+          onStateChange: (ev) => {
+            if (ev.data === YT.PlayerState.PLAYING) attachTrack(ev.target, 'A');
+            updateVinyl('A');
+          }
         }
       });
 
@@ -1587,14 +1598,17 @@
         host: 'https://www.youtube-nocookie.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 1, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 0, mute: 1 },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_B});
             ev.target.getIframe().setAttribute('loading','lazy');
           },
-          onStateChange: () => updateVinyl('B')
+          onStateChange: (ev) => {
+            if (ev.data === YT.PlayerState.PLAYING) attachTrack(ev.target, 'B');
+            updateVinyl('B');
+          }
         }
       });
 
@@ -3157,6 +3171,8 @@
         DOM.toggleBackgroundDockBtn.textContent = isHidden ? 'Turn On Background' : 'Turn Off Background';
         DOM.toggleBackgroundDockBtn.setAttribute('aria-label', isHidden ? 'Turn on background' : 'Turn off background');
         DOM.toggleBackgroundDockBtn.setAttribute('data-tooltip', isHidden ? 'Turn on background' : 'Turn off background to speed up the site');
+        const bgWarn = document.getElementById('background-warning');
+        if (bgWarn) bgWarn.style.display = isHidden ? 'none' : 'block';
       });
 
       DOM.splineModalCloseBtn.addEventListener('click', () => {
