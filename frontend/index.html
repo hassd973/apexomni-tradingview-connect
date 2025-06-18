@@ -97,14 +97,14 @@
       pointer-events: auto;
     }
     .intro-buttons {
-      position: absolute;
-      bottom: 1rem;
+      position: fixed;
+      bottom: 1.5rem;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
       justify-content: center;
       gap: 0.5rem;
-      z-index: 1004;
+      z-index: 1006;
       pointer-events: auto;
     }
     #play-intro-btn, #skip-intro-btn {
@@ -365,13 +365,13 @@
     #loading-screen .title-box {
       position: absolute;
       bottom: 4.5rem;
-      left: 0;
-      right: 0;
-      margin: 0 auto;
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 0;
       z-index: 1003;
       text-align: center;
-      width: 100%;
-      max-width: 90vw;
+      width: auto;
+      max-width: max-content;
       display: flex;
       justify-content: center;
       box-sizing: border-box;
@@ -781,12 +781,12 @@
       background: rgba(35, 46, 46, 0.2);
       border: 2px solid var(--primary-color);
       border-radius: 6px;
-      padding: 1.5rem;
+      padding: 0.75rem 1rem;
       animation: pulse 4s infinite;
       box-shadow: 0 0 4px var(--shadow-color);
-      display: flex;
+      display: inline-flex;
       justify-content: center;
-      max-width: 90vw;
+      max-width: max-content;
       box-sizing: border-box;
     }
     header .title-box { margin-top: 200px; }
@@ -1083,7 +1083,7 @@
         loading="lazy"
         width="560"
         height="315"
-        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&playlist=zHLmyJvSkaA&loop=1"
+        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1"
         title="QuantumI Intro"
         frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
