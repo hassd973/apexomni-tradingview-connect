@@ -1069,10 +1069,10 @@
         <span id="loading-date"></span>
       </div>
       <button id="mute-btn" aria-label="Toggle mute">🔇</button>
-      <div class="intro-buttons">
-        <button id="play-intro-btn" aria-label="Play intro">Play Intro</button>
-        <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
-      </div>
+    </div>
+    <div class="intro-buttons">
+      <button id="play-intro-btn" aria-label="Play intro">Play Intro</button>
+      <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
     </div>
   </div>
   <div class="title-box">
@@ -3397,7 +3397,7 @@
       let zoomDirection = 0;
       let zoomSpeed = 0;
       const basePos = new THREE.Vector3(0, 0, 0.1);
-      const maxZoom = 5;
+      const maxZoom = 20;
       let autoReturn = false;
       let returnStart = null;
       let returnFrom = null;
