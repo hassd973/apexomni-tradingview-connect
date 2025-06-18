@@ -99,11 +99,11 @@
     .intro-buttons {
       position: absolute;
       bottom: 1rem;
-      left: 0;
-      right: 0;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
       justify-content: center;
-      gap: 1rem;
+      gap: 0.5rem;
       z-index: 1002;
     }
     #play-intro-btn, #skip-intro-btn {
@@ -357,6 +357,7 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
+    /* intro buttons styling replaced by .intro-buttons section above */
     #loading-screen .title-box {
       margin-top: 30vh;
       margin-bottom: 2rem;
@@ -1608,7 +1609,6 @@
         try {
           if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
             ytPlayer.playVideo();
-            if (DOM.playIntroBtn) DOM.playIntroBtn.style.display = 'none';
           }
         } catch {}
       }, 7000);
@@ -2262,7 +2262,7 @@
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
-      camera.position.set(0.1, 0.1, 0.1);
+      camera.position.set(0, 0, 0.1);
       camera.lookAt(0, 0, 0);
 
       const ambientLight = new THREE.AmbientLight(0x404040);
@@ -2921,7 +2921,6 @@
         DOM.playIntroBtn.addEventListener('click', () => {
           if (ytPlayer) {
             ytPlayer.playVideo();
-            DOM.playIntroBtn.style.display = 'none';
           }
         });
       }
@@ -2930,14 +2929,12 @@
         setTimeout(() => {
           if (ytPlayer && ytPlayer.playVideo) {
             ytPlayer.playVideo();
-            if (DOM.playIntroBtn) DOM.playIntroBtn.style.display = 'none';
           }
         }, 1000);
         setTimeout(() => {
           try {
             if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
               ytPlayer.playVideo();
-              if (DOM.playIntroBtn) DOM.playIntroBtn.style.display = 'none';
             }
           } catch {}
         }, 7000);
@@ -3399,10 +3396,12 @@
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
-      const basePos = new THREE.Vector3(0.1, 0.1, 0.1);
+      const basePos = new THREE.Vector3(0, 0, 0.1);
       const maxZoom = 5;
       let autoReturn = false;
       let returnStart = null;
+      let returnFrom = null;
+      const returnDuration = 1.5;
       function zoomLoop() {
         if (zoomDirection !== 0 && camera) {
           zoomSpeed = Math.min(zoomSpeed + 0.0008, 0.04);
@@ -3413,9 +3412,12 @@
           }
           controls.update();
         } else if (autoReturn && camera) {
-          const t = Math.min((Date.now() - returnStart) / 1000, 1);
-          camera.position.lerp(basePos, 0.05);
-          if (camera.position.distanceTo(basePos) < 0.01 || t >= 1) {
+          const elapsed = (Date.now() - returnStart) / 1000;
+          const progress = Math.min(elapsed / returnDuration, 1);
+          camera.position.lerpVectors(returnFrom, basePos, progress);
+          const bounce = 1 + 0.05 * Math.sin(progress * Math.PI);
+          camera.position.multiplyScalar(bounce);
+          if (progress >= 1) {
             camera.position.copy(basePos);
             autoReturn = false;
           }
@@ -3438,11 +3440,13 @@
           zoomDirection = 0;
           autoReturn = true;
           returnStart = Date.now();
+          returnFrom = camera.position.clone();
         });
         DOM.zoomOutBtn.addEventListener(ev, () => {
           zoomDirection = 0;
           autoReturn = true;
           returnStart = Date.now();
+          returnFrom = camera.position.clone();
         });
       });
 
