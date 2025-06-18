@@ -93,8 +93,30 @@
       padding: 0.5rem;
       border-radius: 0.25rem;
       cursor: pointer;
-      z-index: 1001;
+      z-index: 1002;
       pointer-events: auto;
+    }
+    .intro-buttons {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      z-index: 1002;
+    }
+    #play-intro-btn, #skip-intro-btn {
+      background-color: var(--primary-color);
+      color: #1e2727;
+      border: 1px solid var(--shadow-color);
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    #play-intro-btn:hover, #skip-intro-btn:hover {
+      background-color: var(--secondary-color);
+      box-shadow: 0 0 8px var(--secondary-color);
     }
     @media (max-width: 640px) {
       #mute-btn { padding: 0.25rem; font-size: 0.75rem; }
@@ -194,10 +216,17 @@
       flex-direction: column;
       align-items: center;
     }
+    .dj-track .playlist-container {
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+    }
     .dj-track iframe {
       width: 100%;
-      height: 200px;
+      height: 100%;
       border-radius: 6px;
+      transform: scale(1.05);
     }
     .dj-overlay {
       position: absolute;
@@ -269,26 +298,55 @@
       z-index: 1;
     }
     .vinyl-disk {
+      position: relative;
       width: 80%;
       max-width: 400px;
       aspect-ratio: 1 / 1;
       border-radius: 50%;
       margin: 0.5rem auto;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 40%, rgba(0,0,0,0.6) 80%);
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 5%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.6) 80%);
       border: 3px solid rgba(135,206,235,0.6);
       box-shadow: 0 0 8px rgba(135,206,235,0.4);
       backdrop-filter: blur(2px);
       opacity: 0.85;
       transition: box-shadow 0.3s ease, border-color 0.3s ease;
     }
+    .vinyl-disk::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 40%;
+      height: 40%;
+      border-radius: 50%;
+      background: url('https://i.postimg.cc/R6HKW38z/q-logo.png') no-repeat center/contain;
+      opacity: 0.9;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .vinyl-disk::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20%;
+      height: 20%;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.3);
+      transform: translate(-50%, -50%);
+    }
     .vinyl-disk.spinning {
       animation: spin 3s linear infinite;
-      border-color: rgba(135,206,235,0.8);
-      box-shadow: 0 0 12px rgba(135,206,235,0.8);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 12px var(--primary-color);
     }
     .vinyl-disk.paused {
-      border-color: rgba(255,0,0,0.8);
-      box-shadow: 0 0 12px rgba(255,0,0,0.8);
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 12px var(--secondary-color);
+    }
+    .cd-playing {
+      animation: spin 4s linear infinite;
+      box-shadow: 0 0 20px 5px rgba(0, 0, 255, 0.7);
     }
     @media (max-width: 640px) {
       .vinyl-disk {
@@ -300,26 +358,14 @@
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
     }
-    #skip-intro-btn {
+    /* intro buttons styling replaced by .intro-buttons section above */
+    #loading-screen .title-box {
       position: absolute;
-      bottom: 1rem;
+      bottom: 4.5rem;
       left: 50%;
       transform: translateX(-50%);
-      background-color: var(--primary-color);
-      color: #1e2727;
-      border: 1px solid var(--shadow-color);
-      border-radius: 6px;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      z-index: 1001;
-    }
-    #skip-intro-btn:hover {
-      background-color: var(--secondary-color);
-      box-shadow: 0 0 8px var(--secondary-color);
-    }
-    #loading-screen .title-box {
-      margin-top: 30vh;
-      margin-bottom: 2rem;
+      margin: 0;
+      z-index: 1002;
     }
     header, main, footer, #module-grid section {
       opacity: 0;
@@ -909,7 +955,9 @@
       padding: 0.5rem;
       border-radius: 6px;
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.25rem;
     }
     .nav-link {
       display: block;
@@ -1010,7 +1058,7 @@
         loading="lazy"
         width="560"
         height="315"
-        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1"
+        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&playlist=zHLmyJvSkaA&loop=1"
         title="QuantumI Intro"
         frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -1025,19 +1073,22 @@
         <span id="loading-time"></span>
         <span id="loading-date"></span>
       </div>
+      <button id="mute-btn" aria-label="Toggle mute">🔇</button>
     </div>
-    <button id="mute-btn" aria-label="Toggle mute">🔇</button>
-    <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
+    <div class="intro-buttons">
+      <button id="play-intro-btn" aria-label="Play intro">Play Intro</button>
+      <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
+    </div>
   </div>
   <div class="title-box">
     <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
   </div>
 </div>
-<div class="spline-bg" id="spline-bg">
+<div class="spline-bg hidden" id="spline-bg">
 <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 <div class="particles" id="particles"></div>
-<div id="beta-banner">QuantumI Alpha Beta Pro Release</div>
+<div id="beta-banner">QuantumI Alpha Version Pro</div>
 <header class="w-full flex justify-center items-center">
 <div class="w-full max-w-[98vw] mx-auto px-4">
 <div class="title-box">
@@ -1057,8 +1108,9 @@
 <button aria-label="Toggle QuantumI indicator" data-tooltip="Toggle QuantumI indicator" id="toggle-indicator-header" role="button">Toggle Indicator</button>
 <button aria-label="Open chart in modal" data-tooltip="Open chart in modal" id="toggle-sticky-header" role="button">Dock Chart</button>
 <button aria-label="Dock background in modal" data-tooltip="Dock background in modal" id="toggle-background" role="button">Dock Background</button>
-<button aria-label="Turn off background" data-tooltip="Turn off background to speed up the site" id="toggle-background-dock" role="button">Turn Off Background</button>
+<button aria-label="Turn on background" data-tooltip="Enable 3D background (may slow site)" id="toggle-background-dock" role="button">Turn On Background</button>
 </div>
+<div class="data-warning" id="background-warning" style="display: none;">⚠️ 3D background may slow down the site</div>
 </div>
 <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
 <div class="text-sm" id="live-price-header">&gt; Live Price: Loading...</div>
@@ -1261,6 +1313,8 @@
 <p><strong>Wallet Address:</strong> <span id="wallet-address">Not connected</span></p>
 <p><strong>ETH Balance:</strong> <span id="wallet-balance">-</span></p>
 <p><strong>Detected Exchange:</strong> <span id="detected-exchange">Scanning...</span></p>
+<p><strong>Token Count:</strong> <span id="token-count">0</span></p>
+<p><strong>Last Tx:</strong> <span id="last-tx">N/A</span></p>
 </div>
 <ul class="list-disc ml-4 text-sm text-gray-300" id="open-trades"></ul>
 </div>
@@ -1282,11 +1336,15 @@
 <span id="btc-volume">Volume: Loading...</span>
 <span id="btc-volatility">Volatility: Loading...</span>
 <span id="btc-momentum">Momentum: Loading...</span>
+<span id="camera-pos">Pos: 0,0,0</span>
 </div>
 <div class="mt-2 flex justify-center gap-2" id="btc-color-legend"></div>
 <div class="mt-2 flex justify-center gap-2" id="btc-zoom-controls">
   <button class="zoom-btn" id="btc-zoom-in" aria-label="Zoom in">+</button>
   <button class="zoom-btn" id="btc-zoom-out" aria-label="Zoom out">-</button>
+  <button class="zoom-btn" id="btc-zoom-z0" aria-label="Center">Z0</button>
+  <button class="zoom-btn" id="btc-zoom-z1" aria-label="Zoom 1">-Z1</button>
+  <button class="zoom-btn" id="btc-zoom-z3" aria-label="Zoom 3">-Z3</button>
 </div>
 <div class="mt-4 text-sm" id="btc-legend-explanation">
 <h3 class="text-base md:text-lg mb-2">Legend</h3>
@@ -1349,7 +1407,7 @@
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-    <div class="dj-track flex-1">
+    <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
         <input id="track-a-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2"/>
         <button id="track-a-load" class="dj-btn">Load A</button>
@@ -1366,7 +1424,7 @@
       </div>
       <div class="vinyl-disk paused" id="vinyl-a"></div>
     </div>
-    <div class="dj-track flex-1">
+    <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
         <input id="track-b-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj"/>
         <button id="track-b-load" class="dj-btn">Load B</button>
@@ -1441,6 +1499,9 @@
       exportObjBtn: document.getElementById('export-obj'),
       zoomInBtn: document.getElementById('btc-zoom-in'),
       zoomOutBtn: document.getElementById('btc-zoom-out'),
+      zoomZ0Btn: document.getElementById('btc-zoom-z0'),
+      zoomZ1Btn: document.getElementById('btc-zoom-z1'),
+      zoomZ3Btn: document.getElementById('btc-zoom-z3'),
       undockBackgroundLink: document.getElementById('undock-background-link'),
       exportHashLogBtn: document.getElementById('export-hash-log'),
       exportBalancesBtn: document.getElementById('export-balances'),
@@ -1455,11 +1516,14 @@
       musicMuteBtn: document.getElementById('music-mute-btn'),
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
       skipIntroBtn: document.getElementById('skip-intro-btn'),
+      playIntroBtn: document.getElementById('play-intro-btn'),
       loadingPrice: document.getElementById('loading-price'),
       loadingTopcoin: document.getElementById('loading-topcoin'),
       loadingInverse: document.getElementById('loading-inverse'),
       loadingTime: document.getElementById('loading-time'),
       loadingDate: document.getElementById('loading-date'),
+      btcDate: document.getElementById('btc-date'),
+      cameraPos: document.getElementById('camera-pos'),
       playlistPrice: document.getElementById('playlist-price'),
       playlistTime: document.getElementById('playlist-time'),
       playlistDate: document.getElementById('playlist-date'),
@@ -1527,7 +1591,16 @@
       ytPlayer = new YT.Player('loading-video-player', {
         host: 'https://www.youtube-nocookie.com',
         videoId: 'RkQ3m_uGwXE',
-        playerVars: { autoplay: 1, mute: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
+        playerVars: {
+          autoplay: 1,
+          mute: 1,
+          controls: 0,
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1,
+          playlist: 'zHLmyJvSkaA',
+          loop: 1
+        },
         events: {
           onReady: (e) => {
             try {
@@ -1538,12 +1611,20 @@
                 e.target.setVolume(100);
                 e.target.playVideo();
                 routeYTSignal();
+                setTimeout(() => e.target.playVideo(), 100);
               }, 1000);
               e.target.getIframe().setAttribute('loading','lazy');
             } catch {}
           }
         }
       });
+      setTimeout(() => {
+        try {
+          if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+            ytPlayer.playVideo();
+          }
+        } catch {}
+      }, 7000);
 
       bgMusicPlayer = new YT.Player('music-player', {
         host: 'https://www.youtube-nocookie.com',
@@ -1572,14 +1653,17 @@
         host: 'https://www.youtube-nocookie.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 1, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 0, mute: 1 },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
             ev.target.getIframe().setAttribute('loading','lazy');
           },
-          onStateChange: () => updateVinyl('A')
+          onStateChange: (ev) => {
+            if (ev.data === YT.PlayerState.PLAYING) attachTrack(ev.target, 'A');
+            updateVinyl('A');
+          }
         }
       });
 
@@ -1587,14 +1671,17 @@
         host: 'https://www.youtube-nocookie.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 1, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 0, mute: 1 },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_B});
             ev.target.getIframe().setAttribute('loading','lazy');
           },
-          onStateChange: () => updateVinyl('B')
+          onStateChange: (ev) => {
+            if (ev.data === YT.PlayerState.PLAYING) attachTrack(ev.target, 'B');
+            updateVinyl('B');
+          }
         }
       });
 
@@ -1651,6 +1738,9 @@
         if (stream) {
           const src = djCtx.createMediaStreamSource(stream);
           const filter = djCtx.createBiquadFilter();
+          const crusher = djCtx.createWaveShaper();
+          crusher.curve = createBitcrusherCurve(4);
+          crusher.oversample = '4x';
           filter.type = 'highpass';
           filter.frequency.value = 400;
           const distortion = djCtx.createWaveShaper();
@@ -1845,10 +1935,10 @@
       if (!el || !player || !player.getPlayerState) return;
       const state = player.getPlayerState();
       if (state === YT.PlayerState.PLAYING) {
-        el.classList.add('spinning');
+        el.classList.add('spinning', 'cd-playing');
         el.classList.remove('paused');
       } else {
-        el.classList.remove('spinning');
+        el.classList.remove('spinning', 'cd-playing');
         el.classList.add('paused');
       }
     }
@@ -2185,7 +2275,7 @@
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
-      camera.position.set(0, 0, 30);
+      camera.position.set(0, 0, 0.1);
       camera.lookAt(0, 0, 0);
 
       const ambientLight = new THREE.AmbientLight(0x404040);
@@ -2198,7 +2288,9 @@
       scene.add(axesHelper);
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
+      controls.dampingFactor = 0.1;
+      controls.enablePan = true;
+      controls.panSpeed = 0.5;
       controls.autoRotate = true;
       controls.autoRotateSpeed = 2.0;
 
@@ -2309,22 +2401,33 @@
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(dotPositions, 3));
         geometry.setAttribute('color', new THREE.Float32BufferAttribute(dotColors, 3));
-        const material = new THREE.PointsMaterial({ size: 0.1, vertexColors: true });
+        const material = new THREE.PointsMaterial({ size: 0.1, vertexColors: true, transparent: true, opacity: 1 });
         const newDotCloud = new THREE.Points(geometry, material);
         scene.add(newDotCloud);
         dotClouds.push(newDotCloud);
+        dotClouds.slice(0, -1).forEach(cloud => {
+          cloud.material.opacity = cloud.material.opacity - 0.05 <= 0.1 ? 1 : cloud.material.opacity - 0.05;
+        });
 
         const latestPrice = prices[prices.length - 1][1];
         const latestVolume = volumes[volumes.length - 1][1];
         const latestTime = new Date(timestamps[timestamps.length - 1]).toLocaleTimeString();
+        const recentPrices = prices.slice(-10).map(p => p[1]);
+        const volatility = ((Math.max(...recentPrices) - Math.min(...recentPrices)) / latestPrice) * 100;
+        const momentum = latestPrice - prices[prices.length - 2][1];
         colorLegend.push({ color: siteColors[colorIndex], price: latestPrice, volume: latestVolume, time: latestTime });
         updateColorLegend();
 
         document.getElementById('btc-price').textContent = `Price: $${latestPrice.toLocaleString()}`;
         document.getElementById('btc-time').textContent = `Time: ${latestTime}`;
+        document.getElementById('btc-date').textContent = `Date: ${new Date().toLocaleDateString()}`;
+        document.getElementById('btc-volume').textContent = `Volume: ${latestVolume.toLocaleString()}`;
+        document.getElementById('btc-volatility').textContent = `Volatility: ${volatility.toFixed(2)}%`;
+        document.getElementById('btc-momentum').textContent = `Momentum: ${momentum >= 0 ? '+' : ''}${momentum.toFixed(2)}`;
         if (DOM.playlistPrice) DOM.playlistPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.playlistTime) DOM.playlistTime.textContent = `Time: ${latestTime}`;
         if (DOM.playlistDate) DOM.playlistDate.textContent = new Date().toLocaleDateString();
+        if (DOM.btcDate) DOM.btcDate.textContent = new Date().toLocaleDateString();
         if (DOM.loadingPrice) DOM.loadingPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.loadingTime) DOM.loadingTime.textContent = latestTime;
         if (DOM.loadingDate) DOM.loadingDate.textContent = new Date().toLocaleDateString();
@@ -2752,13 +2855,15 @@
       }
 
       DOM.loaderBalances.style.display = 'none';
-      DOM.balancesList.innerHTML = balances.map(balance => `
+      DOM.balancesList.innerHTML = balances.map(balance => {
+        const slug = (balance.name || balance.token).toLowerCase().replace(/\s+/g, '-');
+        return `
         <li class="p-2 rounded">
-          <div>Token: ${balance.token}</div>
+          <a href="https://coinmarketcap.com/currencies/${slug}/" target="_blank" class="text-blue-400 underline token-link">${balance.token}</a>
           <div>Balance: ${balance.balance.toLocaleString()}</div>
           <div class="metric">Chain ID: ${balance.chainId}</div>
-        </li>
-      `).join('');
+        </li>`;
+      }).join('');
     }
 
     function updateTokenInsightsUI(insights) {
@@ -2825,6 +2930,28 @@
           }
         });
       }
+      if (DOM.playIntroBtn) {
+        DOM.playIntroBtn.addEventListener('click', () => {
+          if (ytPlayer) {
+            ytPlayer.playVideo();
+          }
+        });
+      }
+
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (ytPlayer && ytPlayer.playVideo) {
+            ytPlayer.playVideo();
+          }
+        }, 1000);
+        setTimeout(() => {
+          try {
+            if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+              ytPlayer.playVideo();
+            }
+          } catch {}
+        }, 7000);
+      });
 
       if (DOM.musicMuteBtn) {
         DOM.musicMuteBtn.addEventListener('click', () => {
@@ -2974,12 +3101,12 @@
       if (DOM.recordMixBtn) {
         DOM.recordMixBtn.addEventListener('click', () => {
           if (!djCtx) return;
-          if (recorder && recorder.state === 'recording') {
-            recorder.stop();
-            DOM.recordMixBtn.classList.remove('active');
-            if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
-            cancelAnimationFrame(waveAnim);
-          } else {
+        if (recorder && recorder.state === 'recording') {
+          recorder.stop();
+          DOM.recordMixBtn.classList.remove('active');
+          if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
+          cancelAnimationFrame(waveAnim);
+        } else {
             const dest = djCtx.createMediaStreamDestination();
             gainA.connect(dest);
             gainB.connect(dest);
@@ -3003,10 +3130,18 @@
                 DOM.downloadMixBtn.download = mime === 'audio/wav' ? 'mix.wav' : 'mix.webm';
               }
             };
-            recorder.start();
-            DOM.recordMixBtn.classList.add('active');
-            drawWave();
-          }
+          recorder.start();
+          setTimeout(() => {
+            if (recorder && recorder.state === 'recording') {
+              recorder.stop();
+              DOM.recordMixBtn.classList.remove('active');
+              if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
+              cancelAnimationFrame(waveAnim);
+            }
+          }, 60000);
+          DOM.recordMixBtn.classList.add('active');
+          drawWave();
+        }
         });
       }
 
@@ -3062,6 +3197,10 @@
       DOM.chatList.appendChild(welcome);
 
       setInterval(updateBTCHash, 60000);
+      setInterval(() => {
+        updateVinyl('A');
+        updateVinyl('B');
+      }, 1000);
 
       DOM.toggleIndicatorHeaderBtn.addEventListener('click', () => {
         isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
@@ -3157,6 +3296,8 @@
         DOM.toggleBackgroundDockBtn.textContent = isHidden ? 'Turn On Background' : 'Turn Off Background';
         DOM.toggleBackgroundDockBtn.setAttribute('aria-label', isHidden ? 'Turn on background' : 'Turn off background');
         DOM.toggleBackgroundDockBtn.setAttribute('data-tooltip', isHidden ? 'Turn on background' : 'Turn off background to speed up the site');
+        const bgWarn = document.getElementById('background-warning');
+        if (bgWarn) bgWarn.style.display = isHidden ? 'none' : 'block';
       });
 
       DOM.splineModalCloseBtn.addEventListener('click', () => {
@@ -3268,14 +3409,37 @@
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
+      const basePos = new THREE.Vector3(0, 0, 0.1);
+      const maxZoom = 20;
+      let autoReturn = false;
+      let returnStart = null;
+      let returnFrom = null;
+      const returnDuration = 1.5;
       function zoomLoop() {
         if (zoomDirection !== 0 && camera) {
           zoomSpeed = Math.min(zoomSpeed + 0.0008, 0.04);
           const factor = zoomDirection > 0 ? 1 - zoomSpeed : 1 + zoomSpeed;
           camera.position.multiplyScalar(factor);
+          if (camera.position.length() > maxZoom) {
+            camera.position.setLength(maxZoom);
+          }
           controls.update();
+        } else if (autoReturn && camera) {
+          const elapsed = (Date.now() - returnStart) / 1000;
+          const progress = Math.min(elapsed / returnDuration, 1);
+          camera.position.lerpVectors(returnFrom, basePos, progress);
+          const bounce = 1 + 0.05 * Math.sin(progress * Math.PI);
+          camera.position.multiplyScalar(bounce);
+          if (progress >= 1) {
+            camera.position.copy(basePos);
+            autoReturn = false;
+          }
         } else {
           zoomSpeed = 0;
+        }
+        if (camera && DOM.cameraPos) {
+          DOM.cameraPos.textContent =
+            `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
         }
         requestAnimationFrame(zoomLoop);
       }
@@ -3285,9 +3449,41 @@
         DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = -1; });
       });
       ['mouseup','mouseleave','touchend'].forEach(ev => {
-        DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 0; });
-        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = 0; });
+        DOM.zoomInBtn.addEventListener(ev, () => {
+          zoomDirection = 0;
+          autoReturn = true;
+          returnStart = Date.now();
+          returnFrom = camera.position.clone();
+        });
+        DOM.zoomOutBtn.addEventListener(ev, () => {
+          zoomDirection = 0;
+          autoReturn = true;
+          returnStart = Date.now();
+          returnFrom = camera.position.clone();
+        });
       });
+
+      if (DOM.zoomZ0Btn) {
+        DOM.zoomZ0Btn.addEventListener('click', () => {
+          camera.position.copy(basePos);
+          autoReturn = false;
+          controls.update();
+        });
+      }
+      if (DOM.zoomZ1Btn) {
+        DOM.zoomZ1Btn.addEventListener('click', () => {
+          camera.position.set(0, 0, maxZoom / 2);
+          autoReturn = false;
+          controls.update();
+        });
+      }
+      if (DOM.zoomZ3Btn) {
+        DOM.zoomZ3Btn.addEventListener('click', () => {
+          camera.position.set(0, 0, maxZoom);
+          autoReturn = false;
+          controls.update();
+        });
+      }
 
       DOM.exportHashLogBtn.addEventListener('click', () => {
         exportToCSV(hashLog, 'hash_log.csv');
@@ -3364,6 +3560,15 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
 let walletAddress = null;
 let balanceVisible = true;
 
+const savedWallet = localStorage.getItem('walletAddress');
+if (savedWallet) {
+  walletAddress = savedWallet;
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('wallet-address').innerText = walletAddress;
+    refreshWalletData();
+  });
+}
+
 async function connectWallet() {
   if (typeof window.ethereum === 'undefined') {
     if (/Mobi|Android/i.test(navigator.userAgent)) {
@@ -3379,6 +3584,7 @@ async function connectWallet() {
     const signer = provider.getSigner();
     walletAddress = await signer.getAddress();
     document.getElementById('wallet-address').innerText = walletAddress;
+    localStorage.setItem('walletAddress', walletAddress);
     await refreshWalletData();
   } catch (err) {
     console.error('Wallet connection failed:', err);
@@ -3399,6 +3605,9 @@ async function refreshWalletData() {
     balEl.innerText = balanceVisible ? balanceTxt : '****';
     document.getElementById('detected-exchange').innerText = data.dex + (data.accountBalance ? ` (${data.accountBalance} USD)` : '');
 
+    document.getElementById('token-count').innerText = data.tokenCount;
+    document.getElementById('last-tx').innerText = data.lastTx;
+
     const tradesEl = document.getElementById('open-trades');
     tradesEl.innerHTML = '';
     data.positions.forEach(p => {
@@ -3406,6 +3615,11 @@ async function refreshWalletData() {
       li.innerHTML = `${p.symbol} | Size: ${p.size} <button class="close-trade" data-symbol="${p.symbol}" data-size="${p.size}">Close</button>`;
       tradesEl.appendChild(li);
     });
+
+    if (Array.isArray(data.tokens)) {
+      balancesData = data.tokens.map(t => ({ token: t.symbol, balance: t.balance, chainId: 1, name: t.name }));
+      updateBalancesUI(balancesData);
+    }
   } catch (e) {
     console.error('refreshWalletData error', e);
     document.getElementById('open-trades').innerHTML = '<li>Error loading wallet</li>';
