@@ -1723,6 +1723,9 @@
         if (stream) {
           const src = djCtx.createMediaStreamSource(stream);
           const filter = djCtx.createBiquadFilter();
+          const crusher = djCtx.createWaveShaper();
+          crusher.curve = createBitcrusherCurve(4);
+          crusher.oversample = '4x';
           filter.type = 'highpass';
           filter.frequency.value = 400;
           const distortion = djCtx.createWaveShaper();
@@ -2257,7 +2260,7 @@
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
-      camera.position.set(0, 0, 0);
+      camera.position.set(1, 1, 1);
       camera.lookAt(0, 0, 0);
 
       const ambientLight = new THREE.AmbientLight(0x404040);
@@ -2928,6 +2931,14 @@
             if (DOM.playTrailerBtn) DOM.playTrailerBtn.style.display = 'none';
           }
         }, 1000);
+        setTimeout(() => {
+          try {
+            if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+              ytPlayer.playVideo();
+              if (DOM.playTrailerBtn) DOM.playTrailerBtn.style.display = 'none';
+            }
+          } catch {}
+        }, 7000);
       });
 
       if (DOM.musicMuteBtn) {
@@ -3174,6 +3185,10 @@
       DOM.chatList.appendChild(welcome);
 
       setInterval(updateBTCHash, 60000);
+      setInterval(() => {
+        updateVinyl('A');
+        updateVinyl('B');
+      }, 1000);
 
       DOM.toggleIndicatorHeaderBtn.addEventListener('click', () => {
         isIndicatorEnabledHeader = !isIndicatorEnabledHeader;
@@ -3382,7 +3397,7 @@
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
-      const basePos = new THREE.Vector3(0, 0, 0);
+      const basePos = new THREE.Vector3(1, 1, 1);
       const maxZoom = 5;
       let autoReturn = false;
       let returnStart = null;
