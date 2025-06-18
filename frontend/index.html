@@ -217,15 +217,16 @@
       align-items: center;
     }
     .dj-track .playlist-container {
-      width: 500px;
-      height: 250px;
-      max-width: 100%;
-      aspect-ratio: auto;
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
     }
     .dj-track iframe {
       width: 100%;
       height: 100%;
       border-radius: 6px;
+      transform: scale(1.05);
     }
     .dj-overlay {
       position: absolute;
@@ -359,8 +360,13 @@
     }
     /* intro buttons styling replaced by .intro-buttons section above */
     #loading-screen .title-box {
-      margin-top: 30vh;
-      margin-bottom: 2rem;
+      position: absolute;
+      bottom: 4.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 0;
+      z-index: 1002;
+
     }
     header, main, footer, #module-grid section {
       opacity: 0;
@@ -1053,7 +1059,7 @@
         loading="lazy"
         width="560"
         height="315"
-        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1"
+        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&playlist=zHLmyJvSkaA&loop=1"
         title="QuantumI Intro"
         frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -1083,7 +1089,7 @@
 <spline-viewer url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 <div class="particles" id="particles"></div>
-<div id="beta-banner">QuantumI Alpha Beta Pro Release</div>
+<div id="beta-banner">QuantumI Alpha Version Pro</div>
 <header class="w-full flex justify-center items-center">
 <div class="w-full max-w-[98vw] mx-auto px-4">
 <div class="title-box">
@@ -1586,7 +1592,16 @@
       ytPlayer = new YT.Player('loading-video-player', {
         host: 'https://www.youtube-nocookie.com',
         videoId: 'RkQ3m_uGwXE',
-        playerVars: { autoplay: 1, mute: 1, controls: 0, rel: 0, modestbranding: 1, playsinline: 1 },
+        playerVars: {
+          autoplay: 1,
+          mute: 1,
+          controls: 0,
+          rel: 0,
+          modestbranding: 1,
+          playsinline: 1,
+          playlist: 'zHLmyJvSkaA',
+          loop: 1
+        },
         events: {
           onReady: (e) => {
             try {
