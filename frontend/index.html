@@ -371,8 +371,10 @@
       z-index: 1003;
       text-align: center;
       width: 100%;
+      max-width: 90vw;
       display: flex;
       justify-content: center;
+      box-sizing: border-box;
     }
     header, main, footer, #module-grid section {
       opacity: 0;
@@ -784,6 +786,8 @@
       box-shadow: 0 0 4px var(--shadow-color);
       display: flex;
       justify-content: center;
+      max-width: 90vw;
+      box-sizing: border-box;
     }
     header .title-box { margin-top: 200px; }
     @media (min-width: 640px) {
@@ -1629,16 +1633,14 @@
       localStorage.setItem('refreshCount', cnt);
       ytPlayer = new YT.Player('loading-video-player', {
         host: 'https://www.youtube-nocookie.com',
-        videoId: introVideoId,
+        videoId: 'RkQ3m_uGwXE',
         playerVars: {
           autoplay: 1,
           mute: 1,
           controls: 0,
           rel: 0,
           modestbranding: 1,
-          playsinline: 1,
-          playlist: 'zHLmyJvSkaA',
-          loop: 1
+          playsinline: 1
         },
         events: {
           onReady: (e) => {
