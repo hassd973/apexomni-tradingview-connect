@@ -365,12 +365,14 @@
     #loading-screen .title-box {
       position: absolute;
       bottom: 4.5rem;
-      left: 50%;
-      transform: translateX(-50%);
-      margin: 0;
+      left: 0;
+      right: 0;
+      margin: 0 auto;
       z-index: 1003;
-      width: 100%;
       text-align: center;
+      width: 100%;
+      display: flex;
+      justify-content: center;
     }
     header, main, footer, #module-grid section {
       opacity: 0;
@@ -773,13 +775,15 @@
     .title-box {
       color: var(--text-color);
       text-align: center;
-      margin-bottom: 1rem;
+      margin: 0 auto 1rem auto;
       background: rgba(35, 46, 46, 0.2);
       border: 2px solid var(--primary-color);
       border-radius: 6px;
       padding: 1.5rem;
       animation: pulse 4s infinite;
       box-shadow: 0 0 4px var(--shadow-color);
+      display: flex;
+      justify-content: center;
     }
     header .title-box { margin-top: 200px; }
     @media (min-width: 640px) {
@@ -1615,10 +1619,14 @@
     const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
 
     function onYouTubeIframeAPIReady() {
-      const cnt = parseInt(localStorage.getItem('refreshCount') || '0') + 1;
+      let cnt = parseInt(localStorage.getItem('refreshCount') || '0');
+      cnt += 1;
+      let introVideoId = 'RkQ3m_uGwXE';
+      if (cnt === 3) {
+        introVideoId = 'zHLmyJvSkaA';
+      }
+      if (cnt >= 4) cnt = 0;
       localStorage.setItem('refreshCount', cnt);
-      const introVideoId = cnt >= 3 ? 'zHLmyJvSkaA' : 'RkQ3m_uGwXE';
-      if (cnt >= 3) localStorage.setItem('refreshCount', '0');
       ytPlayer = new YT.Player('loading-video-player', {
         host: 'https://www.youtube-nocookie.com',
         videoId: introVideoId,
@@ -2307,7 +2315,7 @@
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
-      camera.position.set(0, 0, 0.1);
+      camera.position.set(0, 0, 10);
       camera.lookAt(0, 0, 0);
 
       const ambientLight = new THREE.AmbientLight(0x404040);
@@ -3485,8 +3493,8 @@
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
-      const basePos = new THREE.Vector3(0, 0, 0.1);
       const maxZoom = 20;
+      const basePos = new THREE.Vector3(0, 0, maxZoom / 2);
       let autoReturn = false;
       let returnStart = null;
       let returnFrom = null;
