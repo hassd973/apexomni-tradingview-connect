@@ -1,11 +1,40 @@
-require('dotenv').config();
+
+try {
+  require('dotenv').config();
+} catch (err) {
+  console.warn('dotenv not available, skipping .env loading');
+}
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const ytdl = require('ytdl-core');
-const { apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../src/services');
+const fs = require('fs');
+
+let apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill;
+try {
+  const distServicesPath = path.join(__dirname, '..', 'dist', 'services');
+  if (fs.existsSync(distServicesPath)) {
+    ({ apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../dist/services'));
+  } else {
+    try {
+      require.resolve('ts-node/register');
+      require('ts-node/register');
+      ({ apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../src/services'));
+    } catch (tsErr) {
+      console.warn('ts-node/register not found, services disabled:', tsErr.message);
+    }
+  }
+} catch (err) {
+  console.warn('Failed to load services:', err.message);
+}
+
+if (!apexomniBuildOrderParams) {
+  apexomniBuildOrderParams = async () => { throw new Error('Service unavailable'); };
+  apexomniCreateOrder = async () => { throw new Error('Service unavailable'); };
+  getOrder = async () => { throw new Error('Service unavailable'); };
+  getFill = async () => { throw new Error('Service unavailable'); };
+}
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -13,8 +42,10 @@ const port = process.env.PORT || 3001;
 // Determine the correct frontend path. Default to the frontend directory one
 // level up from the backend folder so running the server from the project root
 // works out of the box.
+const defaultFrontend = path.join(__dirname, '..', 'frontend');
+const distFrontend = path.join(defaultFrontend, 'dist');
 const frontendPath = process.env.FRONTEND_PATH ||
-  path.join(__dirname, '..', 'frontend');
+  (fs.existsSync(distFrontend) ? distFrontend : defaultFrontend);
 console.log('Frontend Path:', frontendPath);
 
 // Serve static files from the frontend directory
