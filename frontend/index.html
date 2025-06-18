@@ -96,6 +96,19 @@
       z-index: 1001;
       pointer-events: auto;
     }
+    #play-trailer-btn {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      opacity: 0.7;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      border: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: 0.25rem;
+      cursor: pointer;
+      z-index: 1001;
+    }
     @media (max-width: 640px) {
       #mute-btn { padding: 0.25rem; font-size: 0.75rem; }
     }
@@ -280,21 +293,21 @@
       aspect-ratio: 1 / 1;
       border-radius: 50%;
       margin: 0.5rem auto;
-      background: radial-gradient(circle, rgba(255,255,255,0.1) 40%, rgba(0,0,0,0.6) 80%);
+      background: radial-gradient(circle, rgba(255,255,255,0.2) 10%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.6) 80%);
       border: 3px solid rgba(135,206,235,0.6);
       box-shadow: 0 0 8px rgba(135,206,235,0.4);
-      backdrop-filter: blur(2px);
+      backdrop-filter: blur(4px);
       opacity: 0.85;
       transition: box-shadow 0.3s ease, border-color 0.3s ease;
     }
     .vinyl-disk.spinning {
       animation: spin 3s linear infinite;
-      border-color: rgba(135,206,235,0.8);
-      box-shadow: 0 0 12px rgba(135,206,235,0.8);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 12px var(--primary-color);
     }
     .vinyl-disk.paused {
-      border-color: rgba(255,0,0,0.8);
-      box-shadow: 0 0 12px rgba(255,0,0,0.8);
+      border-color: var(--secondary-color);
+      box-shadow: 0 0 12px var(--secondary-color);
     }
     @media (max-width: 640px) {
       .vinyl-disk {
@@ -1033,6 +1046,7 @@
       </div>
     </div>
     <button id="mute-btn" aria-label="Toggle mute">🔇</button>
+    <button id="play-trailer-btn" aria-label="Play trailer">▶️ Play</button>
     <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
   </div>
   <div class="title-box">
@@ -1268,6 +1282,8 @@
 <p><strong>Wallet Address:</strong> <span id="wallet-address">Not connected</span></p>
 <p><strong>ETH Balance:</strong> <span id="wallet-balance">-</span></p>
 <p><strong>Detected Exchange:</strong> <span id="detected-exchange">Scanning...</span></p>
+<p><strong>Token Count:</strong> <span id="token-count">0</span></p>
+<p><strong>Last Tx:</strong> <span id="last-tx">N/A</span></p>
 </div>
 <ul class="list-disc ml-4 text-sm text-gray-300" id="open-trades"></ul>
 </div>
@@ -1462,6 +1478,7 @@
       musicMuteBtn: document.getElementById('music-mute-btn'),
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
       skipIntroBtn: document.getElementById('skip-intro-btn'),
+      playTrailerBtn: document.getElementById('play-trailer-btn'),
       loadingPrice: document.getElementById('loading-price'),
       loadingTopcoin: document.getElementById('loading-topcoin'),
       loadingInverse: document.getElementById('loading-inverse'),
@@ -1548,6 +1565,7 @@
                 setTimeout(() => e.target.playVideo(), 100);
               }, 1000);
               e.target.getIframe().setAttribute('loading','lazy');
+              if (DOM.playTrailerBtn) DOM.playTrailerBtn.style.display = 'none';
             } catch {}
           }
         }
@@ -2199,7 +2217,7 @@
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
-      camera.position.set(0, 0, 30);
+      camera.position.set(0, 0, 1);
       camera.lookAt(0, 0, 0);
 
       const ambientLight = new THREE.AmbientLight(0x404040);
@@ -2323,19 +2341,28 @@
         const geometry = new THREE.BufferGeometry();
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(dotPositions, 3));
         geometry.setAttribute('color', new THREE.Float32BufferAttribute(dotColors, 3));
-        const material = new THREE.PointsMaterial({ size: 0.1, vertexColors: true });
+        const material = new THREE.PointsMaterial({ size: 0.1, vertexColors: true, transparent: true, opacity: 1 });
         const newDotCloud = new THREE.Points(geometry, material);
         scene.add(newDotCloud);
         dotClouds.push(newDotCloud);
+        dotClouds.slice(0, -1).forEach(cloud => {
+          cloud.material.opacity = cloud.material.opacity - 0.05 <= 0.1 ? 1 : cloud.material.opacity - 0.05;
+        });
 
         const latestPrice = prices[prices.length - 1][1];
         const latestVolume = volumes[volumes.length - 1][1];
         const latestTime = new Date(timestamps[timestamps.length - 1]).toLocaleTimeString();
+        const recentPrices = prices.slice(-10).map(p => p[1]);
+        const volatility = ((Math.max(...recentPrices) - Math.min(...recentPrices)) / latestPrice) * 100;
+        const momentum = latestPrice - prices[prices.length - 2][1];
         colorLegend.push({ color: siteColors[colorIndex], price: latestPrice, volume: latestVolume, time: latestTime });
         updateColorLegend();
 
         document.getElementById('btc-price').textContent = `Price: $${latestPrice.toLocaleString()}`;
         document.getElementById('btc-time').textContent = `Time: ${latestTime}`;
+        document.getElementById('btc-volume').textContent = `Volume: ${latestVolume.toLocaleString()}`;
+        document.getElementById('btc-volatility').textContent = `Volatility: ${volatility.toFixed(2)}%`;
+        document.getElementById('btc-momentum').textContent = `Momentum: ${momentum >= 0 ? '+' : ''}${momentum.toFixed(2)}`;
         if (DOM.playlistPrice) DOM.playlistPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.playlistTime) DOM.playlistTime.textContent = `Time: ${latestTime}`;
         if (DOM.playlistDate) DOM.playlistDate.textContent = new Date().toLocaleDateString();
@@ -2766,13 +2793,15 @@
       }
 
       DOM.loaderBalances.style.display = 'none';
-      DOM.balancesList.innerHTML = balances.map(balance => `
+      DOM.balancesList.innerHTML = balances.map(balance => {
+        const slug = (balance.name || balance.token).toLowerCase().replace(/\s+/g, '-');
+        return `
         <li class="p-2 rounded">
-          <div>Token: ${balance.token}</div>
+          <a href="https://coinmarketcap.com/currencies/${slug}/" target="_blank" class="text-blue-400 underline token-link">${balance.token}</a>
           <div>Balance: ${balance.balance.toLocaleString()}</div>
           <div class="metric">Chain ID: ${balance.chainId}</div>
-        </li>
-      `).join('');
+        </li>`;
+      }).join('');
     }
 
     function updateTokenInsightsUI(insights) {
@@ -2836,6 +2865,14 @@
           } else {
             ytPlayer.mute();
             DOM.muteBtn.textContent = '🔇';
+          }
+        });
+      }
+      if (DOM.playTrailerBtn) {
+        DOM.playTrailerBtn.addEventListener('click', () => {
+          if (ytPlayer) {
+            ytPlayer.playVideo();
+            DOM.playTrailerBtn.style.display = 'none';
           }
         });
       }
@@ -3284,12 +3321,21 @@
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
+      const basePos = new THREE.Vector3(0,0,1);
+      const maxZoom = 50;
+      let autoReturn = false;
       function zoomLoop() {
         if (zoomDirection !== 0 && camera) {
           zoomSpeed = Math.min(zoomSpeed + 0.0008, 0.04);
           const factor = zoomDirection > 0 ? 1 - zoomSpeed : 1 + zoomSpeed;
           camera.position.multiplyScalar(factor);
+          if (camera.position.length() > maxZoom) {
+            camera.position.setLength(maxZoom);
+          }
           controls.update();
+        } else if (autoReturn) {
+          camera.position.lerp(basePos, 0.05);
+          if (camera.position.distanceTo(basePos) < 0.1) autoReturn = false;
         } else {
           zoomSpeed = 0;
         }
@@ -3302,7 +3348,7 @@
       });
       ['mouseup','mouseleave','touchend'].forEach(ev => {
         DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 0; });
-        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = 0; });
+        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = 0; if (camera.position.length() >= maxZoom) autoReturn = true; });
       });
 
       DOM.exportHashLogBtn.addEventListener('click', () => {
@@ -3415,6 +3461,9 @@ async function refreshWalletData() {
     balEl.innerText = balanceVisible ? balanceTxt : '****';
     document.getElementById('detected-exchange').innerText = data.dex + (data.accountBalance ? ` (${data.accountBalance} USD)` : '');
 
+    document.getElementById('token-count').innerText = data.tokenCount;
+    document.getElementById('last-tx').innerText = data.lastTx;
+
     const tradesEl = document.getElementById('open-trades');
     tradesEl.innerHTML = '';
     data.positions.forEach(p => {
@@ -3422,6 +3471,11 @@ async function refreshWalletData() {
       li.innerHTML = `${p.symbol} | Size: ${p.size} <button class="close-trade" data-symbol="${p.symbol}" data-size="${p.size}">Close</button>`;
       tradesEl.appendChild(li);
     });
+
+    if (Array.isArray(data.tokens)) {
+      balancesData = data.tokens.map(t => ({ token: t.symbol, balance: t.balance, chainId: 1, name: t.name }));
+      updateBalancesUI(balancesData);
+    }
   } catch (e) {
     console.error('refreshWalletData error', e);
     document.getElementById('open-trades').innerHTML = '<li>Error loading wallet</li>';
