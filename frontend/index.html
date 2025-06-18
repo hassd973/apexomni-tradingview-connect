@@ -368,9 +368,9 @@
     #loading-screen .title-box {
       position: fixed;
       bottom: 5rem;
-      left: 0;
-      right: 0;
-      margin: 0 auto;
+      left: 50%;
+      transform: translateX(-50%);
+      margin: 0;
       z-index: 1003;
       text-align: center;
       max-width: max-content;
@@ -801,7 +801,7 @@
       .title-box { font-size: 1.25rem; }
     }
     header.shrink .title-box {
-      margin-top: 0;
+      margin: 0 auto;
       padding: 0.5rem;
       animation: none;
     }
@@ -3503,7 +3503,7 @@
       let zoomDirection = 0;
       let zoomSpeed = 0;
       const maxZoom = 20;
-      const basePos = new THREE.Vector3(0, 0, 0);
+      const basePos = new THREE.Vector3(0, 0, 1);
       let autoReturn = false;
       let returnStart = null;
       let returnFrom = null;
