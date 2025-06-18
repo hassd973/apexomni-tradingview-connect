@@ -162,6 +162,7 @@
       left: 0;
       width: 100%;
       justify-content: center;
+      align-items: flex-start;
       z-index: 1002;
     }
     #music-mute-btn, #quantumi-sound-btn {
@@ -1014,6 +1015,7 @@
       <div class="video-overlay">
         <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
         <span id="loading-price"></span>
+        <span id="loading-topcoin"></span>
         <span id="loading-inverse"></span>
         <span id="loading-time"></span>
         <span id="loading-date"></span>
@@ -1351,6 +1353,7 @@
         <div id="track-a-player"></div>
         <div class="dj-overlay">
           <span id="track-a-price"></span>
+          <span id="track-a-topcoin"></span>
           <span id="track-a-inverse"></span>
           <span id="track-a-time"></span>
           <span id="track-a-date"></span>
@@ -1367,6 +1370,7 @@
         <div id="track-b-player"></div>
         <div class="dj-overlay">
           <span id="track-b-price"></span>
+          <span id="track-b-topcoin"></span>
           <span id="track-b-inverse"></span>
           <span id="track-b-time"></span>
           <span id="track-b-date"></span>
@@ -1447,6 +1451,7 @@
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
       skipIntroBtn: document.getElementById('skip-intro-btn'),
       loadingPrice: document.getElementById('loading-price'),
+      loadingTopcoin: document.getElementById('loading-topcoin'),
       loadingInverse: document.getElementById('loading-inverse'),
       loadingTime: document.getElementById('loading-time'),
       loadingDate: document.getElementById('loading-date'),
@@ -1455,10 +1460,12 @@
       playlistDate: document.getElementById('playlist-date'),
       trackAPrice: document.getElementById('track-a-price'),
       trackAInverse: document.getElementById('track-a-inverse'),
+      trackATopcoin: document.getElementById('track-a-topcoin'),
       trackATime: document.getElementById('track-a-time'),
       trackADate: document.getElementById('track-a-date'),
       trackBPrice: document.getElementById('track-b-price'),
       trackBInverse: document.getElementById('track-b-inverse'),
+      trackBTopcoin: document.getElementById('track-b-topcoin'),
       trackBTime: document.getElementById('track-b-time'),
       trackBDate: document.getElementById('track-b-date'),
       trackAUrl: document.getElementById('track-a-url'),
@@ -1556,7 +1563,7 @@
 
       trackAPlayer = new YT.Player('track-a-player', {
         host: 'https://www.youtube-nocookie.com',
-        height: '200',
+        height: '100%',
         width: '100%',
         playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 1, mute: 1 },
         events: {
@@ -1571,7 +1578,7 @@
 
       trackBPlayer = new YT.Player('track-b-player', {
         host: 'https://www.youtube-nocookie.com',
-        height: '200',
+        height: '100%',
         width: '100%',
         playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 1, mute: 1 },
         events: {
@@ -2094,6 +2101,17 @@
       }
     }
 
+    async function fetchTopCoin() {
+      try {
+        const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=1&page=1';
+        const data = await fetchWithRetry(url);
+        return data && data[0] ? data[0].symbol.toUpperCase() : 'N/A';
+      } catch (err) {
+        console.error('Failed to fetch top coin:', err);
+        return 'N/A';
+      }
+    }
+
     async function fetchChainBalance(chainId, address = '0xb5d85cbf7cb3ee0d56b3bb207d5fc4b82f43f511') {
       const url = `https://api.etherscan.io/api?chainid=${chainId}&module=account&action=balance&address=${address}&tag=latest&apikey=${API_KEY}`;
       try {
@@ -2307,9 +2325,13 @@
         if (DOM.trackBDate) DOM.trackBDate.textContent = new Date().toLocaleDateString();
 
         const inverse = await fetchTopInverseToken();
+        const topCoin = await fetchTopCoin();
         if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Top ⬇️: ${inverse}`;
         if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Top ⬇️: ${inverse}`;
         if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Top ⬇️: ${inverse}`;
+        if (DOM.loadingTopcoin) DOM.loadingTopcoin.textContent = `Top ⬆️: ${topCoin}`;
+        if (DOM.trackATopcoin) DOM.trackATopcoin.textContent = `Top ⬆️: ${topCoin}`;
+        if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = `Top ⬆️: ${topCoin}`;
 
         const hashId = generateHashFromPrice(latestPrice);
         addHashLog(hashId, latestTime);
