@@ -96,18 +96,27 @@
       z-index: 1002;
       pointer-events: auto;
     }
-    #play-trailer-btn {
+    .intro-buttons {
       position: absolute;
       bottom: 1rem;
-      left: 1rem;
-      opacity: 0.7;
-      background: rgba(0,0,0,0.5);
-      color: #fff;
-      border: none;
-      padding: 0.5rem 0.75rem;
-      border-radius: 0.25rem;
-      cursor: pointer;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
       z-index: 1002;
+    }
+    #play-intro-btn, #skip-intro-btn {
+      background-color: var(--primary-color);
+      color: #1e2727;
+      border: 1px solid var(--shadow-color);
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+    }
+    #play-intro-btn:hover, #skip-intro-btn:hover {
+      background-color: var(--secondary-color);
+      box-shadow: 0 0 8px var(--secondary-color);
     }
     @media (max-width: 640px) {
       #mute-btn { padding: 0.25rem; font-size: 0.75rem; }
@@ -347,23 +356,6 @@
     @keyframes spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
-    }
-    #skip-intro-btn {
-      position: absolute;
-      bottom: 1rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: var(--primary-color);
-      color: #1e2727;
-      border: 1px solid var(--shadow-color);
-      border-radius: 6px;
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      z-index: 1002;
-    }
-    #skip-intro-btn:hover {
-      background-color: var(--secondary-color);
-      box-shadow: 0 0 8px var(--secondary-color);
     }
     #loading-screen .title-box {
       margin-top: 30vh;
@@ -957,7 +949,9 @@
       padding: 0.5rem;
       border-radius: 6px;
       display: flex;
-      justify-content: space-between;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.25rem;
     }
     .nav-link {
       display: block;
@@ -1074,8 +1068,10 @@
         <span id="loading-date"></span>
       </div>
       <button id="mute-btn" aria-label="Toggle mute">🔇</button>
-      <button id="play-trailer-btn" aria-label="Play trailer">▶️ Play</button>
-      <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
+      <div class="intro-buttons">
+        <button id="play-intro-btn" aria-label="Play intro">Play Intro</button>
+        <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
+      </div>
     </div>
   </div>
   <div class="title-box">
@@ -1340,6 +1336,9 @@
 <div class="mt-2 flex justify-center gap-2" id="btc-zoom-controls">
   <button class="zoom-btn" id="btc-zoom-in" aria-label="Zoom in">+</button>
   <button class="zoom-btn" id="btc-zoom-out" aria-label="Zoom out">-</button>
+  <button class="zoom-btn" id="btc-zoom-z0" aria-label="Center">Z0</button>
+  <button class="zoom-btn" id="btc-zoom-z1" aria-label="Zoom 1">-Z1</button>
+  <button class="zoom-btn" id="btc-zoom-z3" aria-label="Zoom 3">-Z3</button>
 </div>
 <div class="mt-4 text-sm" id="btc-legend-explanation">
 <h3 class="text-base md:text-lg mb-2">Legend</h3>
@@ -1494,6 +1493,9 @@
       exportObjBtn: document.getElementById('export-obj'),
       zoomInBtn: document.getElementById('btc-zoom-in'),
       zoomOutBtn: document.getElementById('btc-zoom-out'),
+      zoomZ0Btn: document.getElementById('btc-zoom-z0'),
+      zoomZ1Btn: document.getElementById('btc-zoom-z1'),
+      zoomZ3Btn: document.getElementById('btc-zoom-z3'),
       undockBackgroundLink: document.getElementById('undock-background-link'),
       exportHashLogBtn: document.getElementById('export-hash-log'),
       exportBalancesBtn: document.getElementById('export-balances'),
@@ -1508,7 +1510,7 @@
       musicMuteBtn: document.getElementById('music-mute-btn'),
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
       skipIntroBtn: document.getElementById('skip-intro-btn'),
-      playTrailerBtn: document.getElementById('play-trailer-btn'),
+      playIntroBtn: document.getElementById('play-intro-btn'),
       loadingPrice: document.getElementById('loading-price'),
       loadingTopcoin: document.getElementById('loading-topcoin'),
       loadingInverse: document.getElementById('loading-inverse'),
@@ -1597,7 +1599,7 @@
                 setTimeout(() => e.target.playVideo(), 100);
               }, 1000);
               e.target.getIframe().setAttribute('loading','lazy');
-              if (DOM.playTrailerBtn) DOM.playTrailerBtn.style.display = 'none';
+              if (DOM.playIntroBtn) DOM.playIntroBtn.style.display = 'none';
             } catch {}
           }
         }
@@ -1606,7 +1608,7 @@
         try {
           if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
             ytPlayer.playVideo();
-            if (DOM.playTrailerBtn) DOM.playTrailerBtn.style.display = 'none';
+            if (DOM.playIntroBtn) DOM.playIntroBtn.style.display = 'none';
           }
         } catch {}
       }, 7000);
@@ -2260,7 +2262,7 @@
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
-      camera.position.set(1, 1, 1);
+      camera.position.set(0.1, 0.1, 0.1);
       camera.lookAt(0, 0, 0);
 
       const ambientLight = new THREE.AmbientLight(0x404040);
@@ -2915,11 +2917,11 @@
           }
         });
       }
-      if (DOM.playTrailerBtn) {
-        DOM.playTrailerBtn.addEventListener('click', () => {
+      if (DOM.playIntroBtn) {
+        DOM.playIntroBtn.addEventListener('click', () => {
           if (ytPlayer) {
             ytPlayer.playVideo();
-            DOM.playTrailerBtn.style.display = 'none';
+            DOM.playIntroBtn.style.display = 'none';
           }
         });
       }
@@ -2928,14 +2930,14 @@
         setTimeout(() => {
           if (ytPlayer && ytPlayer.playVideo) {
             ytPlayer.playVideo();
-            if (DOM.playTrailerBtn) DOM.playTrailerBtn.style.display = 'none';
+            if (DOM.playIntroBtn) DOM.playIntroBtn.style.display = 'none';
           }
         }, 1000);
         setTimeout(() => {
           try {
             if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
               ytPlayer.playVideo();
-              if (DOM.playTrailerBtn) DOM.playTrailerBtn.style.display = 'none';
+              if (DOM.playIntroBtn) DOM.playIntroBtn.style.display = 'none';
             }
           } catch {}
         }, 7000);
@@ -3397,7 +3399,7 @@
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
-      const basePos = new THREE.Vector3(1, 1, 1);
+      const basePos = new THREE.Vector3(0.1, 0.1, 0.1);
       const maxZoom = 5;
       let autoReturn = false;
       let returnStart = null;
@@ -3443,6 +3445,28 @@
           returnStart = Date.now();
         });
       });
+
+      if (DOM.zoomZ0Btn) {
+        DOM.zoomZ0Btn.addEventListener('click', () => {
+          camera.position.copy(basePos);
+          autoReturn = false;
+          controls.update();
+        });
+      }
+      if (DOM.zoomZ1Btn) {
+        DOM.zoomZ1Btn.addEventListener('click', () => {
+          camera.position.set(0, 0, maxZoom / 2);
+          autoReturn = false;
+          controls.update();
+        });
+      }
+      if (DOM.zoomZ3Btn) {
+        DOM.zoomZ3Btn.addEventListener('click', () => {
+          camera.position.set(0, 0, maxZoom);
+          autoReturn = false;
+          controls.update();
+        });
+      }
 
       DOM.exportHashLogBtn.addEventListener('click', () => {
         exportToCSV(hashLog, 'hash_log.csv');
