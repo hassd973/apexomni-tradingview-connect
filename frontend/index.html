@@ -367,9 +367,9 @@
     /* intro buttons styling replaced by .intro-buttons section above */
     #loading-screen .title-box {
       position: absolute;
-      bottom: 4.5rem;
+      top: 50%;
       left: 50%;
-      transform: translate(-50%, 0);
+      transform: translate(-50%, -50%);
       margin: 0;
       z-index: 1003;
       text-align: center;
@@ -3557,7 +3557,7 @@
 
       if (DOM.zoomZ0Btn) {
         DOM.zoomZ0Btn.addEventListener('click', () => {
-          camera.position.copy(basePos);
+          camera.position.set(0, 0, 0);
           autoReturn = false;
           controls.update();
         });
