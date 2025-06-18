@@ -334,6 +334,10 @@
       border-color: var(--secondary-color);
       box-shadow: 0 0 12px var(--secondary-color);
     }
+    .cd-playing {
+      animation: spin 4s linear infinite;
+      box-shadow: 0 0 20px 5px rgba(0, 0, 255, 0.7);
+    }
     @media (max-width: 640px) {
       .vinyl-disk {
         width: 90%;
@@ -1913,10 +1917,10 @@
       if (!el || !player || !player.getPlayerState) return;
       const state = player.getPlayerState();
       if (state === YT.PlayerState.PLAYING) {
-        el.classList.add('spinning');
+        el.classList.add('spinning', 'cd-playing');
         el.classList.remove('paused');
       } else {
-        el.classList.remove('spinning');
+        el.classList.remove('spinning', 'cd-playing');
         el.classList.add('paused');
       }
     }
@@ -2253,7 +2257,7 @@
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
-      camera.position.set(0, 0, 0.25);
+      camera.position.set(0, 0, 0);
       camera.lookAt(0, 0, 0);
 
       const ambientLight = new THREE.AmbientLight(0x404040);
@@ -2915,6 +2919,15 @@
         });
       }
 
+      window.addEventListener('load', () => {
+        setTimeout(() => {
+          if (ytPlayer && ytPlayer.playVideo) {
+            ytPlayer.playVideo();
+            if (DOM.playTrailerBtn) DOM.playTrailerBtn.style.display = 'none';
+          }
+        }, 1000);
+      });
+
       if (DOM.musicMuteBtn) {
         DOM.musicMuteBtn.addEventListener('click', () => {
           if (!bgMusicPlayer) return;
@@ -3367,7 +3380,7 @@
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
-      const basePos = new THREE.Vector3(0,0,0);
+      const basePos = new THREE.Vector3(0, 0, 0);
       const maxZoom = 5;
       let autoReturn = false;
       let returnStart = null;
@@ -3381,11 +3394,12 @@
           }
           controls.update();
         } else if (autoReturn && camera) {
-          const t = Math.min((Date.now() - returnStart) / 500, 1);
-          const bounce = Math.sin(t * Math.PI) * 0.1;
-          camera.position.lerp(basePos, 0.05);
-          camera.position.multiplyScalar(1 + bounce);
-          if (t >= 1) autoReturn = false;
+          const t = Math.min((Date.now() - returnStart) / 1000, 1);
+          camera.position.lerp(basePos, 0.1);
+          if (camera.position.distanceTo(basePos) < 0.01 || t >= 1) {
+            camera.position.copy(basePos);
+            autoReturn = false;
+          }
         } else {
           zoomSpeed = 0;
         }
@@ -3401,10 +3415,15 @@
         DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = -1; });
       });
       ['mouseup','mouseleave','touchend'].forEach(ev => {
-        DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 0; });
+        DOM.zoomInBtn.addEventListener(ev, () => {
+          zoomDirection = 0;
+          autoReturn = true;
+          returnStart = Date.now();
+        });
         DOM.zoomOutBtn.addEventListener(ev, () => {
           zoomDirection = 0;
-          if (camera.position.length() >= maxZoom) { autoReturn = true; returnStart = Date.now(); }
+          autoReturn = true;
+          returnStart = Date.now();
         });
       });
 
