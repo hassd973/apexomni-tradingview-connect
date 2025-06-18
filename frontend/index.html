@@ -220,10 +220,13 @@
       align-items: center;
     }
     .dj-track .playlist-container {
-      width: 500px;
-      height: 250px;
-      max-width: 90vw;
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 16 / 9;
+      height: auto;
       overflow: hidden;
+      margin-left: auto;
+      margin-right: auto;
     }
     .dj-track iframe {
       width: 100%;
@@ -363,17 +366,17 @@
     }
     /* intro buttons styling replaced by .intro-buttons section above */
     #loading-screen .title-box {
-      position: absolute;
-      bottom: 4.5rem;
+      position: fixed;
+      bottom: 5rem;
       left: 50%;
-      transform: translate(-50%, 0);
-      margin: 0;
+      transform: translateX(-50%);
       z-index: 1003;
       text-align: center;
       width: auto;
       max-width: max-content;
-      display: inline-flex;
+      display: flex;
       justify-content: center;
+      margin: 0;
       box-sizing: border-box;
     }
     header, main, footer, #module-grid section {
@@ -784,12 +787,16 @@
       padding: 0.75rem 1rem;
       animation: pulse 4s infinite;
       box-shadow: 0 0 4px var(--shadow-color);
-      display: inline-flex;
+      display: flex;
       justify-content: center;
       max-width: max-content;
       box-sizing: border-box;
     }
-    header .title-box { margin-top: 200px; }
+    header .title-box {
+      margin-top: 1rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
     @media (min-width: 640px) {
       .title-box { font-size: 1.25rem; }
     }
@@ -1008,12 +1015,12 @@
   }
 </style>
 <style>
-#refreshWalletData, #chart-export-btn, #connectWallet, #toggleBalance {
+#refreshWalletData, #chart-export-btn, #connectWallet, #toggleBalance, #toggleAddress {
     background-color: var(--primary-color) !important;
     color: #000 !important;
     transition: background-color 0.3s ease;
 }
-#refreshWalletData:hover, #chart-export-btn:hover, #connectWallet:hover, #toggleBalance:hover {
+#refreshWalletData:hover, #chart-export-btn:hover, #connectWallet:hover, #toggleBalance:hover, #toggleAddress:hover {
     background-color: #6fc8e9 !important;
 }
 .cmc-link {
@@ -1100,13 +1107,13 @@
       </div>
       <button id="mute-btn" aria-label="Toggle mute">🔇</button>
     </div>
+    <div class="title-box">
+      <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
+    </div>
     <div class="intro-buttons">
       <button id="play-intro-btn" aria-label="Play intro">Play Intro</button>
       <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
     </div>
-  </div>
-  <div class="title-box">
-    <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
   </div>
 </div>
 <div class="spline-bg hidden" id="spline-bg">
@@ -1331,6 +1338,7 @@
 <button class="text-white py-1 px-4 rounded text-sm" id="connectWallet">🔌 Connect Wallet</button>
 <button class="text-white py-1 px-4 rounded text-sm" id="refreshWalletData">🔄 Refresh Wallet</button>
 <button class="text-white py-1 px-2 rounded text-xs" id="toggleBalance">Hide Balance</button>
+<button class="text-white py-1 px-2 rounded text-xs" id="toggleAddress">Show Address</button>
 </div>
 </div>
 <div class="module-content text-white">
@@ -1655,7 +1663,6 @@
                 setTimeout(() => e.target.playVideo(), 100);
               }, 1000);
               e.target.getIframe().setAttribute('loading','lazy');
-              if (DOM.playIntroBtn) DOM.playIntroBtn.style.display = 'none';
             } catch {}
           }
         }
@@ -3645,12 +3652,23 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
 <script>
 let walletAddress = null;
 let balanceVisible = true;
+let addressVisible = false;
+
+function displayWalletAddress(addr) {
+  const el = document.getElementById('wallet-address');
+  if (!addr) {
+    el.innerText = 'Not connected';
+    return;
+  }
+  el.dataset.full = addr;
+  el.innerText = addressVisible ? addr : `****${addr.slice(-4)}`;
+}
 
 const savedWallet = localStorage.getItem('walletAddress');
 if (savedWallet) {
   walletAddress = savedWallet;
   document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('wallet-address').innerText = walletAddress;
+    displayWalletAddress(walletAddress);
     refreshWalletData();
   });
 }
@@ -3669,7 +3687,7 @@ async function connectWallet() {
     await provider.send('eth_requestAccounts', []);
     const signer = provider.getSigner();
     walletAddress = await signer.getAddress();
-    document.getElementById('wallet-address').innerText = walletAddress;
+    displayWalletAddress(walletAddress);
     localStorage.setItem('walletAddress', walletAddress);
     await refreshWalletData();
   } catch (err) {
@@ -3726,6 +3744,12 @@ document.getElementById('toggleBalance').addEventListener('click', () => {
     el.innerText = '****';
     document.getElementById('toggleBalance').innerText = 'Show Balance';
   }
+});
+
+document.getElementById('toggleAddress').addEventListener('click', () => {
+  addressVisible = !addressVisible;
+  displayWalletAddress(walletAddress);
+  document.getElementById('toggleAddress').innerText = addressVisible ? 'Hide Address' : 'Show Address';
 });
 
 document.getElementById('open-trades').addEventListener('click', async (e) => {
