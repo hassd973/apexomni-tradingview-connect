@@ -104,7 +104,8 @@
       display: flex;
       justify-content: center;
       gap: 0.5rem;
-      z-index: 1002;
+      z-index: 1004;
+      pointer-events: auto;
     }
     #play-intro-btn, #skip-intro-btn {
       background-color: var(--primary-color);
@@ -113,6 +114,8 @@
       border-radius: 6px;
       padding: 0.5rem 1rem;
       cursor: pointer;
+      position: relative;
+      z-index: 1005;
     }
     #play-intro-btn:hover, #skip-intro-btn:hover {
       background-color: var(--secondary-color);
@@ -217,9 +220,9 @@
       align-items: center;
     }
     .dj-track .playlist-container {
-      width: 100%;
-      max-width: 500px;
-      aspect-ratio: 16 / 9;
+      width: 500px;
+      height: 250px;
+      max-width: 90vw;
       overflow: hidden;
     }
     .dj-track iframe {
@@ -365,8 +368,9 @@
       left: 50%;
       transform: translateX(-50%);
       margin: 0;
-      z-index: 1002;
-
+      z-index: 1003;
+      width: 100%;
+      text-align: center;
     }
     header, main, footer, #module-grid section {
       opacity: 0;
@@ -1029,6 +1033,18 @@
 .zoom-btn:hover {
     background-color: #6fc8e9;
 }
+.dj-cue-btn {
+    background-color: var(--primary-color);
+    color: #1e2727;
+    border: 1px solid var(--shadow-color);
+    border-radius: 6px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+}
+.dj-cue-btn:hover {
+    background-color: var(--secondary-color);
+    box-shadow: 0 0 4px var(--secondary-color);
+}
 </style>
 </head>
 <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
@@ -1410,8 +1426,10 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
-        <input id="track-a-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2"/>
+        <input id="track-a-url" class="p-1 rounded text-sm" placeholder="Search YouTube"/>
         <button id="track-a-load" class="dj-btn">Load A</button>
+        <button id="track-a-setcue" class="dj-cue-btn">Set Cue</button>
+        <button id="track-a-cue" class="dj-cue-btn">Cue</button>
       </div>
       <div class="playlist-container video-container">
         <div id="track-a-player"></div>
@@ -1427,8 +1445,10 @@
     </div>
     <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
-        <input id="track-b-url" class="p-1 rounded text-sm" value="https://www.youtube.com/playlist?list=PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj"/>
+        <input id="track-b-url" class="p-1 rounded text-sm" placeholder="Search YouTube"/>
         <button id="track-b-load" class="dj-btn">Load B</button>
+        <button id="track-b-setcue" class="dj-cue-btn">Set Cue</button>
+        <button id="track-b-cue" class="dj-cue-btn">Cue</button>
       </div>
       <div class="playlist-container video-container">
         <div id="track-b-player"></div>
@@ -1447,6 +1467,7 @@
     <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full md:w-2/3"/>
     <div class="mt-2 flex gap-2">
       <button id="dj-play" class="dj-btn">Play Both</button>
+      <button id="dj-stop" class="dj-btn">Stop</button>
       <button id="dj-shuffle" class="dj-btn">Shuffle</button>
       <button id="auto-blend" class="dj-btn">Auto Blend</button>
       <button id="record-mix" class="dj-btn">Record</button>
@@ -1540,8 +1561,12 @@
       trackBDate: document.getElementById('track-b-date'),
       trackAUrl: document.getElementById('track-a-url'),
       trackALoad: document.getElementById('track-a-load'),
+      trackASetCue: document.getElementById('track-a-setcue'),
+      trackACue: document.getElementById('track-a-cue'),
       trackBUrl: document.getElementById('track-b-url'),
       trackBLoad: document.getElementById('track-b-load'),
+      trackBSetCue: document.getElementById('track-b-setcue'),
+      trackBCue: document.getElementById('track-b-cue'),
       crossfader: document.getElementById('crossfader'),
       autoBlendBtn: document.getElementById('auto-blend'),
       djDockBtn: document.getElementById('dj-dock-btn'),
@@ -1549,6 +1574,7 @@
       downloadMixBtn: document.getElementById('download-mix'),
       surroundToggleBtn: document.getElementById('surround-toggle'),
       djPlayBtn: document.getElementById('dj-play'),
+      djStopBtn: document.getElementById('dj-stop'),
       djShuffleBtn: document.getElementById('dj-shuffle'),
       vinylA: document.getElementById('vinyl-a'),
       vinylB: document.getElementById('vinyl-b'),
@@ -1589,9 +1615,13 @@
     const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
 
     function onYouTubeIframeAPIReady() {
+      const cnt = parseInt(localStorage.getItem('refreshCount') || '0') + 1;
+      localStorage.setItem('refreshCount', cnt);
+      const introVideoId = cnt >= 3 ? 'zHLmyJvSkaA' : 'RkQ3m_uGwXE';
+      if (cnt >= 3) localStorage.setItem('refreshCount', '0');
       ytPlayer = new YT.Player('loading-video-player', {
         host: 'https://www.youtube-nocookie.com',
-        videoId: 'RkQ3m_uGwXE',
+        videoId: introVideoId,
         playerVars: {
           autoplay: 1,
           mute: 1,
@@ -2986,15 +3016,52 @@
 
       if (DOM.trackALoad) {
         DOM.trackALoad.addEventListener('click', () => {
-          if (trackAPlayer) trackAPlayer.loadPlaylist({list: PLAYLIST_A});
-          if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
+          const q = DOM.trackAUrl.value.trim();
+          if (q && trackAPlayer) {
+            trackAPlayer.loadPlaylist({ listType: 'search', list: q });
+          }
         });
       }
 
       if (DOM.trackBLoad) {
         DOM.trackBLoad.addEventListener('click', () => {
-          if (trackBPlayer) trackBPlayer.loadPlaylist({list: PLAYLIST_B});
-          if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_B});
+          const q = DOM.trackBUrl.value.trim();
+          if (q && trackBPlayer) {
+            trackBPlayer.loadPlaylist({ listType: 'search', list: q });
+          }
+        });
+      }
+
+      let cueA = 0;
+      let cueB = 0;
+      if (DOM.trackASetCue) {
+        DOM.trackASetCue.addEventListener('click', () => {
+          if (trackAPlayer && trackAPlayer.getCurrentTime) {
+            cueA = trackAPlayer.getCurrentTime();
+          }
+        });
+      }
+      if (DOM.trackACue) {
+        DOM.trackACue.addEventListener('click', () => {
+          if (trackAPlayer && trackAPlayer.seekTo) {
+            trackAPlayer.seekTo(cueA, true);
+            trackAPlayer.playVideo();
+          }
+        });
+      }
+      if (DOM.trackBSetCue) {
+        DOM.trackBSetCue.addEventListener('click', () => {
+          if (trackBPlayer && trackBPlayer.getCurrentTime) {
+            cueB = trackBPlayer.getCurrentTime();
+          }
+        });
+      }
+      if (DOM.trackBCue) {
+        DOM.trackBCue.addEventListener('click', () => {
+          if (trackBPlayer && trackBPlayer.seekTo) {
+            trackBPlayer.seekTo(cueB, true);
+            trackBPlayer.playVideo();
+          }
         });
       }
 
@@ -3020,6 +3087,13 @@
         DOM.djPlayBtn.addEventListener('click', () => {
           trackAPlayer && trackAPlayer.playVideo();
           trackBPlayer && trackBPlayer.playVideo();
+        });
+      }
+
+      if (DOM.djStopBtn) {
+        DOM.djStopBtn.addEventListener('click', () => {
+          trackAPlayer && trackAPlayer.pauseVideo();
+          trackBPlayer && trackBPlayer.pauseVideo();
         });
       }
 
