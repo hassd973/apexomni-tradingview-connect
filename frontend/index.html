@@ -368,11 +368,11 @@
     #loading-screen .title-box {
       position: fixed;
       bottom: 5rem;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      right: 0;
+      margin: 0 auto;
       z-index: 1003;
       text-align: center;
-      width: auto;
       max-width: max-content;
       display: flex;
       justify-content: center;
@@ -1377,7 +1377,7 @@
   <button class="zoom-btn" id="btc-zoom-out" aria-label="Zoom out">-</button>
   <button class="zoom-btn" id="btc-zoom-z0" aria-label="Center">Z0</button>
   <button class="zoom-btn" id="btc-zoom-z1" aria-label="Zoom 1">-Z1</button>
-  <button class="zoom-btn" id="btc-zoom-z3" aria-label="Zoom 3">-Z3</button>
+  <button class="zoom-btn" id="btc-zoom-z2" aria-label="Zoom 2">-Z2</button>
 </div>
 <div class="mt-4 text-sm" id="btc-legend-explanation">
 <h3 class="text-base md:text-lg mb-2">Legend</h3>
@@ -1539,7 +1539,7 @@
       zoomOutBtn: document.getElementById('btc-zoom-out'),
       zoomZ0Btn: document.getElementById('btc-zoom-z0'),
       zoomZ1Btn: document.getElementById('btc-zoom-z1'),
-      zoomZ3Btn: document.getElementById('btc-zoom-z3'),
+      zoomZ2Btn: document.getElementById('btc-zoom-z2'),
       undockBackgroundLink: document.getElementById('undock-background-link'),
       exportHashLogBtn: document.getElementById('export-hash-log'),
       exportBalancesBtn: document.getElementById('export-balances'),
@@ -3503,7 +3503,7 @@
       let zoomDirection = 0;
       let zoomSpeed = 0;
       const maxZoom = 20;
-      const basePos = new THREE.Vector3(0, 0, maxZoom / 2);
+      const basePos = new THREE.Vector3(0, 0, 0);
       let autoReturn = false;
       let returnStart = null;
       let returnFrom = null;
@@ -3570,8 +3570,8 @@
           controls.update();
         });
       }
-      if (DOM.zoomZ3Btn) {
-        DOM.zoomZ3Btn.addEventListener('click', () => {
+      if (DOM.zoomZ2Btn) {
+        DOM.zoomZ2Btn.addEventListener('click', () => {
           camera.position.set(0, 0, maxZoom);
           autoReturn = false;
           controls.update();
