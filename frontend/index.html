@@ -301,6 +301,19 @@
       opacity: 0.85;
       transition: box-shadow 0.3s ease, border-color 0.3s ease;
     }
+    .vinyl-disk::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 40%;
+      height: 40%;
+      border-radius: 50%;
+      background: url('https://i.postimg.cc/R6HKW38z/q-logo.png') no-repeat center/contain;
+      opacity: 0.9;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
     .vinyl-disk::after {
       content: '';
       position: absolute;
@@ -342,7 +355,7 @@
       border-radius: 6px;
       padding: 0.5rem 1rem;
       cursor: pointer;
-      z-index: 1001;
+      z-index: 1002;
     }
     #skip-intro-btn:hover {
       background-color: var(--secondary-color);
@@ -1058,8 +1071,8 @@
       </div>
       <button id="mute-btn" aria-label="Toggle mute">🔇</button>
       <button id="play-trailer-btn" aria-label="Play trailer">▶️ Play</button>
+      <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
     </div>
-    <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
   </div>
   <div class="title-box">
     <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
@@ -1317,6 +1330,7 @@
 <span id="btc-volume">Volume: Loading...</span>
 <span id="btc-volatility">Volatility: Loading...</span>
 <span id="btc-momentum">Momentum: Loading...</span>
+<span id="camera-pos">Pos: 0,0,0</span>
 </div>
 <div class="mt-2 flex justify-center gap-2" id="btc-color-legend"></div>
 <div class="mt-2 flex justify-center gap-2" id="btc-zoom-controls">
@@ -1496,6 +1510,8 @@
       loadingInverse: document.getElementById('loading-inverse'),
       loadingTime: document.getElementById('loading-time'),
       loadingDate: document.getElementById('loading-date'),
+      btcDate: document.getElementById('btc-date'),
+      cameraPos: document.getElementById('camera-pos'),
       playlistPrice: document.getElementById('playlist-price'),
       playlistTime: document.getElementById('playlist-time'),
       playlistDate: document.getElementById('playlist-date'),
@@ -2380,12 +2396,14 @@
 
         document.getElementById('btc-price').textContent = `Price: $${latestPrice.toLocaleString()}`;
         document.getElementById('btc-time').textContent = `Time: ${latestTime}`;
+        document.getElementById('btc-date').textContent = `Date: ${new Date().toLocaleDateString()}`;
         document.getElementById('btc-volume').textContent = `Volume: ${latestVolume.toLocaleString()}`;
         document.getElementById('btc-volatility').textContent = `Volatility: ${volatility.toFixed(2)}%`;
         document.getElementById('btc-momentum').textContent = `Momentum: ${momentum >= 0 ? '+' : ''}${momentum.toFixed(2)}`;
         if (DOM.playlistPrice) DOM.playlistPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.playlistTime) DOM.playlistTime.textContent = `Time: ${latestTime}`;
         if (DOM.playlistDate) DOM.playlistDate.textContent = new Date().toLocaleDateString();
+        if (DOM.btcDate) DOM.btcDate.textContent = new Date().toLocaleDateString();
         if (DOM.loadingPrice) DOM.loadingPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.loadingTime) DOM.loadingTime.textContent = latestTime;
         if (DOM.loadingDate) DOM.loadingDate.textContent = new Date().toLocaleDateString();
@@ -3045,12 +3063,12 @@
       if (DOM.recordMixBtn) {
         DOM.recordMixBtn.addEventListener('click', () => {
           if (!djCtx) return;
-          if (recorder && recorder.state === 'recording') {
-            recorder.stop();
-            DOM.recordMixBtn.classList.remove('active');
-            if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
-            cancelAnimationFrame(waveAnim);
-          } else {
+        if (recorder && recorder.state === 'recording') {
+          recorder.stop();
+          DOM.recordMixBtn.classList.remove('active');
+          if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
+          cancelAnimationFrame(waveAnim);
+        } else {
             const dest = djCtx.createMediaStreamDestination();
             gainA.connect(dest);
             gainB.connect(dest);
@@ -3074,10 +3092,18 @@
                 DOM.downloadMixBtn.download = mime === 'audio/wav' ? 'mix.wav' : 'mix.webm';
               }
             };
-            recorder.start();
-            DOM.recordMixBtn.classList.add('active');
-            drawWave();
-          }
+          recorder.start();
+          setTimeout(() => {
+            if (recorder && recorder.state === 'recording') {
+              recorder.stop();
+              DOM.recordMixBtn.classList.remove('active');
+              if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
+              cancelAnimationFrame(waveAnim);
+            }
+          }, 60000);
+          DOM.recordMixBtn.classList.add('active');
+          drawWave();
+        }
         });
       }
 
@@ -3341,9 +3367,10 @@
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
-      const basePos = new THREE.Vector3(0,0,0.25);
+      const basePos = new THREE.Vector3(0,0,0);
       const maxZoom = 5;
       let autoReturn = false;
+      let returnStart = null;
       function zoomLoop() {
         if (zoomDirection !== 0 && camera) {
           zoomSpeed = Math.min(zoomSpeed + 0.0008, 0.04);
@@ -3353,11 +3380,18 @@
             camera.position.setLength(maxZoom);
           }
           controls.update();
-        } else if (autoReturn) {
+        } else if (autoReturn && camera) {
+          const t = Math.min((Date.now() - returnStart) / 500, 1);
+          const bounce = Math.sin(t * Math.PI) * 0.1;
           camera.position.lerp(basePos, 0.05);
-          if (camera.position.distanceTo(basePos) < 0.1) autoReturn = false;
+          camera.position.multiplyScalar(1 + bounce);
+          if (t >= 1) autoReturn = false;
         } else {
           zoomSpeed = 0;
+        }
+        if (camera && DOM.cameraPos) {
+          DOM.cameraPos.textContent =
+            `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
         }
         requestAnimationFrame(zoomLoop);
       }
@@ -3368,7 +3402,10 @@
       });
       ['mouseup','mouseleave','touchend'].forEach(ev => {
         DOM.zoomInBtn.addEventListener(ev, () => { zoomDirection = 0; });
-        DOM.zoomOutBtn.addEventListener(ev, () => { zoomDirection = 0; if (camera.position.length() >= maxZoom) autoReturn = true; });
+        DOM.zoomOutBtn.addEventListener(ev, () => {
+          zoomDirection = 0;
+          if (camera.position.length() >= maxZoom) { autoReturn = true; returnStart = Date.now(); }
+        });
       });
 
       DOM.exportHashLogBtn.addEventListener('click', () => {
