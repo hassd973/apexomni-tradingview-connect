@@ -366,14 +366,17 @@
     }
     /* intro buttons styling replaced by .intro-buttons section above */
     #loading-screen .title-box {
-      position: relative;
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 1003;
       text-align: center;
       width: auto;
       max-width: max-content;
       display: flex;
       justify-content: center;
-      margin: 0 auto;
+      margin: 0;
       box-sizing: border-box;
     }
     header, main, footer, #module-grid section {
@@ -1104,13 +1107,13 @@
       </div>
       <button id="mute-btn" aria-label="Toggle mute">🔇</button>
     </div>
+    <div class="title-box">
+      <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
+    </div>
     <div class="intro-buttons">
       <button id="play-intro-btn" aria-label="Play intro">Play Intro</button>
       <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
     </div>
-  </div>
-  <div class="title-box">
-    <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
   </div>
 </div>
 <div class="spline-bg hidden" id="spline-bg">
