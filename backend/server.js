@@ -308,7 +308,14 @@ app.get('/api/wallet', async (req, res) => {
     const omniData = omniResp.data || {};
 
     const tokenResp = await axios.get(`https://api.ethplorer.io/getAddressInfo/${address}?apiKey=freekey`);
-    const tokenCount = tokenResp.data.tokens ? tokenResp.data.tokens.length : 0;
+    const tokensRaw = tokenResp.data.tokens || [];
+    const tokenCount = tokensRaw.length;
+    const tokens = tokensRaw.map(t => ({
+      symbol: t.tokenInfo.symbol,
+      name: t.tokenInfo.name,
+      address: t.tokenInfo.address,
+      balance: t.balance / Math.pow(10, t.tokenInfo.decimals || 0)
+    }));
 
     const txResp = await axios.get(ETHERSCAN_API_URL, {
       params: {
@@ -328,6 +335,7 @@ app.get('/api/wallet', async (req, res) => {
       accountBalance: omniData.account?.balanceUsd || 'N/A',
       positions: omniData.positions || [],
       tokenCount,
+      tokens,
       lastTx
     });
   } catch (error) {
