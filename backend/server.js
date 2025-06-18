@@ -1,6 +1,9 @@
-require('dotenv').config();
-require('ts-node/register');
 
+try {
+  require('dotenv').config();
+} catch (err) {
+  console.warn('dotenv not available, skipping .env loading');
+}
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
@@ -15,8 +18,10 @@ const port = process.env.PORT || 3001;
 // Determine the correct frontend path. Default to the frontend directory one
 // level up from the backend folder so running the server from the project root
 // works out of the box.
+const defaultFrontend = path.join(__dirname, '..', 'frontend');
+const distFrontend = path.join(defaultFrontend, 'dist');
 const frontendPath = process.env.FRONTEND_PATH ||
-  path.join(__dirname, '..', 'frontend');
+  (fs.existsSync(distFrontend) ? distFrontend : defaultFrontend);
 console.log('Frontend Path:', frontendPath);
 
 // Serve static files from the frontend directory
