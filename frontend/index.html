@@ -220,10 +220,13 @@
       align-items: center;
     }
     .dj-track .playlist-container {
-      width: 500px;
-      height: 250px;
-      max-width: 90vw;
+      width: 100%;
+      max-width: 500px;
+      aspect-ratio: 16 / 9;
+      height: auto;
       overflow: hidden;
+      margin-left: auto;
+      margin-right: auto;
     }
     .dj-track iframe {
       width: 100%;
@@ -789,7 +792,11 @@
       max-width: max-content;
       box-sizing: border-box;
     }
-    header .title-box { margin-top: 200px; }
+    header .title-box {
+      margin-top: 1rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
     @media (min-width: 640px) {
       .title-box { font-size: 1.25rem; }
     }
@@ -1655,7 +1662,6 @@
                 setTimeout(() => e.target.playVideo(), 100);
               }, 1000);
               e.target.getIframe().setAttribute('loading','lazy');
-              if (DOM.playIntroBtn) DOM.playIntroBtn.style.display = 'none';
             } catch {}
           }
         }
