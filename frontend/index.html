@@ -93,7 +93,7 @@
       padding: 0.5rem;
       border-radius: 0.25rem;
       cursor: pointer;
-      z-index: 1001;
+      z-index: 1002;
       pointer-events: auto;
     }
     #play-trailer-btn {
@@ -107,7 +107,7 @@
       padding: 0.5rem 0.75rem;
       border-radius: 0.25rem;
       cursor: pointer;
-      z-index: 1001;
+      z-index: 1002;
     }
     @media (max-width: 640px) {
       #mute-btn { padding: 0.25rem; font-size: 0.75rem; }
@@ -288,17 +288,29 @@
       z-index: 1;
     }
     .vinyl-disk {
+      position: relative;
       width: 80%;
       max-width: 400px;
       aspect-ratio: 1 / 1;
       border-radius: 50%;
       margin: 0.5rem auto;
-      background: radial-gradient(circle, rgba(255,255,255,0.2) 10%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.6) 80%);
+      background: radial-gradient(circle, rgba(255,255,255,0.15) 5%, rgba(255,255,255,0.05) 40%, rgba(0,0,0,0.6) 80%);
       border: 3px solid rgba(135,206,235,0.6);
       box-shadow: 0 0 8px rgba(135,206,235,0.4);
       backdrop-filter: blur(4px);
       opacity: 0.85;
       transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    }
+    .vinyl-disk::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20%;
+      height: 20%;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.3);
+      transform: translate(-50%, -50%);
     }
     .vinyl-disk.spinning {
       animation: spin 3s linear infinite;
@@ -1044,9 +1056,9 @@
         <span id="loading-time"></span>
         <span id="loading-date"></span>
       </div>
+      <button id="mute-btn" aria-label="Toggle mute">🔇</button>
+      <button id="play-trailer-btn" aria-label="Play trailer">▶️ Play</button>
     </div>
-    <button id="mute-btn" aria-label="Toggle mute">🔇</button>
-    <button id="play-trailer-btn" aria-label="Play trailer">▶️ Play</button>
     <button id="skip-intro-btn" aria-label="Skip intro" onclick="hideLoadingScreen()">Skip Intro</button>
   </div>
   <div class="title-box">
@@ -1570,6 +1582,14 @@
           }
         }
       });
+      setTimeout(() => {
+        try {
+          if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
+            ytPlayer.playVideo();
+            if (DOM.playTrailerBtn) DOM.playTrailerBtn.style.display = 'none';
+          }
+        } catch {}
+      }, 7000);
 
       bgMusicPlayer = new YT.Player('music-player', {
         host: 'https://www.youtube-nocookie.com',
@@ -2217,7 +2237,7 @@
       const container = document.getElementById('btc-hash-canvas');
       renderer.setSize(container.clientWidth, container.clientHeight);
       container.appendChild(renderer.domElement);
-      camera.position.set(0, 0, 1);
+      camera.position.set(0, 0, 0.25);
       camera.lookAt(0, 0, 0);
 
       const ambientLight = new THREE.AmbientLight(0x404040);
@@ -3321,8 +3341,8 @@
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
-      const basePos = new THREE.Vector3(0,0,1);
-      const maxZoom = 50;
+      const basePos = new THREE.Vector3(0,0,0.25);
+      const maxZoom = 5;
       let autoReturn = false;
       function zoomLoop() {
         if (zoomDirection !== 0 && camera) {
@@ -3426,6 +3446,15 @@ document.getElementById('chat-send')?.addEventListener('click', async () => {
 let walletAddress = null;
 let balanceVisible = true;
 
+const savedWallet = localStorage.getItem('walletAddress');
+if (savedWallet) {
+  walletAddress = savedWallet;
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('wallet-address').innerText = walletAddress;
+    refreshWalletData();
+  });
+}
+
 async function connectWallet() {
   if (typeof window.ethereum === 'undefined') {
     if (/Mobi|Android/i.test(navigator.userAgent)) {
@@ -3441,6 +3470,7 @@ async function connectWallet() {
     const signer = provider.getSigner();
     walletAddress = await signer.getAddress();
     document.getElementById('wallet-address').innerText = walletAddress;
+    localStorage.setItem('walletAddress', walletAddress);
     await refreshWalletData();
   } catch (err) {
     console.error('Wallet connection failed:', err);
