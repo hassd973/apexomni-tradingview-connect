@@ -105,6 +105,9 @@
       max-width: 500px;
       aspect-ratio: 1 / 1;
       margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     @media (max-width: 640px) {
       .playlist-container {
@@ -139,6 +142,7 @@
       height: 100%;
       border: 0;
       object-fit: cover;
+      object-position: center;
     }
     #music-player { width: 100%; height: 100%; }
     .video-overlay,
@@ -208,6 +212,7 @@
       pointer-events: none;
       font-size: 0.75rem;
       padding: 0.25rem;
+      z-index: 1;
     }
     .dj-btn {
       background-color: var(--primary-color);
@@ -1512,6 +1517,8 @@
     let balancesData = [];
     let tokenInsightsData = [];
     let isBTCPriceMock = false;
+    let cachedTopCoin = null;
+    let cachedInverseCoin = null;
 
     const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
     const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
@@ -2091,10 +2098,12 @@
     }
 
     async function fetchTopInverseToken() {
+      if (cachedInverseCoin) return cachedInverseCoin;
       try {
         const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_change_percentage_24h.asc&per_page=1&page=1';
         const data = await fetchWithRetry(url);
-        return data && data[0] ? data[0].symbol.toUpperCase() : 'N/A';
+        cachedInverseCoin = data && data[0] ? data[0].symbol.toUpperCase() : 'N/A';
+        return cachedInverseCoin;
       } catch (err) {
         console.error('Failed to fetch inverse token:', err);
         return 'N/A';
@@ -2102,10 +2111,12 @@
     }
 
     async function fetchTopCoin() {
+      if (cachedTopCoin) return cachedTopCoin;
       try {
         const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=1&page=1';
         const data = await fetchWithRetry(url);
-        return data && data[0] ? data[0].symbol.toUpperCase() : 'N/A';
+        cachedTopCoin = data && data[0] ? data[0].symbol.toUpperCase() : 'N/A';
+        return cachedTopCoin;
       } catch (err) {
         console.error('Failed to fetch top coin:', err);
         return 'N/A';
@@ -2799,6 +2810,8 @@
       loadData();
       init3D();
       updateBTCHash();
+      fetchTopCoin().then(c => { if (DOM.loadingTopcoin) DOM.loadingTopcoin.textContent = `Top ⬆️: ${c}`; if (DOM.trackATopcoin) DOM.trackATopcoin.textContent = `Top ⬆️: ${c}`; if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = `Top ⬆️: ${c}`; });
+      fetchTopInverseToken().then(i => { if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Top ⬇️: ${i}`; if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Top ⬇️: ${i}`; if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Top ⬇️: ${i}`; });
 
       if (DOM.muteBtn) {
         DOM.muteBtn.addEventListener('click', () => {
