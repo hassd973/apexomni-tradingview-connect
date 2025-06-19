@@ -233,6 +233,26 @@
       height: 100%;
       border-radius: 6px;
       transform: scale(1.05);
+      pointer-events: none;
+    }
+    #dj-playlist {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.5rem;
+    }
+    #dj-playlist .playlist-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0,0,0,0.2);
+      padding: 0.25rem;
+      border-radius: 6px;
+    }
+    #dj-playlist img {
+      width: 40px;
+      height: 30px;
+      object-fit: cover;
+      border-radius: 4px;
     }
     .dj-overlay {
       position: absolute;
@@ -1374,6 +1394,14 @@
 <span id="camera-pos">Pos: 0,0,0</span>
 </div>
 <div class="mt-2 flex justify-center gap-2" id="btc-color-legend"></div>
+<div class="mt-2 flex justify-center gap-2" id="btc-theme-controls">
+  <label for="btc-theme-select" class="text-sm text-white mr-2">Theme:</label>
+  <select id="btc-theme-select" class="bg-gray-800 text-white text-sm px-2 py-1 rounded">
+    <option value="original">Original</option>
+    <option value="heatmap">Heat Map</option>
+    <option value="lifecycle">Life Cycle</option>
+  </select>
+</div>
 <div class="mt-2 flex justify-center gap-2" id="btc-zoom-controls">
   <button class="zoom-btn" id="btc-zoom-in" aria-label="Zoom in">+</button>
   <button class="zoom-btn" id="btc-zoom-out" aria-label="Zoom out">-</button>
@@ -1459,6 +1487,11 @@
           <span id="track-a-date"></span>
         </div>
       </div>
+      <div class="mt-1 flex gap-2 justify-center">
+        <button id="track-a-play" class="dj-btn">Play</button>
+        <button id="track-a-pause" class="dj-btn">Pause</button>
+        <input id="track-a-volume" type="range" min="0" max="100" value="50" class="w-24"/>
+      </div>
       <div class="vinyl-disk paused" id="vinyl-a"></div>
     </div>
     <div class="dj-track flex-1" draggable="true">
@@ -1478,9 +1511,15 @@
           <span id="track-b-date"></span>
         </div>
       </div>
+      <div class="mt-1 flex gap-2 justify-center">
+        <button id="track-b-play" class="dj-btn">Play</button>
+        <button id="track-b-pause" class="dj-btn">Pause</button>
+        <input id="track-b-volume" type="range" min="0" max="100" value="50" class="w-24"/>
+      </div>
       <div class="vinyl-disk paused" id="vinyl-b"></div>
     </div>
   </div>
+  <div id="dj-playlist" class="mt-2 max-h-40 overflow-y-auto text-sm custom-scroll w-full"></div>
   <div class="flex flex-col items-center mt-2 dj-controls">
     <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full md:w-2/3"/>
     <div class="mt-2 flex gap-2">
@@ -1601,7 +1640,15 @@
       decimateKnob: document.getElementById('decimate-knob'),
       lofiKnob: document.getElementById('lofi-knob'),
       repeatKnob: document.getElementById('repeat-knob'),
-      waveCanvas: document.getElementById('wave-canvas')
+      waveCanvas: document.getElementById('wave-canvas'),
+      btcThemeSelect: document.getElementById('btc-theme-select'),
+      trackAPlay: document.getElementById('track-a-play'),
+      trackAPause: document.getElementById('track-a-pause'),
+      trackAVolume: document.getElementById('track-a-volume'),
+      trackBPlay: document.getElementById('track-b-play'),
+      trackBPause: document.getElementById('track-b-pause'),
+      trackBVolume: document.getElementById('track-b-volume'),
+      djPlaylist: document.getElementById('dj-playlist')
     };
 
     let draggedModule = null;
@@ -1618,7 +1665,13 @@
         bitcrusherNodeA, bitcrusherNodeB, analyser, waveAnim;
     let isQuantumSound = false;
     let audioCtx, audioSource, delayNode, convolverNode, filterNode, bitcrusherNode, gainNode;
-    const siteColors = ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'];
+    const themes = {
+      original: ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'],
+      heatmap: ['#00ff00', '#ffff00', '#ff0000'],
+      lifecycle: ['#b3e5fc', '#81d4fa', '#4fc3f7']
+    };
+    let currentTheme = 'original';
+    let siteColors = themes.original;
     let currentEthPrice = 0;
     let isUsingMockLogs = true;
     let gasHistory = [];
@@ -1629,8 +1682,21 @@
     let cachedTopCoin = null;
     let cachedInverseCoin = null;
 
-    const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
-    const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
+const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
+const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
+const DJ_TRACKS = [
+  { id: 'RkQ3m_uGwXE', title: 'Intro Tune' },
+  { id: 'zHLmyJvSkaA', title: 'Groove Beat' }
+];
+
+    function renderDJPlaylist() {
+      if (!DOM.djPlaylist) return;
+      DOM.djPlaylist.innerHTML = DJ_TRACKS.map(t => `
+        <div class="playlist-item">
+          <img src="https://img.youtube.com/vi/${t.id}/default.jpg" alt="${t.title}"/>
+          <span>${t.title}</span>
+        </div>`).join('');
+    }
 
     function onYouTubeIframeAPIReady() {
       let cnt = parseInt(localStorage.getItem('refreshCount') || '0');
@@ -1735,6 +1801,8 @@
           }
         }
       });
+
+      renderDJPlaylist();
 
       enableQuantumSound();
 
@@ -2426,8 +2494,13 @@
         const minVolume = Math.min(...volumes.map(v => v[1]));
         const maxVolume = Math.max(...volumes.map(v => v[1]));
         const pointsPerCloud = 100;
-        const colorIndex = dotClouds.length % siteColors.length;
-        const cloudColor = new THREE.Color(siteColors[colorIndex]);
+        const latestPrice = prices[prices.length - 1][1];
+        const latestVolume = volumes[volumes.length - 1][1];
+        const recentPrices = prices.slice(-10).map(p => p[1]);
+        const volatility = ((Math.max(...recentPrices) - Math.min(...recentPrices)) / latestPrice) * 100;
+        const momentum = latestPrice - prices[prices.length - 2][1];
+        const cloudColorHex = getThemeColor(volatility, latestVolume, minVolume, maxVolume);
+        const cloudColor = new THREE.Color(cloudColorHex);
 
         const dotPositions = [];
         const dotColors = [];
@@ -2460,13 +2533,8 @@
           cloud.material.opacity = cloud.material.opacity - 0.05 <= 0.1 ? 1 : cloud.material.opacity - 0.05;
         });
 
-        const latestPrice = prices[prices.length - 1][1];
-        const latestVolume = volumes[volumes.length - 1][1];
         const latestTime = new Date(timestamps[timestamps.length - 1]).toLocaleTimeString();
-        const recentPrices = prices.slice(-10).map(p => p[1]);
-        const volatility = ((Math.max(...recentPrices) - Math.min(...recentPrices)) / latestPrice) * 100;
-        const momentum = latestPrice - prices[prices.length - 2][1];
-        colorLegend.push({ color: siteColors[colorIndex], price: latestPrice, volume: latestVolume, time: latestTime });
+        colorLegend.push({ color: cloudColorHex, price: latestPrice, volume: latestVolume, time: latestTime });
         updateColorLegend();
 
         document.getElementById('btc-price').textContent = `Price: $${latestPrice.toLocaleString()}`;
@@ -2523,6 +2591,32 @@
           <div class="legend-color" style="background: ${item.color}"></div>
         </div>
       `).join('');
+    }
+
+    function getThemeColor(vol, volume, minV, maxV) {
+      if (currentTheme === 'heatmap') {
+        if (vol < 1) return themes.heatmap[0];
+        if (vol < 3) return themes.heatmap[1];
+        return themes.heatmap[2];
+      } else if (currentTheme === 'lifecycle') {
+        const ratio = (volume - minV) / (maxV - minV);
+        if (ratio < 0.25) return themes.lifecycle[0];
+        if (ratio < 0.5) return themes.lifecycle[1];
+        return themes.lifecycle[2];
+      } else {
+        const idx = dotClouds.length % themes.original.length;
+        return themes.original[idx];
+      }
+    }
+
+    function setTheme(name) {
+      currentTheme = name;
+      siteColors = themes[name] || themes.original;
+      colorLegend = [];
+      dotClouds.forEach(c => scene.remove(c));
+      dotClouds = [];
+      updateColorLegend();
+      updateBTCHash();
     }
 
     async function renderGasHeatmapAndFees() {
@@ -3084,6 +3178,13 @@
         });
       }
 
+      if (DOM.trackAPlay) DOM.trackAPlay.addEventListener('click', () => trackAPlayer && trackAPlayer.playVideo());
+      if (DOM.trackAPause) DOM.trackAPause.addEventListener('click', () => trackAPlayer && trackAPlayer.pauseVideo());
+      if (DOM.trackAVolume) DOM.trackAVolume.addEventListener('input', (e) => trackAPlayer && trackAPlayer.setVolume(e.target.value));
+      if (DOM.trackBPlay) DOM.trackBPlay.addEventListener('click', () => trackBPlayer && trackBPlayer.playVideo());
+      if (DOM.trackBPause) DOM.trackBPause.addEventListener('click', () => trackBPlayer && trackBPlayer.pauseVideo());
+      if (DOM.trackBVolume) DOM.trackBVolume.addEventListener('input', (e) => trackBPlayer && trackBPlayer.setVolume(e.target.value));
+
       if (DOM.djDockBtn) {
         DOM.djDockBtn.addEventListener('click', () => {
           const url = window.location.pathname + '?dj=1';
@@ -3501,6 +3602,10 @@
         link.click();
         addSystemLog('Exported BTC Hash Visualization as OBJ');
       });
+
+      if (DOM.btcThemeSelect) {
+        DOM.btcThemeSelect.addEventListener('change', (e) => setTheme(e.target.value));
+      }
 
       let zoomDirection = 0;
       let zoomSpeed = 0;
