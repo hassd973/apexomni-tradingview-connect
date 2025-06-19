@@ -1664,9 +1664,11 @@
     let bgMusicPlayer;
     let trackAPlayer;
     let trackBPlayer;
-    let djCtx, gainA, gainB, recorder, autoBlendInterval;
+    let djCtx, gainA, gainB, recorder, dest, autoBlendInterval;
     let delayNodeA, delayNodeB, reverbNodeA, reverbNodeB, filterNodeA, filterNodeB,
-        bitcrusherNodeA, bitcrusherNodeB, analyser, waveAnim;
+        bitcrusherNodeA, bitcrusherNodeB, analyser, waveAnim, srcA, srcB;
+    let chunks = [];
+    const fxMatrix = { A: [], B: [] };
     let isQuantumSound = false;
     let audioCtx, audioSource, delayNode, convolverNode, filterNode, bitcrusherNode, gainNode;
     const themes = {
@@ -1851,14 +1853,58 @@ let DJ_TRACKS = [
         return curve;
       }
 
+      function createFxNode(type) {
+        switch (type) {
+          case 'delay':
+            const delay = djCtx.createDelay();
+            delay.delayTime.value = 0.3;
+            return delay;
+          case 'reverb':
+            const convolver = djCtx.createConvolver();
+            convolver.buffer = createImpulse();
+            return convolver;
+          case 'distortion':
+            const distortion = djCtx.createWaveShaper();
+            distortion.curve = createDistortionCurve(250);
+            distortion.oversample = '4x';
+            return distortion;
+          case 'filter':
+            const filter = djCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 400;
+            return filter;
+          case 'bitcrusher':
+            const crusher = djCtx.createWaveShaper();
+            crusher.curve = createBitcrusherCurve(4);
+            crusher.oversample = '4x';
+            return crusher;
+          default:
+            return null;
+        }
+      }
+
+      function addFxToChain(track, fxType) {
+        const node = createFxNode(fxType);
+        if (!node) return;
+        const chain = fxMatrix[track];
+        const last = chain.length > 0 ? chain[chain.length - 1] : (track === 'A' ? srcA : srcB);
+        if (last) last.disconnect();
+        if (last) last.connect(node);
+        node.connect(track === 'A' ? gainA : gainB);
+        chain.push(node);
+      }
+
       function attachTrack(player, which) {
         if (!djCtx) {
           djCtx = new (window.AudioContext || window.webkitAudioContext)();
           djCtx.resume();
           gainA = djCtx.createGain();
           gainB = djCtx.createGain();
+          dest = djCtx.createMediaStreamDestination();
           gainA.connect(djCtx.destination);
           gainB.connect(djCtx.destination);
+          gainA.connect(dest);
+          gainB.connect(dest);
           analyser = djCtx.createAnalyser();
           analyser.fftSize = 2048;
           gainA.connect(analyser);
@@ -1879,37 +1925,16 @@ let DJ_TRACKS = [
         }
         if (stream) {
           const src = djCtx.createMediaStreamSource(stream);
-          const filter = djCtx.createBiquadFilter();
-          const crusher = djCtx.createWaveShaper();
-          crusher.curve = createBitcrusherCurve(4);
-          crusher.oversample = '4x';
-          filter.type = 'highpass';
-          filter.frequency.value = 400;
-          const distortion = djCtx.createWaveShaper();
-          distortion.curve = createDistortionCurve(250);
-          distortion.oversample = '4x';
-          const delay = djCtx.createDelay();
-          delay.delayTime.value = 0.3;
-          const convolver = djCtx.createConvolver();
-          convolver.buffer = createImpulse();
-          src.connect(filter);
-          filter.connect(distortion);
-          distortion.connect(delay);
-          delay.connect(convolver);
-          convolver.connect(filter);
-          filter.connect(crusher);
           if (which === 'A') {
-            delayNodeA = delay;
-            reverbNodeA = convolver;
-            filterNodeA = filter;
-            bitcrusherNodeA = crusher;
-            crusher.connect(gainA);
+            srcA = src;
+            fxMatrix.A = [];
+            ['delay','reverb','distortion','filter','bitcrusher'].forEach(fx => addFxToChain('A', fx));
+            [delayNodeA, reverbNodeA, , filterNodeA, bitcrusherNodeA] = fxMatrix.A;
           } else {
-            delayNodeB = delay;
-            reverbNodeB = convolver;
-            filterNodeB = filter;
-            bitcrusherNodeB = crusher;
-            crusher.connect(gainB);
+            srcB = src;
+            fxMatrix.B = [];
+            ['delay','reverb','distortion','filter','bitcrusher'].forEach(fx => addFxToChain('B', fx));
+            [delayNodeB, reverbNodeB, , filterNodeB, bitcrusherNodeB] = fxMatrix.B;
           }
         }
         if (DOM.crossfader) DOM.crossfader.dispatchEvent(new Event('input'));
@@ -3242,6 +3267,12 @@ let DJ_TRACKS = [
           if (gainA && gainB) {
             gainA.gain.value = 1 - val;
             gainB.gain.value = val;
+            if (dest) {
+              try { gainA.disconnect(dest); } catch {}
+              try { gainB.disconnect(dest); } catch {}
+              gainA.connect(dest);
+              gainB.connect(dest);
+            }
           }
         });
       }
@@ -3339,48 +3370,29 @@ let DJ_TRACKS = [
 
       if (DOM.recordMixBtn) {
         DOM.recordMixBtn.addEventListener('click', () => {
-          if (!djCtx) return;
-        if (recorder && recorder.state === 'recording') {
-          recorder.stop();
-          DOM.recordMixBtn.classList.remove('active');
-          if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
-          cancelAnimationFrame(waveAnim);
-        } else {
-            const dest = djCtx.createMediaStreamDestination();
-            gainA.connect(dest);
-            gainB.connect(dest);
-            if (!analyser) {
-              analyser = djCtx.createAnalyser();
-              analyser.fftSize = 2048;
-              gainA.connect(analyser);
-              gainB.connect(analyser);
-            }
-            recorder = new MediaRecorder(dest.stream, {
-              mimeType: MediaRecorder.isTypeSupported('audio/wav') ? 'audio/wav' : undefined
-            });
-            const chunks = [];
+          if (!djCtx || !dest) return;
+          if (!recorder) {
+            recorder = new MediaRecorder(dest.stream);
             recorder.ondataavailable = e => chunks.push(e.data);
             recorder.onstop = () => {
-              const mime = MediaRecorder.isTypeSupported('audio/wav') ? 'audio/wav' : 'audio/webm';
-              const blob = new Blob(chunks, { type: mime });
+              const blob = new Blob(chunks, { type: 'audio/webm' });
               const url = URL.createObjectURL(blob);
               if (DOM.downloadMixBtn) {
                 DOM.downloadMixBtn.href = url;
-                DOM.downloadMixBtn.download = mime === 'audio/wav' ? 'mix.wav' : 'mix.webm';
+                DOM.downloadMixBtn.style.display = 'inline';
               }
             };
-          recorder.start();
-          setTimeout(() => {
-            if (recorder && recorder.state === 'recording') {
-              recorder.stop();
-              DOM.recordMixBtn.classList.remove('active');
-              if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
-              cancelAnimationFrame(waveAnim);
-            }
-          }, 60000);
-          DOM.recordMixBtn.classList.add('active');
-          drawWave();
-        }
+          }
+          if (recorder.state === 'recording') {
+            recorder.stop();
+            DOM.recordMixBtn.classList.remove('active');
+            cancelAnimationFrame(waveAnim);
+          } else {
+            chunks = [];
+            recorder.start();
+            DOM.recordMixBtn.classList.add('active');
+            drawWave();
+          }
         });
       }
 
