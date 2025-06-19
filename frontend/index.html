@@ -155,7 +155,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.2);
+      background: rgba(0,0,0,0.5);
       pointer-events: none;
     }
     .video-container iframe,
@@ -169,6 +169,15 @@
       object-fit: cover;
       object-position: center;
     }
+    #dj-dashboard { position: relative; }
+    #dj-dashboard .video-container iframe,
+    #dj-dashboard .video-container > div {
+      transform: scale(1.2);
+    }
+    #loading-screen .video-container iframe,
+    #loading-screen .video-container > div {
+      transform: none;
+    }
     #music-player { width: 100%; height: 100%; }
     .video-overlay,
     .playlist-overlay {
@@ -177,6 +186,7 @@
       left: 0;
       width: 100%;
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
       align-items: center;
       justify-content: center;
@@ -184,9 +194,10 @@
       color: var(--text-color);
       pointer-events: none;
       padding: 0.25rem;
+      font-size: clamp(10px, 2vw, 14px);
     }
     #loading-screen .video-overlay {
-      position: fixed;
+      position: absolute;
       top: 0;
       left: 0;
       width: 100%;
@@ -254,34 +265,65 @@
       object-fit: cover;
       border-radius: 4px;
     }
-    .dj-overlay {
+    .metrics-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
+      top: 5%;
+      left: 50%;
+      transform: translate(-50%, 0);
+      width: calc(100% - 20px);
       display: flex;
-      gap: 0.25rem;
-      background: rgba(0,0,0,0.3);
-      color: var(--text-color);
+      align-items: center;
       justify-content: center;
-      pointer-events: none;
-      font-size: 0.75rem;
-      padding: 0.25rem;
-      z-index: 1;
+      background: rgba(0,0,0,0.5);
+      padding: 4px;
+      border-radius: 5px;
+      z-index: 10;
+    }
+    .metrics-container {
+      display: flex;
+      flex: 1;
+      flex-wrap: wrap;
+      justify-content: space-around;
+      gap: 5px;
+    }
+    .metric {
+      flex: 0 1 auto;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: clamp(7px, 1vw, 11px);
+    }
+    .logo {
+      width: 30px;
+      height: 30px;
+      margin-right: 10px;
+    }
+    @media (max-width: 600px) {
+      .metrics-overlay { flex-wrap: wrap; }
+      .metric { font-size: 12px; margin: 2px; }
+    }
     }
     .dj-btn {
-      background-color: var(--primary-color);
-      color: #1e2727;
-      border: 1px solid var(--shadow-color);
-      border-radius: 6px;
-      padding: 0.25rem 0.75rem;
+      background-color: rgba(255,255,255,0.1);
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      padding: 0.5rem 1rem;
       cursor: pointer;
       transition: background-color 0.3s ease, box-shadow 0.3s ease;
     }
-    .dj-btn:hover,
+    .dj-btn:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+    .dj-btn:active {
+      background-color: rgba(255,255,255,0.3);
+    }
     .dj-btn.active {
-      background-color: var(--secondary-color);
-      box-shadow: 0 0 8px var(--secondary-color);
+      box-shadow: 0 0 8px 2px #1e90ff;
+    }
+    .dj-btn.inactive {
+      box-shadow: 0 0 8px 2px orange;
     }
     #wave-canvas {
       background: rgba(35,46,46,0.5);
@@ -307,6 +349,28 @@
       background: var(--text-color);
       cursor: pointer;
     }
+    .fx-knob {
+      appearance: none;
+      width: 80px;
+      height: 6px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    .fx-knob::-webkit-slider-thumb {
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-color);
+      cursor: pointer;
+    }
+    .fx-knob::-moz-range-thumb {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-color);
+      cursor: pointer;
+    }
     .dj-controls { position: relative; }
     .vinyl {
       position: absolute;
@@ -322,6 +386,23 @@
       opacity: 0.8;
       pointer-events: none;
       z-index: 1;
+    }
+    #btc-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+    #btc-visual-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      margin: 0 auto 1rem;
+      z-index: 20;
+    }
+    #btc-canvas {
+      width: 100%;
+      height: 100%;
     }
     .vinyl-disk {
       position: relative;
@@ -934,6 +1015,35 @@
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
+      position: relative;
+    }
+    #btc-audio-canvas {
+      width: 100%;
+      height: 80px;
+      pointer-events: none;
+    }
+    .pip-frame {
+      border: none;
+    }
+    #pip-container {
+      position: relative;
+      width: 300px;
+      height: 900px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 0 4px rgba(255,255,255,0.3), 0 0 6px rgba(0,0,0,0.5);
+      animation: fadeIn 1s ease-in;
+    }
+    #pip-container iframe { width: 100%; height: 100%; border: 0; }
+    #pip-btc-canvas { position: absolute; inset: 0; pointer-events: none; }
+    #pip-container .metrics-overlay {
+      top: 5%;
+      left: 50%;
+      transform: translate(-50%, 0);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     @media (max-width: 640px) {
       #chat-list {
@@ -1119,7 +1229,7 @@
         referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen
       ></iframe>
-      <div class="video-overlay">
+      <div class="video-overlay metrics-overlay">
         <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
         <span id="loading-price"></span>
         <span id="loading-topcoin"></span>
@@ -1378,12 +1488,16 @@
 <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
 <section class="rounded-lg" draggable="true" id="btc-hash-module">
 <div class="module-header">
-<h2 class="text-lg md:text-xl sixtyfour-font">&gt; BTC Hash Visualization</h2>
-<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+  <h2 class="text-lg md:text-xl sixtyfour-font">&gt; BTC Hash Visualization</h2>
+  <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+  <button id="hash-log-toggle" aria-label="Toggle hash log" class="ml-2 dj-btn" data-tooltip="Toggle hash log" role="button">Hide Log</button>
 </div>
 <div class="module-content">
 <div class="data-warning" id="btc-hash-warning" style="display: none;">&gt; Live data from Dune API</div>
-<div class="btc-hash-svg" id="btc-hash-canvas"></div>
+<div class="btc-hash-svg relative" id="btc-hash-canvas">
+  <canvas id="btc-audio-canvas" width="600" height="80" class="absolute top-0 left-0 w-full pointer-events-none"></canvas>
+  <iframe id="pip-frame" class="pip-frame absolute bottom-1 right-1 w-40 h-24" allow="autoplay; picture-in-picture"></iframe>
+</div>
 <div id="btc-legend">
 <span id="btc-price">Price: Loading...</span>
 <span id="btc-time">Time: Loading...</span>
@@ -1410,10 +1524,10 @@
   <button class="zoom-btn" id="btc-zoom-z2" aria-label="Zoom 2">-Z2</button>
 </div>
 <div class="mt-4 text-sm" id="btc-legend-explanation">
-<h3 class="text-base md:text-lg mb-2">Legend</h3>
-<p>Each particle cloud represents a snapshot of BTC price and volume data over the last 24 hours.</p>
-<p>Colors cycle through the website's palette to distinguish between different snapshots.</p>
-<p>Hover over the color indicators in the legend to see specific price, volume, and time information.</p>
+  <h3 class="text-base md:text-lg mb-2">Legend</h3>
+  <p>The rotating 3D hash visualizes recent BTC block data. Clouds move vertically with the current audio volume.</p>
+  <p>Colors cycle through the website palette, giving each snapshot a unique hue.</p>
+  <p>Hover the legend colors to view precise price, volume, and time for each cloud.</p>
 </div>
 <button aria-label="Export as OBJ" class="mt-2" data-tooltip="Export as OBJ" id="export-obj" role="button">Export OBJ</button>
 <div class="mt-4" id="btc-hash-log">
@@ -1424,6 +1538,129 @@
 </div>
 </section>
 </div>
+<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
+  <div class="flex justify-between items-center">
+    <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
+    <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
+  </div>
+  <div id="btc-visual-container" class="mx-auto">
+    <canvas id="btc-canvas"></canvas>
+    <div class="metrics-overlay">
+      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo">
+      <div class="metrics-container">
+        <span id="btc-price" class="metric">BTC: $65,000</span>
+        <span id="btc-top" class="metric">Top: ETH</span>
+        <span id="btc-time" class="metric">Jun 19, 2025, 01:28 PM</span>
+        <span id="btc-vol" class="metric">Volatility: 🟢 Good</span>
+      </div>
+    </div>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+    <div class="dj-track flex-1" draggable="true">
+      <div class="mb-1 flex justify-center gap-2">
+        <input id="track-a-url" class="p-1 rounded text-sm" placeholder="Search"/>
+        <button id="track-a-load" class="dj-btn">Load A</button>
+        <button id="track-a-setcue" class="dj-cue-btn">Set Cue</button>
+        <button id="track-a-cue" class="dj-cue-btn">Cue</button>
+      </div>
+      <div class="playlist-container video-container">
+        <div id="track-a-player"></div>
+        <div class="metrics-overlay">
+          <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo" />
+          <div class="metrics-container">
+            <span id="track-a-price" class="metric"></span>
+            <span id="track-a-topcoin" class="metric"></span>
+            <span id="track-a-time" class="metric"></span>
+            <span id="track-a-inverse" class="metric"></span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-1 flex gap-2 justify-center">
+        <button id="track-a-back" class="dj-btn">&#9664;&#9664;</button>
+        <button id="track-a-play" class="dj-btn">Play</button>
+        <button id="track-a-pause" class="dj-btn">Pause</button>
+        <button id="track-a-forward" class="dj-btn">&#9654;&#9654;</button>
+        <button id="track-a-stop" class="dj-btn" onclick="trackAPlayer.stopVideo()">Stop</button>
+        <button id="track-a-mute" class="dj-btn">Unmute</button>
+          <input id="track-a-volume" type="range" min="0" max="100" value="50" class="w-24 fx-knob"/>
+      </div>
+      <div class="vinyl-disk paused" id="vinyl-a"></div>
+    </div>
+    <div class="dj-track flex-1" draggable="true">
+      <div class="mb-1 flex justify-center gap-2">
+        <input id="track-b-url" class="p-1 rounded text-sm" placeholder="Search"/>
+        <button id="track-b-load" class="dj-btn">Load B</button>
+        <button id="track-b-setcue" class="dj-cue-btn">Set Cue</button>
+        <button id="track-b-cue" class="dj-cue-btn">Cue</button>
+      </div>
+      <div class="playlist-container video-container">
+        <div id="track-b-player"></div>
+        <div class="metrics-overlay">
+          <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo" />
+          <div class="metrics-container">
+            <span id="track-b-price" class="metric"></span>
+            <span id="track-b-topcoin" class="metric"></span>
+            <span id="track-b-time" class="metric"></span>
+            <span id="track-b-inverse" class="metric"></span>
+          </div>
+        </div>
+      </div>
+      <div class="mt-1 flex gap-2 justify-center">
+        <button id="track-b-back" class="dj-btn">&#9664;&#9664;</button>
+        <button id="track-b-play" class="dj-btn">Play</button>
+        <button id="track-b-pause" class="dj-btn">Pause</button>
+        <button id="track-b-forward" class="dj-btn">&#9654;&#9654;</button>
+        <button id="track-b-stop" class="dj-btn" onclick="trackBPlayer.stopVideo()">Stop</button>
+        <button id="track-b-mute" class="dj-btn">Unmute</button>
+          <input id="track-b-volume" type="range" min="0" max="100" value="50" class="w-24 fx-knob"/>
+      </div>
+    <div class="vinyl-disk paused" id="vinyl-b"></div>
+    </div>
+    <div id="pip-container" class="dj-track flex-1 mt-2">
+      <iframe id="pip-iframe" src="" frameborder="0" allowfullscreen></iframe>
+      <canvas id="pip-btc-canvas"></canvas>
+      <div class="metrics-overlay">
+        <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo">
+        <div class="metrics-container">
+          <span id="pip-price" class="metric"></span>
+          <span id="pip-top" class="metric"></span>
+          <span id="pip-time" class="metric"></span>
+          <span id="pip-vol" class="metric"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="dj-playlist" class="mt-2 max-h-40 overflow-y-auto text-sm custom-scroll w-full"></div>
+  <div class="flex flex-col items-center mt-2 dj-controls">
+    <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full md:w-2/3"/>
+    <div class="mt-2 flex gap-2">
+      <button id="dj-play" class="dj-btn">Play Both</button>
+      <button id="dj-stop" class="dj-btn">Stop</button>
+      <button id="dj-shuffle" class="dj-btn">Shuffle</button>
+      <button id="auto-blend" class="dj-btn">Auto Blend</button>
+      <button id="record-mix" class="dj-btn">Record</button>
+      <a id="download-mix" class="dj-btn" style="display:none" href="#">Download</a>
+      <button id="surround-toggle" class="dj-btn">Surround</button>
+      <button id="theme-switch" class="dj-btn">Theme</button>
+      <button id="volume-bars-toggle" class="dj-btn">Bars</button>
+    </div>
+    <div class="mt-2 flex flex-wrap gap-2 items-center text-sm justify-center">
+      <label for="delay-knob">Delay</label>
+      <input id="delay-knob" class="fx-knob" type="range" min="0" max="1" step="0.01" value="0.25"/>
+      <label for="reverb-knob">Reverb</label>
+      <input id="reverb-knob" class="fx-knob" type="range" min="0" max="1" step="0.01" value="0.5"/>
+      <label for="decimate-knob">Decimate</label>
+      <input id="decimate-knob" class="fx-knob" type="range" min="0" max="1" step="0.01" value="0.1"/>
+      <label for="lofi-knob">LoFi</label>
+      <input id="lofi-knob" class="fx-knob" type="range" min="0" max="1" step="0.01" value="0.5"/>
+      <label for="repeat-knob">Repeat</label>
+      <input id="repeat-knob" class="fx-knob" type="range" min="0" max="1" step="0.01" value="0"/>
+    </div>
+    <canvas id="wave-canvas" width="600" height="80" class="mt-2"></canvas>
+    <div id="btc-overlay"></div>
+    <div class="vinyl" id="vinyl-visual"></div>
+  </div>
+</section>
 <div class="chat-logs-container w-full max-w-[98vw] mx-auto text-center">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">&gt; Trading Bot &amp; System Logs</h2>
@@ -1449,106 +1686,6 @@
 </div>
 </div>
 </div>
-<div class="music-module w-full max-w-[98vw] mx-auto text-center mt-4">
-  <div class="flex justify-center gap-2 mb-2">
-    <button id="music-mute-btn" aria-label="Toggle music mute">🔇</button>
-    <button id="quantumi-sound-btn" aria-label="Toggle QuantumI sound">QuantumI Sound</button>
-  </div>
-  <div class="playlist-container video-container">
-    <div id="music-player"></div>
-    <div class="playlist-overlay">
-      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
-      <span id="playlist-price"></span>
-      <span id="playlist-time"></span>
-      <span id="playlist-date"></span>
-    </div>
-  </div>
-</div>
-<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
-  <div class="flex justify-between items-center">
-    <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
-    <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
-  </div>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-    <div class="dj-track flex-1" draggable="true">
-      <div class="mb-1 flex justify-center gap-2">
-        <input id="track-a-url" class="p-1 rounded text-sm" placeholder="Search YouTube"/>
-        <button id="track-a-load" class="dj-btn">Load A</button>
-        <button id="track-a-setcue" class="dj-cue-btn">Set Cue</button>
-        <button id="track-a-cue" class="dj-cue-btn">Cue</button>
-      </div>
-      <div class="playlist-container video-container">
-        <div id="track-a-player"></div>
-        <div class="dj-overlay">
-          <span id="track-a-price"></span>
-          <span id="track-a-topcoin"></span>
-          <span id="track-a-inverse"></span>
-          <span id="track-a-time"></span>
-          <span id="track-a-date"></span>
-        </div>
-      </div>
-      <div class="mt-1 flex gap-2 justify-center">
-        <button id="track-a-play" class="dj-btn">Play</button>
-        <button id="track-a-pause" class="dj-btn">Pause</button>
-        <button id="track-a-mute" class="dj-btn">Unmute</button>
-        <input id="track-a-volume" type="range" min="0" max="100" value="50" class="w-24"/>
-      </div>
-      <div class="vinyl-disk paused" id="vinyl-a"></div>
-    </div>
-    <div class="dj-track flex-1" draggable="true">
-      <div class="mb-1 flex justify-center gap-2">
-        <input id="track-b-url" class="p-1 rounded text-sm" placeholder="Search YouTube"/>
-        <button id="track-b-load" class="dj-btn">Load B</button>
-        <button id="track-b-setcue" class="dj-cue-btn">Set Cue</button>
-        <button id="track-b-cue" class="dj-cue-btn">Cue</button>
-      </div>
-      <div class="playlist-container video-container">
-        <div id="track-b-player"></div>
-        <div class="dj-overlay">
-          <span id="track-b-price"></span>
-          <span id="track-b-topcoin"></span>
-          <span id="track-b-inverse"></span>
-          <span id="track-b-time"></span>
-          <span id="track-b-date"></span>
-        </div>
-      </div>
-      <div class="mt-1 flex gap-2 justify-center">
-        <button id="track-b-play" class="dj-btn">Play</button>
-        <button id="track-b-pause" class="dj-btn">Pause</button>
-        <button id="track-b-mute" class="dj-btn">Unmute</button>
-        <input id="track-b-volume" type="range" min="0" max="100" value="50" class="w-24"/>
-      </div>
-      <div class="vinyl-disk paused" id="vinyl-b"></div>
-    </div>
-  </div>
-  <div id="dj-playlist" class="mt-2 max-h-40 overflow-y-auto text-sm custom-scroll w-full"></div>
-  <div class="flex flex-col items-center mt-2 dj-controls">
-    <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full md:w-2/3"/>
-    <div class="mt-2 flex gap-2">
-      <button id="dj-play" class="dj-btn">Play Both</button>
-      <button id="dj-stop" class="dj-btn">Stop</button>
-      <button id="dj-shuffle" class="dj-btn">Shuffle</button>
-      <button id="auto-blend" class="dj-btn">Auto Blend</button>
-      <button id="record-mix" class="dj-btn">Record</button>
-      <a id="download-mix" class="dj-btn" style="display:none" href="#">Download</a>
-      <button id="surround-toggle" class="dj-btn">Surround</button>
-    </div>
-    <div class="mt-2 flex flex-wrap gap-2 items-center text-sm justify-center">
-      <label for="delay-knob">Delay</label>
-      <input id="delay-knob" type="range" min="0" max="1" step="0.01" value="0.25"/>
-      <label for="reverb-knob">Reverb</label>
-      <input id="reverb-knob" type="range" min="0" max="1" step="0.01" value="0.5"/>
-      <label for="decimate-knob">Decimate</label>
-      <input id="decimate-knob" type="range" min="0" max="1" step="0.01" value="0.1"/>
-      <label for="lofi-knob">LoFi</label>
-      <input id="lofi-knob" type="range" min="0" max="1" step="0.01" value="0.5"/>
-      <label for="repeat-knob">Repeat</label>
-      <input id="repeat-knob" type="range" min="0" max="1" step="0.01" value="0"/>
-    </div>
-    <canvas id="wave-canvas" width="600" height="80" class="mt-2"></canvas>
-    <div class="vinyl" id="vinyl-visual"></div>
-  </div>
-</section>
 <footer class="text-center text-gray-500 text-sm">
 <p class="typewriter">Powered by CoinGecko, Etherscan, Dune &amp; TradingView</p>
 </footer>
@@ -1612,12 +1749,10 @@
       trackAInverse: document.getElementById('track-a-inverse'),
       trackATopcoin: document.getElementById('track-a-topcoin'),
       trackATime: document.getElementById('track-a-time'),
-      trackADate: document.getElementById('track-a-date'),
       trackBPrice: document.getElementById('track-b-price'),
       trackBInverse: document.getElementById('track-b-inverse'),
       trackBTopcoin: document.getElementById('track-b-topcoin'),
       trackBTime: document.getElementById('track-b-time'),
-      trackBDate: document.getElementById('track-b-date'),
       trackAUrl: document.getElementById('track-a-url'),
       trackALoad: document.getElementById('track-a-load'),
       trackASetCue: document.getElementById('track-a-setcue'),
@@ -1632,6 +1767,9 @@
       recordMixBtn: document.getElementById('record-mix'),
       downloadMixBtn: document.getElementById('download-mix'),
       surroundToggleBtn: document.getElementById('surround-toggle'),
+      themeSwitchBtn: document.getElementById('theme-switch'),
+      volumeBarsToggleBtn: document.getElementById('volume-bars-toggle'),
+      hashLogToggleBtn: document.getElementById('hash-log-toggle'),
       djPlayBtn: document.getElementById('dj-play'),
       djStopBtn: document.getElementById('dj-stop'),
       djShuffleBtn: document.getElementById('dj-shuffle'),
@@ -1643,13 +1781,29 @@
       lofiKnob: document.getElementById('lofi-knob'),
       repeatKnob: document.getElementById('repeat-knob'),
       waveCanvas: document.getElementById('wave-canvas'),
+      btcOverlay: document.getElementById('btc-overlay'),
+      audioCanvas: document.getElementById('btc-audio-canvas'),
+      pipIframe: document.getElementById('pip-iframe'),
+      pipBtcCanvas: document.getElementById('pip-btc-canvas'),
+      pipPrice: document.getElementById('pip-price'),
+      pipTop: document.getElementById('pip-top'),
+      pipTime: document.getElementById('pip-time'),
+      pipVol: document.getElementById('pip-vol'),
       btcThemeSelect: document.getElementById('btc-theme-select'),
+      btcVisualContainer: document.getElementById('btc-visual-container'),
+      btcCanvas: document.getElementById('btc-canvas'),
       trackAPlay: document.getElementById('track-a-play'),
+      trackABack: document.getElementById('track-a-back'),
+      trackAForward: document.getElementById('track-a-forward'),
       trackAPause: document.getElementById('track-a-pause'),
+      trackAStop: document.getElementById('track-a-stop'),
       trackAMute: document.getElementById('track-a-mute'),
       trackAVolume: document.getElementById('track-a-volume'),
       trackBPlay: document.getElementById('track-b-play'),
+      trackBBack: document.getElementById('track-b-back'),
+      trackBForward: document.getElementById('track-b-forward'),
       trackBPause: document.getElementById('track-b-pause'),
+      trackBStop: document.getElementById('track-b-stop'),
       trackBMute: document.getElementById('track-b-mute'),
       trackBVolume: document.getElementById('track-b-volume'),
       djPlaylist: document.getElementById('dj-playlist')
@@ -1664,9 +1818,13 @@
     let bgMusicPlayer;
     let trackAPlayer;
     let trackBPlayer;
-    let djCtx, gainA, gainB, recorder, autoBlendInterval;
+    let djCtx, gainA, gainB, recorder, dest, autoBlendInterval;
     let delayNodeA, delayNodeB, reverbNodeA, reverbNodeB, filterNodeA, filterNodeB,
-        bitcrusherNodeA, bitcrusherNodeB, analyser, waveAnim;
+        bitcrusherNodeA, bitcrusherNodeB, analyser, waveAnim, srcA, srcB;
+    let chunks = [];
+    const fxMatrix = { A: [], B: [] };
+    let volumeBarsEnabled = false;
+    let btcVolumeBar;
     let isQuantumSound = false;
     let audioCtx, audioSource, delayNode, convolverNode, filterNode, bitcrusherNode, gainNode;
     const themes = {
@@ -1829,10 +1987,12 @@ let DJ_TRACKS = [
 
       enableQuantumSound();
 
-      function createImpulse(duration = 2, decay = 2) {
-        const rate = audioCtx.sampleRate;
+      function createImpulse(duration = 5, decay = 4) {
+        const ctx = djCtx || audioCtx;
+        if (!ctx) return null;
+        const rate = ctx.sampleRate;
         const length = rate * duration;
-        const impulse = audioCtx.createBuffer(2, length, rate);
+        const impulse = ctx.createBuffer(2, length, rate);
         for (let c = 0; c < 2; c++) {
           const channel = impulse.getChannelData(c);
           for (let i = 0; i < length; i++) {
@@ -1842,7 +2002,7 @@ let DJ_TRACKS = [
         return impulse;
       }
 
-      function createBitcrusherCurve(bits) {
+      function createBitcrusherCurve(bits = 8) {
         const samples = 1 << bits;
         const curve = new Float32Array(samples);
         for (let i = 0; i < samples; i++) {
@@ -1851,19 +2011,69 @@ let DJ_TRACKS = [
         return curve;
       }
 
+      function createFxNode(type) {
+        switch (type) {
+          case 'delay':
+            const delay = djCtx.createDelay();
+            delay.delayTime.value = 0.5;
+            return delay;
+          case 'reverb':
+            const convolver = djCtx.createConvolver();
+            convolver.buffer = createImpulse(5, 4);
+            return convolver;
+          case 'distortion':
+            const distortion = djCtx.createWaveShaper();
+            distortion.curve = createDistortionCurve(100);
+            distortion.oversample = '4x';
+            return distortion;
+          case 'filter':
+            const filter = djCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 1000;
+            return filter;
+          case 'bitcrusher':
+            const crusher = djCtx.createWaveShaper();
+            crusher.curve = createBitcrusherCurve(8);
+            crusher.oversample = '4x';
+            return crusher;
+          default:
+            return null;
+        }
+      }
+
+      function addFxToChain(track, fxType) {
+        const node = createFxNode(fxType);
+        if (!node) return;
+        const chain = fxMatrix[track];
+        const last = chain.length > 0 ? chain[chain.length - 1] : (track === 'A' ? srcA : srcB);
+        if (last) last.disconnect();
+        if (last) last.connect(node);
+        node.connect(track === 'A' ? gainA : gainB);
+        chain.push(node);
+      }
+
       function attachTrack(player, which) {
         if (!djCtx) {
           djCtx = new (window.AudioContext || window.webkitAudioContext)();
           djCtx.resume();
           gainA = djCtx.createGain();
           gainB = djCtx.createGain();
+          dest = djCtx.createMediaStreamDestination();
           gainA.connect(djCtx.destination);
           gainB.connect(djCtx.destination);
+          gainA.connect(dest);
+          gainB.connect(dest);
           analyser = djCtx.createAnalyser();
           analyser.fftSize = 2048;
           gainA.connect(analyser);
           gainB.connect(analyser);
-          if (!waveAnim) drawWave();
+          if (!waveAnim) {
+            drawWave();
+            drawBtcAudio();
+          }
+          if (!btcRenderer) {
+            initBtcOverlay();
+          }
         }
         const iframe = player.getIframe && player.getIframe();
         let stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
@@ -1873,44 +2083,39 @@ let DJ_TRACKS = [
           audioProxy.crossOrigin = 'anonymous';
           audioProxy.src = `/api/youtube-audio?videoId=${vid}`;
           audioProxy.loop = true;
-          audioProxy.muted = true;
-          audioProxy.play().catch(() => {});
+          audioProxy.muted = false;
+          audioProxy.play().catch(e => console.error('Proxy error:', e));
           stream = audioProxy.captureStream ? audioProxy.captureStream() : null;
+          if (stream) console.log('Stream captured:', stream); else {
+            console.error('Stream capture failed');
+            const ws = new WebSocket('wss://your-backend.com/ws/audio');
+            ws.onmessage = (event) => {
+              // Process audio data
+            };
+          }
         }
         if (stream) {
+          console.log('Stream captured via proxy:', stream);
           const src = djCtx.createMediaStreamSource(stream);
-          const filter = djCtx.createBiquadFilter();
-          const crusher = djCtx.createWaveShaper();
-          crusher.curve = createBitcrusherCurve(4);
-          crusher.oversample = '4x';
-          filter.type = 'highpass';
-          filter.frequency.value = 400;
-          const distortion = djCtx.createWaveShaper();
-          distortion.curve = createDistortionCurve(250);
-          distortion.oversample = '4x';
-          const delay = djCtx.createDelay();
-          delay.delayTime.value = 0.3;
-          const convolver = djCtx.createConvolver();
-          convolver.buffer = createImpulse();
-          src.connect(filter);
-          filter.connect(distortion);
-          distortion.connect(delay);
-          delay.connect(convolver);
-          convolver.connect(filter);
-          filter.connect(crusher);
           if (which === 'A') {
-            delayNodeA = delay;
-            reverbNodeA = convolver;
-            filterNodeA = filter;
-            bitcrusherNodeA = crusher;
-            crusher.connect(gainA);
+            srcA = src;
+            fxMatrix.A = [];
+            ['delay','reverb','distortion','filter','bitcrusher'].forEach(fx => addFxToChain('A', fx));
+            [delayNodeA, reverbNodeA, , filterNodeA, bitcrusherNodeA] = fxMatrix.A;
+            if (DOM.pipIframe && player && player.getVideoData) {
+              const id = player.getVideoData().video_id;
+              DOM.pipIframe.src = `https://www.youtube-nocookie.com/embed/${id}?controls=0&mute=1`;
+            }
+            console.log('FX chain A:', fxMatrix.A.map(n => n.constructor.name));
           } else {
-            delayNodeB = delay;
-            reverbNodeB = convolver;
-            filterNodeB = filter;
-            bitcrusherNodeB = crusher;
-            crusher.connect(gainB);
+            srcB = src;
+            fxMatrix.B = [];
+            ['delay','reverb','distortion','filter','bitcrusher'].forEach(fx => addFxToChain('B', fx));
+            [delayNodeB, reverbNodeB, , filterNodeB, bitcrusherNodeB] = fxMatrix.B;
+            console.log('FX chain B:', fxMatrix.B.map(n => n.constructor.name));
           }
+        } else {
+          console.error(`Failed to capture stream for Track ${which}.`);
         }
         if (DOM.crossfader) DOM.crossfader.dispatchEvent(new Event('input'));
       }
@@ -2573,21 +2778,21 @@ let DJ_TRACKS = [
         if (DOM.loadingPrice) DOM.loadingPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
         if (DOM.loadingTime) DOM.loadingTime.textContent = latestTime;
         if (DOM.loadingDate) DOM.loadingDate.textContent = new Date().toLocaleDateString();
-        if (DOM.trackAPrice) DOM.trackAPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
-        if (DOM.trackATime) DOM.trackATime.textContent = latestTime;
-        if (DOM.trackADate) DOM.trackADate.textContent = new Date().toLocaleDateString();
-        if (DOM.trackBPrice) DOM.trackBPrice.textContent = `Price: $${latestPrice.toLocaleString()}`;
-        if (DOM.trackBTime) DOM.trackBTime.textContent = latestTime;
-        if (DOM.trackBDate) DOM.trackBDate.textContent = new Date().toLocaleDateString();
+        const dateTime = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        const rating = volatility > 5 ? '🔴' : (volatility < 2 ? '🟢' : '🟡');
+        if (DOM.trackAPrice) DOM.trackAPrice.textContent = `$${latestPrice.toLocaleString()}`;
+        if (DOM.trackATime) DOM.trackATime.textContent = dateTime;
+        if (DOM.trackAInverse) DOM.trackAInverse.textContent = rating;
+        if (DOM.trackBPrice) DOM.trackBPrice.textContent = `$${latestPrice.toLocaleString()}`;
+        if (DOM.trackBTime) DOM.trackBTime.textContent = dateTime;
+        if (DOM.trackBInverse) DOM.trackBInverse.textContent = rating;
 
         const inverse = await fetchTopInverseToken();
         const topCoin = await fetchTopCoin();
-        if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Top ⬇️: ${inverse}`;
-        if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Top ⬇️: ${inverse}`;
         if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Top ⬇️: ${inverse}`;
         if (DOM.loadingTopcoin) DOM.loadingTopcoin.textContent = `Top ⬆️: ${topCoin}`;
-        if (DOM.trackATopcoin) DOM.trackATopcoin.textContent = `Top ⬆️: ${topCoin}`;
-        if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = `Top ⬆️: ${topCoin}`;
+        if (DOM.trackATopcoin) DOM.trackATopcoin.textContent = topCoin;
+        if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = topCoin;
 
         const hashId = generateHashFromPrice(latestPrice);
         addHashLog(hashId, latestTime);
@@ -3202,7 +3407,18 @@ let DJ_TRACKS = [
       }
 
       if (DOM.trackAPlay) DOM.trackAPlay.addEventListener('click', () => trackAPlayer && trackAPlayer.playVideo());
+      if (DOM.trackABack) DOM.trackABack.addEventListener('click', () => {
+        if (trackAPlayer && trackAPlayer.getCurrentTime) {
+          trackAPlayer.seekTo(Math.max(0, trackAPlayer.getCurrentTime() - 10), true);
+        }
+      });
       if (DOM.trackAPause) DOM.trackAPause.addEventListener('click', () => trackAPlayer && trackAPlayer.pauseVideo());
+      if (DOM.trackAForward) DOM.trackAForward.addEventListener('click', () => {
+        if (trackAPlayer && trackAPlayer.getCurrentTime) {
+          trackAPlayer.seekTo(trackAPlayer.getCurrentTime() + 10, true);
+        }
+      });
+      if (DOM.trackAStop) DOM.trackAStop.addEventListener('click', () => trackAPlayer && trackAPlayer.stopVideo());
       if (DOM.trackAMute) DOM.trackAMute.addEventListener('click', () => {
         if (!trackAPlayer) return;
         if (trackAPlayer.isMuted()) {
@@ -3215,7 +3431,18 @@ let DJ_TRACKS = [
       });
       if (DOM.trackAVolume) DOM.trackAVolume.addEventListener('input', (e) => trackAPlayer && trackAPlayer.setVolume(e.target.value));
       if (DOM.trackBPlay) DOM.trackBPlay.addEventListener('click', () => trackBPlayer && trackBPlayer.playVideo());
+      if (DOM.trackBBack) DOM.trackBBack.addEventListener('click', () => {
+        if (trackBPlayer && trackBPlayer.getCurrentTime) {
+          trackBPlayer.seekTo(Math.max(0, trackBPlayer.getCurrentTime() - 10), true);
+        }
+      });
       if (DOM.trackBPause) DOM.trackBPause.addEventListener('click', () => trackBPlayer && trackBPlayer.pauseVideo());
+      if (DOM.trackBForward) DOM.trackBForward.addEventListener('click', () => {
+        if (trackBPlayer && trackBPlayer.getCurrentTime) {
+          trackBPlayer.seekTo(trackBPlayer.getCurrentTime() + 10, true);
+        }
+      });
+      if (DOM.trackBStop) DOM.trackBStop.addEventListener('click', () => trackBPlayer && trackBPlayer.stopVideo());
       if (DOM.trackBMute) DOM.trackBMute.addEventListener('click', () => {
         if (!trackBPlayer) return;
         if (trackBPlayer.isMuted()) {
@@ -3242,6 +3469,12 @@ let DJ_TRACKS = [
           if (gainA && gainB) {
             gainA.gain.value = 1 - val;
             gainB.gain.value = val;
+            if (dest) {
+              try { gainA.disconnect(dest); } catch {}
+              try { gainB.disconnect(dest); } catch {}
+              gainA.connect(dest);
+              gainB.connect(dest);
+            }
           }
         });
       }
@@ -3339,48 +3572,29 @@ let DJ_TRACKS = [
 
       if (DOM.recordMixBtn) {
         DOM.recordMixBtn.addEventListener('click', () => {
-          if (!djCtx) return;
-        if (recorder && recorder.state === 'recording') {
-          recorder.stop();
-          DOM.recordMixBtn.classList.remove('active');
-          if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
-          cancelAnimationFrame(waveAnim);
-        } else {
-            const dest = djCtx.createMediaStreamDestination();
-            gainA.connect(dest);
-            gainB.connect(dest);
-            if (!analyser) {
-              analyser = djCtx.createAnalyser();
-              analyser.fftSize = 2048;
-              gainA.connect(analyser);
-              gainB.connect(analyser);
-            }
-            recorder = new MediaRecorder(dest.stream, {
-              mimeType: MediaRecorder.isTypeSupported('audio/wav') ? 'audio/wav' : undefined
-            });
-            const chunks = [];
+          if (!djCtx || !dest) return;
+          if (!recorder) {
+            recorder = new MediaRecorder(dest.stream);
             recorder.ondataavailable = e => chunks.push(e.data);
             recorder.onstop = () => {
-              const mime = MediaRecorder.isTypeSupported('audio/wav') ? 'audio/wav' : 'audio/webm';
-              const blob = new Blob(chunks, { type: mime });
+              const blob = new Blob(chunks, { type: 'audio/webm' });
               const url = URL.createObjectURL(blob);
               if (DOM.downloadMixBtn) {
                 DOM.downloadMixBtn.href = url;
-                DOM.downloadMixBtn.download = mime === 'audio/wav' ? 'mix.wav' : 'mix.webm';
+                DOM.downloadMixBtn.style.display = 'inline';
               }
             };
-          recorder.start();
-          setTimeout(() => {
-            if (recorder && recorder.state === 'recording') {
-              recorder.stop();
-              DOM.recordMixBtn.classList.remove('active');
-              if (DOM.downloadMixBtn) DOM.downloadMixBtn.style.display = 'inline-block';
-              cancelAnimationFrame(waveAnim);
-            }
-          }, 60000);
-          DOM.recordMixBtn.classList.add('active');
-          drawWave();
-        }
+          }
+          if (recorder.state === 'recording') {
+            recorder.stop();
+            DOM.recordMixBtn.classList.remove('active');
+            cancelAnimationFrame(waveAnim);
+          } else {
+            chunks = [];
+            recorder.start();
+            DOM.recordMixBtn.classList.add('active');
+            drawWave();
+          }
         });
       }
 
@@ -3412,6 +3626,111 @@ let DJ_TRACKS = [
         draw();
       }
 
+      function drawBtcAudio() {
+        if (!analyser || !DOM.audioCanvas) return;
+        const ctx = DOM.audioCanvas.getContext('2d');
+        const buffer = new Uint8Array(analyser.fftSize);
+        const draw = () => {
+          analyser.getByteTimeDomainData(buffer);
+          ctx.clearRect(0,0,DOM.audioCanvas.width,DOM.audioCanvas.height);
+          ctx.strokeStyle = '#87CEEB';
+          ctx.beginPath();
+          const step = DOM.audioCanvas.width / buffer.length;
+          for(let i=0;i<buffer.length;i++){
+            const v = buffer[i]/128.0;
+            const y = v*DOM.audioCanvas.height/2;
+            if(i===0) ctx.moveTo(0,y); else ctx.lineTo(i*step,y);
+          }
+          ctx.stroke();
+          requestAnimationFrame(draw);
+        };
+        draw();
+      }
+
+      let btcScene, btcCamera, btcRenderer, btcDots, btcVolumeBar;
+      let pipScene, pipCamera, pipRenderer, pipDots, pipVolumeBar;
+
+      function initBtcOverlay() {
+        if (!DOM.btcCanvas) return;
+        btcScene = new THREE.Scene();
+        btcCamera = new THREE.PerspectiveCamera(75, DOM.btcCanvas.clientWidth / DOM.btcCanvas.clientHeight, 0.1, 1000);
+        btcCamera.position.z = 5;
+        btcRenderer = new THREE.WebGLRenderer({ canvas: DOM.btcCanvas, alpha: true });
+        btcRenderer.setSize(DOM.btcCanvas.clientWidth, DOM.btcCanvas.clientHeight);
+
+        const geometry = new THREE.BufferGeometry();
+        const verts = [];
+        for (let i=0;i<500;i++) {
+          verts.push((Math.random()-0.5)*10, (Math.random()-0.5)*10, (Math.random()-0.5)*10);
+        }
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
+        const material = new THREE.PointsMaterial({ color: 0x87CEEB, size: 0.1 });
+        btcDots = new THREE.Points(geometry, material);
+        btcScene.add(btcDots);
+        const barGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0,0,0),
+          new THREE.Vector3(0,1,0)
+        ]);
+        const barMat = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.7 });
+        btcVolumeBar = new THREE.Line(barGeo, barMat);
+        btcVolumeBar.visible = volumeBarsEnabled;
+        btcScene.add(btcVolumeBar);
+
+        if (DOM.pipBtcCanvas) {
+          pipScene = new THREE.Scene();
+          pipCamera = new THREE.PerspectiveCamera(75, DOM.pipBtcCanvas.clientWidth / DOM.pipBtcCanvas.clientHeight, 0.1, 1000);
+          pipCamera.position.z = 7;
+          pipRenderer = new THREE.WebGLRenderer({ canvas: DOM.pipBtcCanvas, alpha: true });
+          pipRenderer.setSize(DOM.pipBtcCanvas.clientWidth, DOM.pipBtcCanvas.clientHeight);
+          pipDots = new THREE.Points(geometry, material.clone());
+          pipScene.add(pipDots);
+          pipVolumeBar = new THREE.Line(barGeo, barMat);
+          pipVolumeBar.visible = volumeBarsEnabled;
+          pipScene.add(pipVolumeBar);
+        }
+
+        animateBtcOverlay();
+      }
+
+      const bufferLength = 2048;
+      const dataArray = new Float32Array(bufferLength);
+      function getVolume() {
+        if (!analyser) return 0;
+        analyser.getFloatTimeDomainData(dataArray);
+        let sum = 0;
+        for (let i=0;i<bufferLength;i++) sum += dataArray[i]*dataArray[i];
+        return Math.sqrt(sum / bufferLength);
+      }
+
+      function animateBtcOverlay() {
+        requestAnimationFrame(animateBtcOverlay);
+        const vol = getVolume();
+        if (btcDots) btcDots.position.y = vol * 10;
+        if (pipDots) {
+          pipDots.position.y = vol * 10;
+          pipDots.rotation.y += 0.02;
+        }
+        if (btcVolumeBar) {
+          btcVolumeBar.visible = volumeBarsEnabled;
+          btcVolumeBar.scale.y = vol * 20;
+          btcVolumeBar.rotation.y += 0.02;
+        }
+        if (pipVolumeBar) {
+          pipVolumeBar.visible = volumeBarsEnabled;
+          pipVolumeBar.scale.y = vol * 20;
+          pipVolumeBar.rotation.y += 0.02;
+        }
+        if (btcRenderer && btcScene && btcCamera) btcRenderer.render(btcScene, btcCamera);
+        if (pipRenderer && pipScene && pipCamera) pipRenderer.render(pipScene, pipCamera);
+      }
+
+      function applyTheme(theme) {
+        if (!btcDots) return;
+        const colors = themes[theme] || themes.original;
+        btcDots.material.color.set(colors[0]);
+        if (pipDots) pipDots.material.color.set(colors[0]);
+      }
+
       if (DOM.surroundToggleBtn) {
         DOM.surroundToggleBtn.addEventListener('click', () => {
           if (!djCtx) return;
@@ -3426,6 +3745,30 @@ let DJ_TRACKS = [
         });
       }
 
+      if (DOM.themeSwitchBtn) {
+        DOM.themeSwitchBtn.addEventListener('click', () => {
+          currentTheme = currentTheme === 'original' ? 'heatmap' : currentTheme === 'heatmap' ? 'lifecycle' : 'original';
+          applyTheme(currentTheme);
+        });
+      }
+
+      if (DOM.volumeBarsToggleBtn) {
+        DOM.volumeBarsToggleBtn.addEventListener('click', () => {
+          volumeBarsEnabled = !volumeBarsEnabled;
+          DOM.volumeBarsToggleBtn.classList.toggle('active', volumeBarsEnabled);
+        });
+      }
+
+      if (DOM.hashLogToggleBtn) {
+        DOM.hashLogToggleBtn.addEventListener('click', () => {
+          const log = document.getElementById('btc-hash-log');
+          if (log) {
+            const hidden = log.classList.toggle('hidden');
+            DOM.hashLogToggleBtn.textContent = hidden ? 'Show Log' : 'Hide Log';
+          }
+        });
+      }
+
       if (DOM.skipIntroBtn) {
         DOM.skipIntroBtn.addEventListener('click', hideLoadingScreen);
       }
@@ -3434,6 +3777,9 @@ let DJ_TRACKS = [
       welcome.className = 'p-2 rounded';
       welcome.innerHTML = '<div>QuantGpt: Welcome to QuantumI! Ask me for insights.</div>';
       DOM.chatList.appendChild(welcome);
+
+      initBtcOverlay();
+      applyTheme(currentTheme);
 
       setInterval(updateBTCHash, 60000);
       setInterval(() => {
