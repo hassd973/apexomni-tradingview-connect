@@ -178,6 +178,7 @@
       left: 0;
       width: 100%;
       display: flex;
+      flex-wrap: wrap;
       gap: 0.5rem;
       align-items: center;
       justify-content: center;
@@ -185,6 +186,7 @@
       color: var(--text-color);
       pointer-events: none;
       padding: 0.25rem;
+      font-size: clamp(10px, 2vw, 14px);
     }
     #loading-screen .video-overlay {
       position: fixed;
@@ -257,13 +259,14 @@
     }
     .metrics-overlay {
       position: absolute;
-      top: 20%;
-      left: 10px;
-      right: 10px;
+      top: 5px;
+      left: 0;
+      right: 0;
       display: flex;
       align-items: center;
+      justify-content: center;
       background: rgba(0,0,0,0.5);
-      padding: 5px;
+      padding: 4px;
       border-radius: 5px;
       z-index: 10;
     }
@@ -279,8 +282,8 @@
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: normal;
-      font-size: clamp(10px, 2vw, 14px);
+      white-space: nowrap;
+      font-size: clamp(10px, 1.8vw, 13px);
     }
     .logo {
       width: 30px;
@@ -356,12 +359,10 @@
       z-index: 5;
     }
     #btc-visual-container {
-      position: absolute;
-      top: -200px;
-      left: 50%;
-      transform: translateX(-50%);
+      position: relative;
       width: 300px;
       height: 200px;
+      margin: 0 auto 1rem;
       z-index: 20;
     }
     #btc-canvas {
@@ -1180,7 +1181,7 @@
         referrerpolicy="strict-origin-when-cross-origin"
         allowfullscreen
       ></iframe>
-      <div class="video-overlay">
+      <div class="video-overlay metrics-overlay">
         <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
         <span id="loading-price"></span>
         <span id="loading-topcoin"></span>
@@ -1603,6 +1604,7 @@
       <a id="download-mix" class="dj-btn" style="display:none" href="#">Download</a>
       <button id="surround-toggle" class="dj-btn">Surround</button>
       <button id="theme-switch" class="dj-btn">Theme</button>
+      <button id="volume-bars-toggle" class="dj-btn">Bars</button>
     </div>
     <div class="mt-2 flex flex-wrap gap-2 items-center text-sm justify-center">
       <label for="delay-knob">Delay</label>
@@ -1703,6 +1705,7 @@
       downloadMixBtn: document.getElementById('download-mix'),
       surroundToggleBtn: document.getElementById('surround-toggle'),
       themeSwitchBtn: document.getElementById('theme-switch'),
+      volumeBarsToggleBtn: document.getElementById('volume-bars-toggle'),
       djPlayBtn: document.getElementById('dj-play'),
       djStopBtn: document.getElementById('dj-stop'),
       djShuffleBtn: document.getElementById('dj-shuffle'),
@@ -1747,6 +1750,8 @@
         bitcrusherNodeA, bitcrusherNodeB, analyser, waveAnim, srcA, srcB;
     let chunks = [];
     const fxMatrix = { A: [], B: [] };
+    let volumeBarsEnabled = false;
+    let btcVolumeBar;
     let isQuantumSound = false;
     let audioCtx, audioSource, delayNode, convolverNode, filterNode, bitcrusherNode, gainNode;
     const themes = {
@@ -2005,6 +2010,8 @@ let DJ_TRACKS = [
           const audioProxy = document.createElement('audio');
           audioProxy.crossOrigin = 'anonymous';
           audioProxy.src = `/api/youtube-audio?videoId=${vid}`;
+          audioProxy.loop = true;
+          audioProxy.muted = false;
           audioProxy.play().catch(e => console.error('Proxy error:', e));
           stream = audioProxy.captureStream ? audioProxy.captureStream() : null;
           if (stream) console.log('Stream captured:', stream); else {
@@ -2012,7 +2019,6 @@ let DJ_TRACKS = [
             const ws = new WebSocket('wss://your-backend.com/ws/audio');
             ws.onmessage = (event) => {
               // Process audio data
-
             };
           }
         }
@@ -3549,7 +3555,7 @@ let DJ_TRACKS = [
         draw();
       }
 
-      let btcScene, btcCamera, btcRenderer, btcDots;
+      let btcScene, btcCamera, btcRenderer, btcDots, btcVolumeBar;
 
       function initBtcOverlay() {
         if (!DOM.btcCanvas) return;
@@ -3568,6 +3574,14 @@ let DJ_TRACKS = [
         const material = new THREE.PointsMaterial({ color: 0x87CEEB, size: 0.1 });
         btcDots = new THREE.Points(geometry, material);
         btcScene.add(btcDots);
+        const barGeo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(0,0,0),
+          new THREE.Vector3(0,1,0)
+        ]);
+        const barMat = new THREE.LineBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.7 });
+        btcVolumeBar = new THREE.Line(barGeo, barMat);
+        btcVolumeBar.visible = volumeBarsEnabled;
+        btcScene.add(btcVolumeBar);
         animateBtcOverlay();
       }
 
@@ -3583,7 +3597,13 @@ let DJ_TRACKS = [
 
       function animateBtcOverlay() {
         requestAnimationFrame(animateBtcOverlay);
-        if (btcDots) btcDots.position.y = getVolume() * 10;
+        const vol = getVolume();
+        if (btcDots) btcDots.position.y = vol * 10;
+        if (btcVolumeBar) {
+          btcVolumeBar.visible = volumeBarsEnabled;
+          btcVolumeBar.scale.y = vol * 20;
+          btcVolumeBar.rotation.y += 0.02;
+        }
         if (btcRenderer && btcScene && btcCamera) btcRenderer.render(btcScene, btcCamera);
       }
 
@@ -3611,6 +3631,13 @@ let DJ_TRACKS = [
         DOM.themeSwitchBtn.addEventListener('click', () => {
           currentTheme = currentTheme === 'original' ? 'heatmap' : currentTheme === 'heatmap' ? 'lifecycle' : 'original';
           applyTheme(currentTheme);
+        });
+      }
+
+      if (DOM.volumeBarsToggleBtn) {
+        DOM.volumeBarsToggleBtn.addEventListener('click', () => {
+          volumeBarsEnabled = !volumeBarsEnabled;
+          DOM.volumeBarsToggleBtn.classList.toggle('active', volumeBarsEnabled);
         });
       }
 

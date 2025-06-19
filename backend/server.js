@@ -397,6 +397,7 @@ app.get('/api/youtube-audio', (req, res) => {
   if (!videoId) return res.status(400).send('videoId required');
   const url = `https://www.youtube.com/watch?v=${videoId}`;
   res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Content-Type', 'audio/mpeg');
   youtubeAudioStream(url).pipe(res).on('error', err => {
     console.error('stream error:', err.message);
     res.status(500).end('Failed to fetch audio');
