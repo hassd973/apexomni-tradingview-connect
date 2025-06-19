@@ -233,6 +233,26 @@
       height: 100%;
       border-radius: 6px;
       transform: scale(1.05);
+      pointer-events: none;
+    }
+    #dj-playlist {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 0.5rem;
+    }
+    #dj-playlist .playlist-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0,0,0,0.2);
+      padding: 0.25rem;
+      border-radius: 6px;
+    }
+    #dj-playlist img {
+      width: 40px;
+      height: 30px;
+      object-fit: cover;
+      border-radius: 4px;
     }
     .dj-overlay {
       position: absolute;
@@ -996,6 +1016,9 @@
   html, body {
     max-width: 100%;
     overflow-x: hidden;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
     font-family: 'Inter', sans-serif;
   }
   .module-card {
@@ -1205,8 +1228,8 @@
 <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 </div>
-<main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
-<section class="rounded-lg" draggable="true" id="tokens-module">
+<main class="flex-1 p-4 w-full max-w-[98vw] mx-auto flex flex-col overflow-y-auto snap-y snap-mandatory" id="module-grid">
+<section class="rounded-lg min-h-screen snap-start" draggable="true" id="tokens-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">&gt; Tokens</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1230,7 +1253,7 @@
 <button aria-label="Export token data as CSV" class="mt-2" data-tooltip="Export token data as CSV" id="export-tokens" role="button">Export CSV</button>
 </div>
 </section>
-<section class="rounded-lg gas-heatmap-section" draggable="true" id="gas-module">
+<section class="rounded-lg gas-heatmap-section min-h-screen snap-start" draggable="true" id="gas-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">&gt; Multi-Chain Gas &amp; Fees</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1267,7 +1290,7 @@
 <button aria-label="Export gas data as CSV" class="mt-2" data-tooltip="Export gas data as CSV" id="export-gas" role="button">Export CSV</button>
 </div>
 </section>
-<section class="rounded-lg" draggable="true" id="logs-module">
+<section class="rounded-lg min-h-screen snap-start" draggable="true" id="logs-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">&gt; Live Logs</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1281,7 +1304,7 @@
 <ul class="space-y-2 text-sm" id="log-list"></ul>
 </div>
 </section>
-<section class="rounded-lg balances-section" draggable="true" id="balances-module">
+<section class="rounded-lg balances-section min-h-screen snap-start" draggable="true" id="balances-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl balances-title typewriter">&gt; Balances (Dune API)</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1293,7 +1316,7 @@
 <button aria-label="Export balances as CSV" class="mt-2" data-tooltip="Export balances as CSV" id="export-balances" role="button">Export CSV</button>
 </div>
 </section>
-<section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
+<section class="rounded-lg token-insights-section min-h-screen snap-start" draggable="true" id="token-insights-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl token-insights-title typewriter">&gt; Token Insights (Dune API)</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1305,7 +1328,7 @@
 <button aria-label="Export token insights as CSV" class="mt-2" data-tooltip="Export token insights as CSV" id="export-token-insights" role="button">Export CSV</button>
 </div>
 </section>
-<section class="rounded-lg" draggable="true" id="inverse-winners-module">
+<section class="rounded-lg min-h-screen snap-start" draggable="true" id="inverse-winners-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">Inverse Metrics</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1333,7 +1356,7 @@
 <canvas class="w-full max-w-3xl mx-auto h-72 md:h-96" id="inverseChart"></canvas>
 </div>
 </section>
-<section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
+<section class="rounded-lg col-span-full min-h-screen snap-start" draggable="true" id="live-logs-module">
 <div class="module-header flex justify-between items-center">
 <h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
 <div class="flex gap-2">
@@ -1356,7 +1379,7 @@
 </section>
 </main>
 <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
-<section class="rounded-lg" draggable="true" id="btc-hash-module">
+<section class="rounded-lg min-h-screen snap-start" draggable="true" id="btc-hash-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl sixtyfour-font">&gt; BTC Hash Visualization</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1444,7 +1467,7 @@
     </div>
   </div>
 </div>
-<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
+<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4 min-h-screen snap-start">
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
@@ -1467,6 +1490,11 @@
           <span id="track-a-date"></span>
         </div>
       </div>
+      <div class="mt-1 flex gap-2 justify-center">
+        <button id="track-a-play" class="dj-btn">Play</button>
+        <button id="track-a-pause" class="dj-btn">Pause</button>
+        <input id="track-a-volume" type="range" min="0" max="100" value="50" class="w-24"/>
+      </div>
       <div class="vinyl-disk paused" id="vinyl-a"></div>
     </div>
     <div class="dj-track flex-1" draggable="true">
@@ -1486,9 +1514,15 @@
           <span id="track-b-date"></span>
         </div>
       </div>
+      <div class="mt-1 flex gap-2 justify-center">
+        <button id="track-b-play" class="dj-btn">Play</button>
+        <button id="track-b-pause" class="dj-btn">Pause</button>
+        <input id="track-b-volume" type="range" min="0" max="100" value="50" class="w-24"/>
+      </div>
       <div class="vinyl-disk paused" id="vinyl-b"></div>
     </div>
   </div>
+  <div id="dj-playlist" class="mt-2 max-h-40 overflow-y-auto text-sm custom-scroll w-full"></div>
   <div class="flex flex-col items-center mt-2 dj-controls">
     <input id="crossfader" type="range" min="0" max="1" step="0.01" value="0.5" class="w-full md:w-2/3"/>
     <div class="mt-2 flex gap-2">
@@ -1610,7 +1644,14 @@
       lofiKnob: document.getElementById('lofi-knob'),
       repeatKnob: document.getElementById('repeat-knob'),
       waveCanvas: document.getElementById('wave-canvas'),
-      btcThemeSelect: document.getElementById('btc-theme-select')
+      btcThemeSelect: document.getElementById('btc-theme-select'),
+      trackAPlay: document.getElementById('track-a-play'),
+      trackAPause: document.getElementById('track-a-pause'),
+      trackAVolume: document.getElementById('track-a-volume'),
+      trackBPlay: document.getElementById('track-b-play'),
+      trackBPause: document.getElementById('track-b-pause'),
+      trackBVolume: document.getElementById('track-b-volume'),
+      djPlaylist: document.getElementById('dj-playlist')
     };
 
     let draggedModule = null;
@@ -1644,8 +1685,21 @@
     let cachedTopCoin = null;
     let cachedInverseCoin = null;
 
-    const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
-    const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
+const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
+const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
+const DJ_TRACKS = [
+  { id: 'RkQ3m_uGwXE', title: 'Intro Tune' },
+  { id: 'zHLmyJvSkaA', title: 'Groove Beat' }
+];
+
+    function renderDJPlaylist() {
+      if (!DOM.djPlaylist) return;
+      DOM.djPlaylist.innerHTML = DJ_TRACKS.map(t => `
+        <div class="playlist-item">
+          <img src="https://img.youtube.com/vi/${t.id}/default.jpg" alt="${t.title}"/>
+          <span>${t.title}</span>
+        </div>`).join('');
+    }
 
     function onYouTubeIframeAPIReady() {
       let cnt = parseInt(localStorage.getItem('refreshCount') || '0');
@@ -1750,6 +1804,8 @@
           }
         }
       });
+
+      renderDJPlaylist();
 
       enableQuantumSound();
 
@@ -2542,13 +2598,13 @@
 
     function getThemeColor(vol, volume, minV, maxV) {
       if (currentTheme === 'heatmap') {
-        if (vol < 2) return themes.heatmap[0];
-        if (vol < 5) return themes.heatmap[1];
+        if (vol < 1) return themes.heatmap[0];
+        if (vol < 3) return themes.heatmap[1];
         return themes.heatmap[2];
       } else if (currentTheme === 'lifecycle') {
         const ratio = (volume - minV) / (maxV - minV);
-        if (ratio < 0.33) return themes.lifecycle[0];
-        if (ratio < 0.66) return themes.lifecycle[1];
+        if (ratio < 0.25) return themes.lifecycle[0];
+        if (ratio < 0.5) return themes.lifecycle[1];
         return themes.lifecycle[2];
       } else {
         const idx = dotClouds.length % themes.original.length;
@@ -3124,6 +3180,13 @@
           }
         });
       }
+
+      if (DOM.trackAPlay) DOM.trackAPlay.addEventListener('click', () => trackAPlayer && trackAPlayer.playVideo());
+      if (DOM.trackAPause) DOM.trackAPause.addEventListener('click', () => trackAPlayer && trackAPlayer.pauseVideo());
+      if (DOM.trackAVolume) DOM.trackAVolume.addEventListener('input', (e) => trackAPlayer && trackAPlayer.setVolume(e.target.value));
+      if (DOM.trackBPlay) DOM.trackBPlay.addEventListener('click', () => trackBPlayer && trackBPlayer.playVideo());
+      if (DOM.trackBPause) DOM.trackBPause.addEventListener('click', () => trackBPlayer && trackBPlayer.pauseVideo());
+      if (DOM.trackBVolume) DOM.trackBVolume.addEventListener('input', (e) => trackBPlayer && trackBPlayer.setVolume(e.target.value));
 
       if (DOM.djDockBtn) {
         DOM.djDockBtn.addEventListener('click', () => {
