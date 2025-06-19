@@ -166,6 +166,7 @@
       width: 100%;
       height: 100%;
       border: 0;
+      transform: scale(1.5);
       object-fit: cover;
       object-position: center;
     }
@@ -321,7 +322,57 @@
       border-radius: 5px;
       padding: 0.5rem 1rem;
       cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .dj-btn:hover {
+      background-color: rgba(0,0,0,0.5);
+      transform: scale(1.05);
+    }
+    .dj-btn:hover {
+      background-color: rgba(33,150,243,0.6);
+    }
+    .dj-btn:active {
+      background-color: #0b5fa5;
+    }
+    .dj-btn:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+    .dj-btn:active {
+      background-color: rgba(255,255,255,0.3);
+    }
+    .dj-btn:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+    .dj-btn:active {
+      background-color: rgba(255,255,255,0.3);
+    }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
+    }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
+    }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
+    }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
     }
     .dj-btn:hover {
       background-color: rgba(30,144,255,0.2);
@@ -394,6 +445,19 @@
       opacity: 0.8;
       pointer-events: none;
       z-index: 1;
+    }
+    #btc-visual-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      max-width: 400px;
+      max-height: 400px;
+      margin: 0 auto 1rem;
+      z-index: 20;
+    }
+    #btc-canvas {
+      width: 100%;
+      height: 100%;
     }
     .vinyl-disk {
       position: relative;
@@ -1515,6 +1579,19 @@
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
+  <div id="btc-visual-container" class="mx-auto">
+    <canvas id="btc-canvas"></canvas>
+    <div class="metrics-overlay">
+      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse">
+      <div class="metrics-container">
+        <span id="btc-price" class="metric">BTC: $65,000</span>
+        <span id="btc-top" class="metric">Top: ETH</span>
+        <span id="btc-time" class="metric">Jun 19, 2025, 01:28 PM</span>
+        <span id="btc-vol" class="metric">Volatility: 🟢 Good</span>
+      </div>
+    </div>
+    <button id="theme-switch" class="dj-btn mt-1">Theme</button>
+  </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
@@ -1588,6 +1665,7 @@
       <button id="record-mix" class="dj-btn">Record</button>
       <a id="download-mix" class="dj-btn" style="display:none" href="#">Download</a>
       <button id="surround-toggle" class="dj-btn">Surround</button>
+      <button id="volume-bars-toggle" class="dj-btn">Bars</button>
     </div>
     <div class="mt-2 flex flex-wrap gap-2 items-center text-sm justify-center">
       <label for="delay-knob">Delay</label>
@@ -1724,6 +1802,8 @@
       repeatKnob: document.getElementById('repeat-knob'),
       audioCanvas: document.getElementById('btc-audio-canvas'),
       btcThemeSelect: document.getElementById('btc-theme-select'),
+      btcVisualContainer: document.getElementById('btc-visual-container'),
+      btcCanvas: document.getElementById('btc-canvas'),
       trackAPlay: document.getElementById('track-a-play'),
       trackABack: document.getElementById('track-a-back'),
       trackAForward: document.getElementById('track-a-forward'),
@@ -3614,16 +3694,6 @@ let DJ_TRACKS = [
           if (log) {
             const hidden = log.classList.toggle('hidden');
             DOM.hashLogToggleBtn.textContent = hidden ? 'Show Log' : 'Hide Log';
-          }
-        });
-      }
-
-      if (DOM.legendToggleBtn) {
-        DOM.legendToggleBtn.addEventListener('click', () => {
-          const legend = document.getElementById('btc-legend-explanation');
-          if (legend) {
-            const hidden = legend.classList.toggle('hidden');
-            DOM.legendToggleBtn.textContent = hidden ? 'Show Legend' : 'Hide Legend';
           }
         });
       }
