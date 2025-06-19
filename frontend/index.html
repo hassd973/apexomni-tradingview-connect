@@ -233,10 +233,9 @@
     }
     .dj-track .playlist-container {
       position: relative;
-      width: 100%;
+      width: 600px;
+      height: 300px;
       max-width: 100%;
-      aspect-ratio: 16 / 9;
-      height: auto;
       overflow: hidden;
       margin-left: auto;
       margin-right: auto;
@@ -445,19 +444,6 @@
       opacity: 0.8;
       pointer-events: none;
       z-index: 1;
-    }
-    #btc-visual-container {
-      position: relative;
-      width: 400px;
-      height: 400px;
-      max-width: 400px;
-      max-height: 400px;
-      margin: 0 auto 1rem;
-      z-index: 20;
-    }
-    #btc-canvas {
-      width: 100%;
-      height: 100%;
     }
     .vinyl-disk {
       position: relative;
@@ -1258,7 +1244,7 @@
         loading="lazy"
         width="560"
         height="315"
-        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1"
+        src="https://www.youtube.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1"
         title="QuantumI Intro"
         frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -1579,19 +1565,6 @@
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
-  <div id="btc-visual-container" class="mx-auto">
-    <canvas id="btc-canvas"></canvas>
-    <div class="metrics-overlay">
-      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse">
-      <div class="metrics-container">
-        <span id="btc-price" class="metric">BTC: $65,000</span>
-        <span id="btc-top" class="metric">Top: ETH</span>
-        <span id="btc-time" class="metric">Jun 19, 2025, 01:28 PM</span>
-        <span id="btc-vol" class="metric">Volatility: 🟢 Good</span>
-      </div>
-    </div>
-    <button id="theme-switch" class="dj-btn mt-1">Theme</button>
-  </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
@@ -1802,8 +1775,6 @@
       repeatKnob: document.getElementById('repeat-knob'),
       audioCanvas: document.getElementById('btc-audio-canvas'),
       btcThemeSelect: document.getElementById('btc-theme-select'),
-      btcVisualContainer: document.getElementById('btc-visual-container'),
-      btcCanvas: document.getElementById('btc-canvas'),
       trackAPlay: document.getElementById('track-a-play'),
       trackABack: document.getElementById('track-a-back'),
       trackAForward: document.getElementById('track-a-forward'),
@@ -1899,7 +1870,7 @@ let DJ_TRACKS = [
       if (cnt >= 4) cnt = 0;
       localStorage.setItem('refreshCount', cnt);
       ytPlayer = new YT.Player('loading-video-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         videoId: 'RkQ3m_uGwXE',
         playerVars: {
           autoplay: 1,
@@ -1907,7 +1878,8 @@ let DJ_TRACKS = [
           controls: 0,
           rel: 0,
           modestbranding: 1,
-          playsinline: 1
+          playsinline: 1,
+          origin: location.origin
         },
         events: {
           onReady: (e) => {
@@ -1935,7 +1907,7 @@ let DJ_TRACKS = [
       }, 7000);
 
       bgMusicPlayer = new YT.Player('music-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         videoId: 'RkQ3m_uGwXE',
         playerVars: {
           listType: 'playlist',
@@ -1945,7 +1917,8 @@ let DJ_TRACKS = [
           loop: 1,
           controls: 0,
           rel: 0,
-          modestbranding: 1
+          modestbranding: 1,
+          origin: location.origin
         },
         events: {
           onReady: (e) => {
@@ -1958,10 +1931,10 @@ let DJ_TRACKS = [
       });
 
       trackAPlayer = new YT.Player('track-a-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 0, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 0, mute: 1, origin: location.origin },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
@@ -1977,10 +1950,10 @@ let DJ_TRACKS = [
       });
 
       trackBPlayer = new YT.Player('track-b-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 0, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 0, mute: 1, origin: location.origin },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
