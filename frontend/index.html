@@ -1999,6 +1999,7 @@ let DJ_TRACKS = [
         }
         const iframe = player.getIframe && player.getIframe();
         let stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
+        if (stream) console.log('Stream captured directly:', stream);
         if (!stream && iframe) {
           const vid = player.getVideoData().video_id;
           const audioProxy = document.createElement('audio');
@@ -2011,6 +2012,7 @@ let DJ_TRACKS = [
             const ws = new WebSocket('wss://your-backend.com/ws/audio');
             ws.onmessage = (event) => {
               // Process audio data
+
             };
           }
         }
