@@ -166,7 +166,7 @@
       width: 100%;
       height: 100%;
       border: 0;
-      transform: scale(1.2);
+      transform: scale(1.5);
       object-fit: cover;
       object-position: center;
     }
@@ -255,21 +255,40 @@
       object-fit: cover;
       border-radius: 4px;
     }
-    .dj-overlay {
+    .metrics-overlay {
       position: absolute;
-      top: 0.5rem;
-      left: 0;
-      width: 100%;
+      top: 20%;
+      left: 10px;
+      right: 10px;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      background: rgba(0,0,0,0.3);
-      color: var(--text-color);
-      justify-content: space-between;
-      pointer-events: none;
-      font-size: 0.7rem;
-      padding: 0.25rem;
-      z-index: 1;
+      background: rgba(0,0,0,0.5);
+      padding: 5px;
+      border-radius: 5px;
+      z-index: 10;
+    }
+    .metrics-container {
+      display: flex;
+      flex: 1;
+      justify-content: space-around;
+    }
+    .metric {
+      flex: 1;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+    }
+    .logo {
+      width: 30px;
+      height: 30px;
+      margin-right: 10px;
+    }
+    @media (max-width: 600px) {
+      .metrics-overlay { flex-wrap: wrap; }
+      .metric { font-size: 12px; margin: 2px; }
+    }
     }
     .dj-logo { height: 1rem; }
     @media (min-width: 768px) {
@@ -332,6 +351,12 @@
       opacity: 0.8;
       pointer-events: none;
       z-index: 1;
+    }
+    #btc-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
     }
     .vinyl-disk {
       position: relative;
@@ -954,6 +979,13 @@
     .pip-frame {
       border: none;
     }
+    #pip-container {
+      animation: fadeIn 1s ease-in;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     @media (max-width: 640px) {
       #chat-list {
         max-height: 30vh;
@@ -1476,6 +1508,9 @@
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
+  <div id="pip-container" style="position:absolute;top:10px;right:10px;width:200px;height:150px;z-index:20;">
+    <iframe id="pip-iframe" src="" frameborder="0" allowfullscreen></iframe>
+  </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
@@ -1486,12 +1521,14 @@
       </div>
       <div class="playlist-container video-container">
         <div id="track-a-player"></div>
-        <div class="dj-overlay">
-          <img src="path/to/logo.png" alt="Logo" class="dj-logo" />
-          <span id="track-a-price"></span>
-          <span id="track-a-topcoin"></span>
-          <span id="track-a-time"></span>
-          <span id="track-a-inverse"></span>
+        <div class="metrics-overlay">
+          <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo" />
+          <div class="metrics-container">
+            <span id="track-a-price" class="metric"></span>
+            <span id="track-a-topcoin" class="metric"></span>
+            <span id="track-a-time" class="metric"></span>
+            <span id="track-a-inverse" class="metric"></span>
+          </div>
         </div>
       </div>
       <div class="mt-1 flex gap-2 justify-center">
@@ -1512,12 +1549,14 @@
       </div>
       <div class="playlist-container video-container">
         <div id="track-b-player"></div>
-        <div class="dj-overlay">
-          <img src="path/to/logo.png" alt="Logo" class="dj-logo" />
-          <span id="track-b-price"></span>
-          <span id="track-b-topcoin"></span>
-          <span id="track-b-time"></span>
-          <span id="track-b-inverse"></span>
+        <div class="metrics-overlay">
+          <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo" />
+          <div class="metrics-container">
+            <span id="track-b-price" class="metric"></span>
+            <span id="track-b-topcoin" class="metric"></span>
+            <span id="track-b-time" class="metric"></span>
+            <span id="track-b-inverse" class="metric"></span>
+          </div>
         </div>
       </div>
       <div class="mt-1 flex gap-2 justify-center">
@@ -1541,6 +1580,7 @@
       <button id="record-mix" class="dj-btn">Record</button>
       <a id="download-mix" class="dj-btn" style="display:none" href="#">Download</a>
       <button id="surround-toggle" class="dj-btn">Surround</button>
+      <button id="theme-switch" class="dj-btn">Theme</button>
     </div>
     <div class="mt-2 flex flex-wrap gap-2 items-center text-sm justify-center">
       <label for="delay-knob">Delay</label>
@@ -1555,6 +1595,7 @@
       <input id="repeat-knob" type="range" min="0" max="1" step="0.01" value="0"/>
     </div>
     <canvas id="wave-canvas" width="600" height="80" class="mt-2"></canvas>
+    <div id="btc-overlay"></div>
     <div class="vinyl" id="vinyl-visual"></div>
   </div>
 </section>
@@ -1621,12 +1662,10 @@
       trackAInverse: document.getElementById('track-a-inverse'),
       trackATopcoin: document.getElementById('track-a-topcoin'),
       trackATime: document.getElementById('track-a-time'),
-      trackADate: document.getElementById('track-a-date'),
       trackBPrice: document.getElementById('track-b-price'),
       trackBInverse: document.getElementById('track-b-inverse'),
       trackBTopcoin: document.getElementById('track-b-topcoin'),
       trackBTime: document.getElementById('track-b-time'),
-      trackBDate: document.getElementById('track-b-date'),
       trackAUrl: document.getElementById('track-a-url'),
       trackALoad: document.getElementById('track-a-load'),
       trackASetCue: document.getElementById('track-a-setcue'),
@@ -1641,6 +1680,7 @@
       recordMixBtn: document.getElementById('record-mix'),
       downloadMixBtn: document.getElementById('download-mix'),
       surroundToggleBtn: document.getElementById('surround-toggle'),
+      themeSwitchBtn: document.getElementById('theme-switch'),
       djPlayBtn: document.getElementById('dj-play'),
       djStopBtn: document.getElementById('dj-stop'),
       djShuffleBtn: document.getElementById('dj-shuffle'),
@@ -1652,7 +1692,9 @@
       lofiKnob: document.getElementById('lofi-knob'),
       repeatKnob: document.getElementById('repeat-knob'),
       waveCanvas: document.getElementById('wave-canvas'),
+      btcOverlay: document.getElementById('btc-overlay'),
       audioCanvas: document.getElementById('btc-audio-canvas'),
+      pipIframe: document.getElementById('pip-iframe'),
       btcThemeSelect: document.getElementById('btc-theme-select'),
       trackAPlay: document.getElementById('track-a-play'),
       trackAPause: document.getElementById('track-a-pause'),
@@ -1927,6 +1969,9 @@ let DJ_TRACKS = [
             drawWave();
             drawBtcAudio();
           }
+          if (!btcRenderer) {
+            initBtcOverlay();
+          }
         }
         const iframe = player.getIframe && player.getIframe();
         let stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
@@ -1938,8 +1983,15 @@ let DJ_TRACKS = [
           audioProxy.src = `https://your-proxy.com/youtube-audio?videoId=${vid}`;
           audioProxy.loop = true;
           audioProxy.muted = true;
-          audioProxy.play().catch(e => console.error('Audio proxy error:', e));
+          audioProxy.play().catch(e => console.error('Proxy error:', e));
           stream = audioProxy.captureStream ? audioProxy.captureStream() : null;
+          if (!stream) {
+            console.error('Stream capture failed');
+            const ws = new WebSocket('wss://your-backend.com/ws/audio');
+            ws.onmessage = (event) => {
+              // handle audio data via websocket
+            };
+          }
         }
         if (stream) {
           console.log('Stream captured via proxy:', stream);
@@ -1949,10 +2001,9 @@ let DJ_TRACKS = [
             fxMatrix.A = [];
             ['delay','reverb','distortion','filter','bitcrusher'].forEach(fx => addFxToChain('A', fx));
             [delayNodeA, reverbNodeA, , filterNodeA, bitcrusherNodeA] = fxMatrix.A;
-            const pip = document.getElementById('pip-frame');
-            if (pip && player && player.getVideoData) {
+            if (DOM.pipIframe && player && player.getVideoData) {
               const id = player.getVideoData().video_id;
-              pip.src = `https://www.youtube-nocookie.com/embed/${id}?controls=0&mute=1`;
+              DOM.pipIframe.src = `https://www.youtube-nocookie.com/embed/${id}?controls=0&mute=1`;
             }
             console.log('FX chain A:', fxMatrix.A.map(n => n.constructor.name));
           } else {
@@ -3475,6 +3526,51 @@ let DJ_TRACKS = [
         draw();
       }
 
+      let btcScene, btcCamera, btcRenderer, btcDots;
+
+      function initBtcOverlay() {
+        if (!DOM.btcOverlay) return;
+        btcScene = new THREE.Scene();
+        btcCamera = new THREE.PerspectiveCamera(75, DOM.btcOverlay.clientWidth / DOM.btcOverlay.clientHeight, 0.1, 1000);
+        btcCamera.position.z = 5;
+        btcRenderer = new THREE.WebGLRenderer({ alpha: true });
+        btcRenderer.setSize(DOM.btcOverlay.clientWidth, DOM.btcOverlay.clientHeight);
+        DOM.btcOverlay.appendChild(btcRenderer.domElement);
+
+        const geometry = new THREE.BufferGeometry();
+        const verts = [];
+        for (let i=0;i<500;i++) {
+          verts.push((Math.random()-0.5)*10, (Math.random()-0.5)*10, (Math.random()-0.5)*10);
+        }
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
+        const material = new THREE.PointsMaterial({ color: 0x87CEEB, size: 0.1 });
+        btcDots = new THREE.Points(geometry, material);
+        btcScene.add(btcDots);
+        animateBtcOverlay();
+      }
+
+      const bufferLength = 2048;
+      const dataArray = new Float32Array(bufferLength);
+      function getVolume() {
+        if (!analyser) return 0;
+        analyser.getFloatTimeDomainData(dataArray);
+        let sum = 0;
+        for (let i=0;i<bufferLength;i++) sum += dataArray[i]*dataArray[i];
+        return Math.sqrt(sum / bufferLength);
+      }
+
+      function animateBtcOverlay() {
+        requestAnimationFrame(animateBtcOverlay);
+        if (btcDots) btcDots.position.y = getVolume() * 10;
+        if (btcRenderer && btcScene && btcCamera) btcRenderer.render(btcScene, btcCamera);
+      }
+
+      function applyTheme(theme) {
+        if (!btcDots) return;
+        const colors = themes[theme] || themes.original;
+        btcDots.material.color.set(colors[0]);
+      }
+
       if (DOM.surroundToggleBtn) {
         DOM.surroundToggleBtn.addEventListener('click', () => {
           if (!djCtx) return;
@@ -3489,6 +3585,13 @@ let DJ_TRACKS = [
         });
       }
 
+      if (DOM.themeSwitchBtn) {
+        DOM.themeSwitchBtn.addEventListener('click', () => {
+          currentTheme = currentTheme === 'original' ? 'heatmap' : currentTheme === 'heatmap' ? 'lifecycle' : 'original';
+          applyTheme(currentTheme);
+        });
+      }
+
       if (DOM.skipIntroBtn) {
         DOM.skipIntroBtn.addEventListener('click', hideLoadingScreen);
       }
@@ -3497,6 +3600,9 @@ let DJ_TRACKS = [
       welcome.className = 'p-2 rounded';
       welcome.innerHTML = '<div>QuantGpt: Welcome to QuantumI! Ask me for insights.</div>';
       DOM.chatList.appendChild(welcome);
+
+      initBtcOverlay();
+      applyTheme(currentTheme);
 
       setInterval(updateBTCHash, 60000);
       setInterval(() => {
