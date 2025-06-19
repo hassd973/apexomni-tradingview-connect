@@ -232,8 +232,9 @@
       align-items: center;
     }
     .dj-track .playlist-container {
+      position: relative;
       width: 100%;
-      max-width: 500px;
+      max-width: 100%;
       aspect-ratio: 16 / 9;
       height: auto;
       overflow: hidden;
@@ -270,8 +271,9 @@
       position: absolute;
       top: 5%;
       left: 50%;
-      transform: translate(-50%, 0);
-      width: calc(100% - 20px);
+      transform: translateX(-50%);
+      max-width: calc(100% - 10px);
+      width: max-content;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -284,7 +286,7 @@
       display: flex;
       flex: 1;
       flex-wrap: wrap;
-      justify-content: space-around;
+      justify-content: center;
       gap: 5px;
     }
     .metric {
@@ -292,8 +294,8 @@
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: normal;
-      font-size: clamp(7px, 1vw, 11px);
+      white-space: nowrap;
+      font-size: clamp(10px, 2vw, 14px);
       min-width: 0;
     }
     .logo {
@@ -351,14 +353,18 @@
     .dj-btn:active {
       background-color: rgba(30,144,255,0.4);
     }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
+    }
     .dj-btn.active {
       box-shadow: 0 0 8px 2px #1e90ff;
     }
     .dj-btn.inactive {
       box-shadow: 0 0 8px 2px orange;
-    }
-    #wave-canvas {
-      background: rgba(35,46,46,0.5);
     }
     #crossfader {
       background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
@@ -1692,7 +1698,6 @@
       <label for="repeat-knob">Repeat</label>
       <input id="repeat-knob" class="fx-knob" type="range" min="0" max="1" step="0.01" value="0"/>
     </div>
-    <canvas id="wave-canvas" width="600" height="80" class="mt-2"></canvas>
     <div id="btc-overlay"></div>
     <div class="vinyl" id="vinyl-visual"></div>
   </div>
@@ -1816,7 +1821,6 @@
       decimateKnob: document.getElementById('decimate-knob'),
       lofiKnob: document.getElementById('lofi-knob'),
       repeatKnob: document.getElementById('repeat-knob'),
-      waveCanvas: document.getElementById('wave-canvas'),
       btcOverlay: document.getElementById('btc-overlay'),
       audioCanvas: document.getElementById('btc-audio-canvas'),
       pipIframe: document.getElementById('pip-iframe'),
@@ -1856,7 +1860,7 @@
     let trackBPlayer;
     let djCtx, gainA, gainB, recorder, dest, autoBlendInterval;
     let delayNodeA, delayNodeB, reverbNodeA, reverbNodeB, filterNodeA, filterNodeB,
-        bitcrusherNodeA, bitcrusherNodeB, analyser, waveAnim, srcA, srcB;
+        bitcrusherNodeA, bitcrusherNodeB, analyser, srcA, srcB;
     let chunks = [];
     const fxMatrix = { A: [], B: [] };
     let volumeBarsEnabled = false;
@@ -2103,35 +2107,15 @@ let DJ_TRACKS = [
           analyser.fftSize = 2048;
           gainA.connect(analyser);
           gainB.connect(analyser);
-          if (!waveAnim) {
-            drawWave();
-            drawBtcAudio();
-          }
+          drawBtcAudio();
           if (!btcRenderer) {
             initBtcOverlay();
           }
         }
         const iframe = player.getIframe && player.getIframe();
-        let stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
-        if (!stream && iframe) {
-          const vid = player.getVideoData().video_id;
-          const audioProxy = document.createElement('audio');
-          audioProxy.crossOrigin = 'anonymous';
-          audioProxy.src = `/api/youtube-audio?videoId=${vid}`;
-          audioProxy.loop = true;
-          audioProxy.muted = false;
-          audioProxy.play().catch(e => console.error('Proxy error:', e));
-          stream = audioProxy.captureStream ? audioProxy.captureStream() : null;
-          if (stream) console.log('Stream captured:', stream); else {
-            console.error('Stream capture failed');
-            const ws = new WebSocket('wss://your-backend.com/ws/audio');
-            ws.onmessage = (event) => {
-              // Process audio data
-            };
-          }
-        }
+        const stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
         if (stream) {
-          console.log('Stream captured via proxy:', stream);
+          console.log('Stream captured:', stream);
           const src = djCtx.createMediaStreamSource(stream);
           if (which === 'A') {
             srcA = src;
@@ -2178,16 +2162,6 @@ let DJ_TRACKS = [
         try {
           stream = bgMusicPlayer.getIframe().captureStream();
         } catch {}
-        if (!stream) {
-          const vid = bgMusicPlayer.getVideoData().video_id;
-          const tmp = document.createElement('audio');
-          tmp.crossOrigin = 'anonymous';
-          tmp.src = `/api/youtube-audio?videoId=${vid}`;
-          tmp.loop = true;
-          tmp.muted = true;
-          tmp.play().catch(() => {});
-          stream = tmp.captureStream ? tmp.captureStream() : null;
-        }
         if (!stream) return;
         audioSource = audioCtx.createMediaStreamSource(stream);
         filterNode = audioCtx.createBiquadFilter();
@@ -3624,12 +3598,10 @@ let DJ_TRACKS = [
           if (recorder.state === 'recording') {
             recorder.stop();
             DOM.recordMixBtn.classList.remove('active');
-            cancelAnimationFrame(waveAnim);
           } else {
             chunks = [];
             recorder.start();
             DOM.recordMixBtn.classList.add('active');
-            drawWave();
           }
         });
       }
@@ -3640,27 +3612,6 @@ let DJ_TRACKS = [
         });
       }
 
-      function drawWave() {
-        if (!analyser || !DOM.waveCanvas) return;
-        const ctx = DOM.waveCanvas.getContext('2d');
-        const buffer = new Uint8Array(analyser.fftSize);
-        const draw = () => {
-          analyser.getByteTimeDomainData(buffer);
-          ctx.fillStyle = '#000';
-          ctx.fillRect(0,0,DOM.waveCanvas.width,DOM.waveCanvas.height);
-          ctx.strokeStyle = '#87CEEB';
-          ctx.beginPath();
-          const step = DOM.waveCanvas.width / buffer.length;
-          for (let i=0;i<buffer.length;i++) {
-            const v = buffer[i]/128.0;
-            const y = v * DOM.waveCanvas.height/2;
-            if(i===0) ctx.moveTo(0,y); else ctx.lineTo(i*step,y);
-          }
-          ctx.stroke();
-          waveAnim = requestAnimationFrame(draw);
-        };
-        draw();
-      }
 
       function drawBtcAudio() {
         if (!analyser || !DOM.audioCanvas) return;
