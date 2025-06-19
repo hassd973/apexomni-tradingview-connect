@@ -270,18 +270,20 @@
       z-index: 1;
     }
     .dj-btn {
-      background-color: var(--primary-color);
-      color: #1e2727;
-      border: 1px solid var(--shadow-color);
-      border-radius: 6px;
-      padding: 0.25rem 0.75rem;
+      background-color: rgba(255,255,255,0.1);
+      color: #fff;
+      border: 1px solid #fff;
+      border-radius: 5px;
+      padding: 0.5rem 1rem;
       cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      transition: background-color 0.3s ease, transform 0.2s ease;
     }
-    .dj-btn:hover,
+    .dj-btn:hover {
+      background-color: rgba(255,255,255,0.3);
+      transform: scale(1.05);
+    }
     .dj-btn.active {
-      background-color: var(--secondary-color);
-      box-shadow: 0 0 8px var(--secondary-color);
+      background-color: rgba(255,255,255,0.5);
     }
     #wave-canvas {
       background: rgba(35,46,46,0.5);
@@ -1831,10 +1833,12 @@ let DJ_TRACKS = [
 
       enableQuantumSound();
 
-      function createImpulse(duration = 2, decay = 2) {
-        const rate = audioCtx.sampleRate;
+      function createImpulse(duration = 5, decay = 4) {
+        const ctx = djCtx || audioCtx;
+        if (!ctx) return null;
+        const rate = ctx.sampleRate;
         const length = rate * duration;
-        const impulse = audioCtx.createBuffer(2, length, rate);
+        const impulse = ctx.createBuffer(2, length, rate);
         for (let c = 0; c < 2; c++) {
           const channel = impulse.getChannelData(c);
           for (let i = 0; i < length; i++) {
@@ -1844,7 +1848,7 @@ let DJ_TRACKS = [
         return impulse;
       }
 
-      function createBitcrusherCurve(bits) {
+      function createBitcrusherCurve(bits = 8) {
         const samples = 1 << bits;
         const curve = new Float32Array(samples);
         for (let i = 0; i < samples; i++) {
@@ -1857,25 +1861,25 @@ let DJ_TRACKS = [
         switch (type) {
           case 'delay':
             const delay = djCtx.createDelay();
-            delay.delayTime.value = 0.3;
+            delay.delayTime.value = 0.5;
             return delay;
           case 'reverb':
             const convolver = djCtx.createConvolver();
-            convolver.buffer = createImpulse();
+            convolver.buffer = createImpulse(5, 4);
             return convolver;
           case 'distortion':
             const distortion = djCtx.createWaveShaper();
-            distortion.curve = createDistortionCurve(250);
+            distortion.curve = createDistortionCurve(100);
             distortion.oversample = '4x';
             return distortion;
           case 'filter':
             const filter = djCtx.createBiquadFilter();
-            filter.type = 'highpass';
-            filter.frequency.value = 400;
+            filter.type = 'lowpass';
+            filter.frequency.value = 1000;
             return filter;
           case 'bitcrusher':
             const crusher = djCtx.createWaveShaper();
-            crusher.curve = createBitcrusherCurve(4);
+            crusher.curve = createBitcrusherCurve(8);
             crusher.oversample = '4x';
             return crusher;
           default:
@@ -1917,10 +1921,10 @@ let DJ_TRACKS = [
           const vid = player.getVideoData().video_id;
           const audioProxy = document.createElement('audio');
           audioProxy.crossOrigin = 'anonymous';
-          audioProxy.src = `/api/youtube-audio?videoId=${vid}`;
+          audioProxy.src = `https://your-proxy.com/youtube-audio?videoId=${vid}`;
           audioProxy.loop = true;
           audioProxy.muted = true;
-          audioProxy.play().catch(() => {});
+          audioProxy.play().catch(e => console.error('Audio proxy error:', e));
           stream = audioProxy.captureStream ? audioProxy.captureStream() : null;
         }
         if (stream) {
@@ -1936,6 +1940,8 @@ let DJ_TRACKS = [
             ['delay','reverb','distortion','filter','bitcrusher'].forEach(fx => addFxToChain('B', fx));
             [delayNodeB, reverbNodeB, , filterNodeB, bitcrusherNodeB] = fxMatrix.B;
           }
+        } else {
+          console.error(`Failed to capture stream for Track ${which}.`);
         }
         if (DOM.crossfader) DOM.crossfader.dispatchEvent(new Event('input'));
       }
