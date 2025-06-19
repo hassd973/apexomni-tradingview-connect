@@ -1016,9 +1016,6 @@
   html, body {
     max-width: 100%;
     overflow-x: hidden;
-    overflow-y: auto;
-    scroll-snap-type: y mandatory;
-    -webkit-overflow-scrolling: touch;
     font-family: 'Inter', sans-serif;
   }
   .module-card {
@@ -1228,8 +1225,8 @@
 <spline-viewer id="spline-viewer-modal" url="https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode"></spline-viewer>
 </div>
 </div>
-<main class="flex-1 p-4 w-full max-w-[98vw] mx-auto flex flex-col overflow-y-auto snap-y snap-mandatory" id="module-grid">
-<section class="rounded-lg min-h-screen snap-start" draggable="true" id="tokens-module">
+<main class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" id="module-grid">
+<section class="rounded-lg" draggable="true" id="tokens-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">&gt; Tokens</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1253,7 +1250,7 @@
 <button aria-label="Export token data as CSV" class="mt-2" data-tooltip="Export token data as CSV" id="export-tokens" role="button">Export CSV</button>
 </div>
 </section>
-<section class="rounded-lg gas-heatmap-section min-h-screen snap-start" draggable="true" id="gas-module">
+<section class="rounded-lg gas-heatmap-section" draggable="true" id="gas-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl gas-heatmap-title typewriter">&gt; Multi-Chain Gas &amp; Fees</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1290,7 +1287,7 @@
 <button aria-label="Export gas data as CSV" class="mt-2" data-tooltip="Export gas data as CSV" id="export-gas" role="button">Export CSV</button>
 </div>
 </section>
-<section class="rounded-lg min-h-screen snap-start" draggable="true" id="logs-module">
+<section class="rounded-lg" draggable="true" id="logs-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">&gt; Live Logs</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1304,7 +1301,7 @@
 <ul class="space-y-2 text-sm" id="log-list"></ul>
 </div>
 </section>
-<section class="rounded-lg balances-section min-h-screen snap-start" draggable="true" id="balances-module">
+<section class="rounded-lg balances-section" draggable="true" id="balances-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl balances-title typewriter">&gt; Balances (Dune API)</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1316,7 +1313,7 @@
 <button aria-label="Export balances as CSV" class="mt-2" data-tooltip="Export balances as CSV" id="export-balances" role="button">Export CSV</button>
 </div>
 </section>
-<section class="rounded-lg token-insights-section min-h-screen snap-start" draggable="true" id="token-insights-module">
+<section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl token-insights-title typewriter">&gt; Token Insights (Dune API)</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1328,7 +1325,7 @@
 <button aria-label="Export token insights as CSV" class="mt-2" data-tooltip="Export token insights as CSV" id="export-token-insights" role="button">Export CSV</button>
 </div>
 </section>
-<section class="rounded-lg min-h-screen snap-start" draggable="true" id="inverse-winners-module">
+<section class="rounded-lg" draggable="true" id="inverse-winners-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl typewriter">Inverse Metrics</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1356,7 +1353,7 @@
 <canvas class="w-full max-w-3xl mx-auto h-72 md:h-96" id="inverseChart"></canvas>
 </div>
 </section>
-<section class="rounded-lg col-span-full min-h-screen snap-start" draggable="true" id="live-logs-module">
+<section class="rounded-lg col-span-full" draggable="true" id="live-logs-module">
 <div class="module-header flex justify-between items-center">
 <h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
 <div class="flex gap-2">
@@ -1379,7 +1376,7 @@
 </section>
 </main>
 <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
-<section class="rounded-lg min-h-screen snap-start" draggable="true" id="btc-hash-module">
+<section class="rounded-lg" draggable="true" id="btc-hash-module">
 <div class="module-header">
 <h2 class="text-lg md:text-xl sixtyfour-font">&gt; BTC Hash Visualization</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
@@ -1467,7 +1464,7 @@
     </div>
   </div>
 </div>
-<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4 min-h-screen snap-start">
+<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
