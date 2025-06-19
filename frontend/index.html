@@ -170,7 +170,11 @@
       object-fit: cover;
       object-position: center;
     }
-    #dj-dashboard { position: relative; }
+    #dj-dashboard {
+      position: relative;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
     #dj-dashboard .video-container iframe,
     #dj-dashboard .video-container > div {
       transform: scale(1.2);
@@ -233,10 +237,9 @@
     }
     .dj-track .playlist-container {
       position: relative;
-      width: 100%;
+      width: 600px;
+      height: 300px;
       max-width: 100%;
-      aspect-ratio: 16 / 9;
-      height: auto;
       overflow: hidden;
       margin-left: auto;
       margin-right: auto;
@@ -274,7 +277,7 @@
       transform: translateX(-50%);
       width: calc(100% - 20px);
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       background: rgba(0,0,0,0.5);
@@ -285,13 +288,13 @@
     }
     .metrics-container {
       display: flex;
-      flex: 1;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
+      width: 100%;
     }
     .metric {
-      flex: 0 1 auto;
+      flex: 0 1 45%;
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -299,10 +302,12 @@
       font-size: clamp(10px, 2vw, 14px);
       min-width: 0;
     }
+    .metric-main { font-weight: bold; }
+    .metric-sub { font-size: 0.75rem; opacity: 0.85; }
     .logo {
-      width: 30px;
-      height: 30px;
-      margin-right: 10px;
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 2px;
     }
     @keyframes logoPulse {
       0%,100% { filter: drop-shadow(0 0 0px #fff); }
@@ -445,19 +450,6 @@
       opacity: 0.8;
       pointer-events: none;
       z-index: 1;
-    }
-    #btc-visual-container {
-      position: relative;
-      width: 400px;
-      height: 400px;
-      max-width: 400px;
-      max-height: 400px;
-      margin: 0 auto 1rem;
-      z-index: 20;
-    }
-    #btc-canvas {
-      width: 100%;
-      height: 100%;
     }
     .vinyl-disk {
       position: relative;
@@ -755,6 +747,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       margin-bottom: 0.75rem;
     }
     .toggle-module-btn {
@@ -1258,7 +1252,7 @@
         loading="lazy"
         width="560"
         height="315"
-        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1"
+        src="https://www.youtube.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1"
         title="QuantumI Intro"
         frameborder="0"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -1528,6 +1522,7 @@
   <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
   <button id="hash-log-toggle" aria-label="Toggle hash log" class="ml-2 dj-btn" data-tooltip="Toggle hash log" role="button">Show Log</button>
   <button id="legend-toggle" aria-label="Toggle legend" class="ml-2 dj-btn" data-tooltip="Toggle legend" role="button">Show Legend</button>
+  <button id="dj-dock-btn" class="ml-2 dj-btn">Dock DJ</button>
 </div>
 <div class="module-content">
 <div class="data-warning" id="btc-hash-warning" style="display: none;">&gt; Live data from Dune API</div>
@@ -1577,20 +1572,6 @@
 <section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
-    <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
-  </div>
-  <div id="btc-visual-container" class="mx-auto">
-    <canvas id="btc-canvas"></canvas>
-    <div class="metrics-overlay">
-      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse">
-      <div class="metrics-container">
-        <span id="btc-price" class="metric">BTC: $65,000</span>
-        <span id="btc-top" class="metric">Top: ETH</span>
-        <span id="btc-time" class="metric">Jun 19, 2025, 01:28 PM</span>
-        <span id="btc-vol" class="metric">Volatility: 🟢 Good</span>
-      </div>
-    </div>
-    <button id="theme-switch" class="dj-btn mt-1">Theme</button>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
@@ -1605,10 +1586,10 @@
         <div class="metrics-overlay">
           <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse" />
           <div class="metrics-container">
-            <span id="track-a-price" class="metric"></span>
-            <span id="track-a-topcoin" class="metric"></span>
-            <span id="track-a-time" class="metric"></span>
-            <span id="track-a-inverse" class="metric"></span>
+            <span id="track-a-price" class="metric metric-main"></span>
+            <span id="track-a-topcoin" class="metric metric-main"></span>
+            <span id="track-a-time" class="metric metric-sub"></span>
+            <span id="track-a-inverse" class="metric metric-sub"></span>
           </div>
         </div>
       </div>
@@ -1635,10 +1616,10 @@
         <div class="metrics-overlay">
           <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse" />
           <div class="metrics-container">
-            <span id="track-b-price" class="metric"></span>
-            <span id="track-b-topcoin" class="metric"></span>
-            <span id="track-b-time" class="metric"></span>
-            <span id="track-b-inverse" class="metric"></span>
+            <span id="track-b-price" class="metric metric-main"></span>
+            <span id="track-b-topcoin" class="metric metric-main"></span>
+            <span id="track-b-time" class="metric metric-sub"></span>
+            <span id="track-b-inverse" class="metric metric-sub"></span>
           </div>
         </div>
       </div>
@@ -1802,8 +1783,6 @@
       repeatKnob: document.getElementById('repeat-knob'),
       audioCanvas: document.getElementById('btc-audio-canvas'),
       btcThemeSelect: document.getElementById('btc-theme-select'),
-      btcVisualContainer: document.getElementById('btc-visual-container'),
-      btcCanvas: document.getElementById('btc-canvas'),
       trackAPlay: document.getElementById('track-a-play'),
       trackABack: document.getElementById('track-a-back'),
       trackAForward: document.getElementById('track-a-forward'),
@@ -1899,7 +1878,7 @@ let DJ_TRACKS = [
       if (cnt >= 4) cnt = 0;
       localStorage.setItem('refreshCount', cnt);
       ytPlayer = new YT.Player('loading-video-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         videoId: 'RkQ3m_uGwXE',
         playerVars: {
           autoplay: 1,
@@ -1907,7 +1886,8 @@ let DJ_TRACKS = [
           controls: 0,
           rel: 0,
           modestbranding: 1,
-          playsinline: 1
+          playsinline: 1,
+          origin: location.origin
         },
         events: {
           onReady: (e) => {
@@ -1935,7 +1915,7 @@ let DJ_TRACKS = [
       }, 7000);
 
       bgMusicPlayer = new YT.Player('music-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         videoId: 'RkQ3m_uGwXE',
         playerVars: {
           listType: 'playlist',
@@ -1945,7 +1925,8 @@ let DJ_TRACKS = [
           loop: 1,
           controls: 0,
           rel: 0,
-          modestbranding: 1
+          modestbranding: 1,
+          origin: location.origin
         },
         events: {
           onReady: (e) => {
@@ -1958,10 +1939,10 @@ let DJ_TRACKS = [
       });
 
       trackAPlayer = new YT.Player('track-a-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 0, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 0, mute: 1, origin: location.origin },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
@@ -1977,10 +1958,10 @@ let DJ_TRACKS = [
       });
 
       trackBPlayer = new YT.Player('track-b-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 0, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 0, mute: 1, origin: location.origin },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
