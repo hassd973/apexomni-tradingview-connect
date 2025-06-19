@@ -1440,8 +1440,9 @@
 <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
 <section class="rounded-lg" draggable="true" id="btc-hash-module">
 <div class="module-header">
-<h2 class="text-lg md:text-xl sixtyfour-font">&gt; BTC Hash Visualization</h2>
-<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+  <h2 class="text-lg md:text-xl sixtyfour-font">&gt; BTC Hash Visualization</h2>
+  <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+  <button id="hash-log-toggle" aria-label="Toggle hash log" class="ml-2 dj-btn" data-tooltip="Toggle hash log" role="button">Hide Log</button>
 </div>
 <div class="module-content">
 <div class="data-warning" id="btc-hash-warning" style="display: none;">&gt; Live data from Dune API</div>
@@ -1475,10 +1476,10 @@
   <button class="zoom-btn" id="btc-zoom-z2" aria-label="Zoom 2">-Z2</button>
 </div>
 <div class="mt-4 text-sm" id="btc-legend-explanation">
-<h3 class="text-base md:text-lg mb-2">Legend</h3>
-<p>Each particle cloud represents a snapshot of BTC price and volume data over the last 24 hours.</p>
-<p>Colors cycle through the website's palette to distinguish between different snapshots.</p>
-<p>Hover over the color indicators in the legend to see specific price, volume, and time information.</p>
+  <h3 class="text-base md:text-lg mb-2">Legend</h3>
+  <p>The rotating 3D hash visualizes recent BTC block data. Clouds move vertically with the current audio volume.</p>
+  <p>Colors cycle through the website palette, giving each snapshot a unique hue.</p>
+  <p>Hover the legend colors to view precise price, volume, and time for each cloud.</p>
 </div>
 <button aria-label="Export as OBJ" class="mt-2" data-tooltip="Export as OBJ" id="export-obj" role="button">Export OBJ</button>
 <div class="mt-4" id="btc-hash-log">
@@ -1706,6 +1707,7 @@
       surroundToggleBtn: document.getElementById('surround-toggle'),
       themeSwitchBtn: document.getElementById('theme-switch'),
       volumeBarsToggleBtn: document.getElementById('volume-bars-toggle'),
+      hashLogToggleBtn: document.getElementById('hash-log-toggle'),
       djPlayBtn: document.getElementById('dj-play'),
       djStopBtn: document.getElementById('dj-stop'),
       djShuffleBtn: document.getElementById('dj-shuffle'),
@@ -3638,6 +3640,16 @@ let DJ_TRACKS = [
         DOM.volumeBarsToggleBtn.addEventListener('click', () => {
           volumeBarsEnabled = !volumeBarsEnabled;
           DOM.volumeBarsToggleBtn.classList.toggle('active', volumeBarsEnabled);
+        });
+      }
+
+      if (DOM.hashLogToggleBtn) {
+        DOM.hashLogToggleBtn.addEventListener('click', () => {
+          const log = document.getElementById('btc-hash-log');
+          if (log) {
+            const hidden = log.classList.toggle('hidden');
+            DOM.hashLogToggleBtn.textContent = hidden ? 'Show Log' : 'Hide Log';
+          }
         });
       }
 
