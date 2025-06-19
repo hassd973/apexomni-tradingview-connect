@@ -374,6 +374,13 @@
     .dj-btn:active {
       background-color: rgba(30,144,255,0.4);
     }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
+    }
     .dj-btn.active {
       box-shadow: 0 0 8px 2px #1e90ff;
     }
@@ -1781,8 +1788,6 @@
       recordMixBtn: document.getElementById('record-mix'),
       downloadMixBtn: document.getElementById('download-mix'),
       surroundToggleBtn: document.getElementById('surround-toggle'),
-      themeSwitchBtn: document.getElementById('theme-switch'),
-      volumeBarsToggleBtn: document.getElementById('volume-bars-toggle'),
       hashLogToggleBtn: document.getElementById('hash-log-toggle'),
       legendToggleBtn: document.getElementById('legend-toggle'),
       djPlayBtn: document.getElementById('dj-play'),
@@ -3682,19 +3687,6 @@ let DJ_TRACKS = [
         });
       }
 
-      if (DOM.themeSwitchBtn) {
-        DOM.themeSwitchBtn.addEventListener('click', () => {
-          currentTheme = currentTheme === 'original' ? 'heatmap' : currentTheme === 'heatmap' ? 'lifecycle' : 'original';
-          applyTheme(currentTheme);
-        });
-      }
-
-      if (DOM.volumeBarsToggleBtn) {
-        DOM.volumeBarsToggleBtn.addEventListener('click', () => {
-          volumeBarsEnabled = !volumeBarsEnabled;
-          DOM.volumeBarsToggleBtn.classList.toggle('active', volumeBarsEnabled);
-        });
-      }
 
       if (DOM.hashLogToggleBtn) {
         DOM.hashLogToggleBtn.addEventListener('click', () => {
