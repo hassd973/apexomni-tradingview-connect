@@ -2006,6 +2006,7 @@ let DJ_TRACKS = [
         }
         const iframe = player.getIframe && player.getIframe();
         let stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
+        if (stream) console.log('Stream captured directly:', stream);
         if (!stream && iframe) {
           const vid = player.getVideoData().video_id;
           const audioProxy = document.createElement('audio');
