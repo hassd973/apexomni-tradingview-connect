@@ -170,6 +170,14 @@
       object-fit: cover;
       object-position: center;
     }
+    #dj-dashboard .video-container iframe,
+    #dj-dashboard .video-container > div {
+      transform: scale(1.2);
+    }
+    #loading-screen .video-container iframe,
+    #loading-screen .video-container > div {
+      transform: none;
+    }
     #music-player { width: 100%; height: 100%; }
     .video-overlay,
     .playlist-overlay {
@@ -259,9 +267,9 @@
     }
     .metrics-overlay {
       position: absolute;
-      top: 5px;
-      left: 0;
-      right: 0;
+      top: 20%;
+      left: 10px;
+      right: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -991,7 +999,21 @@
       border: none;
     }
     #pip-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 500px;
+      height: 250px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 0 4px rgba(255,255,255,0.3), 0 0 6px rgba(0,0,0,0.5);
       animation: fadeIn 1s ease-in;
+    }
+    #pip-container iframe { width: 100%; height: 100%; border: 0; }
+    #pip-btc-canvas { position: absolute; inset: 0; pointer-events: none; }
+    #pip-container .metrics-overlay {
+      top: 50%;
+      transform: translateY(-50%);
     }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(-20px); }
@@ -1532,8 +1554,18 @@
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
-  <div id="pip-container" style="position:absolute;top:10px;right:10px;width:200px;height:150px;z-index:20;">
+  <div id="pip-container">
     <iframe id="pip-iframe" src="" frameborder="0" allowfullscreen></iframe>
+    <canvas id="pip-btc-canvas"></canvas>
+    <div class="metrics-overlay">
+      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo">
+      <div class="metrics-container">
+        <span id="pip-price" class="metric"></span>
+        <span id="pip-top" class="metric"></span>
+        <span id="pip-time" class="metric"></span>
+        <span id="pip-vol" class="metric"></span>
+      </div>
+    </div>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
@@ -1722,6 +1754,11 @@
       btcOverlay: document.getElementById('btc-overlay'),
       audioCanvas: document.getElementById('btc-audio-canvas'),
       pipIframe: document.getElementById('pip-iframe'),
+      pipBtcCanvas: document.getElementById('pip-btc-canvas'),
+      pipPrice: document.getElementById('pip-price'),
+      pipTop: document.getElementById('pip-top'),
+      pipTime: document.getElementById('pip-time'),
+      pipVol: document.getElementById('pip-vol'),
       btcThemeSelect: document.getElementById('btc-theme-select'),
       btcVisualContainer: document.getElementById('btc-visual-container'),
       btcCanvas: document.getElementById('btc-canvas'),
