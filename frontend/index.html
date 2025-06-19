@@ -292,8 +292,9 @@
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
+      white-space: normal;
       font-size: clamp(7px, 1vw, 11px);
+      min-width: 0;
     }
     .logo {
       width: 30px;
@@ -335,6 +336,13 @@
     }
     .dj-btn:active {
       background-color: rgba(255,255,255,0.3);
+    }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
     }
     .dj-btn:hover {
       background-color: rgba(30,144,255,0.2);
@@ -421,6 +429,8 @@
       position: relative;
       width: 400px;
       height: 400px;
+      max-width: 400px;
+      max-height: 400px;
       margin: 0 auto 1rem;
       z-index: 20;
     }
@@ -1523,7 +1533,6 @@
 <div class="data-warning" id="btc-hash-warning" style="display: none;">&gt; Live data from Dune API</div>
 <div class="btc-hash-svg relative" id="btc-hash-canvas">
   <canvas id="btc-audio-canvas" width="600" height="80" class="absolute top-0 left-0 w-full pointer-events-none"></canvas>
-  <iframe id="pip-frame" class="pip-frame absolute bottom-1 right-1 w-40 h-24" allow="autoplay; picture-in-picture"></iframe>
 </div>
 <div id="btc-legend">
 <span id="btc-price">Price: Loading...</span>
@@ -3740,17 +3749,17 @@ let DJ_TRACKS = [
         if (pipDots) {
           pipDots.position.y = vol * 10;
           pipDots.scale.y = 1 + vol * 5;
-          pipDots.rotation.y += 0.02;
+          pipDots.rotation.y += 0.01;
         }
         if (btcVolumeBar) {
           btcVolumeBar.visible = volumeBarsEnabled;
           btcVolumeBar.scale.y = vol * 20;
-          btcVolumeBar.rotation.y += 0.02;
+          btcVolumeBar.rotation.y += 0.01;
         }
         if (pipVolumeBar) {
           pipVolumeBar.visible = volumeBarsEnabled;
           pipVolumeBar.scale.y = vol * 20;
-          pipVolumeBar.rotation.y += 0.02;
+          pipVolumeBar.rotation.y += 0.01;
         }
         if (btcRenderer && btcScene && btcCamera) btcRenderer.render(btcScene, btcCamera);
         if (pipRenderer && pipScene && pipCamera) pipRenderer.render(pipScene, pipCamera);
