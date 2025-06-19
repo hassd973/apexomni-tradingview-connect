@@ -166,6 +166,7 @@
       width: 100%;
       height: 100%;
       border: 0;
+      transform: scale(1.5);
       object-fit: cover;
       object-position: center;
     }
@@ -321,7 +322,50 @@
       border-radius: 5px;
       padding: 0.5rem 1rem;
       cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .dj-btn:hover {
+      background-color: rgba(0,0,0,0.5);
+      transform: scale(1.05);
+    }
+    .dj-btn:hover {
+      background-color: rgba(33,150,243,0.6);
+    }
+    .dj-btn:active {
+      background-color: #0b5fa5;
+    }
+    .dj-btn:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+    .dj-btn:active {
+      background-color: rgba(255,255,255,0.3);
+    }
+    .dj-btn:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+    .dj-btn:active {
+      background-color: rgba(255,255,255,0.3);
+    }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
+    }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
+    }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
     }
     .dj-btn:hover {
       background-color: rgba(30,144,255,0.2);
@@ -3659,16 +3703,6 @@ let DJ_TRACKS = [
           if (log) {
             const hidden = log.classList.toggle('hidden');
             DOM.hashLogToggleBtn.textContent = hidden ? 'Show Log' : 'Hide Log';
-          }
-        });
-      }
-
-      if (DOM.legendToggleBtn) {
-        DOM.legendToggleBtn.addEventListener('click', () => {
-          const legend = document.getElementById('btc-legend-explanation');
-          if (legend) {
-            const hidden = legend.classList.toggle('hidden');
-            DOM.legendToggleBtn.textContent = hidden ? 'Show Legend' : 'Hide Legend';
           }
         });
       }
