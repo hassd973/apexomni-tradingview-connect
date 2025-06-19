@@ -269,18 +269,19 @@
     }
     .metrics-overlay {
       position: absolute;
-      top: 5%;
+      top: 2%;
       left: 50%;
       transform: translateX(-50%);
-      max-width: calc(100% - 10px);
-      width: max-content;
+      width: calc(100% - 20px);
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: center;
       background: rgba(0,0,0,0.5);
       padding: 4px;
       border-radius: 5px;
-      z-index: 10;
+      gap: 4px;
+      z-index: 15;
     }
     .metrics-container {
       display: flex;
@@ -313,7 +314,6 @@
     @media (max-width: 600px) {
       .metrics-overlay { flex-wrap: wrap; }
       .metric { font-size: 12px; margin: 2px; }
-    }
     }
     .dj-btn {
       background-color: rgba(255,255,255,0.1);
@@ -438,12 +438,6 @@
       opacity: 0.8;
       pointer-events: none;
       z-index: 1;
-    }
-    #btc-overlay {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 5;
     }
     #btc-visual-container {
       position: relative;
@@ -1678,7 +1672,6 @@
       <label for="repeat-knob">Repeat</label>
       <input id="repeat-knob" class="fx-knob" type="range" min="0" max="1" step="0.01" value="0"/>
     </div>
-    <div id="btc-overlay"></div>
     <div class="vinyl" id="vinyl-visual"></div>
   </div>
 </section>
@@ -1802,7 +1795,6 @@
       decimateKnob: document.getElementById('decimate-knob'),
       lofiKnob: document.getElementById('lofi-knob'),
       repeatKnob: document.getElementById('repeat-knob'),
-      btcOverlay: document.getElementById('btc-overlay'),
       audioCanvas: document.getElementById('btc-audio-canvas'),
       btcThemeSelect: document.getElementById('btc-theme-select'),
       btcVisualContainer: document.getElementById('btc-visual-container'),
@@ -2760,20 +2752,19 @@ let DJ_TRACKS = [
         if (DOM.loadingTime) DOM.loadingTime.textContent = latestTime;
         if (DOM.loadingDate) DOM.loadingDate.textContent = new Date().toLocaleDateString();
         const dateTime = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const rating = volatility > 5 ? '🔴' : (volatility < 2 ? '🟢' : '🟡');
         if (DOM.trackAPrice) DOM.trackAPrice.textContent = `$${latestPrice.toLocaleString()}`;
         if (DOM.trackATime) DOM.trackATime.textContent = dateTime;
-        if (DOM.trackAInverse) DOM.trackAInverse.textContent = rating;
         if (DOM.trackBPrice) DOM.trackBPrice.textContent = `$${latestPrice.toLocaleString()}`;
         if (DOM.trackBTime) DOM.trackBTime.textContent = dateTime;
-        if (DOM.trackBInverse) DOM.trackBInverse.textContent = rating;
 
         const inverse = await fetchTopInverseToken();
         const topCoin = await fetchTopCoin();
         if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Top ⬇️: ${inverse}`;
         if (DOM.loadingTopcoin) DOM.loadingTopcoin.textContent = `Top ⬆️: ${topCoin}`;
-        if (DOM.trackATopcoin) DOM.trackATopcoin.textContent = topCoin;
-        if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = topCoin;
+        if (DOM.trackATopcoin) DOM.trackATopcoin.textContent = `Top: ${topCoin}`;
+        if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = `Top: ${topCoin}`;
+        if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Inv: ${inverse}`;
+        if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Inv: ${inverse}`;
 
         const hashId = generateHashFromPrice(latestPrice);
         addHashLog(hashId, latestTime);
@@ -3269,8 +3260,16 @@ let DJ_TRACKS = [
       loadData();
       init3D();
       updateBTCHash();
-      fetchTopCoin().then(c => { if (DOM.loadingTopcoin) DOM.loadingTopcoin.textContent = `Top ⬆️: ${c}`; if (DOM.trackATopcoin) DOM.trackATopcoin.textContent = `Top ⬆️: ${c}`; if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = `Top ⬆️: ${c}`; });
-      fetchTopInverseToken().then(i => { if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Top ⬇️: ${i}`; if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Top ⬇️: ${i}`; if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Top ⬇️: ${i}`; });
+      fetchTopCoin().then(c => {
+        if (DOM.loadingTopcoin) DOM.loadingTopcoin.textContent = `Top ⬆️: ${c}`;
+        if (DOM.trackATopcoin) DOM.trackATopcoin.textContent = `Top: ${c}`;
+        if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = `Top: ${c}`;
+      });
+      fetchTopInverseToken().then(i => {
+        if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Top ⬇️: ${i}`;
+        if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Inv: ${i}`;
+        if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Inv: ${i}`;
+      });
 
       if (DOM.muteBtn) {
         DOM.muteBtn.addEventListener('click', () => {
