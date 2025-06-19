@@ -166,6 +166,7 @@
       width: 100%;
       height: 100%;
       border: 0;
+      transform: scale(1.5);
       object-fit: cover;
       object-position: center;
     }
@@ -311,7 +312,17 @@
       border-radius: 5px;
       padding: 0.5rem 1rem;
       cursor: pointer;
-      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .dj-btn:hover {
+      background-color: rgba(0,0,0,0.5);
+      transform: scale(1.05);
+    }
+    .dj-btn:hover {
+      background-color: rgba(33,150,243,0.6);
+    }
+    .dj-btn:active {
+      background-color: #0b5fa5;
     }
     .dj-btn:hover {
       background-color: rgba(255,255,255,0.2);
@@ -1542,6 +1553,19 @@
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
+  </div>
+  <div id="pip-container">
+    <iframe id="pip-iframe" src="" frameborder="0" allowfullscreen></iframe>
+    <canvas id="pip-btc-canvas"></canvas>
+    <div class="metrics-overlay">
+      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo">
+      <div class="metrics-container">
+        <span id="pip-price" class="metric"></span>
+        <span id="pip-top" class="metric"></span>
+        <span id="pip-time" class="metric"></span>
+        <span id="pip-vol" class="metric"></span>
+      </div>
+    </div>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
