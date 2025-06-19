@@ -330,6 +330,12 @@
     .dj-btn:active {
       background-color: rgba(255,255,255,0.3);
     }
+    .dj-btn:hover {
+      background-color: rgba(255,255,255,0.2);
+    }
+    .dj-btn:active {
+      background-color: rgba(255,255,255,0.3);
+    }
     .dj-btn.active {
       box-shadow: 0 0 8px 2px #1e90ff;
     }
@@ -405,9 +411,9 @@
       z-index: 5;
     }
     #btc-visual-container {
-      position: relative;
-      width: 300px;
-      height: 200px;
+      position: relative;s
+      width: 400px;
+      height: 400px;
       margin: 0 auto 1rem;
       z-index: 20;
     }
@@ -1554,16 +1560,15 @@
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
     <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
-  <div id="pip-container">
-    <iframe id="pip-iframe" src="" frameborder="0" allowfullscreen></iframe>
-    <canvas id="pip-btc-canvas"></canvas>
+  <div id="btc-visual-container" class="mx-auto">
+    <canvas id="btc-canvas"></canvas>
     <div class="metrics-overlay">
       <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo">
       <div class="metrics-container">
-        <span id="pip-price" class="metric"></span>
-        <span id="pip-top" class="metric"></span>
-        <span id="pip-time" class="metric"></span>
-        <span id="pip-vol" class="metric"></span>
+        <span id="btc-price" class="metric">BTC: $65,000</span>
+        <span id="btc-top" class="metric">Top: ETH</span>
+        <span id="btc-time" class="metric">Jun 19, 2025, 01:28 PM</span>
+        <span id="btc-vol" class="metric">Volatility: 🟢 Good</span>
       </div>
     </div>
   </div>
@@ -1697,18 +1702,6 @@
 <button aria-label="Send chat message" class="px-4 py-2 rounded" data-tooltip="Send message" id="chat-send" role="button">Send</button>
 </div>
 </div>
-</div>
-<div id="btc-visual-container">
-  <canvas id="btc-canvas"></canvas>
-  <div class="metrics-overlay">
-    <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo">
-    <div class="metrics-container">
-      <span id="btc-price" class="metric">BTC: $65,000</span>
-      <span id="btc-top" class="metric">Top: ETH</span>
-      <span id="btc-time" class="metric">Jun 19, 2025, 01:28 PM</span>
-      <span id="btc-vol" class="metric">Volatility: 🟢 Good</span>
-    </div>
-  </div>
 </div>
 <footer class="text-center text-gray-500 text-sm">
 <p class="typewriter">Powered by CoinGecko, Etherscan, Dune &amp; TradingView</p>
