@@ -170,7 +170,11 @@
       object-fit: cover;
       object-position: center;
     }
-    #dj-dashboard { position: relative; }
+    #dj-dashboard {
+      position: relative;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
     #dj-dashboard .video-container iframe,
     #dj-dashboard .video-container > div {
       transform: scale(1.2);
@@ -273,7 +277,7 @@
       transform: translateX(-50%);
       width: calc(100% - 20px);
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       background: rgba(0,0,0,0.5);
@@ -284,13 +288,13 @@
     }
     .metrics-container {
       display: flex;
-      flex: 1;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
+      width: 100%;
     }
     .metric {
-      flex: 0 1 auto;
+      flex: 0 1 45%;
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -298,10 +302,12 @@
       font-size: clamp(10px, 2vw, 14px);
       min-width: 0;
     }
+    .metric-main { font-weight: bold; }
+    .metric-sub { font-size: 0.75rem; opacity: 0.85; }
     .logo {
-      width: 30px;
-      height: 30px;
-      margin-right: 10px;
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 2px;
     }
     @keyframes logoPulse {
       0%,100% { filter: drop-shadow(0 0 0px #fff); }
@@ -741,6 +747,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       margin-bottom: 0.75rem;
     }
     .toggle-module-btn {
@@ -1514,6 +1522,7 @@
   <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
   <button id="hash-log-toggle" aria-label="Toggle hash log" class="ml-2 dj-btn" data-tooltip="Toggle hash log" role="button">Show Log</button>
   <button id="legend-toggle" aria-label="Toggle legend" class="ml-2 dj-btn" data-tooltip="Toggle legend" role="button">Show Legend</button>
+  <button id="dj-dock-btn" class="ml-2 dj-btn">Dock DJ</button>
 </div>
 <div class="module-content">
 <div class="data-warning" id="btc-hash-warning" style="display: none;">&gt; Live data from Dune API</div>
@@ -1563,7 +1572,6 @@
 <section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
-    <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
@@ -1578,10 +1586,10 @@
         <div class="metrics-overlay">
           <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse" />
           <div class="metrics-container">
-            <span id="track-a-price" class="metric"></span>
-            <span id="track-a-topcoin" class="metric"></span>
-            <span id="track-a-time" class="metric"></span>
-            <span id="track-a-inverse" class="metric"></span>
+            <span id="track-a-price" class="metric metric-main"></span>
+            <span id="track-a-topcoin" class="metric metric-main"></span>
+            <span id="track-a-time" class="metric metric-sub"></span>
+            <span id="track-a-inverse" class="metric metric-sub"></span>
           </div>
         </div>
       </div>
@@ -1608,10 +1616,10 @@
         <div class="metrics-overlay">
           <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse" />
           <div class="metrics-container">
-            <span id="track-b-price" class="metric"></span>
-            <span id="track-b-topcoin" class="metric"></span>
-            <span id="track-b-time" class="metric"></span>
-            <span id="track-b-inverse" class="metric"></span>
+            <span id="track-b-price" class="metric metric-main"></span>
+            <span id="track-b-topcoin" class="metric metric-main"></span>
+            <span id="track-b-time" class="metric metric-sub"></span>
+            <span id="track-b-inverse" class="metric metric-sub"></span>
           </div>
         </div>
       </div>
