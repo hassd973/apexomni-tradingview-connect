@@ -336,6 +336,13 @@
     .dj-btn:active {
       background-color: rgba(255,255,255,0.3);
     }
+    .dj-btn:hover {
+      background-color: rgba(30,144,255,0.2);
+      box-shadow: 0 0 8px #1e90ff;
+    }
+    .dj-btn:active {
+      background-color: rgba(30,144,255,0.4);
+    }
     .dj-btn.active {
       box-shadow: 0 0 8px 2px #1e90ff;
     }
@@ -411,7 +418,7 @@
       z-index: 5;
     }
     #btc-visual-container {
-      position: relative;s
+      position: relative;
       width: 400px;
       height: 400px;
       margin: 0 auto 1rem;
@@ -1043,13 +1050,16 @@
       border: none;
     }
     #pip-container {
-      position: relative;
-      width: 300px;
-      height: 900px;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 500px;
+      height: 250px;
       border-radius: 10px;
       overflow: hidden;
       box-shadow: inset 0 0 4px rgba(255,255,255,0.3), 0 0 6px rgba(0,0,0,0.5);
       animation: fadeIn 1s ease-in;
+      z-index: 25;
     }
     #pip-container iframe { width: 100%; height: 100%; border: 0; }
     #pip-btc-canvas { position: absolute; inset: 0; pointer-events: none; }
@@ -1571,6 +1581,20 @@
         <span id="btc-vol" class="metric">Volatility: 🟢 Good</span>
       </div>
     </div>
+    <button id="theme-switch" class="dj-btn mt-1">Theme</button>
+    <div id="pip-container" class="dj-track mt-2">
+      <iframe id="pip-iframe" src="" frameborder="0" allowfullscreen></iframe>
+      <canvas id="pip-btc-canvas"></canvas>
+      <div class="metrics-overlay">
+        <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo">
+        <div class="metrics-container">
+          <span id="pip-price" class="metric"></span>
+          <span id="pip-top" class="metric"></span>
+          <span id="pip-time" class="metric"></span>
+          <span id="pip-vol" class="metric"></span>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
@@ -1633,19 +1657,6 @@
       </div>
     <div class="vinyl-disk paused" id="vinyl-b"></div>
     </div>
-    <div id="pip-container" class="dj-track flex-1 mt-2">
-      <iframe id="pip-iframe" src="" frameborder="0" allowfullscreen></iframe>
-      <canvas id="pip-btc-canvas"></canvas>
-      <div class="metrics-overlay">
-        <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo">
-        <div class="metrics-container">
-          <span id="pip-price" class="metric"></span>
-          <span id="pip-top" class="metric"></span>
-          <span id="pip-time" class="metric"></span>
-          <span id="pip-vol" class="metric"></span>
-        </div>
-      </div>
-    </div>
   </div>
   <div id="dj-playlist" class="mt-2 max-h-40 overflow-y-auto text-sm custom-scroll w-full"></div>
   <div class="flex flex-col items-center mt-2 dj-controls">
@@ -1658,7 +1669,6 @@
       <button id="record-mix" class="dj-btn">Record</button>
       <a id="download-mix" class="dj-btn" style="display:none" href="#">Download</a>
       <button id="surround-toggle" class="dj-btn">Surround</button>
-      <button id="theme-switch" class="dj-btn">Theme</button>
       <button id="volume-bars-toggle" class="dj-btn">Bars</button>
     </div>
     <div class="mt-2 flex flex-wrap gap-2 items-center text-sm justify-center">
@@ -3681,7 +3691,7 @@ let DJ_TRACKS = [
           verts.push((Math.random()-0.5)*10, (Math.random()-0.5)*10, (Math.random()-0.5)*10);
         }
         geometry.setAttribute('position', new THREE.Float32BufferAttribute(verts,3));
-        const material = new THREE.PointsMaterial({ color: 0x87CEEB, size: 0.1 });
+        const material = new THREE.PointsMaterial({ color: 0x87CEEB, size: 0.1, transparent: true, opacity: 0.3 });
         btcDots = new THREE.Points(geometry, material);
         btcScene.add(btcDots);
         const barGeo = new THREE.BufferGeometry().setFromPoints([
@@ -3722,9 +3732,14 @@ let DJ_TRACKS = [
       function animateBtcOverlay() {
         requestAnimationFrame(animateBtcOverlay);
         const vol = getVolume();
-        if (btcDots) btcDots.position.y = vol * 10;
+        if (btcDots) {
+          btcDots.position.y = vol * 10;
+          btcDots.scale.y = 1 + vol * 5;
+          btcDots.material.opacity = 0.2 + vol * 0.3;
+        }
         if (pipDots) {
           pipDots.position.y = vol * 10;
+          pipDots.scale.y = 1 + vol * 5;
           pipDots.rotation.y += 0.02;
         }
         if (btcVolumeBar) {
