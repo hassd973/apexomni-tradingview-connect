@@ -155,7 +155,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.2);
+      background: rgba(0,0,0,0.5);
       pointer-events: none;
     }
     .video-container iframe,
@@ -166,6 +166,7 @@
       width: 100%;
       height: 100%;
       border: 0;
+      transform: scale(1.2);
       object-fit: cover;
       object-position: center;
     }
@@ -256,7 +257,7 @@
     }
     .dj-overlay {
       position: absolute;
-      top: 0;
+      top: 20%;
       left: 0;
       width: 100%;
       display: flex;
@@ -270,15 +271,21 @@
       z-index: 1;
     }
     .dj-btn {
-      background-color: rgba(255,255,255,0.1);
+      background-color: rgba(0,0,0,0.3);
       color: #fff;
-      border: 1px solid #fff;
+      border: none;
       border-radius: 5px;
       padding: 0.5rem 1rem;
       cursor: pointer;
       transition: background-color 0.3s ease, transform 0.2s ease;
     }
     .dj-btn:hover {
+      background-color: rgba(0,0,0,0.5);
+      transform: scale(1.05);
+    }
+    .dj-btn.active {
+      background-color: rgba(135,206,235,0.7);
+      box-shadow: 0 0 10px var(--primary-color);
       background-color: rgba(255,255,255,0.3);
       transform: scale(1.05);
     }
@@ -936,6 +943,15 @@
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
+      position: relative;
+    }
+    #btc-audio-canvas {
+      width: 100%;
+      height: 80px;
+      pointer-events: none;
+    }
+    .pip-frame {
+      border: none;
     }
     @media (max-width: 640px) {
       #chat-list {
@@ -1385,7 +1401,10 @@
 </div>
 <div class="module-content">
 <div class="data-warning" id="btc-hash-warning" style="display: none;">&gt; Live data from Dune API</div>
-<div class="btc-hash-svg" id="btc-hash-canvas"></div>
+<div class="btc-hash-svg relative" id="btc-hash-canvas">
+  <canvas id="btc-audio-canvas" width="600" height="80" class="absolute top-0 left-0 w-full pointer-events-none"></canvas>
+  <iframe id="pip-frame" class="pip-frame absolute bottom-1 right-1 w-40 h-24" allow="autoplay; picture-in-picture"></iframe>
+</div>
 <div id="btc-legend">
 <span id="btc-price">Price: Loading...</span>
 <span id="btc-time">Time: Loading...</span>
@@ -1451,21 +1470,6 @@
 </div>
 </div>
 </div>
-<div class="music-module w-full max-w-[98vw] mx-auto text-center mt-4">
-  <div class="flex justify-center gap-2 mb-2">
-    <button id="music-mute-btn" aria-label="Toggle music mute">🔇</button>
-    <button id="quantumi-sound-btn" aria-label="Toggle QuantumI sound">QuantumI Sound</button>
-  </div>
-  <div class="playlist-container video-container">
-    <div id="music-player"></div>
-    <div class="playlist-overlay">
-      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
-      <span id="playlist-price"></span>
-      <span id="playlist-time"></span>
-      <span id="playlist-date"></span>
-    </div>
-  </div>
-</div>
 <section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
@@ -1474,7 +1478,7 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
-        <input id="track-a-url" class="p-1 rounded text-sm" placeholder="Search YouTube"/>
+        <input id="track-a-url" class="p-1 rounded text-sm" placeholder="Search"/>
         <button id="track-a-load" class="dj-btn">Load A</button>
         <button id="track-a-setcue" class="dj-cue-btn">Set Cue</button>
         <button id="track-a-cue" class="dj-cue-btn">Cue</button>
@@ -1492,6 +1496,7 @@
       <div class="mt-1 flex gap-2 justify-center">
         <button id="track-a-play" class="dj-btn">Play</button>
         <button id="track-a-pause" class="dj-btn">Pause</button>
+        <button id="track-a-stop" class="dj-btn" onclick="trackAPlayer.stopVideo()">Stop</button>
         <button id="track-a-mute" class="dj-btn">Unmute</button>
         <input id="track-a-volume" type="range" min="0" max="100" value="50" class="w-24"/>
       </div>
@@ -1499,7 +1504,7 @@
     </div>
     <div class="dj-track flex-1" draggable="true">
       <div class="mb-1 flex justify-center gap-2">
-        <input id="track-b-url" class="p-1 rounded text-sm" placeholder="Search YouTube"/>
+        <input id="track-b-url" class="p-1 rounded text-sm" placeholder="Search"/>
         <button id="track-b-load" class="dj-btn">Load B</button>
         <button id="track-b-setcue" class="dj-cue-btn">Set Cue</button>
         <button id="track-b-cue" class="dj-cue-btn">Cue</button>
@@ -1517,6 +1522,7 @@
       <div class="mt-1 flex gap-2 justify-center">
         <button id="track-b-play" class="dj-btn">Play</button>
         <button id="track-b-pause" class="dj-btn">Pause</button>
+        <button id="track-b-stop" class="dj-btn" onclick="trackBPlayer.stopVideo()">Stop</button>
         <button id="track-b-mute" class="dj-btn">Unmute</button>
         <input id="track-b-volume" type="range" min="0" max="100" value="50" class="w-24"/>
       </div>
@@ -1645,13 +1651,16 @@
       lofiKnob: document.getElementById('lofi-knob'),
       repeatKnob: document.getElementById('repeat-knob'),
       waveCanvas: document.getElementById('wave-canvas'),
+      audioCanvas: document.getElementById('btc-audio-canvas'),
       btcThemeSelect: document.getElementById('btc-theme-select'),
       trackAPlay: document.getElementById('track-a-play'),
       trackAPause: document.getElementById('track-a-pause'),
+      trackAStop: document.getElementById('track-a-stop'),
       trackAMute: document.getElementById('track-a-mute'),
       trackAVolume: document.getElementById('track-a-volume'),
       trackBPlay: document.getElementById('track-b-play'),
       trackBPause: document.getElementById('track-b-pause'),
+      trackBStop: document.getElementById('track-b-stop'),
       trackBMute: document.getElementById('track-b-mute'),
       trackBVolume: document.getElementById('track-b-volume'),
       djPlaylist: document.getElementById('dj-playlist')
@@ -1913,10 +1922,14 @@ let DJ_TRACKS = [
           analyser.fftSize = 2048;
           gainA.connect(analyser);
           gainB.connect(analyser);
-          if (!waveAnim) drawWave();
+          if (!waveAnim) {
+            drawWave();
+            drawBtcAudio();
+          }
         }
         const iframe = player.getIframe && player.getIframe();
         let stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
+        if (stream) console.log('Stream captured:', stream);
         if (!stream && iframe) {
           const vid = player.getVideoData().video_id;
           const audioProxy = document.createElement('audio');
@@ -1928,12 +1941,18 @@ let DJ_TRACKS = [
           stream = audioProxy.captureStream ? audioProxy.captureStream() : null;
         }
         if (stream) {
+          console.log('Stream captured:', stream);
           const src = djCtx.createMediaStreamSource(stream);
           if (which === 'A') {
             srcA = src;
             fxMatrix.A = [];
             ['delay','reverb','distortion','filter','bitcrusher'].forEach(fx => addFxToChain('A', fx));
             [delayNodeA, reverbNodeA, , filterNodeA, bitcrusherNodeA] = fxMatrix.A;
+            const pip = document.getElementById('pip-frame');
+            if (pip && player && player.getVideoData) {
+              const id = player.getVideoData().video_id;
+              pip.src = `https://www.youtube-nocookie.com/embed/${id}?controls=0&mute=1`;
+            }
           } else {
             srcB = src;
             fxMatrix.B = [];
@@ -3234,6 +3253,7 @@ let DJ_TRACKS = [
 
       if (DOM.trackAPlay) DOM.trackAPlay.addEventListener('click', () => trackAPlayer && trackAPlayer.playVideo());
       if (DOM.trackAPause) DOM.trackAPause.addEventListener('click', () => trackAPlayer && trackAPlayer.pauseVideo());
+      if (DOM.trackAStop) DOM.trackAStop.addEventListener('click', () => trackAPlayer && trackAPlayer.stopVideo());
       if (DOM.trackAMute) DOM.trackAMute.addEventListener('click', () => {
         if (!trackAPlayer) return;
         if (trackAPlayer.isMuted()) {
@@ -3247,6 +3267,7 @@ let DJ_TRACKS = [
       if (DOM.trackAVolume) DOM.trackAVolume.addEventListener('input', (e) => trackAPlayer && trackAPlayer.setVolume(e.target.value));
       if (DOM.trackBPlay) DOM.trackBPlay.addEventListener('click', () => trackBPlayer && trackBPlayer.playVideo());
       if (DOM.trackBPause) DOM.trackBPause.addEventListener('click', () => trackBPlayer && trackBPlayer.pauseVideo());
+      if (DOM.trackBStop) DOM.trackBStop.addEventListener('click', () => trackBPlayer && trackBPlayer.stopVideo());
       if (DOM.trackBMute) DOM.trackBMute.addEventListener('click', () => {
         if (!trackBPlayer) return;
         if (trackBPlayer.isMuted()) {
@@ -3426,6 +3447,27 @@ let DJ_TRACKS = [
           }
           ctx.stroke();
           waveAnim = requestAnimationFrame(draw);
+        };
+        draw();
+      }
+
+      function drawBtcAudio() {
+        if (!analyser || !DOM.audioCanvas) return;
+        const ctx = DOM.audioCanvas.getContext('2d');
+        const buffer = new Uint8Array(analyser.fftSize);
+        const draw = () => {
+          analyser.getByteTimeDomainData(buffer);
+          ctx.clearRect(0,0,DOM.audioCanvas.width,DOM.audioCanvas.height);
+          ctx.strokeStyle = '#87CEEB';
+          ctx.beginPath();
+          const step = DOM.audioCanvas.width / buffer.length;
+          for(let i=0;i<buffer.length;i++){
+            const v = buffer[i]/128.0;
+            const y = v*DOM.audioCanvas.height/2;
+            if(i===0) ctx.moveTo(0,y); else ctx.lineTo(i*step,y);
+          }
+          ctx.stroke();
+          requestAnimationFrame(draw);
         };
         draw();
       }
