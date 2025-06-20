@@ -11,7 +11,22 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const ytdl = require('ytdl-core');
 const youtubeAudioStream = require('youtube-audio-stream');
-const { apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } = require('../src/services');
+const fs = require('fs');
+
+let apexomniBuildOrderParams;
+let apexomniCreateOrder;
+let getOrder;
+let getFill;
+try {
+  ({ apexomniBuildOrderParams, apexomniCreateOrder, getOrder, getFill } =
+    require('../src/services'));
+} catch (err) {
+  console.warn('ApexOmni services not available, using stubs');
+  apexomniBuildOrderParams = async () => ({ });
+  apexomniCreateOrder = async () => ({ });
+  getOrder = async () => ({ });
+  getFill = async () => ({ });
+}
 
 const app = express();
 const port = process.env.PORT || 3001;
