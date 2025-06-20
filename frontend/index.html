@@ -81,7 +81,9 @@
     #loading-screen video {
       width: 100%;
       height: auto;
+      max-height: 100%;
       aspect-ratio: 16/9;
+      object-fit: contain;
     }
     #loading-screen #loading-video-player,
     #loading-screen .loading-video iframe {
@@ -160,7 +162,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.3);
       pointer-events: none;
     }
     .video-container iframe,
@@ -200,7 +202,7 @@
       gap: 0.5rem;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.15);
+      background: rgba(0, 0, 0, 0.1);
       color: var(--text-color);
       pointer-events: none;
       padding: 0.25rem;
@@ -285,7 +287,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.3);
       padding: 4px;
       border-radius: 5px;
       gap: 4px;
@@ -1261,7 +1263,7 @@
 <div id="loading-screen">
   <div class="loading-video">
     <div class="video-container">
-      <video id="intro-video" preload="auto" playsinline muted autoplay crossorigin="anonymous" class="w-full h-full object-cover">
+      <video id="intro-video" preload="auto" playsinline muted autoplay crossorigin="anonymous" class="w-full">
         <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
       </video>
       <div class="video-overlay metrics-overlay">
@@ -1452,7 +1454,7 @@
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
 <div class="module-content">
-<a class="twitter-timeline" data-height="400" href="https://twitter.com/search?q=bitcoin%20OR%20btc%20finance&src=typed_query">Tweets about Bitcoin</a>
+<a class="twitter-timeline" data-height="400" data-width="100%" data-theme="dark" href="https://twitter.com/search?q=bitcoin%20OR%20btc%20finance&src=typed_query">Tweets about Bitcoin</a>
 <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </div>
 </section>
