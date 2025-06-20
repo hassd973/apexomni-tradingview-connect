@@ -1206,6 +1206,47 @@
     .nav-link:hover {
       color: var(--secondary-color);
     }
+    @media (max-width: 640px) {
+      #dj-dashboard {
+        max-height: 70vh;
+        padding-bottom: 80px;
+      }
+      .dj-track {
+        flex-direction: column;
+        margin-bottom: 1rem;
+      }
+      .playlist-container {
+        width: 100%;
+        max-width: 90vw;
+        height: 200px;
+        aspect-ratio: unset;
+      }
+      .dj-controls {
+        position: sticky;
+        bottom: 0;
+        background: rgba(18, 18, 18, 0.9);
+        padding: 0.5rem;
+        z-index: 10;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .dj-btn, .dj-cue-btn {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.6rem;
+        flex: 1 0 30%;
+        text-align: center;
+      }
+      .fx-knob {
+        width: 60px;
+      }
+      #dj-playlist {
+        max-height: 30vh;
+      }
+      .vinyl-disk {
+        width: 80%;
+        max-width: 200px;
+      }
+    }
   </style>
 <style>
   html, body {
@@ -1302,7 +1343,7 @@
 <div id="loading-screen">
   <div class="loading-video">
     <div class="video-container">
-      <video id="intro-video" preload="auto" playsinline autoplay muted crossorigin="anonymous" class="w-full">
+      <video id="intro-video" preload="auto" playsinline autoplay muted loop crossorigin="anonymous" class="w-full">
         <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
       </video>
       <div class="video-overlay metrics-overlay">
@@ -1941,18 +1982,22 @@ let DJ_TRACKS = [
         </div>`).join('');
     }
 
-    function onYouTubeIframeAPIReady() {
-      if (DOM.introVideo) {
-        DOM.introVideo.volume = 0.5;
-        DOM.introVideo.play().catch(() => {});
-        setTimeout(() => {
-          DOM.introVideo.muted = false;
-          DOM.introVideo.play().catch(() => {});
-          introPlayed = true;
-          routeYTSignal();
-        }, 1000);
-        DOM.introVideo.addEventListener('error', () => console.warn('Intro trailer video failed to load'));
+    function initIntroVideo() {
+      const introVideo = DOM.introVideo;
+      if (!introVideo) return;
+      introVideo.volume = 0.5;
+      introVideo.muted = true;
+      const playPromise = introVideo.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          console.warn('Autoplay blocked, retrying on user interaction');
+          document.addEventListener('click', () => introVideo.play(), { once: true });
+        });
       }
+      introVideo.addEventListener('error', () => console.warn('Intro trailer failed to load'));
+    }
+
+    function onYouTubeIframeAPIReady() {
       
       bgMusicPlayer = new YT.Player('music-player', {
         host: 'https://www.youtube.com',
@@ -2297,20 +2342,47 @@ let DJ_TRACKS = [
 
     function setupDjOverlay() {
       if (!DOM.djOverlay || !DOM.djLogoBtn) return;
+      let clickCount = 0;
+      let lastTouchY = 0;
       const handler = debounce(() => {
-        DOM.djOverlay.classList.add('fade-out');
-        setTimeout(() => {
-          DOM.djOverlay.style.display = 'none';
-          if (DOM.djDashboard) DOM.djDashboard.classList.remove('locked');
-          resumePlayers();
-        }, 500);
+        clickCount++;
+        if (clickCount >= 2) {
+          DOM.djOverlay.classList.add('fade-out');
+          setTimeout(() => {
+            DOM.djOverlay.style.display = 'none';
+            if (DOM.djDashboard) DOM.djDashboard.classList.remove('locked');
+            resumePlayers();
+            clickCount = 0;
+          }, 500);
+        } else {
+          DOM.djLogoBtn.classList.add('pulse');
+          setTimeout(() => DOM.djLogoBtn.classList.remove('pulse'), 1000);
+        }
       }, 100);
-      [DOM.djOverlay, DOM.djLogoBtn].forEach(el => {
-        el.addEventListener('click', handler);
-        el.addEventListener('touchstart', handler);
-        el.addEventListener('keydown', e => {
-          if (e.key === 'Enter' || e.key === 'Space') handler();
-        });
+      DOM.djLogoBtn.addEventListener('click', handler);
+      DOM.djLogoBtn.addEventListener('touchstart', e => {
+        const touchY = e.touches[0].clientY;
+        if (Math.abs(touchY - lastTouchY) > 10) return;
+        lastTouchY = touchY;
+        handler();
+        e.preventDefault();
+      });
+      DOM.djLogoBtn.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === 'Space') {
+          handler();
+          e.preventDefault();
+        }
+      });
+      DOM.djOverlay.addEventListener('touchmove', e => e.stopPropagation());
+      DOM.djDeactivateBtn.addEventListener('click', () => {
+        clickCount = 0;
+        DOM.djOverlay.style.display = 'flex';
+        DOM.djOverlay.classList.remove('fade-out');
+        DOM.djDashboard.classList.add('locked');
+        trackAPlayer?.pauseVideo();
+        trackBPlayer?.pauseVideo();
+        bgMusicPlayer?.pauseVideo();
+        document.querySelectorAll('video').forEach(v => v.pause());
       });
       setTimeout(handler, 5000);
     }
@@ -3473,11 +3545,6 @@ let DJ_TRACKS = [
         });
       }
 
-      window.addEventListener('load', () => {
-        setTimeout(() => {
-          if (DOM.introVideo) DOM.introVideo.play();
-        }, 1000);
-      });
 
       if (DOM.musicMuteBtn) {
         DOM.musicMuteBtn.addEventListener('click', () => {
@@ -4484,6 +4551,7 @@ document.getElementById('topCount').addEventListener('change', (e) => {
     loadInverseChart(parseInt(e.target.value));
 });
 
+window.addEventListener('load', initIntroVideo);
 window.addEventListener('load', () => loadInverseChart(10));
 </script></body>
 </html>
