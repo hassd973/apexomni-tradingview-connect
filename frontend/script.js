@@ -92,7 +92,9 @@ function sanitizeTokenData(data) {
     return {
       id: String(processedToken.id || processedToken.slug || '').replace(/[^a-zA-Z0-9-]/g, ''),
       name: String(processedToken.name || 'Unknown').substring(0, 50),
-      symbol: String(processedToken.symbol || '').toUpperCase().substring(0, 10),
+      symbol: String(processedToken.symbol || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, ''),
       current_price: Number(processedToken.current_price || processedToken.quote?.USD?.price || 0),
       total_volume: Number(processedToken.total_volume || processedToken.quote?.USD?.volume_24h || 0),
       price_change_percentage_24h: Number(processedToken.price_change_percentage_24h || processedToken.quote?.USD?.percent_change_24h || 0),

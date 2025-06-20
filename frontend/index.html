@@ -78,6 +78,11 @@
       width: 100%;
       height: 100%;
     }
+    #loading-screen video {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16/9;
+    }
     #loading-screen #loading-video-player,
     #loading-screen .loading-video iframe {
       width: 100%;
@@ -111,7 +116,7 @@
       background-color: var(--primary-color);
       color: #1e2727;
       border: 1px solid var(--shadow-color);
-      border-radius: 6px;
+      border-radius: 9999px;
       padding: 0.5rem 1rem;
       cursor: pointer;
       position: relative;
@@ -170,10 +175,14 @@
       object-fit: cover;
       object-position: center;
     }
-    #dj-dashboard { position: relative; }
+    #dj-dashboard {
+      position: relative;
+      max-height: 50vh;
+      overflow-y: auto;
+    }
     #dj-dashboard .video-container iframe,
     #dj-dashboard .video-container > div {
-      transform: scale(1.2);
+      transform: none;
     }
     #loading-screen .video-container iframe,
     #loading-screen .video-container > div {
@@ -191,7 +200,7 @@
       gap: 0.5rem;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.15);
       color: var(--text-color);
       pointer-events: none;
       padding: 0.25rem;
@@ -233,10 +242,9 @@
     }
     .dj-track .playlist-container {
       position: relative;
-      width: 100%;
+      width: 600px;
+      height: 300px;
       max-width: 100%;
-      aspect-ratio: 16 / 9;
-      height: auto;
       overflow: hidden;
       margin-left: auto;
       margin-right: auto;
@@ -274,7 +282,7 @@
       transform: translateX(-50%);
       width: calc(100% - 20px);
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       background: rgba(0,0,0,0.5);
@@ -285,13 +293,13 @@
     }
     .metrics-container {
       display: flex;
-      flex: 1;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 5px;
+      gap: 4px;
+      width: 100%;
     }
     .metric {
-      flex: 0 1 auto;
+      flex: 0 1 45%;
       text-align: center;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -299,10 +307,12 @@
       font-size: clamp(10px, 2vw, 14px);
       min-width: 0;
     }
+    .metric-main { font-weight: bold; }
+    .metric-sub { font-size: 0.75rem; opacity: 0.85; }
     .logo {
-      width: 30px;
-      height: 30px;
-      margin-right: 10px;
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 2px;
     }
     @keyframes logoPulse {
       0%,100% { filter: drop-shadow(0 0 0px #fff); }
@@ -352,6 +362,9 @@
     }
     .dj-btn:active {
       background-color: rgba(30,144,255,0.4);
+    }
+    @media (max-width: 640px) {
+      .dj-btn { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
     }
     .dj-btn:hover {
       background-color: rgba(30,144,255,0.2);
@@ -445,19 +458,6 @@
       opacity: 0.8;
       pointer-events: none;
       z-index: 1;
-    }
-    #btc-visual-container {
-      position: relative;
-      width: 400px;
-      height: 400px;
-      max-width: 400px;
-      max-height: 400px;
-      margin: 0 auto 1rem;
-      z-index: 20;
-    }
-    #btc-canvas {
-      width: 100%;
-      height: 100%;
     }
     .vinyl-disk {
       position: relative;
@@ -755,6 +755,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
       margin-bottom: 0.75rem;
     }
     .toggle-module-btn {
@@ -856,7 +858,12 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
     .fade-in { animation: fadeIn 0.5s ease-in; }
+    .fade-out { animation: fadeOut 0.5s forwards; }
     .hover-transition { transition: all 0.3s ease; }
     .hover-transition:hover { background: rgba(255, 187, 51, 0.1); }
     .drop-target { border: 2px dashed var(--secondary-color); }
@@ -1081,6 +1088,7 @@
       from { opacity: 0; transform: translateY(-20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
     @media (max-width: 640px) {
       #chat-list {
         max-height: 30vh;
@@ -1253,20 +1261,11 @@
 <div id="loading-screen">
   <div class="loading-video">
     <div class="video-container">
-      <iframe
-        id="loading-video-player"
-        loading="lazy"
-        width="560"
-        height="315"
-        src="https://www.youtube-nocookie.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1"
-        title="QuantumI Intro"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerpolicy="strict-origin-when-cross-origin"
-        allowfullscreen
-      ></iframe>
+      <video id="intro-video" preload="auto" playsinline muted autoplay crossorigin="anonymous" class="w-full h-full object-cover">
+        <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
+      </video>
       <div class="video-overlay metrics-overlay">
-        <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
+        <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo"/>
         <span id="loading-price"></span>
         <span id="loading-topcoin"></span>
         <span id="loading-inverse"></span>
@@ -1449,14 +1448,12 @@
 </section>
 <section class="rounded-lg balances-section" draggable="true" id="balances-module">
 <div class="module-header">
-<h2 class="text-lg md:text-xl balances-title typewriter">&gt; Balances (Dune API)</h2>
+<h2 class="text-lg md:text-xl balances-title typewriter">&gt; Finance Tweets</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
 <div class="module-content">
-<div class="loader text-center text-gray-500 text-sm" id="loader-balances">&gt; Loading...</div>
-<div class="data-warning" id="balances-warning" style="display: none;">&gt; Live data from Dune API</div>
-<ul class="space-y-2 text-sm" id="balances-list"></ul>
-<button aria-label="Export balances as CSV" class="mt-2" data-tooltip="Export balances as CSV" id="export-balances" role="button">Export CSV</button>
+<a class="twitter-timeline" data-height="400" href="https://twitter.com/search?q=bitcoin%20OR%20btc%20finance&src=typed_query">Tweets about Bitcoin</a>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </div>
 </section>
 <section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
@@ -1528,6 +1525,7 @@
   <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
   <button id="hash-log-toggle" aria-label="Toggle hash log" class="ml-2 dj-btn" data-tooltip="Toggle hash log" role="button">Show Log</button>
   <button id="legend-toggle" aria-label="Toggle legend" class="ml-2 dj-btn" data-tooltip="Toggle legend" role="button">Show Legend</button>
+  <button id="dj-dock-btn" class="ml-2 dj-btn">Dock DJ</button>
 </div>
 <div class="module-content">
 <div class="data-warning" id="btc-hash-warning" style="display: none;">&gt; Live data from Dune API</div>
@@ -1574,23 +1572,9 @@
 </div>
 </section>
 </div>
-<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
+<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4 custom-scroll">
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
-    <button id="dj-dock-btn" class="dj-btn ml-2">Dock DJ</button>
-  </div>
-  <div id="btc-visual-container" class="mx-auto">
-    <canvas id="btc-canvas"></canvas>
-    <div class="metrics-overlay">
-      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse">
-      <div class="metrics-container">
-        <span id="btc-price" class="metric">BTC: $65,000</span>
-        <span id="btc-top" class="metric">Top: ETH</span>
-        <span id="btc-time" class="metric">Jun 19, 2025, 01:28 PM</span>
-        <span id="btc-vol" class="metric">Volatility: 🟢 Good</span>
-      </div>
-    </div>
-    <button id="theme-switch" class="dj-btn mt-1">Theme</button>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
@@ -1605,10 +1589,10 @@
         <div class="metrics-overlay">
           <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse" />
           <div class="metrics-container">
-            <span id="track-a-price" class="metric"></span>
-            <span id="track-a-topcoin" class="metric"></span>
-            <span id="track-a-time" class="metric"></span>
-            <span id="track-a-inverse" class="metric"></span>
+            <span id="track-a-price" class="metric metric-main"></span>
+            <span id="track-a-topcoin" class="metric metric-main"></span>
+            <span id="track-a-time" class="metric metric-sub"></span>
+            <span id="track-a-inverse" class="metric metric-sub"></span>
           </div>
         </div>
       </div>
@@ -1635,10 +1619,10 @@
         <div class="metrics-overlay">
           <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo pulse" />
           <div class="metrics-container">
-            <span id="track-b-price" class="metric"></span>
-            <span id="track-b-topcoin" class="metric"></span>
-            <span id="track-b-time" class="metric"></span>
-            <span id="track-b-inverse" class="metric"></span>
+            <span id="track-b-price" class="metric metric-main"></span>
+            <span id="track-b-topcoin" class="metric metric-main"></span>
+            <span id="track-b-time" class="metric metric-sub"></span>
+            <span id="track-b-inverse" class="metric metric-sub"></span>
           </div>
         </div>
       </div>
@@ -1756,6 +1740,7 @@
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
       skipIntroBtn: document.getElementById('skip-intro-btn'),
       playIntroBtn: document.getElementById('play-intro-btn'),
+      introVideo: document.getElementById('intro-video'),
       loadingPrice: document.getElementById('loading-price'),
       loadingTopcoin: document.getElementById('loading-topcoin'),
       loadingInverse: document.getElementById('loading-inverse'),
@@ -1802,8 +1787,6 @@
       repeatKnob: document.getElementById('repeat-knob'),
       audioCanvas: document.getElementById('btc-audio-canvas'),
       btcThemeSelect: document.getElementById('btc-theme-select'),
-      btcVisualContainer: document.getElementById('btc-visual-container'),
-      btcCanvas: document.getElementById('btc-canvas'),
       trackAPlay: document.getElementById('track-a-play'),
       trackABack: document.getElementById('track-a-back'),
       trackAForward: document.getElementById('track-a-forward'),
@@ -1826,7 +1809,6 @@
     let isIndicatorEnabledModal = false;
     const chartCache = {};
     let scene, camera, renderer, controls, dotClouds = [], colorLegend = [], hashLog = [];
-    let ytPlayer;
     let bgMusicPlayer;
     let trackAPlayer;
     let trackBPlayer;
@@ -1890,52 +1872,17 @@ let DJ_TRACKS = [
     }
 
     function onYouTubeIframeAPIReady() {
-      let cnt = parseInt(localStorage.getItem('refreshCount') || '0');
-      cnt += 1;
-      let introVideoId = 'RkQ3m_uGwXE';
-      if (cnt === 3) {
-        introVideoId = 'zHLmyJvSkaA';
+      if (DOM.introVideo) {
+        DOM.introVideo.play().catch(() => {});
+        setTimeout(() => {
+          DOM.introVideo.muted = false;
+          DOM.introVideo.play().catch(() => {});
+          routeYTSignal();
+        }, 1000);
       }
-      if (cnt >= 4) cnt = 0;
-      localStorage.setItem('refreshCount', cnt);
-      ytPlayer = new YT.Player('loading-video-player', {
-        host: 'https://www.youtube-nocookie.com',
-        videoId: 'RkQ3m_uGwXE',
-        playerVars: {
-          autoplay: 1,
-          mute: 1,
-          controls: 0,
-          rel: 0,
-          modestbranding: 1,
-          playsinline: 1
-        },
-        events: {
-          onReady: (e) => {
-            try {
-              e.target.mute();
-              e.target.playVideo();
-              setTimeout(() => {
-                e.target.unMute();
-                e.target.setVolume(100);
-                e.target.playVideo();
-                routeYTSignal();
-                setTimeout(() => e.target.playVideo(), 100);
-              }, 1000);
-              e.target.getIframe().setAttribute('loading','lazy');
-            } catch {}
-          }
-        }
-      });
-      setTimeout(() => {
-        try {
-          if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
-            ytPlayer.playVideo();
-          }
-        } catch {}
-      }, 7000);
-
+      
       bgMusicPlayer = new YT.Player('music-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         videoId: 'RkQ3m_uGwXE',
         playerVars: {
           listType: 'playlist',
@@ -1945,28 +1892,33 @@ let DJ_TRACKS = [
           loop: 1,
           controls: 0,
           rel: 0,
-          modestbranding: 1
+          modestbranding: 1,
+          origin: location.origin
         },
         events: {
           onReady: (e) => {
             e.target.setVolume(100);
             e.target.mute();
             e.target.playVideo();
-            e.target.getIframe().setAttribute('loading','lazy');
+            const frame = e.target.getIframe();
+            frame.setAttribute('loading','lazy');
+            frame.setAttribute('crossorigin','anonymous');
           }
         }
       });
 
       trackAPlayer = new YT.Player('track-a-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 0, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_A, autoplay: 0, mute: 1, origin: location.origin },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
-            ev.target.getIframe().setAttribute('loading','lazy');
+            const frameA = ev.target.getIframe();
+            frameA.setAttribute('loading','lazy');
+            frameA.setAttribute('crossorigin','anonymous');
             if (DOM.trackAMute) DOM.trackAMute.textContent = 'Unmute';
           },
           onStateChange: (ev) => {
@@ -1977,15 +1929,17 @@ let DJ_TRACKS = [
       });
 
       trackBPlayer = new YT.Player('track-b-player', {
-        host: 'https://www.youtube-nocookie.com',
+        host: 'https://www.youtube.com',
         height: '100%',
         width: '100%',
-        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 0, mute: 1 },
+        playerVars: { listType: 'playlist', list: PLAYLIST_B, autoplay: 0, mute: 1, origin: location.origin },
         events: {
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_B});
-            ev.target.getIframe().setAttribute('loading','lazy');
+            const frameB = ev.target.getIframe();
+            frameB.setAttribute('loading','lazy');
+            frameB.setAttribute('crossorigin','anonymous');
             if (DOM.trackBMute) DOM.trackBMute.textContent = 'Unmute';
           },
           onStateChange: (ev) => {
@@ -2123,13 +2077,19 @@ let DJ_TRACKS = [
       window.enableQuantumSound = function() {
         if (!bgMusicPlayer || !bgMusicPlayer.getIframe) return;
         if (audioCtx) return;
-        const players = [bgMusicPlayer, ytPlayer].filter(p => p && p.getIframe && p.getIframe().captureStream);
+        const players = [bgMusicPlayer];
+        if (DOM.introVideo && DOM.introVideo.captureStream) players.push(DOM.introVideo);
+        const valid = players.filter(p => (p.getIframe ? p.getIframe().captureStream : p.captureStream));
+        if (!valid.length) return;
         if (!players.length) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let stream = null;
         try {
           stream = bgMusicPlayer.getIframe().captureStream();
         } catch {}
+        if (!stream && DOM.introVideo && DOM.introVideo.captureStream) {
+          try { stream = DOM.introVideo.captureStream(); } catch {}
+        }
         if (!stream) return;
         audioSource = audioCtx.createMediaStreamSource(stream);
         filterNode = audioCtx.createBiquadFilter();
@@ -2161,7 +2121,7 @@ let DJ_TRACKS = [
       };
 
       window.routeYTSignal = function() {
-        if (!ytPlayer) return;
+        if (!DOM.introVideo) return;
         if (!isQuantumSound) enableQuantumSound();
       };
     }
@@ -2213,7 +2173,7 @@ let DJ_TRACKS = [
     ];
 
     function hideLoadingScreen() {
-      DOM.loadingScreen.style.opacity = '0';
+      DOM.loadingScreen.classList.add('fade-out');
       setTimeout(() => {
         DOM.loadingScreen.style.display = 'none';
         document.querySelector('header').style.opacity = '1';
@@ -2229,7 +2189,7 @@ let DJ_TRACKS = [
     window.onload = function() {
       setTimeout(hideLoadingScreen, 23000);
       setTimeout(() => {
-        try { if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo(); } catch {}
+        try { if (DOM.introVideo) DOM.introVideo.play(); } catch {}
       }, 500);
     };
 
@@ -2245,7 +2205,7 @@ let DJ_TRACKS = [
 
     function resumePlayers() {
       try {
-        if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+        if (DOM.introVideo) DOM.introVideo.play();
         if (bgMusicPlayer && bgMusicPlayer.playVideo) bgMusicPlayer.playVideo();
         document.removeEventListener('click', resumePlayers);
       } catch {}
@@ -2259,12 +2219,15 @@ let DJ_TRACKS = [
       const player = which === 'A' ? trackAPlayer : trackBPlayer;
       if (!el || !player || !player.getPlayerState) return;
       const state = player.getPlayerState();
+      const logo = el.parentElement?.querySelector('.metrics-overlay .logo');
       if (state === YT.PlayerState.PLAYING) {
         el.classList.add('spinning', 'cd-playing');
         el.classList.remove('paused');
+        logo?.classList.add('pulse');
       } else {
         el.classList.remove('spinning', 'cd-playing');
         el.classList.add('paused');
+        logo?.classList.remove('pulse');
       }
     }
 
@@ -3278,37 +3241,23 @@ let DJ_TRACKS = [
 
       if (DOM.muteBtn) {
         DOM.muteBtn.addEventListener('click', () => {
-          if (!ytPlayer) return;
-          if (ytPlayer.isMuted()) {
-            ytPlayer.unMute();
-            DOM.muteBtn.textContent = '🔊';
-          } else {
-            ytPlayer.mute();
-            DOM.muteBtn.textContent = '🔇';
-          }
+          if (!DOM.introVideo) return;
+          DOM.introVideo.muted = !DOM.introVideo.muted;
+          DOM.muteBtn.textContent = DOM.introVideo.muted ? '🔇' : '🔊';
         });
       }
       if (DOM.playIntroBtn) {
         DOM.playIntroBtn.addEventListener('click', () => {
-          if (ytPlayer) {
-            ytPlayer.playVideo();
-          }
+          if (!DOM.introVideo) return;
+          if (DOM.introVideo.paused) DOM.introVideo.play();
+          else DOM.introVideo.pause();
         });
       }
 
       window.addEventListener('load', () => {
         setTimeout(() => {
-          if (ytPlayer && ytPlayer.playVideo) {
-            ytPlayer.playVideo();
-          }
+          if (DOM.introVideo) DOM.introVideo.play();
         }, 1000);
-        setTimeout(() => {
-          try {
-            if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
-              ytPlayer.playVideo();
-            }
-          } catch {}
-        }, 7000);
       });
 
       if (DOM.musicMuteBtn) {
@@ -3393,14 +3342,14 @@ let DJ_TRACKS = [
 
       if (DOM.trackAPlay) DOM.trackAPlay.addEventListener('click', () => trackAPlayer && trackAPlayer.playVideo());
       if (DOM.trackABack) DOM.trackABack.addEventListener('click', () => {
-        if (trackAPlayer && trackAPlayer.getCurrentTime) {
-          trackAPlayer.seekTo(Math.max(0, trackAPlayer.getCurrentTime() - 10), true);
+        if (trackAPlayer && trackAPlayer.previousVideo) {
+          trackAPlayer.previousVideo();
         }
       });
       if (DOM.trackAPause) DOM.trackAPause.addEventListener('click', () => trackAPlayer && trackAPlayer.pauseVideo());
       if (DOM.trackAForward) DOM.trackAForward.addEventListener('click', () => {
-        if (trackAPlayer && trackAPlayer.getCurrentTime) {
-          trackAPlayer.seekTo(trackAPlayer.getCurrentTime() + 10, true);
+        if (trackAPlayer && trackAPlayer.nextVideo) {
+          trackAPlayer.nextVideo();
         }
       });
       if (DOM.trackAStop) DOM.trackAStop.addEventListener('click', () => trackAPlayer && trackAPlayer.stopVideo());
@@ -3417,14 +3366,14 @@ let DJ_TRACKS = [
       if (DOM.trackAVolume) DOM.trackAVolume.addEventListener('input', (e) => trackAPlayer && trackAPlayer.setVolume(e.target.value));
       if (DOM.trackBPlay) DOM.trackBPlay.addEventListener('click', () => trackBPlayer && trackBPlayer.playVideo());
       if (DOM.trackBBack) DOM.trackBBack.addEventListener('click', () => {
-        if (trackBPlayer && trackBPlayer.getCurrentTime) {
-          trackBPlayer.seekTo(Math.max(0, trackBPlayer.getCurrentTime() - 10), true);
+        if (trackBPlayer && trackBPlayer.previousVideo) {
+          trackBPlayer.previousVideo();
         }
       });
       if (DOM.trackBPause) DOM.trackBPause.addEventListener('click', () => trackBPlayer && trackBPlayer.pauseVideo());
       if (DOM.trackBForward) DOM.trackBForward.addEventListener('click', () => {
-        if (trackBPlayer && trackBPlayer.getCurrentTime) {
-          trackBPlayer.seekTo(trackBPlayer.getCurrentTime() + 10, true);
+        if (trackBPlayer && trackBPlayer.nextVideo) {
+          trackBPlayer.nextVideo();
         }
       });
       if (DOM.trackBStop) DOM.trackBStop.addEventListener('click', () => trackBPlayer && trackBPlayer.stopVideo());
@@ -3698,8 +3647,24 @@ let DJ_TRACKS = [
         });
       }
 
+      if (DOM.legendToggleBtn) {
+        DOM.legendToggleBtn.addEventListener('click', () => {
+          const legend = document.getElementById('btc-legend-explanation');
+          if (legend) {
+            const hidden = legend.classList.toggle('hidden');
+            DOM.legendToggleBtn.textContent = hidden ? 'Show Legend' : 'Hide Legend';
+          }
+        });
+      }
+
       if (DOM.skipIntroBtn) {
         DOM.skipIntroBtn.addEventListener('click', hideLoadingScreen);
+      }
+
+      if (DOM.introVideo) {
+        const introLogo = document.querySelector('#loading-screen .metrics-overlay .logo');
+        DOM.introVideo.addEventListener('play', () => introLogo?.classList.add('pulse'));
+        DOM.introVideo.addEventListener('pause', () => introLogo?.classList.remove('pulse'));
       }
 
       const welcome = document.createElement('li');
