@@ -80,10 +80,8 @@
     }
     #loading-screen video {
       width: 100%;
-      height: auto;
-      max-height: 100%;
-      aspect-ratio: 16/9;
-      object-fit: contain;
+      height: 100%;
+      object-fit: cover;
     }
     #loading-screen #loading-video-player,
     #loading-screen .loading-video iframe {
@@ -819,26 +817,26 @@
       background: var(--primary-color);
       border-radius: 4px;
     }
-    #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list {
+    #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list, #twitter-list {
       max-height: 50vh;
       overflow-y: auto;
       padding-right: 4px;
     }
-    #gas-heatmap-list, #balances-list, #token-insights-list {
+    #gas-heatmap-list, #balances-list, #token-insights-list, #twitter-list {
       max-height: 20vh;
     }
     #chat-list {
       height: calc(100vh - 200px);
     }
     @media (min-width: 640px) {
-      #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list {
+      #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list, #twitter-list {
         max-height: 60vh;
       }
-      #gas-heatmap-list, #balances-list, #token-insights-list {
+      #gas-heatmap-list, #balances-list, #token-insights-list, #twitter-list {
         max-height: 20vh;
       }
     }
-    #token-list li, #profit-pairs li, #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li {
+    #token-list li, #profit-pairs li, #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li, #twitter-list li {
       display: flex;
       flex-direction: column;
       padding: 0.75rem;
@@ -849,13 +847,13 @@
       font-size: 0.875rem;
       background: rgba(35, 46, 46, 0.2);
     }
-    #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li {
+    #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li, #twitter-list li {
       font-size: 0.75rem;
       padding: 0.5rem;
       overflow-x: auto;
       white-space: nowrap;
     }
-    #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover, #balances-list li:hover, #token-insights-list li:hover {
+    #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover, #balances-list li:hover, #token-insights-list li:hover, #twitter-list li:hover {
       background: rgba(255, 187, 51, 0.1);
       transform: translateX(2px);
       box-shadow: 0 0 6px var(--shadow-color);
@@ -865,11 +863,11 @@
       background: rgba(255, 187, 51, 0.1);
       box-shadow: 0 0 6px var(--shadow-color);
     }
-    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric {
+    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric, #twitter-list .metric {
       font-size: 0.75rem;
       color: var(--text-color);
     }
-    #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric {
+    #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric, #twitter-list .metric {
       word-break: break-all;
     }
     #token-list .performance, #profit-pairs .top-pair, #profit-pairs .bottom-pair {
@@ -1290,7 +1288,7 @@
 <div id="loading-screen">
   <div class="loading-video">
     <div class="video-container">
-      <video id="intro-video" preload="auto" playsinline autoplay crossorigin="anonymous" class="w-full">
+      <video id="intro-video" preload="auto" playsinline autoplay muted crossorigin="anonymous" class="w-full">
         <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
       </video>
       <div class="video-overlay metrics-overlay">
@@ -1481,13 +1479,14 @@
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
 <div class="module-content">
-<a class="twitter-timeline" data-height="400" data-width="100%" data-theme="dark" href="https://twitter.com/search?q=bitcoin%20OR%20btc%20finance&src=typed_query">Tweets about Bitcoin</a>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<div class="loader text-center text-gray-500 text-sm" id="loader-twitter">&gt; Loading tweets...</div>
+<div class="data-warning" id="twitter-warning" style="display: none;">&gt; Using cached tweets</div>
+<ul class="space-y-2 text-sm" id="twitter-list"></ul>
 </div>
 </section>
 <section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
 <div class="module-header">
-<h2 class="text-lg md:text-xl token-insights-title typewriter">&gt; Token Insights (Dune API)</h2>
+<h2 class="text-lg md:text-xl token-insights-title typewriter">&gt; Token Insights (Dune API <span id="dune-version"></span>)</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
 <div class="module-content">
@@ -1542,6 +1541,7 @@
 <p><strong>Detected Exchange:</strong> <span id="detected-exchange">Scanning...</span></p>
 <p><strong>Token Count:</strong> <span id="token-count">0</span></p>
 <p><strong>Last Tx:</strong> <span id="last-tx">N/A</span></p>
+<p><strong>Track Status:</strong> <span id="wallet-track-status">-</span></p>
 </div>
 <ul class="list-disc ml-4 text-sm text-gray-300" id="open-trades"></ul>
 </div>
@@ -1560,6 +1560,15 @@
 <div class="data-warning" id="btc-hash-warning" style="display: none;">&gt; Live data from Dune API</div>
 <div class="btc-hash-svg relative" id="btc-hash-canvas">
   <canvas id="btc-audio-canvas" width="600" height="80" class="absolute top-0 left-0 w-full pointer-events-none"></canvas>
+  <div id="btc-metrics-overlay" class="metrics-overlay">
+    <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo" />
+    <div class="metrics-container">
+      <span id="btc-overlay-price" class="metric metric-main"></span>
+      <span id="btc-overlay-loss" class="metric metric-main"></span>
+      <span id="btc-overlay-hashrate" class="metric metric-sub"></span>
+      <span id="btc-overlay-difficulty" class="metric metric-sub"></span>
+    </div>
+  </div>
 </div>
 <div id="btc-legend">
 <span id="btc-price">Price: Loading...</span>
@@ -1608,6 +1617,7 @@
   </div>
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
+    <button id="dj-deactivate-btn" class="dj-btn">Deactivate DJ</button>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
     <div class="dj-track flex-1" draggable="true">
@@ -1768,6 +1778,11 @@
       tokenInsightsList: document.getElementById('token-insights-list'),
       loaderTokenInsights: document.getElementById('loader-token-insights'),
       tokenInsightsWarning: document.getElementById('token-insights-warning'),
+      twitterList: document.getElementById('twitter-list'),
+      twitterLoader: document.getElementById('loader-twitter'),
+      twitterWarning: document.getElementById('twitter-warning'),
+      duneVersion: document.getElementById('dune-version'),
+      walletTrackStatus: document.getElementById('wallet-track-status'),
       muteBtn: document.getElementById('mute-btn'),
       musicMuteBtn: document.getElementById('music-mute-btn'),
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
@@ -1836,7 +1851,13 @@
       trackBVolume: document.getElementById('track-b-volume'),
       djPlaylist: document.getElementById('dj-playlist'),
       djOverlay: document.getElementById('dj-activation-overlay'),
-      djDashboard: document.getElementById('dj-dashboard')
+      djLogoBtn: document.querySelector('#dj-activation-overlay .logo'),
+      djDashboard: document.getElementById('dj-dashboard'),
+      djDeactivateBtn: document.getElementById('dj-deactivate-btn'),
+      btcOverlayPrice: document.getElementById('btc-overlay-price'),
+      btcOverlayLoss: document.getElementById('btc-overlay-loss'),
+      btcOverlayHashrate: document.getElementById('btc-overlay-hashrate'),
+      btcOverlayDifficulty: document.getElementById('btc-overlay-difficulty')
     };
 
     let draggedModule = null;
@@ -1908,6 +1929,7 @@ let DJ_TRACKS = [
 
     function onYouTubeIframeAPIReady() {
       if (DOM.introVideo) {
+        DOM.introVideo.volume = 0.5;
         DOM.introVideo.play().catch(() => {});
         setTimeout(() => {
           DOM.introVideo.muted = false;
@@ -1915,6 +1937,7 @@ let DJ_TRACKS = [
           introPlayed = true;
           routeYTSignal();
         }, 1000);
+        DOM.introVideo.addEventListener('error', () => console.warn('Intro trailer video failed to load'));
       }
       
       bgMusicPlayer = new YT.Player('music-player', {
@@ -2170,7 +2193,9 @@ let DJ_TRACKS = [
     }
 
     const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
-    const DUNE_API_KEY = 'sim_166oiUHo2nJJgnWUrA1Qkq9n1MKzmDSZ';
+    const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
+    const X_BEARER_TOKEN = 'YOUR_X_BEARER_TOKEN';
+    const DUNE_MODULE_VERSION = '1.1.0.11';
     const CHAINS = [1, 42161, 8453, 10, 534352, 81457]; // Mainnet, Arbitrum, Base, Optimism, Scroll, Blast
     const TOKEN_ADDRESS = '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca';
     const CHAIN_ID = 8453;
@@ -2257,7 +2282,20 @@ let DJ_TRACKS = [
     }
 
     if (DOM.djOverlay) {
-      DOM.djOverlay.addEventListener('click', resumePlayers);
+      let overlayHandled = false;
+      const handler = debounce(() => {
+        if (overlayHandled) return;
+        overlayHandled = true;
+        resumePlayers();
+      });
+      [DOM.djOverlay, DOM.djLogoBtn].forEach(el => {
+        if (el) {
+          el.addEventListener('click', handler);
+          el.addEventListener('touchstart', handler);
+        }
+      });
+      DOM.djOverlay.addEventListener('keydown', e => { if (e.key === 'Enter') handler(); });
+      setTimeout(handler, 5000);
     }
 
     function updateVinyl(which) {
@@ -2521,16 +2559,75 @@ let DJ_TRACKS = [
       }
     }
 
+    async function fetchBTCHashRate() {
+      const url = 'https://api.blockchain.com/charts/hash-rate?timespan=1days&format=json';
+      try {
+        const data = await fetchWithRetry(url);
+        if (data && data.values && data.values.length) {
+          return data.values[data.values.length - 1].y;
+        }
+      } catch (error) {
+        console.warn('Failed to fetch BTC hash rate:', error);
+      }
+      return 0;
+    }
+
+    async function fetchBTCDifficulty() {
+      const url = 'https://api.blockchain.com/charts/difficulty?timespan=1days&format=json';
+      try {
+        const data = await fetchWithRetry(url);
+        if (data && data.values && data.values.length) {
+          return data.values[data.values.length - 1].y;
+        }
+      } catch (error) {
+        console.warn('Failed to fetch BTC difficulty:', error);
+      }
+      return 0;
+    }
+
+    async function fetchTwitterData(query) {
+      const cacheKey = `tw_${query}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        DOM.twitterWarning.style.display = 'block';
+        return JSON.parse(cached);
+      }
+      for (let i = 0; i < 3; i++) {
+        try {
+          const url = `https://api.twitter.com/2/tweets/search/recent?max_results=5&tweet.fields=text&query=${encodeURIComponent(query)}`;
+          const data = await fetchWithRetry(url, { headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` } });
+          if (data && data.data) {
+            localStorage.setItem(cacheKey, JSON.stringify(data.data));
+            return data.data;
+          }
+        } catch (error) {
+          console.warn(`Twitter fetch failed (${i + 1})`, error);
+          await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+        }
+      }
+      try {
+        const fallback = await fetchWithRetry('https://api.coindesk.com/v1/api/news');
+        return fallback?.data?.slice(0, 5).map(n => ({ text: n.title }));
+      } catch (err) {
+        console.error('Fallback news fetch failed', err);
+        return [];
+      }
+    }
+
     async function fetchTopInverseToken() {
       if (cachedInverseCoin) return cachedInverseCoin;
       try {
         const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=price_change_percentage_24h.asc&per_page=1&page=1';
         const data = await fetchWithRetry(url);
-        cachedInverseCoin = data && data[0] ? data[0].symbol.toUpperCase() : 'N/A';
+        if (data && data[0]) {
+          cachedInverseCoin = { symbol: data[0].symbol.toUpperCase(), change: data[0].price_change_percentage_24h };
+        } else {
+          cachedInverseCoin = { symbol: 'N/A', change: 0 };
+        }
         return cachedInverseCoin;
       } catch (err) {
         console.error('Failed to fetch inverse token:', err);
-        return 'N/A';
+        return { symbol: 'N/A', change: 0 };
       }
     }
 
@@ -2582,9 +2679,13 @@ let DJ_TRACKS = [
 
     async function fetchTokenInfo(tokenAddress, chainId) {
       const url = `https://api.sim.dune.com/v1/evm/token-info/${tokenAddress}?chain_ids=${chainId}`;
+      const cacheKey = `dune_${tokenAddress}_${chainId}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) return JSON.parse(cached);
       try {
         const data = await fetchWithRetry(url, { headers: { 'X-Sim-Api-Key': DUNE_API_KEY } });
         if (!data || !data.data) throw new Error('Invalid response from Dune API');
+        localStorage.setItem(cacheKey, JSON.stringify(data.data));
         return data.data;
       } catch (error) {
         console.error(`Failed to fetch token info for ${tokenAddress} on chain ${chainId}:`, error);
@@ -2691,6 +2792,10 @@ let DJ_TRACKS = [
       isBTCPriceMock = false;
 
       let historicalData;
+      const [hashRate, difficulty] = await Promise.all([
+        fetchBTCHashRate(),
+        fetchBTCDifficulty()
+      ]);
       try {
         historicalData = await fetchBTCHistoricalData();
       } catch (error) {
@@ -2773,12 +2878,17 @@ let DJ_TRACKS = [
 
         const inverse = await fetchTopInverseToken();
         const topCoin = await fetchTopCoin();
-        if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Top ⬇️: ${inverse}`;
+        const lossText = `${inverse.symbol} ${inverse.change.toFixed(2)}%`;
+        if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Down: ${lossText}`;
         if (DOM.loadingTopcoin) DOM.loadingTopcoin.textContent = `Top ⬆️: ${topCoin}`;
         if (DOM.trackATopcoin) DOM.trackATopcoin.textContent = `Top: ${topCoin}`;
         if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = `Top: ${topCoin}`;
-        if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Inv: ${inverse}`;
-        if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Inv: ${inverse}`;
+        if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Loss: ${lossText}`;
+        if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Loss: ${lossText}`;
+        if (DOM.btcOverlayPrice) DOM.btcOverlayPrice.textContent = `$${latestPrice.toLocaleString()}`;
+        if (DOM.btcOverlayLoss) DOM.btcOverlayLoss.textContent = lossText;
+        if (DOM.btcOverlayHashrate) DOM.btcOverlayHashrate.textContent = `Hash: ${hashRate.toFixed(2)} EH/s`;
+        if (DOM.btcOverlayDifficulty) DOM.btcOverlayDifficulty.textContent = `Diff: ${difficulty.toFixed(0)}`;
 
         const hashId = generateHashFromPrice(latestPrice);
         addHashLog(hashId, latestTime);
@@ -3249,15 +3359,35 @@ let DJ_TRACKS = [
       return div.innerHTML;
     }
 
+    function debounce(fn, delay = 100) {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), delay);
+      };
+    }
+
     function extractVideoId(url) {
       if (!url) return null;
       const match = url.match(/(?:v=|\.be\/)([A-Za-z0-9_-]{11})/);
       return match ? match[1] : url;
     }
 
+    async function loadTwitterData() {
+      if (!DOM.twitterList) return;
+      const tweets = await fetchTwitterData('bitcoin OR btc finance OR world news');
+      if (!tweets || tweets.length === 0) {
+        if (DOM.twitterLoader) DOM.twitterLoader.textContent = '> No tweets available';
+        return;
+      }
+      if (DOM.twitterLoader) DOM.twitterLoader.style.display = 'none';
+      DOM.twitterList.innerHTML = tweets.map(t => `<li class="p-2 rounded">${sanitizeInput(t.text)}</li>`).join('');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       DOM.navMenuToggle.addEventListener('click', () => DOM.navMenu.classList.add('active'));
       DOM.navMenuClose.addEventListener('click', () => DOM.navMenu.classList.remove('active'));
+      if (DOM.duneVersion) DOM.duneVersion.textContent = DUNE_MODULE_VERSION;
 
       const params = new URLSearchParams(window.location.search);
       if (params.get('dj') === '1') {
@@ -3272,6 +3402,7 @@ let DJ_TRACKS = [
       loadModuleOrder();
       setupModuleToggles();
       loadData();
+      loadTwitterData();
       init3D();
       updateBTCHash();
       fetchTopCoin().then(c => {
@@ -3280,9 +3411,10 @@ let DJ_TRACKS = [
         if (DOM.trackBTopcoin) DOM.trackBTopcoin.textContent = `Top: ${c}`;
       });
       fetchTopInverseToken().then(i => {
-        if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Top ⬇️: ${i}`;
-        if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Inv: ${i}`;
-        if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Inv: ${i}`;
+        const txt = `${i.symbol} ${i.change.toFixed(2)}%`;
+        if (DOM.loadingInverse) DOM.loadingInverse.textContent = `Down: ${txt}`;
+        if (DOM.trackAInverse) DOM.trackAInverse.textContent = `Loss: ${txt}`;
+        if (DOM.trackBInverse) DOM.trackBInverse.textContent = `Loss: ${txt}`;
       });
 
       if (DOM.muteBtn) {
@@ -3470,6 +3602,19 @@ let DJ_TRACKS = [
         DOM.djStopBtn.addEventListener('click', () => {
           trackAPlayer && trackAPlayer.pauseVideo();
           trackBPlayer && trackBPlayer.pauseVideo();
+        });
+      }
+
+      if (DOM.djDeactivateBtn) {
+        DOM.djDeactivateBtn.addEventListener('click', () => {
+          trackAPlayer && trackAPlayer.pauseVideo();
+          trackBPlayer && trackBPlayer.pauseVideo();
+          if (bgMusicPlayer && bgMusicPlayer.pauseVideo) bgMusicPlayer.pauseVideo();
+          DOM.djDashboard.classList.add('locked');
+          if (DOM.djOverlay) {
+            DOM.djOverlay.style.display = 'flex';
+            DOM.djOverlay.classList.remove('fade-out');
+          }
         });
       }
 
@@ -4106,6 +4251,7 @@ if (savedWallet) {
   document.addEventListener('DOMContentLoaded', () => {
     displayWalletAddress(walletAddress);
     refreshWalletData();
+    trackWalletTransactions(walletAddress);
   });
 }
 
@@ -4126,6 +4272,7 @@ async function connectWallet() {
     displayWalletAddress(walletAddress);
     localStorage.setItem('walletAddress', walletAddress);
     await refreshWalletData();
+    trackWalletTransactions(walletAddress);
   } catch (err) {
     console.error('Wallet connection failed:', err);
   }
@@ -4164,6 +4311,30 @@ async function refreshWalletData() {
     console.error('refreshWalletData error', e);
     document.getElementById('open-trades').innerHTML = '<li>Error loading wallet</li>';
     document.getElementById('wallet-balance').innerText = 'N/A';
+  }
+}
+
+async function trackWalletTransactions(addr) {
+  if (!addr) return;
+  if (DOM.walletTrackStatus) DOM.walletTrackStatus.textContent = 'Tracking...';
+  const cacheKey = `dune_tx_${addr}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    const obj = JSON.parse(cached);
+    if (Date.now() - obj.timestamp < 3600000) {
+      if (DOM.walletTrackStatus) DOM.walletTrackStatus.textContent = 'Cached';
+      return obj.data;
+    }
+  }
+  try {
+    const url = `https://api.sim.dune.com/v1/evm/transactions/${addr}?chain_id=${CHAIN_ID}`;
+    const data = await fetchWithRetry(url, { headers: { 'X-Sim-Api-Key': DUNE_API_KEY } });
+    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+    if (DOM.walletTrackStatus) DOM.walletTrackStatus.textContent = 'Tracked';
+    return data;
+  } catch (err) {
+    console.error('Failed to track transactions', err);
+    if (DOM.walletTrackStatus) DOM.walletTrackStatus.textContent = 'Failed';
   }
 }
 
