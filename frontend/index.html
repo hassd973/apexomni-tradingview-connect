@@ -1541,6 +1541,7 @@
 <p><strong>Detected Exchange:</strong> <span id="detected-exchange">Scanning...</span></p>
 <p><strong>Token Count:</strong> <span id="token-count">0</span></p>
 <p><strong>Last Tx:</strong> <span id="last-tx">N/A</span></p>
+<p><strong>Track Status:</strong> <span id="wallet-track-status">-</span></p>
 </div>
 <ul class="list-disc ml-4 text-sm text-gray-300" id="open-trades"></ul>
 </div>
@@ -1781,6 +1782,7 @@
       twitterLoader: document.getElementById('loader-twitter'),
       twitterWarning: document.getElementById('twitter-warning'),
       duneVersion: document.getElementById('dune-version'),
+      walletTrackStatus: document.getElementById('wallet-track-status'),
       muteBtn: document.getElementById('mute-btn'),
       musicMuteBtn: document.getElementById('music-mute-btn'),
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
@@ -1849,6 +1851,7 @@
       trackBVolume: document.getElementById('track-b-volume'),
       djPlaylist: document.getElementById('dj-playlist'),
       djOverlay: document.getElementById('dj-activation-overlay'),
+      djLogoBtn: document.querySelector('#dj-activation-overlay .logo'),
       djDashboard: document.getElementById('dj-dashboard'),
       djDeactivateBtn: document.getElementById('dj-deactivate-btn'),
       btcOverlayPrice: document.getElementById('btc-overlay-price'),
@@ -2190,7 +2193,7 @@ let DJ_TRACKS = [
     }
 
     const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
-    const DUNE_API_KEY = 'sim_166oiUHo2nJJgnWUrA1Qkq9n1MKzmDSZ';
+    const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
     const X_BEARER_TOKEN = 'YOUR_X_BEARER_TOKEN';
     const DUNE_MODULE_VERSION = '1.1.0.11';
     const CHAINS = [1, 42161, 8453, 10, 534352, 81457]; // Mainnet, Arbitrum, Base, Optimism, Scroll, Blast
@@ -2280,13 +2283,17 @@ let DJ_TRACKS = [
 
     if (DOM.djOverlay) {
       let overlayHandled = false;
-      const handler = () => {
+      const handler = debounce(() => {
         if (overlayHandled) return;
         overlayHandled = true;
         resumePlayers();
-      };
-      DOM.djOverlay.addEventListener('click', handler);
-      DOM.djOverlay.addEventListener('touchstart', handler);
+      });
+      [DOM.djOverlay, DOM.djLogoBtn].forEach(el => {
+        if (el) {
+          el.addEventListener('click', handler);
+          el.addEventListener('touchstart', handler);
+        }
+      });
       DOM.djOverlay.addEventListener('keydown', e => { if (e.key === 'Enter') handler(); });
       setTimeout(handler, 5000);
     }
@@ -3352,6 +3359,14 @@ let DJ_TRACKS = [
       return div.innerHTML;
     }
 
+    function debounce(fn, delay = 100) {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), delay);
+      };
+    }
+
     function extractVideoId(url) {
       if (!url) return null;
       const match = url.match(/(?:v=|\.be\/)([A-Za-z0-9_-]{11})/);
@@ -4236,6 +4251,7 @@ if (savedWallet) {
   document.addEventListener('DOMContentLoaded', () => {
     displayWalletAddress(walletAddress);
     refreshWalletData();
+    trackWalletTransactions(walletAddress);
   });
 }
 
@@ -4256,6 +4272,7 @@ async function connectWallet() {
     displayWalletAddress(walletAddress);
     localStorage.setItem('walletAddress', walletAddress);
     await refreshWalletData();
+    trackWalletTransactions(walletAddress);
   } catch (err) {
     console.error('Wallet connection failed:', err);
   }
@@ -4294,6 +4311,30 @@ async function refreshWalletData() {
     console.error('refreshWalletData error', e);
     document.getElementById('open-trades').innerHTML = '<li>Error loading wallet</li>';
     document.getElementById('wallet-balance').innerText = 'N/A';
+  }
+}
+
+async function trackWalletTransactions(addr) {
+  if (!addr) return;
+  if (DOM.walletTrackStatus) DOM.walletTrackStatus.textContent = 'Tracking...';
+  const cacheKey = `dune_tx_${addr}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) {
+    const obj = JSON.parse(cached);
+    if (Date.now() - obj.timestamp < 3600000) {
+      if (DOM.walletTrackStatus) DOM.walletTrackStatus.textContent = 'Cached';
+      return obj.data;
+    }
+  }
+  try {
+    const url = `https://api.sim.dune.com/v1/evm/transactions/${addr}?chain_id=${CHAIN_ID}`;
+    const data = await fetchWithRetry(url, { headers: { 'X-Sim-Api-Key': DUNE_API_KEY } });
+    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
+    if (DOM.walletTrackStatus) DOM.walletTrackStatus.textContent = 'Tracked';
+    return data;
+  } catch (err) {
+    console.error('Failed to track transactions', err);
+    if (DOM.walletTrackStatus) DOM.walletTrackStatus.textContent = 'Failed';
   }
 }
 
