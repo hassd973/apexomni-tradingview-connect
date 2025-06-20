@@ -109,6 +109,12 @@ function sanitizeTokenData(data) {
   }).filter(token => token.current_price > 0);
 }
 
+function normalizeSymbol(sym) {
+  return String(sym || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+}
+
 // Render ETH gas fee heatmap
 async function renderGasHeatmap() {
   const canvas = document.getElementById('gas-heatmap-canvas');
@@ -230,7 +236,7 @@ function updateTokenList(tokens) {
     const li = document.createElement('li');
     li.className = `gradient-bg p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} z-10`;
     li.setAttribute('data-tooltip', '[Click to toggle chart] ❄️');
-    li.setAttribute('data-symbol', `BINANCE:${token.symbol}USDT`);
+    li.setAttribute('data-symbol', `BINANCE:${normalizeSymbol(token.symbol)}USDT`);
     const priceChangeEmoji = token.price_change_percentage_24h >= 0 ? '🤑' : '🤮';
     li.innerHTML = `
       > 🍀 ${token.name} (${token.symbol})
@@ -340,7 +346,7 @@ function selectToken(token) {
   const chartTitleModal = document.getElementById('chart-title-modal');
   if (chartTitleHeader) chartTitleHeader.textContent = `> Chart: ${token.name} (${token.symbol}) ❄️`;
   if (chartTitleModal) chartTitleModal.textContent = `> Chart: ${token.name} (${token.symbol}) ❄️`;
-  updateChart(`BINANCE:${token.symbol}USDT`);
+  updateChart(`BINANCE:${normalizeSymbol(token.symbol)}USDT`);
   if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
   selectedTokenLi = event.target.closest('li');
   if (selectedTokenLi) selectedTokenLi.classList.add('selected-token');
