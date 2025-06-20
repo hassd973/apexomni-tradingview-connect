@@ -235,11 +235,12 @@
     }
     #loading-screen .video-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      justify-content: center;
-      align-items: flex-start;
+      bottom: 20px;
+      left: 20px;
+      top: auto;
+      width: auto;
+      justify-content: flex-start;
+      align-items: flex-end;
       z-index: 1002;
     }
     #music-mute-btn, #quantumi-sound-btn {
@@ -317,6 +318,15 @@
       border-radius: 5px;
       gap: 4px;
       z-index: 15;
+    }
+    #loading-screen .metrics-overlay {
+      bottom: 20px;
+      left: 20px;
+      top: auto;
+      transform: none;
+      width: auto;
+      justify-content: flex-start;
+      align-items: flex-end;
     }
     .metrics-container {
       display: flex;
@@ -2281,8 +2291,10 @@ let DJ_TRACKS = [
       } catch {}
     }
 
-    if (DOM.djOverlay) {
-      let overlayHandled = false;
+    let overlayHandled = false;
+    function setupDjOverlay() {
+      if (!DOM.djOverlay) return;
+      overlayHandled = false;
       const handler = debounce(() => {
         if (overlayHandled) return;
         overlayHandled = true;
@@ -2296,6 +2308,10 @@ let DJ_TRACKS = [
       });
       DOM.djOverlay.addEventListener('keydown', e => { if (e.key === 'Enter') handler(); });
       setTimeout(handler, 5000);
+    }
+
+    if (DOM.djOverlay) {
+      setupDjOverlay();
     }
 
     function updateVinyl(which) {
@@ -3610,10 +3626,12 @@ let DJ_TRACKS = [
           trackAPlayer && trackAPlayer.pauseVideo();
           trackBPlayer && trackBPlayer.pauseVideo();
           if (bgMusicPlayer && bgMusicPlayer.pauseVideo) bgMusicPlayer.pauseVideo();
+          document.querySelectorAll('video').forEach(v => v.pause());
           DOM.djDashboard.classList.add('locked');
           if (DOM.djOverlay) {
             DOM.djOverlay.style.display = 'flex';
             DOM.djOverlay.classList.remove('fade-out');
+            setupDjOverlay();
           }
         });
       }
