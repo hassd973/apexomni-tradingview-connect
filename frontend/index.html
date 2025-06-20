@@ -111,7 +111,7 @@
       background-color: var(--primary-color);
       color: #1e2727;
       border: 1px solid var(--shadow-color);
-      border-radius: 6px;
+      border-radius: 9999px;
       padding: 0.5rem 1rem;
       cursor: pointer;
       position: relative;
@@ -357,6 +357,9 @@
     }
     .dj-btn:active {
       background-color: rgba(30,144,255,0.4);
+    }
+    @media (max-width: 640px) {
+      .dj-btn { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
     }
     .dj-btn:hover {
       background-color: rgba(30,144,255,0.2);
@@ -850,7 +853,12 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
     .fade-in { animation: fadeIn 0.5s ease-in; }
+    .fade-out { animation: fadeOut 0.5s forwards; }
     .hover-transition { transition: all 0.3s ease; }
     .hover-transition:hover { background: rgba(255, 187, 51, 0.1); }
     .drop-target { border: 2px dashed var(--secondary-color); }
@@ -1075,6 +1083,7 @@
       from { opacity: 0; transform: translateY(-20px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
     @media (max-width: 640px) {
       #chat-list {
         max-height: 30vh;
@@ -1247,20 +1256,11 @@
 <div id="loading-screen">
   <div class="loading-video">
     <div class="video-container">
-      <iframe
-        id="loading-video-player"
-        loading="lazy"
-        width="560"
-        height="315"
-        src="https://www.youtube.com/embed/RkQ3m_uGwXE?enablejsapi=1&autoplay=1&mute=1&controls=0&playsinline=1&rel=0&modestbranding=1"
-        title="QuantumI Intro"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerpolicy="strict-origin-when-cross-origin"
-        allowfullscreen
-      ></iframe>
+      <video id="intro-video" preload="auto" playsinline muted autoplay class="w-full h-full object-cover">
+        <source src="intro.mp4" type="video/mp4" />
+      </video>
       <div class="video-overlay metrics-overlay">
-        <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="w-6 h-6"/>
+        <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo"/>
         <span id="loading-price"></span>
         <span id="loading-topcoin"></span>
         <span id="loading-inverse"></span>
@@ -1737,6 +1737,7 @@
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
       skipIntroBtn: document.getElementById('skip-intro-btn'),
       playIntroBtn: document.getElementById('play-intro-btn'),
+      introVideo: document.getElementById('intro-video'),
       loadingPrice: document.getElementById('loading-price'),
       loadingTopcoin: document.getElementById('loading-topcoin'),
       loadingInverse: document.getElementById('loading-inverse'),
@@ -1805,7 +1806,6 @@
     let isIndicatorEnabledModal = false;
     const chartCache = {};
     let scene, camera, renderer, controls, dotClouds = [], colorLegend = [], hashLog = [];
-    let ytPlayer;
     let bgMusicPlayer;
     let trackAPlayer;
     let trackBPlayer;
@@ -1869,51 +1869,14 @@ let DJ_TRACKS = [
     }
 
     function onYouTubeIframeAPIReady() {
-      let cnt = parseInt(localStorage.getItem('refreshCount') || '0');
-      cnt += 1;
-      let introVideoId = 'RkQ3m_uGwXE';
-      if (cnt === 3) {
-        introVideoId = 'zHLmyJvSkaA';
+      if (DOM.introVideo) {
+        DOM.introVideo.play().catch(() => {});
+        setTimeout(() => {
+          DOM.introVideo.muted = false;
+          DOM.introVideo.play().catch(() => {});
+          routeYTSignal();
+        }, 1000);
       }
-      if (cnt >= 4) cnt = 0;
-      localStorage.setItem('refreshCount', cnt);
-      ytPlayer = new YT.Player('loading-video-player', {
-        host: 'https://www.youtube.com',
-        videoId: 'RkQ3m_uGwXE',
-        playerVars: {
-          autoplay: 1,
-          mute: 1,
-          controls: 0,
-          rel: 0,
-          modestbranding: 1,
-          playsinline: 1,
-          origin: location.origin
-        },
-        events: {
-          onReady: (e) => {
-            try {
-              e.target.mute();
-              e.target.playVideo();
-              setTimeout(() => {
-                e.target.unMute();
-                e.target.setVolume(100);
-                e.target.playVideo();
-                routeYTSignal();
-                setTimeout(() => e.target.playVideo(), 100);
-              }, 1000);
-              e.target.getIframe().setAttribute('loading','lazy');
-            } catch {}
-          }
-        }
-      });
-      setTimeout(() => {
-        try {
-          if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
-            ytPlayer.playVideo();
-          }
-        } catch {}
-      }, 7000);
-
       bgMusicPlayer = new YT.Player('music-player', {
         host: 'https://www.youtube.com',
         videoId: 'RkQ3m_uGwXE',
@@ -2104,13 +2067,19 @@ let DJ_TRACKS = [
       window.enableQuantumSound = function() {
         if (!bgMusicPlayer || !bgMusicPlayer.getIframe) return;
         if (audioCtx) return;
-        const players = [bgMusicPlayer, ytPlayer].filter(p => p && p.getIframe && p.getIframe().captureStream);
+        const players = [bgMusicPlayer];
+        if (DOM.introVideo && DOM.introVideo.captureStream) players.push(DOM.introVideo);
+        const valid = players.filter(p => (p.getIframe ? p.getIframe().captureStream : p.captureStream));
+        if (!valid.length) return;
         if (!players.length) return;
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         let stream = null;
         try {
           stream = bgMusicPlayer.getIframe().captureStream();
         } catch {}
+        if (!stream && DOM.introVideo && DOM.introVideo.captureStream) {
+          try { stream = DOM.introVideo.captureStream(); } catch {}
+        }
         if (!stream) return;
         audioSource = audioCtx.createMediaStreamSource(stream);
         filterNode = audioCtx.createBiquadFilter();
@@ -2142,7 +2111,7 @@ let DJ_TRACKS = [
       };
 
       window.routeYTSignal = function() {
-        if (!ytPlayer) return;
+        if (!DOM.introVideo) return;
         if (!isQuantumSound) enableQuantumSound();
       };
     }
@@ -2194,7 +2163,7 @@ let DJ_TRACKS = [
     ];
 
     function hideLoadingScreen() {
-      DOM.loadingScreen.style.opacity = '0';
+      DOM.loadingScreen.classList.add('fade-out');
       setTimeout(() => {
         DOM.loadingScreen.style.display = 'none';
         document.querySelector('header').style.opacity = '1';
@@ -2210,7 +2179,7 @@ let DJ_TRACKS = [
     window.onload = function() {
       setTimeout(hideLoadingScreen, 23000);
       setTimeout(() => {
-        try { if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo(); } catch {}
+        try { if (DOM.introVideo) DOM.introVideo.play(); } catch {}
       }, 500);
     };
 
@@ -2226,7 +2195,7 @@ let DJ_TRACKS = [
 
     function resumePlayers() {
       try {
-        if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+        if (DOM.introVideo) DOM.introVideo.play();
         if (bgMusicPlayer && bgMusicPlayer.playVideo) bgMusicPlayer.playVideo();
         document.removeEventListener('click', resumePlayers);
       } catch {}
@@ -2240,12 +2209,15 @@ let DJ_TRACKS = [
       const player = which === 'A' ? trackAPlayer : trackBPlayer;
       if (!el || !player || !player.getPlayerState) return;
       const state = player.getPlayerState();
+      const logo = el.parentElement?.querySelector('.metrics-overlay .logo');
       if (state === YT.PlayerState.PLAYING) {
         el.classList.add('spinning', 'cd-playing');
         el.classList.remove('paused');
+        logo?.classList.add('pulse');
       } else {
         el.classList.remove('spinning', 'cd-playing');
         el.classList.add('paused');
+        logo?.classList.remove('pulse');
       }
     }
 
@@ -3259,37 +3231,23 @@ let DJ_TRACKS = [
 
       if (DOM.muteBtn) {
         DOM.muteBtn.addEventListener('click', () => {
-          if (!ytPlayer) return;
-          if (ytPlayer.isMuted()) {
-            ytPlayer.unMute();
-            DOM.muteBtn.textContent = '🔊';
-          } else {
-            ytPlayer.mute();
-            DOM.muteBtn.textContent = '🔇';
-          }
+          if (!DOM.introVideo) return;
+          DOM.introVideo.muted = !DOM.introVideo.muted;
+          DOM.muteBtn.textContent = DOM.introVideo.muted ? '🔇' : '🔊';
         });
       }
       if (DOM.playIntroBtn) {
         DOM.playIntroBtn.addEventListener('click', () => {
-          if (ytPlayer) {
-            ytPlayer.playVideo();
-          }
+          if (!DOM.introVideo) return;
+          if (DOM.introVideo.paused) DOM.introVideo.play();
+          else DOM.introVideo.pause();
         });
       }
 
       window.addEventListener('load', () => {
         setTimeout(() => {
-          if (ytPlayer && ytPlayer.playVideo) {
-            ytPlayer.playVideo();
-          }
+          if (DOM.introVideo) DOM.introVideo.play();
         }, 1000);
-        setTimeout(() => {
-          try {
-            if (ytPlayer && ytPlayer.getPlayerState && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) {
-              ytPlayer.playVideo();
-            }
-          } catch {}
-        }, 7000);
       });
 
       if (DOM.musicMuteBtn) {
@@ -3679,8 +3637,24 @@ let DJ_TRACKS = [
         });
       }
 
+      if (DOM.legendToggleBtn) {
+        DOM.legendToggleBtn.addEventListener('click', () => {
+          const legend = document.getElementById('btc-legend-explanation');
+          if (legend) {
+            const hidden = legend.classList.toggle('hidden');
+            DOM.legendToggleBtn.textContent = hidden ? 'Show Legend' : 'Hide Legend';
+          }
+        });
+      }
+
       if (DOM.skipIntroBtn) {
         DOM.skipIntroBtn.addEventListener('click', hideLoadingScreen);
+      }
+
+      if (DOM.introVideo) {
+        const introLogo = document.querySelector('#loading-screen .metrics-overlay .logo');
+        DOM.introVideo.addEventListener('play', () => introLogo?.classList.add('pulse'));
+        DOM.introVideo.addEventListener('pause', () => introLogo?.classList.remove('pulse'));
       }
 
       const welcome = document.createElement('li');
