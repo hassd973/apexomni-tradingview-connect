@@ -204,6 +204,10 @@
       height: 60px;
       margin-bottom: 0.5rem;
     }
+    #dj-activation-overlay.fade-out {
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
     #dj-activation-overlay:active img {
       animation: logoPulse 1s;
     }
@@ -2291,22 +2295,23 @@ let DJ_TRACKS = [
       } catch {}
     }
 
-    let overlayHandled = false;
     function setupDjOverlay() {
-      if (!DOM.djOverlay) return;
-      overlayHandled = false;
+      if (!DOM.djOverlay || !DOM.djLogoBtn) return;
       const handler = debounce(() => {
-        if (overlayHandled) return;
-        overlayHandled = true;
-        resumePlayers();
-      });
+        DOM.djOverlay.classList.add('fade-out');
+        setTimeout(() => {
+          DOM.djOverlay.style.display = 'none';
+          if (DOM.djDashboard) DOM.djDashboard.classList.remove('locked');
+          resumePlayers();
+        }, 500);
+      }, 100);
       [DOM.djOverlay, DOM.djLogoBtn].forEach(el => {
-        if (el) {
-          el.addEventListener('click', handler);
-          el.addEventListener('touchstart', handler);
-        }
+        el.addEventListener('click', handler);
+        el.addEventListener('touchstart', handler);
+        el.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === 'Space') handler();
+        });
       });
-      DOM.djOverlay.addEventListener('keydown', e => { if (e.key === 'Enter') handler(); });
       setTimeout(handler, 5000);
     }
 
@@ -2604,29 +2609,28 @@ let DJ_TRACKS = [
     async function fetchTwitterData(query) {
       const cacheKey = `tw_${query}`;
       const cached = localStorage.getItem(cacheKey);
-      if (cached) {
+      if (cached && Date.now() - JSON.parse(cached).timestamp < 1800000) {
         DOM.twitterWarning.style.display = 'block';
-        return JSON.parse(cached);
-      }
-      for (let i = 0; i < 3; i++) {
-        try {
-          const url = `https://api.twitter.com/2/tweets/search/recent?max_results=5&tweet.fields=text&query=${encodeURIComponent(query)}`;
-          const data = await fetchWithRetry(url, { headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` } });
-          if (data && data.data) {
-            localStorage.setItem(cacheKey, JSON.stringify(data.data));
-            return data.data;
-          }
-        } catch (error) {
-          console.warn(`Twitter fetch failed (${i + 1})`, error);
-          await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
-        }
+        return JSON.parse(cached).data;
       }
       try {
-        const fallback = await fetchWithRetry('https://api.coindesk.com/v1/api/news');
-        return fallback?.data?.slice(0, 5).map(n => ({ text: n.title }));
-      } catch (err) {
-        console.error('Fallback news fetch failed', err);
-        return [];
+        const url = `https://api.x.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,type`;
+        const data = await fetchWithRetry(url, { headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` } });
+        if (!data.data) throw new Error('No tweets found');
+        const result = data.data.map(tweet => ({
+          text: tweet.text,
+          author: data.includes.users.find(u => u.id === tweet.author_id)?.username || 'Unknown',
+          created_at: tweet.created_at,
+          video: tweet.attachments?.media_keys && data.includes.media.find(m => m.media_key === tweet.attachments.media_keys[0] && m.type === 'video')?.url
+        }));
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: result }));
+        DOM.twitterWarning.style.display = 'none';
+        return result;
+      } catch (error) {
+        console.error('X API fetch failed:', error);
+        DOM.twitterWarning.textContent = '> Failed to load tweets, using fallback';
+        DOM.twitterWarning.style.display = 'block';
+        return [{ text: 'Bitcoin hits $105,000!', author: 'CoinDesk', created_at: new Date().toISOString() }];
       }
     }
 
@@ -2694,18 +2698,29 @@ let DJ_TRACKS = [
     }
 
     async function fetchTokenInfo(tokenAddress, chainId) {
-      const url = `https://api.sim.dune.com/v1/evm/token-info/${tokenAddress}?chain_ids=${chainId}`;
-      const cacheKey = `dune_${tokenAddress}_${chainId}`;
+      const url = `https://api.sim.dune.com/v1/evm/transactions?address=${tokenAddress}&chain_id=${chainId}`;
+      const cacheKey = `dune_tx_${tokenAddress}_${chainId}`;
       const cached = localStorage.getItem(cacheKey);
-      if (cached) return JSON.parse(cached);
+      if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
+        DOM.tokenInsightsWarning.style.display = 'block';
+        return JSON.parse(cached).data;
+      }
       try {
         const data = await fetchWithRetry(url, { headers: { 'X-Sim-Api-Key': DUNE_API_KEY } });
         if (!data || !data.data) throw new Error('Invalid response from Dune API');
-        localStorage.setItem(cacheKey, JSON.stringify(data.data));
-        return data.data;
+        const result = data.data.map(tx => ({
+          tx_hash: tx.transaction_hash,
+          token: tx.token_symbol,
+          value: tx.value,
+          chain_id: chainId
+        }));
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: result }));
+        DOM.tokenInsightsWarning.style.display = 'none';
+        return result;
       } catch (error) {
         console.error(`Failed to fetch token info for ${tokenAddress} on chain ${chainId}:`, error);
-        return null;
+        DOM.tokenInsightsWarning.style.display = 'block';
+        return mockTokenInsights.map(t => ({ tx_hash: '0xmock', token: t.symbol, value: Math.random() * 100, chain_id: chainId }));
       }
     }
 
@@ -3353,18 +3368,18 @@ let DJ_TRACKS = [
 
     function updateTokenInsightsUI(insights) {
       if (!insights || insights.length === 0) {
-        console.error('No token insights provided to updateTokenInsightsUI');
+        console.error('No token insights provided');
         DOM.loaderTokenInsights.textContent = '> No data available';
         return;
       }
 
       DOM.loaderTokenInsights.style.display = 'none';
       DOM.tokenInsightsList.innerHTML = insights.map(insight => `
-        <li class="p-2 rounded">
-          <div>Token: ${insight.symbol}</div>
-          <div>Name: ${insight.name}</div>
-          <div class="metric">Decimals: ${insight.decimals}</div>
-          <div class="metric">Chain ID: ${insight.chainId}</div>
+        <li class="p-2 rounded bg-gray-800">
+          <div>Token: ${insight.token}</div>
+          <div>Tx Hash: <a href="https://etherscan.io/tx/${insight.tx_hash}" target="_blank" class="text-blue-400">${insight.tx_hash.slice(0,8)}...</a></div>
+          <div class="metric">Value: ${parseFloat(insight.value).toFixed(4)}</div>
+          <div class="metric">Chain ID: ${insight.chain_id}</div>
         </li>
       `).join('');
     }
@@ -3391,13 +3406,23 @@ let DJ_TRACKS = [
 
     async function loadTwitterData() {
       if (!DOM.twitterList) return;
-      const tweets = await fetchTwitterData('bitcoin OR btc finance OR world news');
+      DOM.twitterLoader.style.display = 'block';
+      const tweets = await fetchTwitterData('from:verified (bitcoin OR btc OR finance OR "world news")');
       if (!tweets || tweets.length === 0) {
-        if (DOM.twitterLoader) DOM.twitterLoader.textContent = '> No tweets available';
+        DOM.twitterLoader.textContent = '> No tweets available';
         return;
       }
-      if (DOM.twitterLoader) DOM.twitterLoader.style.display = 'none';
-      DOM.twitterList.innerHTML = tweets.map(t => `<li class="p-2 rounded">${sanitizeInput(t.text)}</li>`).join('');
+      DOM.twitterLoader.style.display = 'none';
+      DOM.twitterList.innerHTML = tweets.map(tweet => `
+        <li class="p-2 rounded-lg bg-gray-800">
+          <div class="flex justify-between">
+            <span>@${sanitizeInput(tweet.author)}</span>
+            <span class="text-gray-500 text-xs">${new Date(tweet.created_at).toLocaleString()}</span>
+          </div>
+          <div class="text-sm">${sanitizeInput(tweet.text)}</div>
+          ${tweet.video ? `<video src="${tweet.video}" controls class="w-full mt-2 rounded" autoplay muted playsinline></video>` : ''}
+        </li>
+      `).join('');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
