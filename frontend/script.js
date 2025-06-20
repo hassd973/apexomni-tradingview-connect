@@ -92,7 +92,9 @@ function sanitizeTokenData(data) {
     return {
       id: String(processedToken.id || processedToken.slug || '').replace(/[^a-zA-Z0-9-]/g, ''),
       name: String(processedToken.name || 'Unknown').substring(0, 50),
-      symbol: String(processedToken.symbol || '').toUpperCase().substring(0, 10),
+      symbol: String(processedToken.symbol || '')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, ''),
       current_price: Number(processedToken.current_price || processedToken.quote?.USD?.price || 0),
       total_volume: Number(processedToken.total_volume || processedToken.quote?.USD?.volume_24h || 0),
       price_change_percentage_24h: Number(processedToken.price_change_percentage_24h || processedToken.quote?.USD?.percent_change_24h || 0),
@@ -105,6 +107,12 @@ function sanitizeTokenData(data) {
       gasPrice: Number(processedToken.gasPrice || 0)
     };
   }).filter(token => token.current_price > 0);
+}
+
+function normalizeSymbol(sym) {
+  return String(sym || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
 }
 
 // Render ETH gas fee heatmap
@@ -228,7 +236,7 @@ function updateTokenList(tokens) {
     const li = document.createElement('li');
     li.className = `gradient-bg p-2 rounded-md shadow hover-glow transition cursor-pointer ${bgColor} fade-in ${glowClass} z-10`;
     li.setAttribute('data-tooltip', '[Click to toggle chart] ❄️');
-    li.setAttribute('data-symbol', `BINANCE:${token.symbol}USDT`);
+    li.setAttribute('data-symbol', `BINANCE:${normalizeSymbol(token.symbol)}USDT`);
     const priceChangeEmoji = token.price_change_percentage_24h >= 0 ? '🤑' : '🤮';
     li.innerHTML = `
       > 🍀 ${token.name} (${token.symbol})
@@ -338,7 +346,7 @@ function selectToken(token) {
   const chartTitleModal = document.getElementById('chart-title-modal');
   if (chartTitleHeader) chartTitleHeader.textContent = `> Chart: ${token.name} (${token.symbol}) ❄️`;
   if (chartTitleModal) chartTitleModal.textContent = `> Chart: ${token.name} (${token.symbol}) ❄️`;
-  updateChart(`BINANCE:${token.symbol}USDT`);
+  updateChart(`BINANCE:${normalizeSymbol(token.symbol)}USDT`);
   if (selectedTokenLi) selectedTokenLi.classList.remove('selected-token');
   selectedTokenLi = event.target.closest('li');
   if (selectedTokenLi) selectedTokenLi.classList.add('selected-token');
