@@ -177,7 +177,7 @@
     }
     #dj-dashboard .video-container iframe,
     #dj-dashboard .video-container > div {
-      transform: scale(1.2);
+      transform: none;
     }
     #loading-screen .video-container iframe,
     #loading-screen .video-container > div {
@@ -1569,7 +1569,7 @@
 </div>
 </section>
 </div>
-<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4">
+<section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4 custom-scroll">
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
   </div>
@@ -3332,14 +3332,14 @@ let DJ_TRACKS = [
 
       if (DOM.trackAPlay) DOM.trackAPlay.addEventListener('click', () => trackAPlayer && trackAPlayer.playVideo());
       if (DOM.trackABack) DOM.trackABack.addEventListener('click', () => {
-        if (trackAPlayer && trackAPlayer.getCurrentTime) {
-          trackAPlayer.seekTo(Math.max(0, trackAPlayer.getCurrentTime() - 10), true);
+        if (trackAPlayer && trackAPlayer.previousVideo) {
+          trackAPlayer.previousVideo();
         }
       });
       if (DOM.trackAPause) DOM.trackAPause.addEventListener('click', () => trackAPlayer && trackAPlayer.pauseVideo());
       if (DOM.trackAForward) DOM.trackAForward.addEventListener('click', () => {
-        if (trackAPlayer && trackAPlayer.getCurrentTime) {
-          trackAPlayer.seekTo(trackAPlayer.getCurrentTime() + 10, true);
+        if (trackAPlayer && trackAPlayer.nextVideo) {
+          trackAPlayer.nextVideo();
         }
       });
       if (DOM.trackAStop) DOM.trackAStop.addEventListener('click', () => trackAPlayer && trackAPlayer.stopVideo());
@@ -3356,14 +3356,14 @@ let DJ_TRACKS = [
       if (DOM.trackAVolume) DOM.trackAVolume.addEventListener('input', (e) => trackAPlayer && trackAPlayer.setVolume(e.target.value));
       if (DOM.trackBPlay) DOM.trackBPlay.addEventListener('click', () => trackBPlayer && trackBPlayer.playVideo());
       if (DOM.trackBBack) DOM.trackBBack.addEventListener('click', () => {
-        if (trackBPlayer && trackBPlayer.getCurrentTime) {
-          trackBPlayer.seekTo(Math.max(0, trackBPlayer.getCurrentTime() - 10), true);
+        if (trackBPlayer && trackBPlayer.previousVideo) {
+          trackBPlayer.previousVideo();
         }
       });
       if (DOM.trackBPause) DOM.trackBPause.addEventListener('click', () => trackBPlayer && trackBPlayer.pauseVideo());
       if (DOM.trackBForward) DOM.trackBForward.addEventListener('click', () => {
-        if (trackBPlayer && trackBPlayer.getCurrentTime) {
-          trackBPlayer.seekTo(trackBPlayer.getCurrentTime() + 10, true);
+        if (trackBPlayer && trackBPlayer.nextVideo) {
+          trackBPlayer.nextVideo();
         }
       });
       if (DOM.trackBStop) DOM.trackBStop.addEventListener('click', () => trackBPlayer && trackBPlayer.stopVideo());
