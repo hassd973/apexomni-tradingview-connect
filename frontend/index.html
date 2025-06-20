@@ -182,6 +182,20 @@
       max-height: 50vh;
       overflow-y: auto;
     }
+    #dj-activation-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.5);
+      color: #fff;
+      cursor: pointer;
+      z-index: 20;
+    }
     #dj-dashboard .video-container iframe,
     #dj-dashboard .video-container > div {
       transform: none;
@@ -1263,7 +1277,7 @@
 <div id="loading-screen">
   <div class="loading-video">
     <div class="video-container">
-      <video id="intro-video" preload="auto" playsinline muted autoplay crossorigin="anonymous" class="w-full">
+      <video id="intro-video" preload="auto" playsinline autoplay crossorigin="anonymous" class="w-full">
         <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
       </video>
       <div class="video-overlay metrics-overlay">
@@ -1575,6 +1589,9 @@
 </section>
 </div>
 <section id="dj-dashboard" class="rounded-lg w-full max-w-[98vw] mx-auto text-center mt-4 custom-scroll">
+  <div id="dj-activation-overlay" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center cursor-pointer z-20 text-white">
+    Tap to activate DJ
+  </div>
   <div class="flex justify-between items-center">
     <h2 class="text-lg md:text-xl">&gt; QuantumI DJ</h2>
   </div>
@@ -1803,7 +1820,8 @@
       trackBStop: document.getElementById('track-b-stop'),
       trackBMute: document.getElementById('track-b-mute'),
       trackBVolume: document.getElementById('track-b-volume'),
-      djPlaylist: document.getElementById('dj-playlist')
+      djPlaylist: document.getElementById('dj-playlist'),
+      djOverlay: document.getElementById('dj-activation-overlay')
     };
 
     let draggedModule = null;
@@ -2191,7 +2209,12 @@ let DJ_TRACKS = [
     window.onload = function() {
       setTimeout(hideLoadingScreen, 23000);
       setTimeout(() => {
-        try { if (DOM.introVideo) DOM.introVideo.play(); } catch {}
+        try {
+          if (DOM.introVideo) {
+            DOM.introVideo.muted = false;
+            DOM.introVideo.play().catch(() => {});
+          }
+        } catch {}
       }, 500);
     };
 
@@ -2207,13 +2230,20 @@ let DJ_TRACKS = [
 
     function resumePlayers() {
       try {
-        if (DOM.introVideo) DOM.introVideo.play();
+        if (DOM.introVideo) {
+          DOM.introVideo.muted = false;
+          DOM.introVideo.play().catch(() => {});
+        }
         if (bgMusicPlayer && bgMusicPlayer.playVideo) bgMusicPlayer.playVideo();
+        if (DOM.djOverlay) DOM.djOverlay.style.display = 'none';
         document.removeEventListener('click', resumePlayers);
       } catch {}
     }
 
     document.addEventListener('click', resumePlayers, { once: true });
+    if (DOM.djOverlay) {
+      DOM.djOverlay.addEventListener('click', resumePlayers);
+    }
     window.addEventListener('load', () => setTimeout(resumePlayers, 500));
 
     function updateVinyl(which) {
