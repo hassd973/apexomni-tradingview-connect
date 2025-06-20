@@ -817,26 +817,26 @@
       background: var(--primary-color);
       border-radius: 4px;
     }
-    #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list {
+    #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list, #twitter-list {
       max-height: 50vh;
       overflow-y: auto;
       padding-right: 4px;
     }
-    #gas-heatmap-list, #balances-list, #token-insights-list {
+    #gas-heatmap-list, #balances-list, #token-insights-list, #twitter-list {
       max-height: 20vh;
     }
     #chat-list {
       height: calc(100vh - 200px);
     }
     @media (min-width: 640px) {
-      #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list {
+      #token-list, #profit-pairs, #log-list, #chat-list, #gas-heatmap-list, #balances-list, #token-insights-list, #twitter-list {
         max-height: 60vh;
       }
-      #gas-heatmap-list, #balances-list, #token-insights-list {
+      #gas-heatmap-list, #balances-list, #token-insights-list, #twitter-list {
         max-height: 20vh;
       }
     }
-    #token-list li, #profit-pairs li, #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li {
+    #token-list li, #profit-pairs li, #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li, #twitter-list li {
       display: flex;
       flex-direction: column;
       padding: 0.75rem;
@@ -847,13 +847,13 @@
       font-size: 0.875rem;
       background: rgba(35, 46, 46, 0.2);
     }
-    #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li {
+    #gas-heatmap-list li, #log-list li, #balances-list li, #token-insights-list li, #twitter-list li {
       font-size: 0.75rem;
       padding: 0.5rem;
       overflow-x: auto;
       white-space: nowrap;
     }
-    #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover, #balances-list li:hover, #token-insights-list li:hover {
+    #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover, #balances-list li:hover, #token-insights-list li:hover, #twitter-list li:hover {
       background: rgba(255, 187, 51, 0.1);
       transform: translateX(2px);
       box-shadow: 0 0 6px var(--shadow-color);
@@ -863,11 +863,11 @@
       background: rgba(255, 187, 51, 0.1);
       box-shadow: 0 0 6px var(--shadow-color);
     }
-    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric {
+    #token-list .metric, #profit-pairs .metric, #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric, #twitter-list .metric {
       font-size: 0.75rem;
       color: var(--text-color);
     }
-    #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric {
+    #gas-heatmap-list .metric, #log-list .metric, #balances-list .metric, #token-insights-list .metric, #twitter-list .metric {
       word-break: break-all;
     }
     #token-list .performance, #profit-pairs .top-pair, #profit-pairs .bottom-pair {
@@ -1479,13 +1479,14 @@
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
 <div class="module-content">
-<a class="twitter-timeline" data-height="400" data-width="100%" data-theme="dark" href="https://twitter.com/search?q=bitcoin%20OR%20btc%20finance&src=typed_query">Tweets about Bitcoin</a>
-<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<div class="loader text-center text-gray-500 text-sm" id="loader-twitter">&gt; Loading tweets...</div>
+<div class="data-warning" id="twitter-warning" style="display: none;">&gt; Using cached tweets</div>
+<ul class="space-y-2 text-sm" id="twitter-list"></ul>
 </div>
 </section>
 <section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
 <div class="module-header">
-<h2 class="text-lg md:text-xl token-insights-title typewriter">&gt; Token Insights (Dune API)</h2>
+<h2 class="text-lg md:text-xl token-insights-title typewriter">&gt; Token Insights (Dune API <span id="dune-version"></span>)</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
 <div class="module-content">
@@ -1776,6 +1777,10 @@
       tokenInsightsList: document.getElementById('token-insights-list'),
       loaderTokenInsights: document.getElementById('loader-token-insights'),
       tokenInsightsWarning: document.getElementById('token-insights-warning'),
+      twitterList: document.getElementById('twitter-list'),
+      twitterLoader: document.getElementById('loader-twitter'),
+      twitterWarning: document.getElementById('twitter-warning'),
+      duneVersion: document.getElementById('dune-version'),
       muteBtn: document.getElementById('mute-btn'),
       musicMuteBtn: document.getElementById('music-mute-btn'),
       quantumiSoundBtn: document.getElementById('quantumi-sound-btn'),
@@ -2186,6 +2191,8 @@ let DJ_TRACKS = [
 
     const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
     const DUNE_API_KEY = 'sim_166oiUHo2nJJgnWUrA1Qkq9n1MKzmDSZ';
+    const X_BEARER_TOKEN = 'YOUR_X_BEARER_TOKEN';
+    const DUNE_MODULE_VERSION = '1.1.0.11';
     const CHAINS = [1, 42161, 8453, 10, 534352, 81457]; // Mainnet, Arbitrum, Base, Optimism, Scroll, Blast
     const TOKEN_ADDRESS = '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca';
     const CHAIN_ID = 8453;
@@ -2272,7 +2279,16 @@ let DJ_TRACKS = [
     }
 
     if (DOM.djOverlay) {
-      DOM.djOverlay.addEventListener('click', resumePlayers);
+      let overlayHandled = false;
+      const handler = () => {
+        if (overlayHandled) return;
+        overlayHandled = true;
+        resumePlayers();
+      };
+      DOM.djOverlay.addEventListener('click', handler);
+      DOM.djOverlay.addEventListener('touchstart', handler);
+      DOM.djOverlay.addEventListener('keydown', e => { if (e.key === 'Enter') handler(); });
+      setTimeout(handler, 5000);
     }
 
     function updateVinyl(which) {
@@ -2562,6 +2578,35 @@ let DJ_TRACKS = [
       return 0;
     }
 
+    async function fetchTwitterData(query) {
+      const cacheKey = `tw_${query}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        DOM.twitterWarning.style.display = 'block';
+        return JSON.parse(cached);
+      }
+      for (let i = 0; i < 3; i++) {
+        try {
+          const url = `https://api.twitter.com/2/tweets/search/recent?max_results=5&tweet.fields=text&query=${encodeURIComponent(query)}`;
+          const data = await fetchWithRetry(url, { headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` } });
+          if (data && data.data) {
+            localStorage.setItem(cacheKey, JSON.stringify(data.data));
+            return data.data;
+          }
+        } catch (error) {
+          console.warn(`Twitter fetch failed (${i + 1})`, error);
+          await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
+        }
+      }
+      try {
+        const fallback = await fetchWithRetry('https://api.coindesk.com/v1/api/news');
+        return fallback?.data?.slice(0, 5).map(n => ({ text: n.title }));
+      } catch (err) {
+        console.error('Fallback news fetch failed', err);
+        return [];
+      }
+    }
+
     async function fetchTopInverseToken() {
       if (cachedInverseCoin) return cachedInverseCoin;
       try {
@@ -2627,9 +2672,13 @@ let DJ_TRACKS = [
 
     async function fetchTokenInfo(tokenAddress, chainId) {
       const url = `https://api.sim.dune.com/v1/evm/token-info/${tokenAddress}?chain_ids=${chainId}`;
+      const cacheKey = `dune_${tokenAddress}_${chainId}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) return JSON.parse(cached);
       try {
         const data = await fetchWithRetry(url, { headers: { 'X-Sim-Api-Key': DUNE_API_KEY } });
         if (!data || !data.data) throw new Error('Invalid response from Dune API');
+        localStorage.setItem(cacheKey, JSON.stringify(data.data));
         return data.data;
       } catch (error) {
         console.error(`Failed to fetch token info for ${tokenAddress} on chain ${chainId}:`, error);
@@ -3309,9 +3358,21 @@ let DJ_TRACKS = [
       return match ? match[1] : url;
     }
 
+    async function loadTwitterData() {
+      if (!DOM.twitterList) return;
+      const tweets = await fetchTwitterData('bitcoin OR btc finance OR world news');
+      if (!tweets || tweets.length === 0) {
+        if (DOM.twitterLoader) DOM.twitterLoader.textContent = '> No tweets available';
+        return;
+      }
+      if (DOM.twitterLoader) DOM.twitterLoader.style.display = 'none';
+      DOM.twitterList.innerHTML = tweets.map(t => `<li class="p-2 rounded">${sanitizeInput(t.text)}</li>`).join('');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       DOM.navMenuToggle.addEventListener('click', () => DOM.navMenu.classList.add('active'));
       DOM.navMenuClose.addEventListener('click', () => DOM.navMenu.classList.remove('active'));
+      if (DOM.duneVersion) DOM.duneVersion.textContent = DUNE_MODULE_VERSION;
 
       const params = new URLSearchParams(window.location.search);
       if (params.get('dj') === '1') {
@@ -3326,6 +3387,7 @@ let DJ_TRACKS = [
       loadModuleOrder();
       setupModuleToggles();
       loadData();
+      loadTwitterData();
       init3D();
       updateBTCHash();
       fetchTopCoin().then(c => {
