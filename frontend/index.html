@@ -1256,8 +1256,8 @@
 <div id="loading-screen">
   <div class="loading-video">
     <div class="video-container">
-      <video id="intro-video" preload="auto" playsinline muted autoplay class="w-full h-full object-cover">
-        <source src="intro.mp4" type="video/mp4" />
+      <video id="intro-video" preload="auto" playsinline muted autoplay crossorigin="anonymous" class="w-full h-full object-cover">
+        <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
       </video>
       <div class="video-overlay metrics-overlay">
         <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo"/>
@@ -1443,14 +1443,12 @@
 </section>
 <section class="rounded-lg balances-section" draggable="true" id="balances-module">
 <div class="module-header">
-<h2 class="text-lg md:text-xl balances-title typewriter">&gt; Balances (Dune API)</h2>
+<h2 class="text-lg md:text-xl balances-title typewriter">&gt; Finance Tweets</h2>
 <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
 </div>
 <div class="module-content">
-<div class="loader text-center text-gray-500 text-sm" id="loader-balances">&gt; Loading...</div>
-<div class="data-warning" id="balances-warning" style="display: none;">&gt; Live data from Dune API</div>
-<ul class="space-y-2 text-sm" id="balances-list"></ul>
-<button aria-label="Export balances as CSV" class="mt-2" data-tooltip="Export balances as CSV" id="export-balances" role="button">Export CSV</button>
+<a class="twitter-timeline" data-height="400" href="https://twitter.com/search?q=bitcoin%20OR%20btc%20finance&src=typed_query">Tweets about Bitcoin</a>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 </div>
 </section>
 <section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
@@ -1896,7 +1894,9 @@ let DJ_TRACKS = [
             e.target.setVolume(100);
             e.target.mute();
             e.target.playVideo();
-            e.target.getIframe().setAttribute('loading','lazy');
+            const frame = e.target.getIframe();
+            frame.setAttribute('loading','lazy');
+            frame.setAttribute('crossorigin','anonymous');
           }
         }
       });
@@ -1910,7 +1910,9 @@ let DJ_TRACKS = [
           onReady: (ev) => {
             attachTrack(ev.target, 'A');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_A});
-            ev.target.getIframe().setAttribute('loading','lazy');
+            const frameA = ev.target.getIframe();
+            frameA.setAttribute('loading','lazy');
+            frameA.setAttribute('crossorigin','anonymous');
             if (DOM.trackAMute) DOM.trackAMute.textContent = 'Unmute';
           },
           onStateChange: (ev) => {
@@ -1929,7 +1931,9 @@ let DJ_TRACKS = [
           onReady: (ev) => {
             attachTrack(ev.target, 'B');
             if (bgMusicPlayer) bgMusicPlayer.loadPlaylist({list: PLAYLIST_B});
-            ev.target.getIframe().setAttribute('loading','lazy');
+            const frameB = ev.target.getIframe();
+            frameB.setAttribute('loading','lazy');
+            frameB.setAttribute('crossorigin','anonymous');
             if (DOM.trackBMute) DOM.trackBMute.textContent = 'Unmute';
           },
           onStateChange: (ev) => {
