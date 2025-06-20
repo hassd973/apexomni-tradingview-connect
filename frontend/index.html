@@ -1988,7 +1988,7 @@ let DJ_TRACKS = [
         return impulse;
       }
 
-      function createBitcrusherCurve(bits = 8) {
+      function createBitcrusherCurve(bits = 4) {
         const samples = 1 << bits;
         const curve = new Float32Array(samples);
         for (let i = 0; i < samples; i++) {
@@ -2001,11 +2001,11 @@ let DJ_TRACKS = [
         switch (type) {
           case 'delay':
             const delay = djCtx.createDelay();
-            delay.delayTime.value = 0.5;
+            delay.delayTime.value = 0.7;
             return delay;
           case 'reverb':
             const convolver = djCtx.createConvolver();
-            convolver.buffer = createImpulse(5, 4);
+            convolver.buffer = createImpulse(6, 3);
             return convolver;
           case 'distortion':
             const distortion = djCtx.createWaveShaper();
@@ -2015,11 +2015,11 @@ let DJ_TRACKS = [
           case 'filter':
             const filter = djCtx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.value = 1000;
+            filter.frequency.value = 800;
             return filter;
           case 'bitcrusher':
             const crusher = djCtx.createWaveShaper();
-            crusher.curve = createBitcrusherCurve(8);
+            crusher.curve = createBitcrusherCurve(4);
             crusher.oversample = '4x';
             return crusher;
           default:
@@ -2123,6 +2123,7 @@ let DJ_TRACKS = [
         bitcrusherNode.curve = new Float32Array([-1,-0.5,0,0.5,1]);
         bitcrusherNode.oversample = '4x';
         gainNode = audioCtx.createGain();
+        gainNode.gain.value = 1.2;
         audioSource.connect(filterNode);
         filterNode.connect(delayNode);
         delayNode.connect(convolverNode);
@@ -2235,6 +2236,7 @@ let DJ_TRACKS = [
           DOM.introVideo.play().catch(() => {});
         }
         if (bgMusicPlayer && bgMusicPlayer.playVideo) bgMusicPlayer.playVideo();
+        routeYTSignal();
         if (DOM.djOverlay) DOM.djOverlay.style.display = 'none';
         document.removeEventListener('click', resumePlayers);
       } catch {}
