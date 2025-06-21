@@ -324,20 +324,32 @@
       z-index: 15;
     }
     #loading-screen .metrics-overlay {
-      bottom: 20px;
-      left: 20px;
-      top: auto;
-      transform: none;
-      width: auto;
-      justify-content: flex-start;
-      align-items: flex-end;
-    }
-    .metrics-container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 4px;
+      position: absolute;
+      bottom: 0;
+      left: 0;
       width: 100%;
+      justify-content: center;
+      align-items: flex-end;
+      z-index: 1002;
+      flex-direction: column;
+      padding: 1rem;
+    }
+    #loading-screen .metrics-overlay .logo {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      width: 50px;
+      height: 50px;
+    }
+    #loading-screen .metrics-overlay .metrics-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
     }
     .metric {
       flex: 0 1 45%;
@@ -563,18 +575,34 @@
     }
     /* intro buttons styling replaced by .intro-buttons section above */
     #loading-screen .title-box {
-      position: fixed;
-      bottom: 5rem;
+      border: none;
+      font-size: 1.25rem;
+      padding: 0.5rem 1rem;
+    }
+    #loading-screen .title-box h1 {
+      font-size: 2rem;
+    }
+    @media (max-width: 640px) {
+      #loading-screen .title-box {
+        font-size: 1rem;
+      }
+      #loading-screen .title-box h1 {
+        font-size: 1.5rem;
+      }
+      #loading-screen .metrics-overlay .logo {
+        width: 40px;
+        height: 40px;
+      }
+    }
+    /* Ensure DJ track overlays are unaffected */
+    #track-a-player .metrics-overlay, #track-b-player .metrics-overlay {
+      position: absolute;
+      top: 2%;
       left: 50%;
       transform: translateX(-50%);
-      margin: 0;
-      z-index: 1003;
-      text-align: center;
-      max-width: max-content;
-      display: flex;
+      width: calc(100% - 20px);
       justify-content: center;
-      margin: 0;
-      box-sizing: border-box;
+      align-items: center;
     }
     header, main, footer, #module-grid section {
       opacity: 0;
@@ -1040,12 +1068,12 @@
       z-index: 60;
       box-shadow: 0 0 4px var(--shadow-color);
     }
-    .gas-heatmap-section, .balances-section, .token-insights-section {
+    .gas-heatmap-section, .twitter-section, .token-insights-section {
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
     }
-    .gas-heatmap-title, .balances-title, .token-insights-title {
+    .gas-heatmap-title, .twitter-title, .token-insights-title {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -1208,43 +1236,47 @@
     }
     @media (max-width: 640px) {
       #dj-dashboard {
-        max-height: 70vh;
-        padding-bottom: 80px;
+        max-height: 80vh;
+        padding-bottom: 100px;
       }
       .dj-track {
         flex-direction: column;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
       }
       .playlist-container {
         width: 100%;
         max-width: 90vw;
-        height: 200px;
+        height: 180px;
         aspect-ratio: unset;
       }
       .dj-controls {
         position: sticky;
         bottom: 0;
-        background: rgba(18, 18, 18, 0.9);
+        background: rgba(18, 18, 18, 0.95);
         padding: 0.5rem;
-        z-index: 10;
+        z-index: 15;
         flex-wrap: wrap;
-        gap: 0.5rem;
+        gap: 0.4rem;
       }
       .dj-btn, .dj-cue-btn {
-        font-size: 0.7rem;
-        padding: 0.3rem 0.6rem;
-        flex: 1 0 30%;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.5rem;
+        flex: 1 0 45%;
         text-align: center;
       }
       .fx-knob {
-        width: 60px;
+        width: 50px;
       }
       #dj-playlist {
-        max-height: 30vh;
+        max-height: 25vh;
+        font-size: 0.8rem;
       }
       .vinyl-disk {
-        width: 80%;
-        max-width: 200px;
+        width: 85%;
+        max-width: 180px;
+      }
+      #dj-playlist .playlist-item span {
+        font-size: 0.75rem;
       }
     }
   </style>
@@ -1528,16 +1560,17 @@
 <ul class="space-y-2 text-sm" id="log-list"></ul>
 </div>
 </section>
-<section class="rounded-lg balances-section" draggable="true" id="balances-module">
-<div class="module-header">
-<h2 class="text-lg md:text-xl balances-title typewriter">&gt; Finance Tweets</h2>
-<button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
-</div>
-<div class="module-content">
-<div class="loader text-center text-gray-500 text-sm" id="loader-twitter">&gt; Loading tweets...</div>
-<div class="data-warning" id="twitter-warning" style="display: none;">&gt; Using cached tweets</div>
-<ul class="space-y-2 text-sm" id="twitter-list"></ul>
-</div>
+<section class="rounded-lg twitter-section" draggable="true" id="balances-module">
+  <div class="module-header">
+    <h2 class="text-lg md:text-xl twitter-title typewriter">&gt; Finance &amp; Crypto News</h2>
+    <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+  </div>
+  <div class="module-content">
+    <div class="loader text-center text-gray-500 text-sm" id="loader-twitter">&gt; Loading tweets...</div>
+    <div class="data-warning" id="twitter-warning" style="display: none;">&gt; Using cached tweets</div>
+    <div id="twitter-timeline" class="custom-scroll" style="max-height: 50vh; overflow-y: auto;"></div>
+    <ul class="space-y-2 text-sm custom-scroll" id="twitter-list"></ul>
+  </div>
 </section>
 <section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
 <div class="module-header">
@@ -1834,7 +1867,8 @@
       loaderTokenInsights: document.getElementById('loader-token-insights'),
       tokenInsightsWarning: document.getElementById('token-insights-warning'),
       twitterList: document.getElementById('twitter-list'),
-      twitterLoader: document.getElementById('loader-twitter'),
+      twitterTimeline: document.getElementById('twitter-timeline'),
+      loaderTwitter: document.getElementById('loader-twitter'),
       twitterWarning: document.getElementById('twitter-warning'),
       duneVersion: document.getElementById('dune-version'),
       walletTrackStatus: document.getElementById('wallet-track-status'),
@@ -1923,9 +1957,9 @@
     let bgMusicPlayer;
     let trackAPlayer;
     let trackBPlayer;
-    let djCtx, gainA, gainB, recorder, dest, autoBlendInterval;
+    let djCtx, gainA, gainB, recorder, dest, analyser, srcA, srcB, autoBlendInterval;
     let delayNodeA, delayNodeB, reverbNodeA, reverbNodeB, filterNodeA, filterNodeB,
-        bitcrusherNodeA, bitcrusherNodeB, analyser, srcA, srcB;
+        bitcrusherNodeA, bitcrusherNodeB;
     let chunks = [];
     const fxMatrix = { A: [], B: [] };
     let volumeBarsEnabled = false;
@@ -2072,11 +2106,10 @@ let DJ_TRACKS = [
       enableQuantumSound();
 
       function createImpulse(duration = 5, decay = 4) {
-        const ctx = djCtx || audioCtx;
-        if (!ctx) return null;
-        const rate = ctx.sampleRate;
+        if (!djCtx) return null;
+        const rate = djCtx.sampleRate;
         const length = rate * duration;
-        const impulse = ctx.createBuffer(2, length, rate);
+        const impulse = djCtx.createBuffer(2, length, rate);
         for (let c = 0; c < 2; c++) {
           const channel = impulse.getChannelData(c);
           for (let i = 0; i < length; i++) {
@@ -2098,18 +2131,13 @@ let DJ_TRACKS = [
       function createFxNode(type) {
         switch (type) {
           case 'delay':
-            const delay = djCtx.createDelay();
+            const delay = djCtx.createDelay(5);
             delay.delayTime.value = 0.7;
             return delay;
           case 'reverb':
             const convolver = djCtx.createConvolver();
             convolver.buffer = createImpulse(6, 3);
             return convolver;
-          case 'distortion':
-            const distortion = djCtx.createWaveShaper();
-            distortion.curve = createDistortionCurve(100);
-            distortion.oversample = '4x';
-            return distortion;
           case 'filter':
             const filter = djCtx.createBiquadFilter();
             filter.type = 'lowpass';
@@ -2118,22 +2146,10 @@ let DJ_TRACKS = [
           case 'bitcrusher':
             const crusher = djCtx.createWaveShaper();
             crusher.curve = createBitcrusherCurve(4);
-            crusher.oversample = '4x';
             return crusher;
           default:
             return null;
         }
-      }
-
-      function addFxToChain(track, fxType) {
-        const node = createFxNode(fxType);
-        if (!node) return;
-        const chain = fxMatrix[track];
-        const last = chain.length > 0 ? chain[chain.length - 1] : (track === 'A' ? srcA : srcB);
-        if (last) last.disconnect();
-        if (last) last.connect(node);
-        node.connect(track === 'A' ? gainA : gainB);
-        chain.push(node);
       }
 
       function attachTrack(player, which) {
@@ -2143,41 +2159,54 @@ let DJ_TRACKS = [
           gainA = djCtx.createGain();
           gainB = djCtx.createGain();
           dest = djCtx.createMediaStreamDestination();
-          gainA.connect(djCtx.destination);
-          gainB.connect(djCtx.destination);
-          gainA.connect(dest);
-          gainB.connect(dest);
           analyser = djCtx.createAnalyser();
           analyser.fftSize = 2048;
           gainA.connect(analyser);
           gainB.connect(analyser);
+          gainA.connect(dest);
+          gainB.connect(dest);
+          analyser.connect(djCtx.destination);
           drawBtcAudio();
-          if (!btcRenderer) {
-            initBtcOverlay();
-          }
         }
-        const iframe = player.getIframe && player.getIframe();
-        const stream = iframe && iframe.captureStream ? iframe.captureStream() : null;
-        if (stream) {
-          console.log('Stream captured:', stream);
-          const src = djCtx.createMediaStreamSource(stream);
-          if (which === 'A') {
-            srcA = src;
-            fxMatrix.A = [];
-            ['delay','reverb','distortion','filter','bitcrusher'].forEach(fx => addFxToChain('A', fx));
-            [delayNodeA, reverbNodeA, , filterNodeA, bitcrusherNodeA] = fxMatrix.A;
-            console.log('FX chain A:', fxMatrix.A.map(n => n.constructor.name));
-          } else {
-            srcB = src;
-            fxMatrix.B = [];
-            ['delay','reverb','distortion','filter','bitcrusher'].forEach(fx => addFxToChain('B', fx));
-            [delayNodeB, reverbNodeB, , filterNodeB, bitcrusherNodeB] = fxMatrix.B;
-            console.log('FX chain B:', fxMatrix.B.map(n => n.constructor.name));
-          }
+        const iframe = player.getIframe();
+        const stream = iframe?.captureStream ? iframe.captureStream() : null;
+        if (!stream) {
+          console.error(`Failed to capture stream for Track ${which}`);
+          return;
+        }
+        const src = djCtx.createMediaStreamSource(stream);
+        const fxChain = [];
+        ['delay', 'reverb', 'filter', 'bitcrusher'].forEach(fx => {
+          const node = createFxNode(fx);
+          if (node) fxChain.push(node);
+        });
+        if (which === 'A') {
+          srcA = src;
+          fxMatrix.A = fxChain;
+          [delayNodeA, reverbNodeA, filterNodeA, bitcrusherNodeA] = fxChain;
+          src.connect(fxChain[0]);
+          fxChain.reduce((prev, curr) => prev.connect(curr), src);
+          fxChain[fxChain.length - 1].connect(gainA);
         } else {
-          console.error(`Failed to capture stream for Track ${which}.`);
+          srcB = src;
+          fxMatrix.B = fxChain;
+          [delayNodeB, reverbNodeB, filterNodeB, bitcrusherNodeB] = fxChain;
+          src.connect(fxChain[0]);
+          fxChain.reduce((prev, curr) => prev.connect(curr), src);
+          fxChain[fxChain.length - 1].connect(gainB);
         }
-        if (DOM.crossfader) DOM.crossfader.dispatchEvent(new Event('input'));
+        DOM.crossfader?.dispatchEvent(new Event('input'));
+        if (!recorder) {
+          recorder = new MediaRecorder(dest.stream, { mimeType: 'audio/webm' });
+          recorder.ondataavailable = e => chunks.push(e.data);
+          recorder.onstop = () => {
+            const blob = new Blob(chunks, { type: 'audio/webm' });
+            DOM.downloadMixBtn.href = URL.createObjectURL(blob);
+            DOM.downloadMixBtn.download = 'dj-mix.webm';
+            DOM.downloadMixBtn.style.display = 'inline';
+            chunks = [];
+          };
+        }
       }
 
       function createDistortionCurve(amount = 50) {
@@ -2253,7 +2282,7 @@ let DJ_TRACKS = [
 
     const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
     const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
-    const X_BEARER_TOKEN = 'YOUR_X_BEARER_TOKEN';
+    const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
     const DUNE_MODULE_VERSION = '1.1.0.11';
     const CHAINS = [1, 42161, 8453, 10, 534352, 81457]; // Mainnet, Arbitrum, Base, Optimism, Scroll, Blast
     const TOKEN_ADDRESS = '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca';
@@ -2687,13 +2716,15 @@ let DJ_TRACKS = [
       }
       try {
         const url = `https://api.x.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,type`;
-        const data = await fetchWithRetry(url, { headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` } });
+        const data = await fetchWithRetry(url, {
+          headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` }
+        });
         if (!data.data) throw new Error('No tweets found');
         const result = data.data.map(tweet => ({
           text: tweet.text,
           author: data.includes.users.find(u => u.id === tweet.author_id)?.username || 'Unknown',
           created_at: tweet.created_at,
-          video: tweet.attachments?.media_keys && data.includes.media.find(m => m.media_key === tweet.attachments.media_keys[0] && m.type === 'video')?.url
+          video: tweet.attachments?.media_keys && data.includes.media.find(m => m.type === 'video')?.url
         }));
         localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: result }));
         DOM.twitterWarning.style.display = 'none';
@@ -2702,7 +2733,10 @@ let DJ_TRACKS = [
         console.error('X API fetch failed:', error);
         DOM.twitterWarning.textContent = '> Failed to load tweets, using fallback';
         DOM.twitterWarning.style.display = 'block';
-        return [{ text: 'Bitcoin hits $105,000!', author: 'CoinDesk', created_at: new Date().toISOString() }];
+        return [
+          { text: 'Bitcoin surges to $105,000 amid market rally', author: 'CoinDesk', created_at: new Date().toISOString(), video: null },
+          { text: 'Art auction features NFT collection for $2M', author: 'ArtDaily', created_at: new Date().toISOString(), video: null }
+        ];
       }
     }
 
@@ -3477,14 +3511,22 @@ let DJ_TRACKS = [
     }
 
     async function loadTwitterData() {
-      if (!DOM.twitterList) return;
-      DOM.twitterLoader.style.display = 'block';
-      const tweets = await fetchTwitterData('from:verified (bitcoin OR btc OR finance OR "world news")');
-      if (!tweets || tweets.length === 0) {
-        DOM.twitterLoader.textContent = '> No tweets available';
-        return;
-      }
-      DOM.twitterLoader.style.display = 'none';
+      if (!DOM.twitterList || !DOM.twitterTimeline) return;
+      DOM.loaderTwitter.style.display = 'flex';
+      // Load embedded timeline
+      const timeline = document.createElement('a');
+      timeline.className = 'twitter-timeline';
+      timeline.setAttribute('data-height', '400');
+      timeline.setAttribute('data-theme', 'dark');
+      timeline.href = 'https://x.com/search?q=from%3Averified%20(finance%20OR%20crypto%20OR%20%22world%20news%22%20OR%20%22celebrity%20deals%22%20OR%20%22art%20auction%22)';
+      DOM.twitterTimeline.appendChild(timeline);
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://platform.x.com/widgets.js';
+      DOM.twitterTimeline.appendChild(script);
+      // Load API tweets
+      const tweets = await fetchTwitterData('from:verified (finance OR crypto OR "world news" OR "celebrity deals" OR "art auction")');
+      DOM.loaderTwitter.style.display = 'none';
       DOM.twitterList.innerHTML = tweets.map(tweet => `
         <li class="p-2 rounded-lg bg-gray-800">
           <div class="flex justify-between">
@@ -3808,35 +3850,23 @@ let DJ_TRACKS = [
       if (DOM.recordMixBtn) {
         DOM.recordMixBtn.addEventListener('click', () => {
           if (!djCtx || !dest) return;
-          if (!recorder) {
-            recorder = new MediaRecorder(dest.stream);
-            recorder.ondataavailable = e => chunks.push(e.data);
-            recorder.onstop = () => {
-              const blob = new Blob(chunks, { type: 'audio/webm' });
-              const url = URL.createObjectURL(blob);
-              if (DOM.downloadMixBtn) {
-                DOM.downloadMixBtn.href = url;
-                DOM.downloadMixBtn.style.display = 'inline';
-              }
-            };
-          }
-          if (recorder.state === 'recording') {
+          if (recorder?.state === 'recording') {
             recorder.stop();
+            DOM.recordMixBtn.textContent = 'Record';
             DOM.recordMixBtn.classList.remove('active');
           } else {
             chunks = [];
             recorder.start();
+            DOM.recordMixBtn.textContent = 'Stop Recording';
             DOM.recordMixBtn.classList.add('active');
           }
         });
       }
-
       if (DOM.downloadMixBtn) {
         DOM.downloadMixBtn.addEventListener('click', () => {
           DOM.downloadMixBtn.style.display = 'none';
         });
       }
-
 
       function drawBtcAudio() {
         if (!analyser || !DOM.audioCanvas) return;
