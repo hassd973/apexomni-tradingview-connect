@@ -1854,7 +1854,7 @@
 					<a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
 					<a class="nav-link" href="#logs-module">Logs</a>
                                         <a class="nav-link" href="#balances-module">Finance Tweets</a>
-                                        <a class="nav-link" href="#youtube-module">World News</a>
+                                        <a class="nav-link" href="#world-module">Asmongold</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
 					<a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
 					<a class="nav-link" href="#" id="undock-background-link"
@@ -2352,11 +2352,11 @@
                         <section
                                 class="rounded-lg youtube-news-section"
                                 draggable="true"
-                                id="youtube-module"
+                                id="world-module"
                         >
                                <div class="module-header">
                                        <h2 class="text-lg md:text-xl token-insights-title typewriter">
-                                               &gt; World News Videos
+                                               &gt; Asmongold Videos
                                        </h2>
                                        <button
                                                aria-label="Toggle module visibility"
@@ -5180,49 +5180,40 @@
 			}
 
 
-async function fetchYouTubeVideos() {
-        const cacheKey = 'yt_asmon_news';
+async function fetchAsmongoldVideos() {
+        const cacheKey = 'yt_asmongold';
         const cached = localStorage.getItem(cacheKey);
         if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
                 return JSON.parse(cached).data;
         }
         try {
-                const res = await fetch(
-                        'https://www.youtube.com/feeds/videos.xml?user=AsmonTV'
-                );
-                const text = await res.text();
-                const doc = new DOMParser().parseFromString(text, 'application/xml');
-                const entries = Array.from(doc.querySelectorAll('entry'));
-                const channelName = doc.querySelector('author > name')?.textContent || 'AsmonTV';
-                const videos = entries.map((e) => ({
-                        videoId: e.querySelector('yt\\:videoId')?.textContent || '',
-                        title: e.querySelector('title')?.textContent || '',
-                        channelTitle: channelName,
-                        publishedAt: e.querySelector('published')?.textContent || '',
-                        thumbnail: e.querySelector('media\\:thumbnail')?.getAttribute('url') || ''
-                }));
-                localStorage.setItem(
-                        cacheKey,
-                        JSON.stringify({ timestamp: Date.now(), data: videos })
-                );
-                return videos;
+                const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=UCQeRaTadDVFo4LhNJ6T06ZQ&q=world+of+warcraft&type=video&order=date&maxResults=10&key=${YOUTUBE_API_KEY}`;
+                const data = await fetchWithRetry(url);
+                if (data.items) {
+                        const videos = data.items.map((item) => ({
+                                videoId: item.id.videoId,
+                                title: item.snippet.title,
+                                channelTitle: item.snippet.channelTitle,
+                                publishedAt: item.snippet.publishedAt,
+                                thumbnail: item.snippet.thumbnails.medium.url
+                        }));
+                        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: videos }));
+                        return videos;
+                }
         } catch (err) {
                 console.error('YouTube API error:', err);
-                return [
-                        {
-                                videoId: 'mock123',
-                                title: 'Bitcoin Surges to $105K',
-                                channelTitle: 'CryptoNews',
-                                publishedAt: new Date().toISOString(),
-                                thumbnail: 'https://via.placeholder.com/120x90'
-                        }
-                ];
         }
+        return [{
+                videoId: 'mock123',
+                title: 'Asmongold Reacts to WoW Update',
+                channelTitle: 'Asmongold',
+                publishedAt: new Date().toISOString(),
+                thumbnail: 'https://via.placeholder.com/120x90'
+        }];
 }
-
 async function loadYouTubeVideos() {
         if (!DOM.youtubePlayer || !DOM.youtubeList) return;
-        const videos = await fetchYouTubeVideos();
+        const videos = await fetchAsmongoldVideos();
         DOM.loaderYoutube.style.display = 'none';
         if (videos.length && youtubePlayer) {
                 youtubePlayer.loadVideoById(videos[0].videoId);
@@ -5469,16 +5460,17 @@ async function loadYouTubeVideos() {
 						() => trackAPlayer && trackAPlayer.stopVideo()
 					);
 				if (DOM.trackAMute)
-					DOM.trackAMute.addEventListener('click', () => {
-						if (!trackAPlayer) return;
-						if (trackAPlayer.isMuted()) {
-							trackAPlayer.unMute();
-							DOM.trackAMute.textContent = 'Mute';
-						} else {
-							trackAPlayer.mute();
-							DOM.trackAMute.textContent = 'Unmute';
-						}
-					});
+					['click','touchstart'].forEach(ev => DOM.trackAMute.addEventListener(ev, () => {
+					    if (djCtx && djCtx.state == "suspended") djCtx.resume();
+					    if (!trackAPlayer) return;
+					    if (trackAPlayer.isMuted()) {
+					    trackAPlayer.unMute();
+					    DOM.trackAMute.textContent = 'Mute';
+					    } else {
+					    trackAPlayer.mute();
+					    DOM.trackAMute.textContent = 'Unmute';
+					    }
+					}));
 				if (DOM.trackAVolume)
 					DOM.trackAVolume.addEventListener(
 						'input',
@@ -5512,16 +5504,17 @@ async function loadYouTubeVideos() {
 						() => trackBPlayer && trackBPlayer.stopVideo()
 					);
 				if (DOM.trackBMute)
-					DOM.trackBMute.addEventListener('click', () => {
-						if (!trackBPlayer) return;
-						if (trackBPlayer.isMuted()) {
-							trackBPlayer.unMute();
-							DOM.trackBMute.textContent = 'Mute';
-						} else {
-							trackBPlayer.mute();
-							DOM.trackBMute.textContent = 'Unmute';
-						}
-					});
+					['click','touchstart'].forEach(ev => DOM.trackBMute.addEventListener(ev, () => {
+					    if (djCtx && djCtx.state == "suspended") djCtx.resume();
+					    if (!trackBPlayer) return;
+					    if (trackBPlayer.isMuted()) {
+					    trackBPlayer.unMute();
+					    DOM.trackBMute.textContent = 'Mute';
+					    } else {
+					    trackBPlayer.mute();
+					    DOM.trackBMute.textContent = 'Unmute';
+					    }
+					}));
 				if (DOM.trackBVolume)
 					DOM.trackBVolume.addEventListener(
 						'input',
