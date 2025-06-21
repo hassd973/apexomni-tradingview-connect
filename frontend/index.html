@@ -1209,6 +1209,52 @@
                         #youtube-player iframe {
                                 max-width: 100%;
                         }
+                        .youtube-container {
+                                max-width: 900px;
+                                margin: 20px auto;
+                        }
+                        .yt-main {
+                                display: flex;
+                                gap: 0.75rem;
+                                flex-wrap: wrap;
+                        }
+                        .yt-player-wrapper iframe {
+                                width: 100%;
+                                height: 400px;
+                                border-radius: 8px;
+                                box-shadow: 0 0 6px var(--shadow-color);
+                        }
+                        #yt-playlist-thumbs {
+                                flex: 1;
+                                min-width: 220px;
+                                max-height: 400px;
+                                overflow-y: auto;
+                                background: rgba(35, 46, 46, 0.2);
+                                border: 1px solid var(--shadow-color);
+                                border-radius: 8px;
+                                padding: 0.5rem;
+                        }
+                        #yt-playlist-thumbs .yt-thumb {
+                                display: flex;
+                                align-items: center;
+                                gap: 0.5rem;
+                                margin-bottom: 0.5rem;
+                                cursor: pointer;
+                                border-radius: 4px;
+                                transition: background 0.2s;
+                        }
+                        #yt-playlist-thumbs .yt-thumb:hover {
+                                background: rgba(135, 206, 235, 0.1);
+                        }
+                        #yt-playlist-thumbs .yt-thumb.active {
+                                background: rgba(135, 206, 235, 0.2);
+                        }
+                        #yt-playlist-thumbs img {
+                                width: 80px;
+                                height: 45px;
+                                object-fit: cover;
+                                border-radius: 4px;
+                        }
                         @media (max-width: 640px) {
                                 #youtube-list li {
                                         flex-direction: column;
@@ -1466,6 +1512,37 @@
                                 display: flex;
                                 flex-direction: column;
                                 gap: 0.75rem;
+                        }
+                        .bluesky-box {
+                                max-width: 500px;
+                                margin: auto;
+                                border: 1px solid var(--shadow-color);
+                                border-radius: 8px;
+                                padding: 16px;
+                                box-shadow: 0 0 6px var(--shadow-color);
+                                background: rgba(35, 46, 46, 0.2);
+                        }
+                        .bluesky-title {
+                                color: var(--primary-color);
+                                margin-bottom: 12px;
+                        }
+                        .bluesky-link {
+                                display: inline-block;
+                                margin-top: 12px;
+                                padding: 8px 16px;
+                                background-color: var(--primary-color);
+                                color: white;
+                                text-decoration: none;
+                                border-radius: 20px;
+                        }
+                        .bsky-post {
+                                border-bottom: 1px solid #444;
+                                padding: 8px 0;
+                                font-size: 0.85rem;
+                        }
+                        .bsky-post .post-date {
+                                font-size: 0.75rem;
+                                color: #888;
                         }
 			.gas-heatmap-title,
 			.twitter-title,
@@ -2328,12 +2405,12 @@
 					<div class="data-warning" id="twitter-warning" style="display: none">
 						&gt; Using cached tweets
 					</div>
-                                <div id="twitter-timeline" style="max-width: 500px; margin: auto; font-family: Arial, sans-serif; border: 1px solid #ddd; border-radius: 8px; padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
-                                        <h3 style="color: #007fff; margin-bottom: 12px;">BlueSky Feed: financialtimes.com</h3>
+                                <div id="bluesky-feed" class="bluesky-box">
+                                        <h3 class="bluesky-title">BlueSky Feed: finance/tech/world</h3>
                                         <div id="posts">
                                                 <p>Loading posts...</p>
                                         </div>
-                                        <a href="https://bsky.app/profile/financialtimes.com" target="_blank" style="display: inline-block; margin-top: 12px; padding: 8px 16px; background-color: #007fff; color: white; text-decoration: none; border-radius: 20px;">View on BlueSky</a>
+                                        <a class="bluesky-link" href="https://bsky.app/" target="_blank">View on BlueSky</a>
                                 </div>
                                 </div>
                         </section>
@@ -2356,24 +2433,18 @@
                                         </button>
                                 </div>
                                 <div class="module-content">
-                                        <div id="youtube-playlist-module" style="max-width: 900px; margin: 20px auto; font-family: Arial, sans-serif;">
-                                                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
-                                                        <div style="flex: 2; min-width: 300px;">
+                                        <div id="youtube-playlist-module" class="youtube-container">
+                                                <div class="yt-main">
+                                                        <div class="yt-player-wrapper">
                                                                 <iframe
                                                                         id="yt-player"
-                                                                        width="100%"
-                                                                        height="400"
                                                                         src="https://www.youtube.com/embed/9LEbjMAkU4I?rel=0"
                                                                         title="YouTube video player"
-                                                                        frameborder="0"
                                                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                                                         allowfullscreen
                                                                 ></iframe>
                                                         </div>
-                                                        <div
-                                                                id="yt-playlist-thumbs"
-                                                                style="flex: 1; min-width: 220px; max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px; background: #f9f9f9;"
-                                                        >
+                                                        <div id="yt-playlist-thumbs" class="custom-scroll">
                                                                 <p>Loading playlist...</p>
                                                         </div>
                                                 </div>
@@ -3006,7 +3077,7 @@
                                 youtubeList: document.getElementById('youtube-list'),
                                 youtubeWarning: document.getElementById('youtube-warning'),
                                 tokenInsightsWarning: document.getElementById('token-insights-warning'),
-                                twitterTimeline: document.getElementById('twitter-timeline'),
+                                twitterTimeline: document.getElementById('bluesky-feed'),
                                 loaderTwitter: document.getElementById('loader-twitter'),
                                 twitterWarning: document.getElementById('twitter-warning'),
 				duneVersion: document.getElementById('dune-version'),
@@ -5207,29 +5278,18 @@ async function loadPlaylistVideos() {
                         const title = video.snippet.title;
                         const thumbnail = video.snippet.thumbnails.medium.url;
                         const thumbElem = document.createElement('div');
-                        thumbElem.style.cursor = 'pointer';
-                        thumbElem.style.marginBottom = '12px';
-                        thumbElem.style.display = 'flex';
-                        thumbElem.style.alignItems = 'center';
-                        thumbElem.style.gap = '8px';
+                        thumbElem.classList.add('yt-thumb');
                         thumbElem.innerHTML = `
-                                <img src="${thumbnail}" alt="${title}" style="width: 80px; height: 45px; object-fit: cover; border-radius: 4px;" />
-                                <span style="font-size: 0.9em; color: #333;">${title}</span>
+                                <img src="${thumbnail}" alt="${title}" />
+                                <span>${title}</span>
                         `;
                         if (idx === 0) {
-                                thumbElem.style.backgroundColor = '#dceeff';
-                                thumbElem.style.borderRadius = '6px';
-                                thumbElem.style.padding = '4px';
+                                thumbElem.classList.add('active');
                         }
                         thumbElem.addEventListener('click', () => {
                                 ytPlayer.src = `https://www.youtube.com/embed/${videoId}?rel=0`;
-                                Array.from(thumbsContainer.children).forEach(child => {
-                                        child.style.backgroundColor = '';
-                                        child.style.padding = '';
-                                });
-                                thumbElem.style.backgroundColor = '#dceeff';
-                                thumbElem.style.padding = '4px';
-                                thumbElem.style.borderRadius = '6px';
+                                Array.from(thumbsContainer.children).forEach(child => child.classList.remove('active'));
+                                thumbElem.classList.add('active');
                         });
                         thumbsContainer.appendChild(thumbElem);
                 });
@@ -5259,39 +5319,44 @@ async function loadPlaylistVideos() {
 				return match ? match[1] : url;
 			}
 
-                        async function loadBlueSkyPosts() {
-                                const postsContainer = document.getElementById('posts');
-                                if (!postsContainer) return;
-                                postsContainer.innerHTML = '<p>Loading posts...</p>';
-                                try {
-                                        const userRes = await fetch('https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle=financialtimes.com');
-                                        const userData = await userRes.json();
-                                        const userDID = userData.did;
-                                        const feedRes = await fetch(`https://bsky.social/xrpc/com.atproto.feed.getProfileFeed?actor=${userDID}&limit=5`);
-                                        const feedData = await feedRes.json();
-                                        if (feedData.feed && feedData.feed.length > 0) {
-                                                postsContainer.innerHTML = '';
-                                                feedData.feed.forEach(post => {
-                                                        const postText = post.post.record.text || '[No text content]';
-                                                        const postLink = `https://bsky.app/profile/${userData.handle}/post/${post.post.cid}`;
-                                                        const postDate = new Date(post.post.record.createdAt).toLocaleString();
-                                                        const postElem = document.createElement('div');
-                                                        postElem.style.borderBottom = '1px solid #eee';
-                                                        postElem.style.padding = '8px 0';
-                                                        postElem.innerHTML = `
-                                                                <p style="margin: 0 0 6px;">${postText}</p>
-                                                                <a href="${postLink}" target="_blank" style="font-size: 0.85em; color: #007fff; text-decoration: none;">View post</a>
-                                                                <div style="font-size: 0.75em; color: #666;">${postDate}</div>
-                                                        `;
-                                                        postsContainer.appendChild(postElem);
-                                                });
-                                        } else {
-                                                postsContainer.innerHTML = '<p>No posts found.</p>';
-                                        }
-                                } catch (err) {
-                                        postsContainer.innerHTML = `<p>Error loading posts: ${err.message}</p>`;
-                                }
+        async function loadBlueSkyPosts() {
+                const postsContainer = document.getElementById('posts');
+                if (!postsContainer) return;
+                postsContainer.innerHTML = '<p>Loading posts...</p>';
+                const cacheKey = 'bsky_fintech_news';
+                try {
+                        const cached = localStorage.getItem(cacheKey);
+                        if (cached && Date.now() - JSON.parse(cached).timestamp < 1800000) {
+                                renderBskyPosts(JSON.parse(cached).items, postsContainer);
+                                return;
                         }
+                        const res = await fetch('https://bsky.social/xrpc/app.bsky.feed.searchPosts?term=finance%20tech%20world%20news&limit=5');
+                        const data = await res.json();
+                        const posts = data.feed || [];
+                        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), items: posts }));
+                        renderBskyPosts(posts, postsContainer);
+                } catch (err) {
+                        console.error('BlueSky fetch failed:', err);
+                        postsContainer.innerHTML = '<p>Posts unavailable.</p>';
+                }
+        }
+
+        function renderBskyPosts(feed, container) {
+                container.innerHTML = '';
+                if (!feed.length) {
+                        container.innerHTML = '<p>No posts found.</p>';
+                        return;
+                }
+                feed.forEach((post) => {
+                        const text = sanitizeInput(post.post.record?.text || '[No text]');
+                        const link = `https://bsky.app/profile/${post.post.author.handle}/post/${post.post.cid}`;
+                        const date = new Date(post.post.record.createdAt).toLocaleString();
+                        const div = document.createElement('div');
+                        div.className = 'bsky-post';
+                        div.innerHTML = `<p>${text}</p><a href="${link}" target="_blank">View post</a><div class="post-date">${date}</div>`;
+                        container.appendChild(div);
+                });
+        }
 
 			document.addEventListener('DOMContentLoaded', () => {
 				DOM.navMenuToggle.addEventListener('click', () =>
