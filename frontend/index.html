@@ -2328,18 +2328,20 @@
 					<div class="data-warning" id="twitter-warning" style="display: none">
 						&gt; Using cached tweets
 					</div>
-                                        <div
-                                                id="twitter-timeline"
-                                                class="custom-scroll"
-                                                style="max-height: 50vh; overflow-y: auto"
-                                        >
-                                                <a
-                                                        class="twitter-timeline"
-                                                        href="https://x.com/DIFF810489"
-                                                        data-tweet-limit="10"
-                                                        data-chrome="nofooter transparent"
-                                                >Tweets by DIFF810489</a>
-                                        </div>
+                                <div
+                                        id="twitter-timeline"
+                                        class="custom-scroll"
+                                        style="max-height: 50vh; overflow-y: auto"
+                                >
+                                        <a
+                                                class="twitter-timeline"
+                                                href="https://twitter.com/DIFF810489?ref_src=twsrc%5Etfw"
+                                                data-tweet-limit="10"
+                                                data-chrome="nofooter transparent"
+                                                data-theme="dark"
+                                        >Tweets by DIFF810489</a>
+                                        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                                </div>
 					<div id="twitter-fallback" class="text-sm mt-2" style="display: none">
 						<p>Bitcoin hits $105,000!</p>
 						<p>Art auction features NFT collection for $2M</p>
@@ -5179,21 +5181,25 @@
 
 
 async function fetchYouTubeVideos() {
-        const cacheKey = 'yt_crypto_news';
+        const cacheKey = 'yt_asmon_news';
         const cached = localStorage.getItem(cacheKey);
         if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
                 return JSON.parse(cached).data;
         }
         try {
-                const url =
-                        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=Crypto%20World%20News&type=video&order=date&maxResults=10&key=${YOUTUBE_API_KEY}`;
-                const data = await fetchWithRetry(url);
-                const videos = data.items.map((item) => ({
-                        videoId: item.id.videoId,
-                        title: item.snippet.title,
-                        channelTitle: item.snippet.channelTitle,
-                        publishedAt: item.snippet.publishedAt,
-                        thumbnail: item.snippet.thumbnails.medium.url
+                const res = await fetch(
+                        'https://www.youtube.com/feeds/videos.xml?user=AsmonTV'
+                );
+                const text = await res.text();
+                const doc = new DOMParser().parseFromString(text, 'application/xml');
+                const entries = Array.from(doc.querySelectorAll('entry'));
+                const channelName = doc.querySelector('author > name')?.textContent || 'AsmonTV';
+                const videos = entries.map((e) => ({
+                        videoId: e.querySelector('yt\\:videoId')?.textContent || '',
+                        title: e.querySelector('title')?.textContent || '',
+                        channelTitle: channelName,
+                        publishedAt: e.querySelector('published')?.textContent || '',
+                        thumbnail: e.querySelector('media\\:thumbnail')?.getAttribute('url') || ''
                 }));
                 localStorage.setItem(
                         cacheKey,
@@ -5218,6 +5224,9 @@ async function loadYouTubeVideos() {
         if (!DOM.youtubePlayer || !DOM.youtubeList) return;
         const videos = await fetchYouTubeVideos();
         DOM.loaderYoutube.style.display = 'none';
+        if (videos.length && youtubePlayer) {
+                youtubePlayer.loadVideoById(videos[0].videoId);
+        }
         DOM.youtubeList.innerHTML = videos
                 .map(
                         (v) => `
@@ -5264,20 +5273,12 @@ async function loadYouTubeVideos() {
                         async function loadTwitterData() {
                                 if (!DOM.twitterTimeline || !DOM.twitterList) return;
                                 const fallback = document.getElementById('twitter-fallback');
-                                const script = document.createElement('script');
-                                script.async = true;
-                                script.src = 'https://platform.twitter.com/widgets.js';
-                                script.onload = () => {
+                                if (window.twttr && window.twttr.widgets) {
+                                        window.twttr.widgets.load(DOM.twitterTimeline);
                                         if (fallback) fallback.style.display = 'none';
-                                        if (window.twttr && window.twttr.widgets)
-                                                window.twttr.widgets.load(DOM.twitterTimeline);
-                                };
-                                script.onerror = () => {
-                                        if (fallback) fallback.style.display = 'block';
-                                        DOM.twitterWarning.textContent = 'Tweets unavailable, retrying...';
-                                        DOM.twitterWarning.style.display = 'block';
-                                };
-                                DOM.twitterTimeline.appendChild(script);
+                                } else if (fallback) {
+                                        fallback.style.display = 'block';
+                                }
 
                                 const tweets = await fetchTwitterData();
 				DOM.loaderTwitter.style.display = 'none';
