@@ -385,13 +385,14 @@
 				gap: 4px;
 				z-index: 15;
 			}
-			#btc-metrics-overlay {
-				top: 0;
-				left: 0;
-				width: 100%;
-				padding: 0.5rem;
-				font-size: clamp(16px, 4vw, 26px);
-			}
+                        #btc-metrics-overlay {
+                                top: 0;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                width: calc(100% - 20px);
+                                padding: 0.5rem;
+                                font-size: clamp(20px, 5vw, 32px);
+                        }
 			#btc-metrics-overlay .metrics-row {
 				display: flex;
 				align-items: center;
@@ -1023,14 +1024,26 @@
 			section:hover {
 				box-shadow: 0 0 8px var(--shadow-color);
 			}
-			.module-header {
-				display: flex;
-				justify-content: space-between;
-				align-items: center;
-				flex-wrap: wrap;
-				gap: 0.5rem;
-				margin-bottom: 0.75rem;
-			}
+                        .module-header {
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                flex-wrap: wrap;
+                                gap: 0.5rem;
+                                margin-bottom: 0.75rem;
+                        }
+
+                        @media (max-width: 640px) {
+                                #btc-hash-module .module-header {
+                                        flex-direction: column;
+                                        align-items: stretch;
+                                }
+                                #btc-hash-module .module-header .dj-btn,
+                                #btc-hash-module .module-header button {
+                                        font-size: 0.75rem;
+                                        padding: 0.25rem 0.5rem;
+                                }
+                        }
 			.toggle-module-btn {
 				background: none;
 				border: none;
@@ -1337,15 +1350,16 @@
 			.title-box h1 {
 				animation: pulse 4s infinite;
 			}
-			header .title-box {
-				margin-top: 1rem;
-				margin-left: auto;
-				margin-right: auto;
-			}
-			@media (max-width: 640px) {
-				header .title-box {
-					margin-bottom: 1rem;
-				}
+                        header .title-box {
+                                margin-top: 1rem;
+                                margin-left: auto;
+                                margin-right: auto;
+                                margin-bottom: 1.5rem;
+                        }
+                        @media (max-width: 640px) {
+                                header .title-box {
+                                        margin-bottom: 1.25rem;
+                                }
 				header .chart-wrapper .flex {
 					flex-wrap: wrap;
 					gap: 0.5rem;
@@ -1647,17 +1661,21 @@
 					height: 160px;
 					aspect-ratio: unset;
 				}
-				.dj-controls {
-					position: sticky;
-					bottom: 0;
-					background: rgba(18, 18, 18, 0.95);
-					padding: 0.5rem;
-					z-index: 15;
-					flex-direction: column;
-					gap: 0.4rem;
-					align-items: stretch;
-					width: 100%;
-				}
+                                .dj-controls {
+                                        position: sticky;
+                                        bottom: 0;
+                                        background: rgba(18, 18, 18, 0.95);
+                                        padding: 0.5rem;
+                                        z-index: 15;
+                                        flex-direction: column;
+                                        gap: 0.4rem;
+                                        align-items: stretch;
+                                        width: 100%;
+                                }
+                                .dj-controls > .flex {
+                                        flex-wrap: wrap;
+                                        gap: 0.4rem;
+                                }
 				.dj-btn,
 				.dj-cue-btn {
 					font-size: 0.75rem;
@@ -1816,12 +1834,11 @@
 		<div id="loading-screen">
 			<div class="loading-video">
 				<div class="video-container">
-					<video
-						id="intro-video"
-						preload="auto"
-						playsinline
-						autoplay
-						muted
+                                        <video
+                                                id="intro-video"
+                                                preload="auto"
+                                                playsinline
+                                                muted
 						crossorigin="anonymous"
 						class="w-full"
 					>
@@ -3146,27 +3163,34 @@
 				).join('');
 			}
 
-			function initIntroVideo() {
-				const introVideo = DOM.introVideo;
-				if (!introVideo) return;
-				introVideo.volume = 0.5;
-				introVideo.muted = true;
-				const playPromise = introVideo.play();
-				if (playPromise !== undefined) {
-					playPromise.catch(() => {
-						console.warn('Autoplay blocked, retrying on user interaction');
-						document.addEventListener('click', () => introVideo.play(), {
-							once: true
-						});
-					});
-				}
-				introVideo.addEventListener('play', () => {
-					introPlayed = true;
-				});
-				introVideo.addEventListener('ended', () => {
-					introPlayed = true;
-					hideLoadingScreen();
-				});
+                        function initIntroVideo() {
+                                const introVideo = DOM.introVideo;
+                                if (!introVideo) return;
+                                introVideo.volume = 0.5;
+                                introVideo.muted = true;
+                                if (!introPlayed) {
+                                        const playPromise = introVideo.play();
+                                        if (playPromise !== undefined) {
+                                                playPromise.catch(() => {
+                                                        console.warn('Autoplay blocked, retrying on user interaction');
+                                                        document.addEventListener('click', () => introVideo.play(), {
+                                                                once: true
+                                                        });
+                                                });
+                                        }
+                                } else {
+                                        hideLoadingScreen();
+                                        return;
+                                }
+                                introVideo.addEventListener('play', () => {
+                                        introPlayed = true;
+                                        localStorage.setItem('introPlayed', '1');
+                                });
+                                introVideo.addEventListener('ended', () => {
+                                        introPlayed = true;
+                                        localStorage.setItem('introPlayed', '1');
+                                        hideLoadingScreen();
+                                });
 				introVideo.addEventListener('error', () =>
 					console.warn('Intro trailer failed to load')
 				);
@@ -3446,11 +3470,10 @@
 
 			const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
 			const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
-			const X_BEARER_TOKEN =
-				'AAAAAAAAAAAAAAAAAAAAADeW2gEAAAAAYSk8CWiEa4ohqUlkXWEKzWPFGI0%3DQPGnR9XYQbngmP1luRFvfD0o4qwtOpBmn9Tqw0qW5NtfZbQCSX';
-			const X_ACCESS_TOKEN =
-				'1936237883842576384-9IJRr0ts6KdHvkaDRlDSPjmFJlhL7Z';
-			const X_ACCESS_SECRET = 'N6zNRkS3Fu8Iumf80KM2oE3wnMRDmgBrc9KiQ7dKbhpT1';
+                        const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
+                        const X_ACCESS_TOKEN =
+                                '1936237883842576384-eikvHEUXy2YxGwryeLcEfhEUjTGLIO';
+                        const X_ACCESS_SECRET = 'ajjdpdkdaM821iTcHx06bMJh2fAl7NoEBDBTM1UOdxSlv';
 			const DUNE_MODULE_VERSION = '1.1.0.11';
 			const CHAINS = [1, 42161, 8453, 10, 534352, 81457]; // Mainnet, Arbitrum, Base, Optimism, Scroll, Blast
 			const TOKEN_ADDRESS = '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca';
@@ -3552,8 +3575,9 @@
 				'Riding the quantum wave to success!'
 			];
 
-			function hideLoadingScreen() {
-				DOM.loadingScreen.classList.add('fade-out');
+                        function hideLoadingScreen() {
+                                if (DOM.introVideo) DOM.introVideo.pause();
+                                DOM.loadingScreen.classList.add('fade-out');
 				setTimeout(() => {
 					DOM.loadingScreen.style.display = 'none';
 					document.querySelector('header').style.opacity = '1';
@@ -3591,14 +3615,15 @@
 				if (window.scrollY > 50) shrinkHeader();
 			});
 
-			let introPlayed = false;
-			function resumePlayers() {
-				try {
-					if (DOM.introVideo && !introPlayed) {
-						DOM.introVideo.muted = false;
-						DOM.introVideo.play().catch(() => {});
-						introPlayed = true;
-					}
+                        let introPlayed = localStorage.getItem('introPlayed') === '1';
+                        function resumePlayers() {
+                                try {
+                                        if (DOM.introVideo && !introPlayed) {
+                                                DOM.introVideo.muted = false;
+                                                DOM.introVideo.play().catch(() => {});
+                                                introPlayed = true;
+                                                localStorage.setItem('introPlayed', '1');
+                                        }
 					if (bgMusicPlayer && bgMusicPlayer.playVideo)
 						bgMusicPlayer.playVideo();
 					routeYTSignal();
@@ -4039,27 +4064,27 @@
 				}
 			}
 
-			async function fetchBTCHashRate() {
-				const url = 'https://api.blockchain.info/q/hashrate';
-				try {
-					const text = await fetchTextWithRetry(url);
-					return parseFloat(text) / 1e6;
-				} catch (error) {
-					console.warn('Failed to fetch BTC hash rate:', error);
-					return 0;
-				}
-			}
+                        async function fetchBTCHashRate() {
+                                const url = 'https://api.blockchain.info/q/hashrate?cors=true';
+                                try {
+                                        const text = await fetchTextWithRetry(url);
+                                        return parseFloat(text) / 1e9;
+                                } catch (error) {
+                                        console.warn('Failed to fetch BTC hash rate:', error);
+                                        return 0;
+                                }
+                        }
 
-			async function fetchBTCDifficulty() {
-				const url = 'https://api.blockchain.info/q/getdifficulty';
-				try {
-					const text = await fetchTextWithRetry(url);
-					return parseFloat(text);
-				} catch (error) {
-					console.warn('Failed to fetch BTC difficulty:', error);
-					return 0;
-				}
-			}
+                        async function fetchBTCDifficulty() {
+                                const url = 'https://api.blockchain.info/q/getdifficulty?cors=true';
+                                try {
+                                        const text = await fetchTextWithRetry(url);
+                                        return parseFloat(text);
+                                } catch (error) {
+                                        console.warn('Failed to fetch BTC difficulty:', error);
+                                        return 0;
+                                }
+                        }
 
 			async function fetchTwitterData(query) {
 				const cacheKey = `tw_${query}`;
@@ -4198,7 +4223,7 @@
 			}
 
 			async function fetchTokenInfo(address, chainId) {
-				const url = `https://api.sim.dune.com/v1/evm/balances/${address}?chain_id=${chainId}`;
+                                const url = `https://api.sim.dune.com/v1/evm/balances/${address}?chain_id=${chainId}&include=token`;
 				const cacheKey = `dune_bal_${address}_${chainId}`;
 				const cached = localStorage.getItem(cacheKey);
 				if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
@@ -5205,13 +5230,14 @@
 						DOM.muteBtn.textContent = DOM.introVideo.muted ? '🔇' : '🔊';
 					});
 				}
-				if (DOM.playIntroBtn) {
-					DOM.playIntroBtn.addEventListener('click', () => {
-						if (!DOM.introVideo) return;
-						if (DOM.introVideo.paused) DOM.introVideo.play();
-						else DOM.introVideo.pause();
-					});
-				}
+                                if (DOM.playIntroBtn) {
+                                        DOM.playIntroBtn.addEventListener('click', () => {
+                                                if (!DOM.introVideo) return;
+                                                introPlayed = true;
+                                                localStorage.setItem('introPlayed', '1');
+                                                DOM.introVideo.play().catch(() => {});
+                                        });
+                                }
 
 				if (DOM.musicMuteBtn) {
 					DOM.musicMuteBtn.addEventListener('click', () => {
@@ -5693,9 +5719,13 @@
 					});
 				}
 
-				if (DOM.skipIntroBtn) {
-					DOM.skipIntroBtn.addEventListener('click', hideLoadingScreen);
-				}
+                                if (DOM.skipIntroBtn) {
+                                        DOM.skipIntroBtn.addEventListener('click', () => {
+                                                introPlayed = true;
+                                                localStorage.setItem('introPlayed', '1');
+                                                hideLoadingScreen();
+                                        });
+                                }
 
 				if (DOM.introVideo) {
 					const introLogo = document.querySelector(
