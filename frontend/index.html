@@ -1264,6 +1264,18 @@
                                 border-radius: 8px;
                                 box-shadow: 0 0 6px var(--shadow-color);
                         }
+                        .playlist-desc {
+                                font-size: 0.875rem;
+                                margin-top: 0.25rem;
+                        }
+                        .toggle-desc-btn {
+                                background: none;
+                                border: none;
+                                color: var(--primary-color);
+                                font-size: 0.75rem;
+                                cursor: pointer;
+                                margin-left: 0.5rem;
+                        }
                         .opensea-embed iframe {
                                 width: 100%;
                                 height: 420px;
@@ -2447,23 +2459,28 @@
                                         </button>
                                 </div>
                                 <div class="module-content">
-                                        <p class="text-sm mb-4">
-                                                QuantumI Insights is your curated gateway to the cutting edge of technology and world events:<br /><br />
-                                                🎥 <strong>Y Combinator: Startup School &amp; AI Deep Dives</strong><br />
-                                                Get behind the curtain of emerging startups, hear live pitches, technical roundtables, and founder stories—all focusing on artificial intelligence, scaling products, and building the next generation of innovation.<br /><br />
-                                                🌍 <strong>The Guardian: World News &amp; Analysis</strong><br />
-                                                Stay informed with in-depth coverage from The Guardian—ranging from geopolitics and global crises to culture and policy shifts. Insights you can trust, delivered clearly and contextually.<br /><br />
-                                                📓 <strong>AI &amp; Tech Think Pieces</strong><br />
-                                                Explore interviews, panel discussions, and expert breakdowns on the future of AI, ethics, quantum computing, and technological impact on society. Broader than the headlines—more than just the buzz.<br /><br />
-                                                Every video in this playlist is hand-selected to spark curiosity and understanding—whether you’re a startup founder, AI researcher, policy-maker, or world citizen. Dive in, get inspired, and stay ahead.
+                                        <p class="text-sm mb-2">
+                                                QuantumI Insights is your curated gateway to the cutting edge of technology and world events.
                                         </p>
                                         <div class="extra-playlists">
                                                 <div class="extra-playlist">
-                                                        <h3>Y Combinator: Startup School</h3>
+                                                        <div class="flex items-center justify-between">
+                                                                <h3>Y Combinator: Startup School</h3>
+                                                                <button class="toggle-desc-btn" type="button">Info</button>
+                                                        </div>
+                                                        <p class="playlist-desc hidden">
+                                                                Get behind the curtain of emerging startups, hear live pitches, technical roundtables, and founder stories—all focusing on artificial intelligence, scaling products, and building the next generation of innovation.
+                                                        </p>
                                                         <iframe src="https://www.youtube.com/embed/videoseries?list=PLQ-uHSnFig5NPx4adxl97CZb8vU4numwi" allowfullscreen></iframe>
                                                 </div>
                                                 <div class="extra-playlist">
-                                                        <h3>The Guardian</h3>
+                                                        <div class="flex items-center justify-between">
+                                                                <h3>The Guardian</h3>
+                                                                <button class="toggle-desc-btn" type="button">Info</button>
+                                                        </div>
+                                                        <p class="playlist-desc hidden">
+                                                                Stay informed with in-depth coverage from The Guardian—ranging from geopolitics and global crises to culture and policy shifts. Insights you can trust, delivered clearly and contextually.
+                                                        </p>
                                                         <iframe src="https://www.youtube.com/embed/videoseries?list=PLa_1MA_DEorHsfi3ntZ8ME6n3rTKM_uGQ" allowfullscreen></iframe>
                                                 </div>
                                         </div>
@@ -3963,7 +3980,7 @@
 				}
 			}
 
-			function setupModuleToggles() {
+function setupModuleToggles() {
 				document.querySelectorAll('.toggle-module-btn').forEach((btn) => {
 					btn.addEventListener('click', () => {
 						const moduleContent = btn
@@ -3979,9 +3996,20 @@
 							'aria-label',
 							isHidden ? 'Show module content' : 'Hide module content'
 						);
-					});
-				});
-			}
+                                       });
+                               });
+                       }
+
+                        function setupPlaylistDescriptions() {
+                                document.querySelectorAll('.toggle-desc-btn').forEach((btn) => {
+                                        btn.addEventListener('click', () => {
+                                                const desc = btn.closest('.extra-playlist').querySelector('.playlist-desc');
+                                                if (!desc) return;
+                                                const hidden = desc.classList.toggle('hidden');
+                                                btn.textContent = hidden ? 'Info' : 'Hide';
+                                        });
+                                });
+                        }
 
 			function initializeChart(
 				containerId,
@@ -5313,7 +5341,8 @@
 
 				setupDragAndDrop();
 				loadModuleOrder();
-				setupModuleToggles();
+                                setupModuleToggles();
+                                setupPlaylistDescriptions();
                                 loadData();
                                 loadTwitterTimeline();
                                 init3D();
