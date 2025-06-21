@@ -341,13 +341,6 @@
       text-align: center;
       font-size: clamp(12px, 2vw, 16px);
     }
-    #loading-screen .metrics-overlay .logo {
-      position: absolute;
-      bottom: 1rem;
-      left: 1rem;
-      width: 50px;
-      height: 50px;
-    }
     #loading-screen .metrics-overlay .metrics-container {
       position: absolute;
       top: 50%;
@@ -610,9 +603,11 @@
     }
     /* intro buttons styling replaced by .intro-buttons section above */
     #loading-screen .title-box {
-      border: none;
+      border: none !important;
       font-size: 1.25rem;
       padding: 0.5rem 1rem;
+      position: relative;
+      z-index: 1003;
     }
     #loading-screen .title-box h1 {
       font-size: 2rem;
@@ -1290,13 +1285,14 @@
         background: rgba(18, 18, 18, 0.95);
         padding: 0.5rem;
         z-index: 15;
-        flex-wrap: wrap;
+        flex-direction: column;
         gap: 0.4rem;
+        align-items: stretch;
       }
       .dj-btn, .dj-cue-btn {
         font-size: 0.75rem;
         padding: 0.3rem 0.5rem;
-        flex: 1 0 45%;
+        flex: 1 0 100%;
         text-align: center;
       }
       .dj-track input {
@@ -1603,11 +1599,12 @@
     <h2 class="text-lg md:text-xl twitter-title typewriter">&gt; Finance &amp; Crypto News</h2>
     <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
   </div>
-  <div class="module-content">
-    <div class="loader text-center text-gray-500 text-sm" id="loader-twitter">&gt; Loading tweets...</div>
-    <div class="data-warning" id="twitter-warning" style="display: none;">&gt; Using cached tweets</div>
-    <div id="twitter-timeline" class="custom-scroll" style="max-height: 50vh; overflow-y: auto;"></div>
-    <ul class="space-y-2 text-sm custom-scroll" id="twitter-list"></ul>
+  <div class="module-content" id="twitter-timeline-wrap">
+    <a class="twitter-timeline" data-height="400" data-theme="dark" href="https://x.com/username/lists/list-id">Finance and Crypto News</a>
+    <div id="twitter-fallback" class="text-sm mt-2" style="display:none">
+      <p>Bitcoin hits $105,000!</p>
+      <p>Art auction features NFT collection for $2M</p>
+    </div>
   </div>
 </section>
 <section class="rounded-lg token-insights-section" draggable="true" id="token-insights-module">
@@ -1906,8 +1903,7 @@
       tokenInsightsList: document.getElementById('token-insights-list'),
       loaderTokenInsights: document.getElementById('loader-token-insights'),
       tokenInsightsWarning: document.getElementById('token-insights-warning'),
-      twitterList: document.getElementById('twitter-list'),
-      twitterTimeline: document.getElementById('twitter-timeline'),
+      twitterTimeline: document.getElementById('twitter-timeline-wrap'),
       loaderTwitter: document.getElementById('loader-twitter'),
       twitterWarning: document.getElementById('twitter-warning'),
       duneVersion: document.getElementById('dune-version'),
@@ -2857,9 +2853,9 @@ let DJ_TRACKS = [
       }
     }
 
-    async function fetchTokenInfo(tokenAddress, chainId) {
-      const url = `https://api.dune.com/api/v1/evm/transactions?address=${tokenAddress}&chain_id=${chainId}`;
-      const cacheKey = `dune_tx_${tokenAddress}_${chainId}`;
+    async function fetchTokenInfo(address, chainId) {
+      const url = `https://api.dune.com/api/v1/evm/transactions/${address}?chain_id=${chainId}`;
+      const cacheKey = `dune_tx_${address}_${chainId}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
         DOM.tokenInsightsWarning.style.display = 'block';
@@ -2870,7 +2866,7 @@ let DJ_TRACKS = [
         if (!data || !data.data) throw new Error('Invalid response from Dune API');
         const result = data.data.map(tx => ({
           tx_hash: tx.transaction_hash,
-          token: tx.token_symbol,
+          token: tx.token_symbol || 'ETH',
           value: tx.value,
           chain_id: chainId
         }));
@@ -2878,7 +2874,7 @@ let DJ_TRACKS = [
         DOM.tokenInsightsWarning.style.display = 'none';
         return result;
       } catch (error) {
-        console.error(`Failed to fetch token info for ${tokenAddress} on chain ${chainId}:`, error);
+        console.error(`Failed to fetch token info for ${address} on chain ${chainId}:`, error);
         DOM.tokenInsightsWarning.style.display = 'block';
         return mockTokenInsights.map(t => ({ tx_hash: '0xmock', token: t.symbol, value: Math.random() * 100, chain_id: chainId }));
       }
@@ -3262,10 +3258,29 @@ let DJ_TRACKS = [
     }
 
     async function fetchLogs() {
+      if (!walletAddress) {
+        return [{ message: 'Connect wallet to view trade logs', type: 'info', timestamp: new Date().toLocaleString() }];
+      }
+      const cacheKey = `dune_logs_${walletAddress}`;
+      const cached = localStorage.getItem(cacheKey);
+      if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
+        DOM.logsWarning.style.display = 'block';
+        return JSON.parse(cached).data;
+      }
       try {
-        throw new Error('Connection issue: Logs API not available');
+        const url = `https://api.dune.com/api/v1/evm/transactions/${walletAddress}?chain_id=${CHAIN_ID}`;
+        const data = await fetchWithRetry(url, { headers: { 'x-dune-api-key': DUNE_API_KEY } });
+        const result = (data.data || []).map(tx => ({
+          message: tx.transaction_hash,
+          type: 'trade',
+          timestamp: tx.block_time
+        }));
+        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: result }));
+        DOM.logsWarning.style.display = 'none';
+        return result;
       } catch (error) {
         console.error('Failed to fetch logs:', error);
+        DOM.logsWarning.style.display = 'block';
         return mockLogs;
       }
     }
@@ -3405,7 +3420,8 @@ let DJ_TRACKS = [
       });
 
       try {
-        const tokenInfo = await fetchTokenInfo(TOKEN_ADDRESS, CHAIN_ID);
+        const target = walletAddress || TOKEN_ADDRESS;
+        const tokenInfo = await fetchTokenInfo(target, CHAIN_ID);
         if (tokenInfo) {
           balancesData = tokenInfo.map(info => ({ token: info.symbol, balance: info.balance, chainId: info.chain_id }));
           updateBalancesUI(balancesData);
@@ -3565,32 +3581,14 @@ let DJ_TRACKS = [
     }
 
     async function loadTwitterData() {
-      if (!DOM.twitterList || !DOM.twitterTimeline) return;
-      DOM.loaderTwitter.style.display = 'flex';
-      // Load embedded timeline
-      const timeline = document.createElement('a');
-      timeline.className = 'twitter-timeline';
-      timeline.setAttribute('data-height', '400');
-      timeline.setAttribute('data-theme', 'dark');
-      timeline.href = 'https://twitter.com/search?q=from%3Averified%20(finance%20OR%20crypto%20OR%20%22world%20news%22%20OR%20%22celebrity%20deals%22%20OR%20%22art%20auction%22)';
-      DOM.twitterTimeline.appendChild(timeline);
+      if (!DOM.twitterTimeline) return;
+      const fallback = document.getElementById('twitter-fallback');
       const script = document.createElement('script');
       script.async = true;
       script.src = 'https://platform.twitter.com/widgets.js';
+      script.onload = () => { if (fallback) fallback.style.display = 'none'; };
+      script.onerror = () => { if (fallback) fallback.style.display = 'block'; };
       DOM.twitterTimeline.appendChild(script);
-      // Load API tweets
-      const tweets = await fetchTwitterData('from:verified (finance OR crypto OR "world news" OR "celebrity deals" OR "art auction")');
-      DOM.loaderTwitter.style.display = 'none';
-      DOM.twitterList.innerHTML = tweets.map(tweet => `
-        <li class="p-2 rounded-lg bg-gray-800">
-          <div class="flex justify-between">
-            <span>@${sanitizeInput(tweet.author)}</span>
-            <span class="text-gray-500 text-xs">${new Date(tweet.created_at).toLocaleString()}</span>
-          </div>
-          <div class="text-sm">${sanitizeInput(tweet.text)}</div>
-          ${tweet.video ? `<video src="${tweet.video}" controls class="w-full mt-2 rounded" autoplay muted playsinline></video>` : ''}
-        </li>
-      `).join('');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -4054,7 +4052,7 @@ let DJ_TRACKS = [
 
       const welcome = document.createElement('li');
       welcome.className = 'p-2 rounded';
-      welcome.innerHTML = '<div>QuantGpt: Welcome to QuantumI! Ask me for insights.</div>';
+      welcome.innerHTML = '<div>QuantGpt: Welcome to QuantumI! Ask me for insights.<br><span class="text-xs opacity-70">QuantGPT is a resource, not a financial advisor. Always conduct your own research.</span></div>';
       DOM.chatList.appendChild(welcome);
 
       initBtcOverlay();
@@ -4218,10 +4216,21 @@ let DJ_TRACKS = [
           }
         }
 
+        if (!quickAnswer) {
+          const lowerSite = lower;
+          if (lowerSite.includes('dj section')) {
+            quickAnswer = 'The DJ section lets you mix YouTube tracks, apply effects, and record the output.';
+          } else if (lowerSite.includes('connect wallet')) {
+            quickAnswer = 'Use the Connect Wallet button in the Wallet Log module to link MetaMask.';
+          }
+        }
+
+        const disclaimer = '<span class="text-xs opacity-70">QuantGPT is a resource, not a financial advisor. Always conduct your own research.</span>';
+
         if (quickAnswer) {
           const botMessage = document.createElement('li');
           botMessage.className = 'p-2 rounded';
-          botMessage.innerHTML = `<div>QuantGpt: ${quickAnswer}</div>`;
+          botMessage.innerHTML = `<div>QuantGpt: ${quickAnswer}<br>${disclaimer}</div>`;
           DOM.chatList.appendChild(botMessage);
           DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
         } else {
@@ -4235,14 +4244,14 @@ let DJ_TRACKS = [
             const data = await response.json();
             const botMessage = document.createElement('li');
             botMessage.className = 'p-2 rounded';
-            botMessage.innerHTML = `<div>QuantGpt: ${data.response || 'No response received'}</div>`;
+            botMessage.innerHTML = `<div>QuantGpt: ${data.response || 'No response received'}<br>${disclaimer}</div>`;
             DOM.chatList.appendChild(botMessage);
             DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
           } catch (error) {
             console.error('ChatGPT API error:', error);
             const errorMessage = document.createElement('li');
             errorMessage.className = 'p-2 rounded text-orange-400';
-            errorMessage.innerHTML = `<div>QuantGpt: Error processing request - ${error.message}</div>`;
+            errorMessage.innerHTML = `<div>QuantGpt: Error processing request - ${error.message}<br>${disclaimer}</div>`;
             DOM.chatList.appendChild(errorMessage);
           }
         }
@@ -4478,29 +4487,29 @@ async function refreshWalletData() {
     return;
   }
   try {
-    const res = await fetch(`/api/wallet?address=${walletAddress}`);
-    const data = await res.json();
-    const balanceTxt = parseFloat(data.balanceEth).toFixed(4) + ' ETH';
+    const balRes = await fetch(`https://api.etherscan.io/api?module=account&action=balance&address=${walletAddress}&tag=latest&apikey=${API_KEY}`);
+    const balJson = await balRes.json();
+    const ethBal = parseFloat(balJson.result) / 1e18;
+    const balanceTxt = ethBal.toFixed(4) + ' ETH';
     const balEl = document.getElementById('wallet-balance');
     balEl.dataset.full = balanceTxt;
     balEl.innerText = balanceVisible ? balanceTxt : '****';
-    document.getElementById('detected-exchange').innerText = data.dex + (data.accountBalance ? ` (${data.accountBalance} USD)` : '');
 
-    document.getElementById('token-count').innerText = data.tokenCount;
-    document.getElementById('last-tx').innerText = data.lastTx;
-
+    const tokens = [
+      { addr: '0xA0b86991c6218b36c1d19d4a2e9eb0ce3606eb48', symbol: 'USDC' },
+      { addr: '0x6B175474E89094C44Da98b954EedeAC495271d0F', symbol: 'DAI' }
+    ];
+    const holdings = [];
+    for (const t of tokens) {
+      const r = await fetch(`https://api.etherscan.io/api?module=account&action=tokenbalance&address=${walletAddress}&contractaddress=${t.addr}&tag=latest&apikey=${API_KEY}`);
+      const j = await r.json();
+      holdings.push({ token: t.symbol, balance: parseFloat(j.result) / 1e18 });
+    }
+    document.getElementById('token-count').innerText = holdings.filter(h => h.balance > 0).length;
+    document.getElementById('detected-exchange').innerText = 'No exchanges detected';
     const tradesEl = document.getElementById('open-trades');
     tradesEl.innerHTML = '';
-    data.positions.forEach(p => {
-      const li = document.createElement('li');
-      li.innerHTML = `${p.symbol} | Size: ${p.size} <button class="close-trade" data-symbol="${p.symbol}" data-size="${p.size}">Close</button>`;
-      tradesEl.appendChild(li);
-    });
-
-    if (Array.isArray(data.tokens)) {
-      balancesData = data.tokens.map(t => ({ token: t.symbol, balance: t.balance, chainId: 1, name: t.name }));
-      updateBalancesUI(balancesData);
-    }
+    updateBalancesUI(holdings);
   } catch (e) {
     console.error('refreshWalletData error', e);
     document.getElementById('open-trades').innerHTML = '<li>Error loading wallet</li>';
