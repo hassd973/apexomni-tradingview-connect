@@ -328,6 +328,7 @@
       left: 0;
       width: 100%;
       padding: 0.5rem;
+      font-size: clamp(14px, 3vw, 22px);
     }
     #btc-metrics-overlay .metrics-row {
       display: flex;
@@ -339,7 +340,7 @@
     #btc-metrics-overlay .metrics-row .metric {
       flex: 1 1 auto;
       text-align: center;
-      font-size: clamp(12px, 2vw, 16px);
+      font-size: inherit;
     }
     #loading-screen .metrics-overlay .metrics-container {
       position: absolute;
@@ -389,7 +390,7 @@
       min-width: 0;
     }
     .metric-main { font-weight: bold; }
-    .metric-sub { font-size: 0.75rem; opacity: 0.85; }
+    .metric-sub { font-size: clamp(12px, 2vw, 18px); opacity: 0.85; }
     .logo {
       width: 40px;
       height: 40px;
@@ -486,6 +487,7 @@
       border-radius: 4px;
       height: 6px;
       appearance: none;
+      width: 100%;
     }
     #crossfader::-webkit-slider-thumb {
       appearance: none;
@@ -604,9 +606,13 @@
     /* intro buttons styling replaced by .intro-buttons section above */
     #loading-screen .title-box {
       border: none !important;
+      background: transparent;
       font-size: 1.25rem;
       padding: 0.5rem 1rem;
-      position: relative;
+      position: absolute;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 1003;
     }
     #loading-screen .title-box h1 {
@@ -615,6 +621,7 @@
     @media (max-width: 640px) {
       #loading-screen .title-box {
         font-size: 1rem;
+        top: 0.5rem;
       }
       #loading-screen .title-box h1 {
         font-size: 1.5rem;
@@ -714,6 +721,9 @@
     }
     .chart-wrapper {
       position: relative;
+    }
+    @media (max-width: 640px) {
+      .chart-wrapper .flex { flex-wrap: wrap; }
     }
     .chart-container {
       position: relative;
@@ -924,6 +934,7 @@
       padding: 0.5rem;
       overflow-x: auto;
       white-space: nowrap;
+      max-width: 100%;
     }
     #token-list li:hover, #gas-heatmap-list li:hover, #log-list li:hover, #balances-list li:hover, #token-insights-list li:hover, #twitter-list li:hover {
       background: rgba(255, 187, 51, 0.1);
@@ -1061,6 +1072,11 @@
       margin-left: auto;
       margin-right: auto;
     }
+    @media (max-width: 640px) {
+      header .title-box { margin-bottom: 0.5rem; }
+      header .chart-wrapper .flex { flex-wrap: wrap; }
+      .timeframe-btn { font-size: 0.75rem; padding: 0.25rem 0.5rem; }
+    }
     @media (min-width: 640px) {
       .title-box { font-size: 1.25rem; }
     }
@@ -1114,6 +1130,7 @@
       border: 1px solid var(--shadow-color);
       border-radius: 6px;
       box-shadow: 0 0 4px var(--shadow-color);
+      overflow: hidden;
     }
     @media (min-width: 640px) {
       #gas-heatmap-canvas { height: 25vh; }
@@ -1170,6 +1187,7 @@
       width: 100% !important;
       height: 50vh !important;
       opacity: 0.8;
+      overflow: hidden;
     }
     .btc-hash-svg {
       background: #000000;
@@ -1288,6 +1306,7 @@
         flex-direction: column;
         gap: 0.4rem;
         align-items: stretch;
+        width: 100%;
       }
       .dj-btn, .dj-cue-btn {
         font-size: 0.75rem;
@@ -1312,6 +1331,7 @@
       #dj-playlist .playlist-item span {
         font-size: 0.75rem;
       }
+      .dj-controls input[type="range"] { width: 100%; }
     }
   </style>
 <style>
@@ -1906,6 +1926,7 @@
       twitterTimeline: document.getElementById('twitter-timeline-wrap'),
       loaderTwitter: document.getElementById('loader-twitter'),
       twitterWarning: document.getElementById('twitter-warning'),
+      twitterList: document.getElementById('twitter-list'),
       duneVersion: document.getElementById('dune-version'),
       walletTrackStatus: document.getElementById('wallet-track-status'),
       muteBtn: document.getElementById('mute-btn'),
@@ -2736,7 +2757,7 @@ let DJ_TRACKS = [
     }
 
     async function fetchBTCHashRate() {
-      const url = 'https://blockchain.info/q/hashrate';
+      const url = 'https://api.blockchain.info/q/hashrate';
       try {
         const text = await fetchTextWithRetry(url);
         return parseFloat(text) / 1e6;
@@ -2747,7 +2768,7 @@ let DJ_TRACKS = [
     }
 
     async function fetchBTCDifficulty() {
-      const url = 'https://blockchain.info/q/getdifficulty';
+      const url = 'https://api.blockchain.info/q/getdifficulty';
       try {
         const text = await fetchTextWithRetry(url);
         return parseFloat(text);
@@ -3581,7 +3602,7 @@ let DJ_TRACKS = [
     }
 
     async function loadTwitterData() {
-      if (!DOM.twitterTimeline) return;
+      if (!DOM.twitterTimeline || !DOM.twitterList) return;
       const fallback = document.getElementById('twitter-fallback');
       const script = document.createElement('script');
       script.async = true;
@@ -3589,6 +3610,18 @@ let DJ_TRACKS = [
       script.onload = () => { if (fallback) fallback.style.display = 'none'; };
       script.onerror = () => { if (fallback) fallback.style.display = 'block'; };
       DOM.twitterTimeline.appendChild(script);
+      const tweets = await fetchTwitterData('from:verified (finance OR crypto OR "world news" OR "celebrity deals" OR "art auction")');
+      DOM.loaderTwitter.style.display = 'none';
+      DOM.twitterList.innerHTML = tweets.map(t => `
+        <li class="p-2 rounded-lg bg-gray-800">
+          <div class="flex justify-between">
+            <span>@${sanitizeInput(t.author)}</span>
+            <span class="text-gray-500 text-xs">${new Date(t.created_at).toLocaleString()}</span>
+          </div>
+          <div class="text-sm">${sanitizeInput(t.text)}</div>
+          ${t.video ? `<video src="${t.video}" controls class="w-full mt-2 rounded" autoplay muted playsinline></video>` : ''}
+        </li>
+      `).join('');
     }
 
     document.addEventListener('DOMContentLoaded', () => {
