@@ -3142,7 +3142,7 @@
 
                         const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
                         const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
-                        const NEWS_PLAYLIST = 'PL0vfts4VzfNieTtC_yYSK7M1S5Hz_ffPz';
+                        const NEWS_PLAYLIST = 'PLrhpR40o4n5wvhJXaYjkqb0B8ZYDcjeSY';
 			let DJ_TRACKS = [
 				{ id: 'RkQ3m_uGwXE', title: 'Intro' },
 				{ id: 'zHLmyJvSkaA', title: 'BORN FREE' }
@@ -3521,7 +3521,6 @@
 
                         const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
                         const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
-                        const YOUTUBE_API_KEY = 'YOUR_API_KEY';
                         const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
                         const X_ACCESS_TOKEN =
                                 '1936237883842576384-eikvHEUXy2YxGwryeLcEfhEUjTGLIO';
@@ -5177,29 +5176,28 @@ async function fetchNewsVideos() {
                 return JSON.parse(cached).data;
         }
         try {
-                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${NEWS_PLAYLIST}&maxResults=10&key=${YOUTUBE_API_KEY}`;
-                const data = await fetchWithRetry(url);
-                if (data.items) {
-                        const videos = data.items.map((item) => ({
-                                videoId: item.snippet.resourceId.videoId,
-                                title: item.snippet.title,
-                                channelTitle: item.snippet.channelTitle,
-                                publishedAt: item.snippet.publishedAt,
-                                thumbnail: item.snippet.thumbnails.medium.url
-                        }))
-                                .sort(
-                                        (a, b) => new Date(b.publishedAt) - new Date(a.publishedAt)
-                                );
-                        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: videos }));
-                        return videos;
-                }
+                const url = `https://corsproxy.io/https://www.youtube.com/feeds/videos.xml?playlist_id=${NEWS_PLAYLIST}`;
+                const xmlText = await fetchTextWithRetry(url);
+                const parser = new DOMParser();
+                const xml = parser.parseFromString(xmlText, 'text/xml');
+                const entries = Array.from(xml.querySelectorAll('entry'));
+                const channelTitle = xml.querySelector('title')?.textContent || 'News Feed';
+                const videos = entries.map((e) => ({
+                        videoId: e.querySelector('yt\\:videoId')?.textContent || '',
+                        title: e.querySelector('title')?.textContent || '',
+                        channelTitle,
+                        publishedAt: e.querySelector('published')?.textContent || '',
+                        thumbnail: e.querySelector('media\\:thumbnail')?.getAttribute('url') || ''
+                })).sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+                localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: videos }));
+                return videos;
         } catch (err) {
-                console.error('YouTube API error:', err);
+                console.error('YouTube fetch failed:', err);
         }
         return [{
-                videoId: 'pF1UvN7SEGU',
+                videoId: 'NExbobK7XlY',
                 title: 'Latest World News',
-                channelTitle: 'News Feed',
+                channelTitle: 'AsmonTV',
                 publishedAt: new Date().toISOString(),
                 thumbnail: 'https://via.placeholder.com/120x90'
         }];
@@ -5254,21 +5252,27 @@ async function loadYouTubeVideos() {
 				return match ? match[1] : url;
 			}
 
-                        function loadTwitterData() {
+                        async function loadTwitterData() {
                                 if (!DOM.twitterTimeline) return;
                                 const fallback = document.getElementById('twitter-fallback');
                                 if (fallback) fallback.style.display = 'none';
 
                                 DOM.loaderTwitter.style.display = 'none';
                                 DOM.twitterTimeline.innerHTML =
-                                        '<a class="twitter-timeline" data-tweet-limit="10" data-chrome="nofooter transparent" data-theme="dark" href="https://x.com/DIFF810489">Tweets by DIFF810489</a>';
+                                        '<a class="twitter-timeline" data-tweet-limit="10" data-chrome="nofooter transparent" data-theme="dark" href="https://twitter.com/DIFF810489">Tweets by DIFF810489</a>';
                                 const script = document.createElement('script');
                                 script.async = true;
                                 script.src = 'https://platform.twitter.com/widgets.js';
-                                script.onerror = () => {
+                                script.onload = () => {
+                                        DOM.twitterWarning.style.display = 'none';
+                                };
+                                script.onerror = async () => {
                                         if (fallback) fallback.style.display = 'block';
                                         DOM.twitterWarning.textContent = 'Tweets unavailable, retrying...';
                                         DOM.twitterWarning.style.display = 'block';
+                                        const tweets = await fetchTwitterData();
+                                        DOM.twitterTimeline.innerHTML = '<ul class="space-y-2 text-sm">' +
+                                                tweets.map(t => `<li class="p-2 rounded-lg bg-gray-800"><div class="flex justify-between"><span>@${sanitizeInput(t.author)}</span><span class="text-gray-500 text-xs">${new Date(t.created_at).toLocaleString()}</span></div><div class="text-sm">${sanitizeInput(t.text)}</div>${t.video ? `<video src="${t.video}" controls class="w-full mt-2 rounded" autoplay muted playsinline></video>` : t.image ? `<img src="${t.image}" class="w-full mt-2 rounded" loading="lazy" />` : ''}</li>`).join('') + '</ul>';
                                 };
                                 DOM.twitterTimeline.appendChild(script);
                         }
