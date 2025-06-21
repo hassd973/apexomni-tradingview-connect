@@ -7,7 +7,7 @@
 <meta content="QuantumI Dashboard: Live crypto market analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains." name="description"/>
 <meta content="crypto, dashboard, QuantumI, trading, analytics, multi-chain, Dune" name="keywords"/>
 <meta content="xAI" name="author"/>
-<title>⚛️ QUANTUMI 🌌</title>
+<title>QUANTUMI</title>
 <link href="https://i.postimg.cc/R6HKW38z/q-logo.png" rel="icon" type="image/png"/>
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -322,6 +322,12 @@
       border-radius: 5px;
       gap: 4px;
       z-index: 15;
+    }
+    .metrics-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
     }
     #loading-screen .metrics-overlay {
       position: absolute;
@@ -1246,7 +1252,7 @@
       .playlist-container {
         width: 100%;
         max-width: 90vw;
-        height: 180px;
+        height: 160px;
         aspect-ratio: unset;
       }
       .dj-controls {
@@ -1263,6 +1269,9 @@
         padding: 0.3rem 0.5rem;
         flex: 1 0 45%;
         text-align: center;
+      }
+      .dj-track input {
+        font-size: 0.75rem;
       }
       .fx-knob {
         width: 50px;
@@ -1375,7 +1384,7 @@
 <div id="loading-screen">
   <div class="loading-video">
     <div class="video-container">
-      <video id="intro-video" preload="auto" playsinline autoplay muted loop crossorigin="anonymous" class="w-full">
+      <video id="intro-video" preload="auto" playsinline autoplay muted crossorigin="anonymous" class="w-full">
         <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
       </video>
       <div class="video-overlay metrics-overlay">
@@ -1389,7 +1398,7 @@
       <button id="mute-btn" aria-label="Toggle mute">🔇</button>
     </div>
     <div class="title-box">
-      <h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
+      <h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
     </div>
     <div class="intro-buttons">
       <button id="play-intro-btn" aria-label="Play intro">Play Intro</button>
@@ -1405,7 +1414,7 @@
 <header class="w-full flex justify-center items-center">
 <div class="w-full max-w-[98vw] mx-auto px-4">
 <div class="title-box">
-<h1 class="text-2xl md:text-3xl main-title">⚛️ QUANTUMI 🌌</h1>
+<h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
 </div>
 <p class="text-base text-center">Real-time cryptocurrency market data and analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains.</p>
 <div class="chart-wrapper w-full">
@@ -2028,6 +2037,7 @@ let DJ_TRACKS = [
           document.addEventListener('click', () => introVideo.play(), { once: true });
         });
       }
+      introVideo.addEventListener('play', () => { introPlayed = true; });
       introVideo.addEventListener('error', () => console.warn('Intro trailer failed to load'));
     }
 
@@ -2652,6 +2662,21 @@ let DJ_TRACKS = [
       }
     }
 
+    async function fetchTextWithRetry(url, options = {}, retries = 3, delay = 1000) {
+      for (let i = 0; i <= retries; i++) {
+        try {
+          const response = await fetch(url, { method: 'GET', mode: 'cors', credentials: 'omit', headers: { 'Accept': 'text/plain', ...options.headers }, ...options });
+          if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}, Text: ${response.statusText}`);
+          return await response.text();
+        } catch (error) {
+          if (i === retries) throw error;
+          const backoff = delay * Math.pow(2, i);
+          console.warn(`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${backoff}ms: ${error.message}`);
+          await new Promise(resolve => setTimeout(resolve, backoff));
+        }
+      }
+    }
+
     async function fetchBTCPrice() {
       const url = 'https://api.coingecko.com/api/v3/coins/bitcoin';
       try {
@@ -2682,29 +2707,25 @@ let DJ_TRACKS = [
     }
 
     async function fetchBTCHashRate() {
-      const url = 'https://api.blockchain.com/charts/hash-rate?timespan=1days&format=json';
+      const url = 'https://blockchain.info/q/hashrate';
       try {
-        const data = await fetchWithRetry(url);
-        if (data && data.values && data.values.length) {
-          return data.values[data.values.length - 1].y;
-        }
+        const text = await fetchTextWithRetry(url);
+        return parseFloat(text) / 1e6;
       } catch (error) {
         console.warn('Failed to fetch BTC hash rate:', error);
+        return 0;
       }
-      return 0;
     }
 
     async function fetchBTCDifficulty() {
-      const url = 'https://api.blockchain.com/charts/difficulty?timespan=1days&format=json';
+      const url = 'https://blockchain.info/q/getdifficulty';
       try {
-        const data = await fetchWithRetry(url);
-        if (data && data.values && data.values.length) {
-          return data.values[data.values.length - 1].y;
-        }
+        const text = await fetchTextWithRetry(url);
+        return parseFloat(text);
       } catch (error) {
         console.warn('Failed to fetch BTC difficulty:', error);
+        return 0;
       }
-      return 0;
     }
 
     async function fetchTwitterData(query) {
@@ -2715,7 +2736,7 @@ let DJ_TRACKS = [
         return JSON.parse(cached).data;
       }
       try {
-        const url = `https://api.x.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,type`;
+        const url = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,type`;
         const data = await fetchWithRetry(url, {
           headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` }
         });
@@ -2730,7 +2751,7 @@ let DJ_TRACKS = [
         DOM.twitterWarning.style.display = 'none';
         return result;
       } catch (error) {
-        console.error('X API fetch failed:', error);
+        console.error('Twitter API fetch failed:', error);
         DOM.twitterWarning.textContent = '> Failed to load tweets, using fallback';
         DOM.twitterWarning.style.display = 'block';
         return [
@@ -3518,11 +3539,11 @@ let DJ_TRACKS = [
       timeline.className = 'twitter-timeline';
       timeline.setAttribute('data-height', '400');
       timeline.setAttribute('data-theme', 'dark');
-      timeline.href = 'https://x.com/search?q=from%3Averified%20(finance%20OR%20crypto%20OR%20%22world%20news%22%20OR%20%22celebrity%20deals%22%20OR%20%22art%20auction%22)';
+      timeline.href = 'https://twitter.com/search?q=from%3Averified%20(finance%20OR%20crypto%20OR%20%22world%20news%22%20OR%20%22celebrity%20deals%22%20OR%20%22art%20auction%22)';
       DOM.twitterTimeline.appendChild(timeline);
       const script = document.createElement('script');
       script.async = true;
-      script.src = 'https://platform.x.com/widgets.js';
+      script.src = 'https://platform.twitter.com/widgets.js';
       DOM.twitterTimeline.appendChild(script);
       // Load API tweets
       const tweets = await fetchTwitterData('from:verified (finance OR crypto OR "world news" OR "celebrity deals" OR "art auction")');
