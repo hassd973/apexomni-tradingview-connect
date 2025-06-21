@@ -391,7 +391,16 @@
                                 transform: none;
                                 width: 100%;
                                 padding: 0.5rem;
-                                font-size: clamp(18px, 4vw, 28px);
+                        }
+                        #btc-metrics-overlay .metrics-container {
+                                gap: 2px;
+                                padding: 2px;
+                        }
+                        #btc-metrics-overlay .metric-main {
+                                font-size: clamp(8px, 1.5vw, 12px);
+                        }
+                        #btc-metrics-overlay .metric-sub {
+                                font-size: clamp(6px, 1.2vw, 10px);
                         }
                         #btc-metrics-overlay .metrics-row {
                                 display: flex;
@@ -519,15 +528,28 @@
 				background-color: rgba(30, 144, 255, 0.2);
 				box-shadow: 0 0 8px #1e90ff;
 			}
-			.dj-btn:active {
-				background-color: rgba(30, 144, 255, 0.4);
-			}
-			@media (max-width: 640px) {
-				.dj-btn {
-					padding: 0.25rem 0.5rem;
-					font-size: 0.75rem;
-				}
-			}
+                        .dj-btn:active {
+                                background-color: rgba(30, 144, 255, 0.4);
+                        }
+                        .dj-error {
+                                color: #f87171;
+                                font-size: 0.75rem;
+                                text-align: center;
+                                margin-top: 0.25rem;
+                                display: none;
+                        }
+                        @media (max-width: 640px) {
+                                .dj-btn {
+                                        padding: 0.25rem 0.5rem;
+                                        font-size: 0.75rem;
+                                }
+                                #dj-deactivate-btn {
+                                        font-size: 0.7rem;
+                                        padding: 0.3rem 0.6rem;
+                                        width: auto;
+                                        max-width: 120px;
+                                }
+                        }
 			.dj-btn:hover {
 				background-color: rgba(30, 144, 255, 0.2);
 				box-shadow: 0 0 8px #1e90ff;
@@ -1089,7 +1111,7 @@
                         }
                         #gas-heatmap-list,
                         #balances-list,
-                        #youtube-feed,
+                        #youtube-list,
                         #twitter-list {
                                 max-height: 20vh;
                         }
@@ -1131,7 +1153,8 @@
                         #gas-heatmap-list li,
                         #log-list li,
                         #balances-list li,
-                        #twitter-list li {
+                        #twitter-list li,
+                        #youtube-list li {
                                 font-size: 0.75rem;
                                 padding: 0.5rem;
                                 overflow-x: auto;
@@ -1176,10 +1199,27 @@
 			#profit-pairs .top-pair {
 				color: var(--primary-color);
 			}
-			#profit-pairs .bottom-pair {
-				color: var(--secondary-color);
-			}
-			@keyframes pulse {
+                        #profit-pairs .bottom-pair {
+                                color: var(--secondary-color);
+                        }
+                        #youtube-list {
+                                max-height: 50vh;
+                                overflow-y: auto;
+                        }
+                        #youtube-player iframe {
+                                max-width: 100%;
+                        }
+                        @media (max-width: 640px) {
+                                #youtube-list li {
+                                        flex-direction: column;
+                                        font-size: 0.75rem;
+                                }
+                                #youtube-list img {
+                                        width: 80px;
+                                        height: 60px;
+                                }
+                        }
+                        @keyframes pulse {
 				0% {
 					transform: scale(1);
 				}
@@ -1813,8 +1853,8 @@
 					<a class="nav-link" href="#tokens-module">Tokens</a>
 					<a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
 					<a class="nav-link" href="#logs-module">Logs</a>
-					<a class="nav-link" href="#balances-module">Balances</a>
-					<a class="nav-link" href="#token-insights-module">Token Insights</a>
+                                        <a class="nav-link" href="#balances-module">Finance Tweets</a>
+                                        <a class="nav-link" href="#world-module">World News</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
 					<a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
 					<a class="nav-link" href="#" id="undock-background-link"
@@ -2260,50 +2300,15 @@
 					</button>
 				</div>
 			</section>
-			<section class="rounded-lg" draggable="true" id="logs-module">
-				<div class="module-header">
-					<h2 class="text-lg md:text-xl typewriter">&gt; Live Logs</h2>
-					<button
-						aria-label="Toggle module visibility"
-						class="toggle-module-btn"
-						data-tooltip="Toggle module visibility"
-						role="button"
-					>
-						▼
-					</button>
-				</div>
-				<div class="module-content">
-					<div class="flex justify-between items-center mb-2">
-						<div
-							class="loader text-center text-gray-500 text-sm"
-							id="loader-logs"
-						>
-							&gt; Loading...
-						</div>
-						<button
-							aria-label="Switch log data source"
-							data-tooltip="Switch log data source"
-							id="toggle-logs-data"
-							role="button"
-						>
-							Real Logs
-						</button>
-					</div>
-					<div class="data-warning" id="logs-warning" style="display: none">
-						&gt; Using mock logs due to connection issue
-					</div>
-					<ul class="space-y-2 text-sm" id="log-list"></ul>
-				</div>
-			</section>
 			<section
 				class="rounded-lg twitter-section"
 				draggable="true"
 				id="balances-module"
 			>
-				<div class="module-header">
-					<h2 class="text-lg md:text-xl twitter-title typewriter">
-						&gt; Finance &amp; Crypto News
-					</h2>
+                                <div class="module-header">
+                                        <h2 class="text-lg md:text-xl twitter-title typewriter">
+                                                &gt; BlueSky Feed
+                                        </h2>
 					<button
 						aria-label="Toggle module visibility"
 						class="toggle-module-btn"
@@ -2323,59 +2328,94 @@
 					<div class="data-warning" id="twitter-warning" style="display: none">
 						&gt; Using cached tweets
 					</div>
-					<div
-						id="twitter-timeline"
-						class="custom-scroll"
-						style="max-height: 50vh; overflow-y: auto"
-					></div>
-					<a
-						class="twitter-timeline"
-						data-height="400"
-						data-theme="dark"
-						href="https://twitter.com/search?q=finance%20OR%20crypto%20OR%20%22world%20news%22%20OR%20%22celebrity%20deals%22%20OR%20%22art%20auction%22&src=typed_query"
-					></a>
-					<div id="twitter-fallback" class="text-sm mt-2" style="display: none">
-						<p>Bitcoin hits $105,000!</p>
-						<p>Art auction features NFT collection for $2M</p>
-					</div>
-					<ul class="space-y-2 text-sm custom-scroll" id="twitter-list"></ul>
-				</div>
-			</section>
-                       <section
-                               class="rounded-lg youtube-news-section"
-                               draggable="true"
-                               id="token-insights-module"
-                       >
-                               <div class="module-header">
-                                       <h2 class="text-lg md:text-xl token-insights-title typewriter">
-                                               &gt; Crypto &amp; World News Videos
-                                       </h2>
-                                       <button
-                                               aria-label="Toggle module visibility"
-                                               class="toggle-module-btn"
-                                               data-tooltip="Toggle module visibility"
-                                               role="button"
-                                       >
-                                               ▼
-                                       </button>
-                               </div>
-                               <div class="module-content">
-                                       <div
-                                               class="loader text-center text-gray-500 text-sm"
-                                               id="loader-youtube"
-                                       >
-                                               &gt; Loading videos...
-                                       </div>
-                                       <iframe
-                                               id="youtube-feed"
-                                               style="display:none;"
-                                               class="w-full rounded-lg"
-                                               height="315"
-                                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                                       ></iframe>
-                               </div>
-                       </section>
-			<section class="rounded-lg" draggable="true" id="inverse-winners-module">
+                                <div id="twitter-timeline" style="max-width: 500px; margin: auto; font-family: Arial, sans-serif; border: 1px solid #ddd; border-radius: 8px; padding: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                                        <h3 style="color: #007fff; margin-bottom: 12px;">BlueSky Feed: financialtimes.com</h3>
+                                        <div id="posts">
+                                                <p>Loading posts...</p>
+                                        </div>
+                                        <a href="https://bsky.app/profile/financialtimes.com" target="_blank" style="display: inline-block; margin-top: 12px; padding: 8px 16px; background-color: #007fff; color: white; text-decoration: none; border-radius: 20px;">View on BlueSky</a>
+                                </div>
+                                </div>
+                        </section>
+                        <section
+                                class="rounded-lg youtube-news-section"
+                                draggable="true"
+                                id="world-module"
+                        >
+                                <div class="module-header">
+                                        <h2 class="text-lg md:text-xl token-insights-title typewriter">
+                                                &gt; YouTube Playlist
+                                        </h2>
+                                        <button
+                                                aria-label="Toggle module visibility"
+                                                class="toggle-module-btn"
+                                                data-tooltip="Toggle module visibility"
+                                                role="button"
+                                        >
+                                                ▼
+                                        </button>
+                                </div>
+                                <div class="module-content">
+                                        <div id="youtube-playlist-module" style="max-width: 900px; margin: 20px auto; font-family: Arial, sans-serif;">
+                                                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                                                        <div style="flex: 2; min-width: 300px;">
+                                                                <iframe
+                                                                        id="yt-player"
+                                                                        width="100%"
+                                                                        height="400"
+                                                                        src="https://www.youtube.com/embed/9LEbjMAkU4I?rel=0"
+                                                                        title="YouTube video player"
+                                                                        frameborder="0"
+                                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                                        allowfullscreen
+                                                                ></iframe>
+                                                        </div>
+                                                        <div
+                                                                id="yt-playlist-thumbs"
+                                                                style="flex: 1; min-width: 220px; max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; padding: 8px; background: #f9f9f9;"
+                                                        >
+                                                                <p>Loading playlist...</p>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                </div>
+                        </section>
+                        <section class="rounded-lg" draggable="true" id="logs-module">
+                                <div class="module-header">
+                                        <h2 class="text-lg md:text-xl typewriter">&gt; Live Logs</h2>
+                                        <button
+                                                aria-label="Toggle module visibility"
+                                                class="toggle-module-btn"
+                                                data-tooltip="Toggle module visibility"
+                                                role="button"
+                                        >
+                                                ▼
+                                        </button>
+                                </div>
+                                <div class="module-content">
+                                        <div class="flex justify-between items-center mb-2">
+                                                <div
+                                                        class="loader text-center text-gray-500 text-sm"
+                                                        id="loader-logs"
+                                                >
+                                                        &gt; Loading...
+                                                </div>
+                                                <button
+                                                        aria-label="Switch log data source"
+                                                        data-tooltip="Switch log data source"
+                                                        id="toggle-logs-data"
+                                                        role="button"
+                                                >
+                                                        Real Logs
+                                                </button>
+                                        </div>
+                                        <div class="data-warning" id="logs-warning" style="display: none">
+                                                &gt; Using mock logs due to connection issue
+                                        </div>
+                                        <ul class="space-y-2 text-sm" id="log-list"></ul>
+                                </div>
+                        </section>
+                        <section class="rounded-lg" draggable="true" id="inverse-winners-module">
 				<div class="module-header">
 					<h2 class="text-lg md:text-xl typewriter">Inverse Metrics</h2>
 					<button
@@ -2665,24 +2705,25 @@
 						<button id="track-a-setcue" class="dj-cue-btn">Set Cue</button>
 						<button id="track-a-cue" class="dj-cue-btn">Cue</button>
 					</div>
-					<div class="playlist-container video-container">
-						<div id="track-a-player"></div>
-						<div class="metrics-overlay">
-							<img
-								src="https://i.postimg.cc/R6HKW38z/q-logo.png"
-								alt="QuantumI Logo"
+                                        <div class="playlist-container video-container">
+                                                <div id="track-a-player"></div>
+                                                <div class="metrics-overlay">
+                                                        <img
+                                                                src="https://i.postimg.cc/R6HKW38z/q-logo.png"
+                                                                alt="QuantumI Logo"
 								class="logo pulse"
 							/>
-							<div class="metrics-container">
-								<span id="track-a-price" class="metric metric-main"></span>
-								<span id="track-a-topcoin" class="metric metric-main"></span>
-								<span id="track-a-time" class="metric metric-sub"></span>
-								<span id="track-a-inverse" class="metric metric-sub"></span>
-							</div>
-						</div>
-					</div>
-					<div class="mt-1 flex gap-2 justify-center">
-						<button id="track-a-back" class="dj-btn">&#9664;&#9664;</button>
+                                                        <div class="metrics-container">
+                                                                <span id="track-a-price" class="metric metric-main"></span>
+                                                                <span id="track-a-topcoin" class="metric metric-main"></span>
+                                                                <span id="track-a-time" class="metric metric-sub"></span>
+                                                                <span id="track-a-inverse" class="metric metric-sub"></span>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                        <div id="track-a-error" class="dj-error">Video unavailable, please try another track.</div>
+                                        <div class="mt-1 flex gap-2 justify-center">
+                                                <button id="track-a-back" class="dj-btn">&#9664;&#9664;</button>
 						<button id="track-a-play" class="dj-btn">Play</button>
 						<button id="track-a-pause" class="dj-btn">Pause</button>
 						<button id="track-a-forward" class="dj-btn">&#9654;&#9654;</button>
@@ -2716,24 +2757,25 @@
 						<button id="track-b-setcue" class="dj-cue-btn">Set Cue</button>
 						<button id="track-b-cue" class="dj-cue-btn">Cue</button>
 					</div>
-					<div class="playlist-container video-container">
-						<div id="track-b-player"></div>
-						<div class="metrics-overlay">
-							<img
-								src="https://i.postimg.cc/R6HKW38z/q-logo.png"
-								alt="QuantumI Logo"
+                                        <div class="playlist-container video-container">
+                                                <div id="track-b-player"></div>
+                                                <div class="metrics-overlay">
+                                                        <img
+                                                                src="https://i.postimg.cc/R6HKW38z/q-logo.png"
+                                                                alt="QuantumI Logo"
 								class="logo pulse"
 							/>
-							<div class="metrics-container">
-								<span id="track-b-price" class="metric metric-main"></span>
-								<span id="track-b-topcoin" class="metric metric-main"></span>
-								<span id="track-b-time" class="metric metric-sub"></span>
-								<span id="track-b-inverse" class="metric metric-sub"></span>
-							</div>
-						</div>
-					</div>
-					<div class="mt-1 flex gap-2 justify-center">
-						<button id="track-b-back" class="dj-btn">&#9664;&#9664;</button>
+                                                        <div class="metrics-container">
+                                                                <span id="track-b-price" class="metric metric-main"></span>
+                                                                <span id="track-b-topcoin" class="metric metric-main"></span>
+                                                                <span id="track-b-time" class="metric metric-sub"></span>
+                                                                <span id="track-b-inverse" class="metric metric-sub"></span>
+                                                        </div>
+                                                </div>
+                                        </div>
+                                        <div id="track-b-error" class="dj-error">Video unavailable, please try another track.</div>
+                                        <div class="mt-1 flex gap-2 justify-center">
+                                                <button id="track-b-back" class="dj-btn">&#9664;&#9664;</button>
 						<button id="track-b-play" class="dj-btn">Play</button>
 						<button id="track-b-pause" class="dj-btn">Pause</button>
 						<button id="track-b-forward" class="dj-btn">&#9654;&#9654;</button>
@@ -2959,13 +3001,14 @@
 				balancesList: document.getElementById('balances-list'),
 				loaderBalances: document.getElementById('loader-balances'),
 				balancesWarning: document.getElementById('balances-warning'),
-                                youtubeFeed: document.getElementById('youtube-feed'),
                                 loaderYoutube: document.getElementById('loader-youtube'),
+                                youtubePlayer: document.getElementById('youtube-player'),
+                                youtubeList: document.getElementById('youtube-list'),
+                                youtubeWarning: document.getElementById('youtube-warning'),
                                 tokenInsightsWarning: document.getElementById('token-insights-warning'),
-				twitterTimeline: document.getElementById('twitter-timeline'),
-				loaderTwitter: document.getElementById('loader-twitter'),
-				twitterWarning: document.getElementById('twitter-warning'),
-				twitterList: document.getElementById('twitter-list'),
+                                twitterTimeline: document.getElementById('twitter-timeline'),
+                                loaderTwitter: document.getElementById('loader-twitter'),
+                                twitterWarning: document.getElementById('twitter-warning'),
 				duneVersion: document.getElementById('dune-version'),
 				walletTrackStatus: document.getElementById('wallet-track-status'),
 				muteBtn: document.getElementById('mute-btn'),
@@ -3025,16 +3068,18 @@
 				trackAForward: document.getElementById('track-a-forward'),
 				trackAPause: document.getElementById('track-a-pause'),
 				trackAStop: document.getElementById('track-a-stop'),
-				trackAMute: document.getElementById('track-a-mute'),
-				trackAVolume: document.getElementById('track-a-volume'),
-				trackBPlay: document.getElementById('track-b-play'),
+                                trackAMute: document.getElementById('track-a-mute'),
+                                trackAVolume: document.getElementById('track-a-volume'),
+                                trackAError: document.getElementById('track-a-error'),
+                                trackBPlay: document.getElementById('track-b-play'),
 				trackBBack: document.getElementById('track-b-back'),
 				trackBForward: document.getElementById('track-b-forward'),
 				trackBPause: document.getElementById('track-b-pause'),
-				trackBStop: document.getElementById('track-b-stop'),
-				trackBMute: document.getElementById('track-b-mute'),
-				trackBVolume: document.getElementById('track-b-volume'),
-				djPlaylist: document.getElementById('dj-playlist'),
+                                trackBStop: document.getElementById('track-b-stop'),
+                                trackBMute: document.getElementById('track-b-mute'),
+                                trackBVolume: document.getElementById('track-b-volume'),
+                                trackBError: document.getElementById('track-b-error'),
+                                djPlaylist: document.getElementById('dj-playlist'),
 				djOverlay: document.getElementById('dj-activation-overlay'),
 				djLogoBtn: document.querySelector('#dj-activation-overlay .logo'),
 				djDashboard: document.getElementById('dj-dashboard'),
@@ -3056,9 +3101,10 @@
 				dotClouds = [],
 				colorLegend = [],
 				hashLog = [];
-			let bgMusicPlayer;
-			let trackAPlayer;
-			let trackBPlayer;
+                        let bgMusicPlayer;
+                        let trackAPlayer;
+                        let trackBPlayer;
+                        let youtubePlayer;
 			let djCtx,
 				gainA,
 				gainB,
@@ -3105,8 +3151,9 @@
 			let cachedTopCoin = null;
 			let cachedInverseCoin = null;
 
-			const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
-			const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
+                        const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
+                        const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
+                        const NEWS_PLAYLIST = 'PLrhpR40o4n5wvhJXaYjkqb0B8ZYDcjeSY';
 			let DJ_TRACKS = [
 				{ id: 'RkQ3m_uGwXE', title: 'Intro' },
 				{ id: 'zHLmyJvSkaA', title: 'BORN FREE' }
@@ -3191,17 +3238,20 @@
                                                 origin: location.origin,
                                                 enablejsapi: 1
                                         },
-					events: {
-						onReady: (e) => {
-							e.target.setVolume(100);
-							e.target.mute();
-							e.target.playVideo();
-							const frame = e.target.getIframe();
-							frame.setAttribute('loading', 'lazy');
-							frame.setAttribute('crossorigin', 'anonymous');
-						}
-					}
-				});
+                                        events: {
+                                                onReady: (e) => {
+                                                        e.target.setVolume(100);
+                                                        e.target.mute();
+                                                        e.target.playVideo();
+                                                        const frame = e.target.getIframe();
+                                                        frame.setAttribute('loading', 'lazy');
+                                                        frame.setAttribute('crossorigin', 'anonymous');
+                                                },
+                                                onError: (err) => {
+                                                        console.error('Failed to load YouTube video', err);
+                                                }
+                                        }
+                                });
 
 				trackAPlayer = new YT.Player('track-a-player', {
 					host: 'https://www.youtube.com',
@@ -3215,25 +3265,30 @@
                                                 origin: location.origin,
                                                 enablejsapi: 1
                                         },
-					events: {
-						onReady: (ev) => {
-							attachTrack(ev.target, 'A');
-							if (bgMusicPlayer)
-								bgMusicPlayer.loadPlaylist({ list: PLAYLIST_A });
-							const frameA = ev.target.getIframe();
-							frameA.setAttribute('loading', 'lazy');
-							frameA.setAttribute('crossorigin', 'anonymous');
-							if (DOM.trackAMute) DOM.trackAMute.textContent = 'Unmute';
-						},
-						onStateChange: (ev) => {
-							if (ev.data === YT.PlayerState.PLAYING)
-								attachTrack(ev.target, 'A');
-							updateVinyl('A');
-						}
-					}
-				});
+                                        events: {
+                                                onReady: (ev) => {
+                                                        if (DOM.trackAError) DOM.trackAError.style.display = 'none';
+                                                        attachTrack(ev.target, 'A');
+                                                        if (bgMusicPlayer)
+                                                                bgMusicPlayer.loadPlaylist({ list: PLAYLIST_A });
+                                                        const frameA = ev.target.getIframe();
+                                                        frameA.setAttribute('loading', 'lazy');
+                                                        frameA.setAttribute('crossorigin', 'anonymous');
+                                                        if (DOM.trackAMute) DOM.trackAMute.textContent = 'Unmute';
+                                                },
+                                                onStateChange: (ev) => {
+                                                        if (ev.data === YT.PlayerState.PLAYING)
+                                                                attachTrack(ev.target, 'A');
+                                                        updateVinyl('A');
+                                                },
+                                                onError: () => {
+                                                        if (DOM.trackAError) DOM.trackAError.style.display = 'block';
+                                                        console.error('Failed to load YouTube video');
+                                                }
+                                        }
+                                });
 
-				trackBPlayer = new YT.Player('track-b-player', {
+                               trackBPlayer = new YT.Player('track-b-player', {
 					host: 'https://www.youtube.com',
 					height: '100%',
 					width: '100%',
@@ -3245,25 +3300,50 @@
                                                 origin: location.origin,
                                                 enablejsapi: 1
                                         },
-					events: {
-						onReady: (ev) => {
-							attachTrack(ev.target, 'B');
-							if (bgMusicPlayer)
-								bgMusicPlayer.loadPlaylist({ list: PLAYLIST_B });
-							const frameB = ev.target.getIframe();
-							frameB.setAttribute('loading', 'lazy');
-							frameB.setAttribute('crossorigin', 'anonymous');
-							if (DOM.trackBMute) DOM.trackBMute.textContent = 'Unmute';
-						},
-						onStateChange: (ev) => {
-							if (ev.data === YT.PlayerState.PLAYING)
-								attachTrack(ev.target, 'B');
-							updateVinyl('B');
-						}
-					}
-				});
+                                        events: {
+                                                onReady: (ev) => {
+                                                        if (DOM.trackBError) DOM.trackBError.style.display = 'none';
+                                                        attachTrack(ev.target, 'B');
+                                                        if (bgMusicPlayer)
+                                                                bgMusicPlayer.loadPlaylist({ list: PLAYLIST_B });
+                                                        const frameB = ev.target.getIframe();
+                                                        frameB.setAttribute('loading', 'lazy');
+                                                        frameB.setAttribute('crossorigin', 'anonymous');
+                                                        if (DOM.trackBMute) DOM.trackBMute.textContent = 'Unmute';
+                                                },
+                                                onStateChange: (ev) => {
+                                                        if (ev.data === YT.PlayerState.PLAYING)
+                                                                attachTrack(ev.target, 'B');
+                                                        updateVinyl('B');
+                                                },
+                                                onError: () => {
+                                                        if (DOM.trackBError) DOM.trackBError.style.display = 'block';
+                                                        console.error('Failed to load YouTube video');
+                                                }
+                                        }
+                               });
 
-				loadDJPlaylist();
+                                youtubePlayer = new YT.Player('youtube-player', {
+                                        host: 'https://www.youtube.com',
+                                        height: '315',
+                                        width: '100%',
+                                        playerVars: {
+                                                autoplay: 0,
+                                                mute: 1,
+                                                origin: location.origin,
+                                                enablejsapi: 1
+                                        },
+                                        events: {
+                                                onReady: () => {
+                                                        DOM.youtubeWarning.style.display = 'none';
+                                                },
+                                                onError: () => {
+                                                        DOM.youtubeWarning.style.display = 'block';
+                                                }
+                                        }
+                                });
+
+                               loadDJPlaylist();
 
 				enableQuantumSound();
 
@@ -3450,8 +3530,8 @@
 				window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 			}
 
-			const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
-			const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
+                        const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
+                        const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
                         const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
                         const X_ACCESS_TOKEN =
                                 '1936237883842576384-eikvHEUXy2YxGwryeLcEfhEUjTGLIO';
@@ -4077,7 +4157,7 @@
 					return JSON.parse(cached).data;
 				}
                                 try {
-                                const url = `https://corsproxy.io/https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,preview_image_url,type`;
+                                const url = `https://corsproxy.io/https://api.x.com/2/users/by/username/DIFF810489/tweets?max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,preview_image_url,type`;
 					const data = await fetchWithRetry(url, {
 						headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` }
 					});
@@ -4110,9 +4190,9 @@
 					return result;
 				} catch (error) {
 					console.error('Twitter API fetch failed:', error);
-					DOM.twitterWarning.textContent =
-						'> Failed to load tweets, using fallback';
-					DOM.twitterWarning.style.display = 'block';
+                                        DOM.twitterWarning.textContent =
+                                                'Tweets unavailable, retrying...';
+                                        DOM.twitterWarning.style.display = 'block';
                                         return [
                                                 {
                                                         text: 'Bitcoin surges to $105,000 amid market rally',
@@ -4960,13 +5040,13 @@
                                 }
 
                                 try {
-                                        loadYouTubeFeed();
-                                        DOM.tokenInsightsWarning.style.display = 'none';
+                                        loadPlaylistVideos();
+                                        if (DOM.youtubeWarning) DOM.youtubeWarning.style.display = 'none';
                                 } catch (error) {
                                         console.error('Failed to load YouTube feed:', error);
-                                        if (DOM.tokenInsightsWarning) {
-                                                DOM.tokenInsightsWarning.style.display = 'block';
-                                                DOM.tokenInsightsWarning.textContent = '> YouTube feed unavailable';
+                                        if (DOM.youtubeWarning) {
+                                                DOM.youtubeWarning.style.display = 'block';
+                                                DOM.youtubeWarning.textContent = '> Videos unavailable, retrying...';
                                         }
                                 }
 			};
@@ -5099,12 +5179,64 @@
 					.join('');
 			}
 
-function loadYouTubeFeed() {
-        if (!DOM.youtubeFeed) return;
-        DOM.loaderYoutube.style.display = 'none';
-        DOM.youtubeFeed.src =
-                'https://www.youtube.com/embed?listType=search&list=crypto%20news%20world%20news';
-        DOM.youtubeFeed.style.display = 'block';
+
+async function loadPlaylistVideos() {
+        const playlistId = 'PLG8IrydigQfeg0mRrlniT36ia-tMD_vzb';
+        const ytPlayer = document.getElementById('yt-player');
+        const thumbsContainer = document.getElementById('yt-playlist-thumbs');
+        const API_KEY = 'AIzaSyC4PW-SIRSy6pY2WrGz-PDqCu5-Rf7QPIU';
+        if (!thumbsContainer || !ytPlayer) return;
+        thumbsContainer.innerHTML = '<p>Loading playlist videos...</p>';
+        try {
+                let videos = [];
+                let nextPageToken = '';
+                do {
+                        const res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&pageToken=${nextPageToken}&key=${API_KEY}`);
+                        const data = await res.json();
+                        if (data.error) throw new Error(data.error.message);
+                        videos = videos.concat(data.items);
+                        nextPageToken = data.nextPageToken || '';
+                } while (nextPageToken);
+                if (!videos.length) {
+                        thumbsContainer.innerHTML = '<p>No videos found in playlist.</p>';
+                        return;
+                }
+                thumbsContainer.innerHTML = '';
+                videos.forEach((video, idx) => {
+                        const videoId = video.snippet.resourceId.videoId;
+                        const title = video.snippet.title;
+                        const thumbnail = video.snippet.thumbnails.medium.url;
+                        const thumbElem = document.createElement('div');
+                        thumbElem.style.cursor = 'pointer';
+                        thumbElem.style.marginBottom = '12px';
+                        thumbElem.style.display = 'flex';
+                        thumbElem.style.alignItems = 'center';
+                        thumbElem.style.gap = '8px';
+                        thumbElem.innerHTML = `
+                                <img src="${thumbnail}" alt="${title}" style="width: 80px; height: 45px; object-fit: cover; border-radius: 4px;" />
+                                <span style="font-size: 0.9em; color: #333;">${title}</span>
+                        `;
+                        if (idx === 0) {
+                                thumbElem.style.backgroundColor = '#dceeff';
+                                thumbElem.style.borderRadius = '6px';
+                                thumbElem.style.padding = '4px';
+                        }
+                        thumbElem.addEventListener('click', () => {
+                                ytPlayer.src = `https://www.youtube.com/embed/${videoId}?rel=0`;
+                                Array.from(thumbsContainer.children).forEach(child => {
+                                        child.style.backgroundColor = '';
+                                        child.style.padding = '';
+                                });
+                                thumbElem.style.backgroundColor = '#dceeff';
+                                thumbElem.style.padding = '4px';
+                                thumbElem.style.borderRadius = '6px';
+                        });
+                        thumbsContainer.appendChild(thumbElem);
+                });
+                ytPlayer.src = `https://www.youtube.com/embed/${videos[0].snippet.resourceId.videoId}?rel=0`;
+        } catch (error) {
+                thumbsContainer.innerHTML = `<p style="color: red;">Error loading playlist: ${error.message}</p>`;
+        }
 }
 
 			function sanitizeInput(input) {
@@ -5127,50 +5259,39 @@ function loadYouTubeFeed() {
 				return match ? match[1] : url;
 			}
 
-			async function loadTwitterData() {
-				if (!DOM.twitterTimeline || !DOM.twitterList) return;
-				const fallback = document.getElementById('twitter-fallback');
-                                const script = document.createElement('script');
-                                script.async = true;
-                                script.src = 'https://platform.twitter.com/widgets.js';
-				script.onload = () => {
-					if (fallback) fallback.style.display = 'none';
-				};
-				script.onerror = () => {
-					if (fallback) fallback.style.display = 'block';
-				};
-                                DOM.twitterTimeline.innerHTML = '';
-                                const timeline = document.createElement('a');
-                                timeline.className = 'twitter-timeline';
-                                timeline.setAttribute('data-height', '400');
-                                timeline.setAttribute('data-theme', 'dark');
-                                timeline.href = 'https://x.com/DIFF810489';
-                                DOM.twitterTimeline.appendChild(timeline);
-                                DOM.twitterTimeline.appendChild(script);
-
-                                const tweets = await fetchTwitterData();
-				DOM.loaderTwitter.style.display = 'none';
-                                DOM.twitterList.innerHTML = tweets
-                                        .map(
-                                                (t) => `
-        <li class="p-2 rounded-lg bg-gray-800">
-          <div class="flex justify-between">
-            <span>@${sanitizeInput(t.author)}</span>
-            <span class="text-gray-500 text-xs">${new Date(t.created_at).toLocaleString()}</span>
-          </div>
-          <div class="text-sm">${sanitizeInput(t.text)}</div>
-          ${
-                                                t.video
-                                                        ? `<video src="${t.video}" controls class="w-full mt-2 rounded" autoplay muted playsinline></video>`
-                                                        : t.image
-                                                        ? `<img src="${t.image}" class="w-full mt-2 rounded" loading="lazy" />`
-                                                        : ''
+                        async function loadBlueSkyPosts() {
+                                const postsContainer = document.getElementById('posts');
+                                if (!postsContainer) return;
+                                postsContainer.innerHTML = '<p>Loading posts...</p>';
+                                try {
+                                        const userRes = await fetch('https://bsky.social/xrpc/com.atproto.identity.resolveHandle?handle=financialtimes.com');
+                                        const userData = await userRes.json();
+                                        const userDID = userData.did;
+                                        const feedRes = await fetch(`https://bsky.social/xrpc/com.atproto.feed.getProfileFeed?actor=${userDID}&limit=5`);
+                                        const feedData = await feedRes.json();
+                                        if (feedData.feed && feedData.feed.length > 0) {
+                                                postsContainer.innerHTML = '';
+                                                feedData.feed.forEach(post => {
+                                                        const postText = post.post.record.text || '[No text content]';
+                                                        const postLink = `https://bsky.app/profile/${userData.handle}/post/${post.post.cid}`;
+                                                        const postDate = new Date(post.post.record.createdAt).toLocaleString();
+                                                        const postElem = document.createElement('div');
+                                                        postElem.style.borderBottom = '1px solid #eee';
+                                                        postElem.style.padding = '8px 0';
+                                                        postElem.innerHTML = `
+                                                                <p style="margin: 0 0 6px;">${postText}</p>
+                                                                <a href="${postLink}" target="_blank" style="font-size: 0.85em; color: #007fff; text-decoration: none;">View post</a>
+                                                                <div style="font-size: 0.75em; color: #666;">${postDate}</div>
+                                                        `;
+                                                        postsContainer.appendChild(postElem);
+                                                });
+                                        } else {
+                                                postsContainer.innerHTML = '<p>No posts found.</p>';
                                         }
-        </li>
-      `
-                                        )
-                                        .join('');
-			}
+                                } catch (err) {
+                                        postsContainer.innerHTML = `<p>Error loading posts: ${err.message}</p>`;
+                                }
+                        }
 
 			document.addEventListener('DOMContentLoaded', () => {
 				DOM.navMenuToggle.addEventListener('click', () =>
@@ -5193,8 +5314,8 @@ function loadYouTubeFeed() {
 				setupDragAndDrop();
 				loadModuleOrder();
 				setupModuleToggles();
-				loadData();
-				loadTwitterData();
+                                loadData();
+                                loadBlueSkyPosts();
 				init3D();
 				updateBTCHash();
 				fetchTopCoin().then((c) => {
@@ -5337,16 +5458,17 @@ function loadYouTubeFeed() {
 						() => trackAPlayer && trackAPlayer.stopVideo()
 					);
 				if (DOM.trackAMute)
-					DOM.trackAMute.addEventListener('click', () => {
-						if (!trackAPlayer) return;
-						if (trackAPlayer.isMuted()) {
-							trackAPlayer.unMute();
-							DOM.trackAMute.textContent = 'Mute';
-						} else {
-							trackAPlayer.mute();
-							DOM.trackAMute.textContent = 'Unmute';
-						}
-					});
+					['click','touchstart'].forEach(ev => DOM.trackAMute.addEventListener(ev, () => {
+					    if (djCtx && djCtx.state == "suspended") djCtx.resume();
+					    if (!trackAPlayer) return;
+					    if (trackAPlayer.isMuted()) {
+					    trackAPlayer.unMute();
+					    DOM.trackAMute.textContent = 'Mute';
+					    } else {
+					    trackAPlayer.mute();
+					    DOM.trackAMute.textContent = 'Unmute';
+					    }
+					}));
 				if (DOM.trackAVolume)
 					DOM.trackAVolume.addEventListener(
 						'input',
@@ -5380,16 +5502,17 @@ function loadYouTubeFeed() {
 						() => trackBPlayer && trackBPlayer.stopVideo()
 					);
 				if (DOM.trackBMute)
-					DOM.trackBMute.addEventListener('click', () => {
-						if (!trackBPlayer) return;
-						if (trackBPlayer.isMuted()) {
-							trackBPlayer.unMute();
-							DOM.trackBMute.textContent = 'Mute';
-						} else {
-							trackBPlayer.mute();
-							DOM.trackBMute.textContent = 'Unmute';
-						}
-					});
+					['click','touchstart'].forEach(ev => DOM.trackBMute.addEventListener(ev, () => {
+					    if (djCtx && djCtx.state == "suspended") djCtx.resume();
+					    if (!trackBPlayer) return;
+					    if (trackBPlayer.isMuted()) {
+					    trackBPlayer.unMute();
+					    DOM.trackBMute.textContent = 'Mute';
+					    } else {
+					    trackBPlayer.mute();
+					    DOM.trackBMute.textContent = 'Unmute';
+					    }
+					}));
 				if (DOM.trackBVolume)
 					DOM.trackBVolume.addEventListener(
 						'input',
