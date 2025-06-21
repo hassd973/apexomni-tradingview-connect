@@ -1854,7 +1854,7 @@
 					<a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
 					<a class="nav-link" href="#logs-module">Logs</a>
                                         <a class="nav-link" href="#balances-module">Finance Tweets</a>
-                                        <a class="nav-link" href="#world-module">Asmongold</a>
+                                        <a class="nav-link" href="#world-module">World News</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
 					<a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
 					<a class="nav-link" href="#" id="undock-background-link"
@@ -2329,23 +2329,10 @@
 						&gt; Using cached tweets
 					</div>
                                 <div
-                                        id="twitter-profile"
-                                        style="max-width: 400px; font-family: Arial, sans-serif; border: 1px solid #ccc; border-radius: 8px; padding: 16px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"
-                                >
-                                        <div style="display: flex; align-items: center; margin-bottom: 12px;">
-                                                <img src="https://pbs.twimg.com/profile_images/your_profile_image.jpg" alt="Profile" style="border-radius: 50%; width: 48px; height: 48px; margin-right: 12px;" />
-                                                <div>
-                                                        <strong style="font-size: 1.1em;">DIFF810489</strong><br />
-                                                        <a href="https://x.com/DIFF810489" target="_blank" style="color: #1DA1F2; text-decoration: none;">@DIFF810489</a>
-                                                </div>
-                                        </div>
-                                        <p style="font-size: 0.9em; color: #555;">This is a custom summary or bio of the user to give visitors a quick intro.</p>
-                                        <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;" />
-                                        <div id="twitter-list">
-                                                <p style="font-size: 0.95em; line-height: 1.4; margin-bottom: 12px;">Loading latest tweets...</p>
-                                        </div>
-                                        <a href="https://x.com/DIFF810489" target="_blank" style="display: inline-block; margin-top: 12px; color: white; background: #1DA1F2; padding: 8px 16px; border-radius: 20px; text-decoration: none;">Follow on X</a>
-                                </div>
+                                        id="twitter-timeline"
+                                        class="custom-scroll"
+                                        style="max-height: 50vh; overflow-y: auto"
+                                ></div>
                                 <div id="twitter-fallback" class="text-sm mt-2" style="display: none">
                                         <p>Bitcoin hits $105,000!</p>
                                         <p>Art auction features NFT collection for $2M</p>
@@ -2359,7 +2346,7 @@
                         >
                                <div class="module-header">
                                        <h2 class="text-lg md:text-xl token-insights-title typewriter">
-                                               &gt; Asmongold Videos
+                                               &gt; World News Videos
                                        </h2>
                                        <button
                                                aria-label="Toggle module visibility"
@@ -3008,10 +2995,9 @@
                                 youtubeList: document.getElementById('youtube-list'),
                                 youtubeWarning: document.getElementById('youtube-warning'),
                                 tokenInsightsWarning: document.getElementById('token-insights-warning'),
-                                twitterTimeline: document.getElementById('twitter-profile'),
+                                twitterTimeline: document.getElementById('twitter-timeline'),
                                 loaderTwitter: document.getElementById('loader-twitter'),
                                 twitterWarning: document.getElementById('twitter-warning'),
-                                twitterList: document.getElementById('twitter-list'),
 				duneVersion: document.getElementById('dune-version'),
 				walletTrackStatus: document.getElementById('wallet-track-status'),
 				muteBtn: document.getElementById('mute-btn'),
@@ -3156,7 +3142,7 @@
 
                         const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
                         const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
-                        const ASMON_PLAYLIST = 'PLrhpR40o4n5wvhJXaYjkqb0B8ZYDcjeSY';
+                        const NEWS_PLAYLIST = 'PL0vfts4VzfNieTtC_yYSK7M1S5Hz_ffPz';
 			let DJ_TRACKS = [
 				{ id: 'RkQ3m_uGwXE', title: 'Intro' },
 				{ id: 'zHLmyJvSkaA', title: 'BORN FREE' }
@@ -5184,14 +5170,14 @@
 			}
 
 
-async function fetchAsmongoldVideos() {
-        const cacheKey = 'yt_asmon_playlist';
+async function fetchNewsVideos() {
+        const cacheKey = 'yt_news_playlist';
         const cached = localStorage.getItem(cacheKey);
         if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
                 return JSON.parse(cached).data;
         }
         try {
-                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${ASMON_PLAYLIST}&maxResults=10&key=${YOUTUBE_API_KEY}`;
+                const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${NEWS_PLAYLIST}&maxResults=10&key=${YOUTUBE_API_KEY}`;
                 const data = await fetchWithRetry(url);
                 if (data.items) {
                         const videos = data.items.map((item) => ({
@@ -5211,16 +5197,16 @@ async function fetchAsmongoldVideos() {
                 console.error('YouTube API error:', err);
         }
         return [{
-                videoId: 'NExbobK7XlY',
-                title: 'Asmongold Reacts to Latest News',
-                channelTitle: 'AsmonTV',
+                videoId: 'pF1UvN7SEGU',
+                title: 'Latest World News',
+                channelTitle: 'News Feed',
                 publishedAt: new Date().toISOString(),
                 thumbnail: 'https://via.placeholder.com/120x90'
         }];
 }
 async function loadYouTubeVideos() {
         if (!DOM.youtubePlayer || !DOM.youtubeList) return;
-        const videos = await fetchAsmongoldVideos();
+        const videos = await fetchNewsVideos();
         DOM.loaderYoutube.style.display = 'none';
         if (videos.length && youtubePlayer) {
                 youtubePlayer.loadVideoById(videos[0].videoId);
@@ -5268,19 +5254,24 @@ async function loadYouTubeVideos() {
 				return match ? match[1] : url;
 			}
 
-                        async function loadTwitterData() {
-                                if (!DOM.twitterTimeline || !DOM.twitterList) return;
+                        function loadTwitterData() {
+                                if (!DOM.twitterTimeline) return;
                                 const fallback = document.getElementById('twitter-fallback');
                                 if (fallback) fallback.style.display = 'none';
 
-                                const tweets = await fetchTwitterData();
-				DOM.loaderTwitter.style.display = 'none';
-                                DOM.twitterList.innerHTML = tweets
-                                        .map(
-                                                (t) => `<p style="margin-bottom:10px;"><strong>@${sanitizeInput(t.author)}</strong> - ${sanitizeInput(t.text)}</p>`
-                                        )
-                                        .join('');
-			}
+                                DOM.loaderTwitter.style.display = 'none';
+                                DOM.twitterTimeline.innerHTML =
+                                        '<a class="twitter-timeline" data-tweet-limit="10" data-chrome="nofooter transparent" data-theme="dark" href="https://x.com/DIFF810489">Tweets by DIFF810489</a>';
+                                const script = document.createElement('script');
+                                script.async = true;
+                                script.src = 'https://platform.twitter.com/widgets.js';
+                                script.onerror = () => {
+                                        if (fallback) fallback.style.display = 'block';
+                                        DOM.twitterWarning.textContent = 'Tweets unavailable, retrying...';
+                                        DOM.twitterWarning.style.display = 'block';
+                                };
+                                DOM.twitterTimeline.appendChild(script);
+                        }
 
 			document.addEventListener('DOMContentLoaded', () => {
 				DOM.navMenuToggle.addEventListener('click', () =>
