@@ -387,19 +387,19 @@
 			}
                         #btc-metrics-overlay {
                                 top: 0;
-                                left: 50%;
-                                transform: translateX(-50%);
-                                width: calc(100% - 20px);
+                                left: 0;
+                                transform: none;
+                                width: 100%;
                                 padding: 0.5rem;
-                                font-size: clamp(20px, 5vw, 32px);
+                                font-size: clamp(24px, 6vw, 36px);
                         }
-			#btc-metrics-overlay .metrics-row {
-				display: flex;
-				align-items: center;
-				justify-content: space-between;
-				width: 100%;
-				gap: 0.5rem;
-			}
+                        #btc-metrics-overlay .metrics-row {
+                                display: flex;
+                                align-items: center;
+                                justify-content: space-around;
+                                width: 100%;
+                                gap: 0.5rem;
+                        }
 			#btc-metrics-overlay .metrics-row .metric {
 				flex: 1 1 auto;
 				text-align: center;
@@ -710,17 +710,18 @@
 				}
 			}
 			/* intro buttons styling replaced by .intro-buttons section above */
-			#loading-screen .title-box {
-				border: none !important;
-				background: transparent;
-				font-size: 1.25rem;
-				padding: 0.5rem 1rem;
-				position: absolute;
-				top: 1rem;
-				left: 50%;
-				transform: translateX(-50%);
-				z-index: 1003;
-			}
+                        #loading-screen .title-box {
+                                border: none !important;
+                                background: transparent;
+                                font-size: 1.25rem;
+                                padding: 0.5rem 1rem;
+                                position: absolute;
+                                top: 1rem;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                z-index: 1003;
+                                display: block;
+                        }
 			#loading-screen .title-box h1 {
 				font-size: 2rem;
 				color: var(--text-color);
@@ -1075,55 +1076,51 @@
 				background: var(--primary-color);
 				border-radius: 4px;
 			}
-			#token-list,
-			#profit-pairs,
-			#log-list,
-			#chat-list,
-			#gas-heatmap-list,
-			#balances-list,
-			#token-insights-list,
-			#twitter-list {
-				max-height: 50vh;
-				overflow-y: auto;
-				padding-right: 4px;
-			}
-			#gas-heatmap-list,
-			#balances-list,
-			#token-insights-list,
-			#twitter-list {
-				max-height: 20vh;
-			}
+                        #token-list,
+                        #profit-pairs,
+                        #log-list,
+                        #chat-list,
+                        #gas-heatmap-list,
+                        #balances-list,
+                        #twitter-list {
+                                max-height: 50vh;
+                                overflow-y: auto;
+                                padding-right: 4px;
+                        }
+                        #gas-heatmap-list,
+                        #balances-list,
+                        #youtube-feed,
+                        #twitter-list {
+                                max-height: 20vh;
+                        }
 			#chat-list {
 				height: calc(100vh - 200px);
 			}
 			@media (min-width: 640px) {
-				#token-list,
-				#profit-pairs,
-				#log-list,
-				#chat-list,
-				#gas-heatmap-list,
-				#balances-list,
-				#token-insights-list,
-				#twitter-list {
-					max-height: 60vh;
-				}
-				#gas-heatmap-list,
-				#balances-list,
-				#token-insights-list,
-				#twitter-list {
-					max-height: 20vh;
-				}
+                                #token-list,
+                                #profit-pairs,
+                                #log-list,
+                                #chat-list,
+                                #gas-heatmap-list,
+                                #balances-list,
+                                #twitter-list {
+                                        max-height: 60vh;
+                                }
+                                #gas-heatmap-list,
+                                #balances-list,
+                                #twitter-list {
+                                        max-height: 20vh;
+                                }
 			}
-			#token-list li,
-			#profit-pairs li,
-			#gas-heatmap-list li,
-			#log-list li,
-			#balances-list li,
-			#token-insights-list li,
-			#twitter-list li {
-				display: flex;
-				flex-direction: column;
-				padding: 0.75rem;
+                        #token-list li,
+                        #profit-pairs li,
+                        #gas-heatmap-list li,
+                        #log-list li,
+                        #balances-list li,
+                        #twitter-list li {
+                                display: flex;
+                                flex-direction: column;
+                                padding: 0.75rem;
 				border-radius: 6px;
 				margin-bottom: 0.5rem;
 				transition: all 0.3s ease;
@@ -1131,24 +1128,22 @@
 				font-size: 0.875rem;
 				background: rgba(35, 46, 46, 0.2);
 			}
-			#gas-heatmap-list li,
-			#log-list li,
-			#balances-list li,
-			#token-insights-list li,
-			#twitter-list li {
-				font-size: 0.75rem;
-				padding: 0.5rem;
-				overflow-x: auto;
-				white-space: nowrap;
-				max-width: 100%;
-			}
-			#token-list li:hover,
-			#gas-heatmap-list li:hover,
-			#log-list li:hover,
-			#balances-list li:hover,
-			#token-insights-list li:hover,
-			#twitter-list li:hover {
-				background: rgba(255, 187, 51, 0.1);
+                        #gas-heatmap-list li,
+                        #log-list li,
+                        #balances-list li,
+                        #twitter-list li {
+                                font-size: 0.75rem;
+                                padding: 0.5rem;
+                                overflow-x: auto;
+                                white-space: nowrap;
+                                max-width: 100%;
+                        }
+                        #token-list li:hover,
+                        #gas-heatmap-list li:hover,
+                        #log-list li:hover,
+                        #balances-list li:hover,
+                        #twitter-list li:hover {
+                                background: rgba(255, 187, 51, 0.1);
 				transform: translateX(2px);
 				box-shadow: 0 0 6px var(--shadow-color);
 			}
@@ -1158,22 +1153,20 @@
 				box-shadow: 0 0 6px var(--shadow-color);
 			}
 			#token-list .metric,
-			#profit-pairs .metric,
-			#gas-heatmap-list .metric,
-			#log-list .metric,
-			#balances-list .metric,
-			#token-insights-list .metric,
-			#twitter-list .metric {
-				font-size: 0.75rem;
-				color: var(--text-color);
-			}
-			#gas-heatmap-list .metric,
-			#log-list .metric,
-			#balances-list .metric,
-			#token-insights-list .metric,
-			#twitter-list .metric {
-				word-break: break-all;
-			}
+                        #profit-pairs .metric,
+                        #gas-heatmap-list .metric,
+                        #log-list .metric,
+                        #balances-list .metric,
+                        #twitter-list .metric {
+                                font-size: 0.75rem;
+                                color: var(--text-color);
+                        }
+                        #gas-heatmap-list .metric,
+                        #log-list .metric,
+                        #balances-list .metric,
+                        #twitter-list .metric {
+                                word-break: break-all;
+                        }
 			#token-list .performance,
 			#profit-pairs .top-pair,
 			#profit-pairs .bottom-pair {
@@ -1427,13 +1420,13 @@
 				z-index: 60;
 				box-shadow: 0 0 4px var(--shadow-color);
 			}
-			.gas-heatmap-section,
-			.twitter-section,
-			.token-insights-section {
-				display: flex;
-				flex-direction: column;
-				gap: 0.75rem;
-			}
+                        .gas-heatmap-section,
+                        .twitter-section,
+                        .youtube-news-section {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 0.75rem;
+                        }
 			.gas-heatmap-title,
 			.twitter-title,
 			.token-insights-title {
@@ -1662,15 +1655,14 @@
 					aspect-ratio: unset;
 				}
                                 .dj-controls {
-                                        position: sticky;
-                                        bottom: 0;
+                                        position: relative;
                                         background: rgba(18, 18, 18, 0.95);
-                                        padding: 0.5rem;
-                                        z-index: 15;
+                                        padding: 0.5rem 0;
                                         flex-direction: column;
                                         gap: 0.4rem;
                                         align-items: stretch;
                                         width: 100%;
+                                        margin-top: 0.5rem;
                                 }
                                 .dj-controls > .flex {
                                         flex-wrap: wrap;
@@ -2349,50 +2341,40 @@
 					<ul class="space-y-2 text-sm custom-scroll" id="twitter-list"></ul>
 				</div>
 			</section>
-			<section
-				class="rounded-lg token-insights-section"
-				draggable="true"
-				id="token-insights-module"
-			>
-				<div class="module-header">
-					<h2 class="text-lg md:text-xl token-insights-title typewriter">
-						&gt; Token Insights (Dune API <span id="dune-version"></span>)
-					</h2>
-					<button
-						aria-label="Toggle module visibility"
-						class="toggle-module-btn"
-						data-tooltip="Toggle module visibility"
-						role="button"
-					>
-						▼
-					</button>
-				</div>
-				<div class="module-content">
-					<div
-						class="loader text-center text-gray-500 text-sm"
-						id="loader-token-insights"
-					>
-						&gt; Loading...
-					</div>
-					<div
-						class="data-warning"
-						id="token-insights-warning"
-						style="display: none"
-					>
-						&gt; Live data from Dune API
-					</div>
-					<ul class="space-y-2 text-sm" id="token-insights-list"></ul>
-					<button
-						aria-label="Export token insights as CSV"
-						class="mt-2"
-						data-tooltip="Export token insights as CSV"
-						id="export-token-insights"
-						role="button"
-					>
-						Export CSV
-					</button>
-				</div>
-			</section>
+                       <section
+                               class="rounded-lg youtube-news-section"
+                               draggable="true"
+                               id="token-insights-module"
+                       >
+                               <div class="module-header">
+                                       <h2 class="text-lg md:text-xl token-insights-title typewriter">
+                                               &gt; Crypto &amp; World News Videos
+                                       </h2>
+                                       <button
+                                               aria-label="Toggle module visibility"
+                                               class="toggle-module-btn"
+                                               data-tooltip="Toggle module visibility"
+                                               role="button"
+                                       >
+                                               ▼
+                                       </button>
+                               </div>
+                               <div class="module-content">
+                                       <div
+                                               class="loader text-center text-gray-500 text-sm"
+                                               id="loader-youtube"
+                                       >
+                                               &gt; Loading videos...
+                                       </div>
+                                       <iframe
+                                               id="youtube-feed"
+                                               style="display:none;"
+                                               class="w-full rounded-lg"
+                                               height="315"
+                                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                                       ></iframe>
+                               </div>
+                       </section>
 			<section class="rounded-lg" draggable="true" id="inverse-winners-module">
 				<div class="module-header">
 					<h2 class="text-lg md:text-xl typewriter">Inverse Metrics</h2>
@@ -2977,12 +2959,9 @@
 				balancesList: document.getElementById('balances-list'),
 				loaderBalances: document.getElementById('loader-balances'),
 				balancesWarning: document.getElementById('balances-warning'),
-				exportTokenInsightsBtn: document.getElementById(
-					'export-token-insights'
-				),
-				tokenInsightsList: document.getElementById('token-insights-list'),
-				loaderTokenInsights: document.getElementById('loader-token-insights'),
-				tokenInsightsWarning: document.getElementById('token-insights-warning'),
+                                youtubeFeed: document.getElementById('youtube-feed'),
+                                loaderYoutube: document.getElementById('loader-youtube'),
+                                tokenInsightsWarning: document.getElementById('token-insights-warning'),
 				twitterTimeline: document.getElementById('twitter-timeline'),
 				loaderTwitter: document.getElementById('loader-twitter'),
 				twitterWarning: document.getElementById('twitter-warning'),
@@ -4093,8 +4072,8 @@
 					DOM.twitterWarning.style.display = 'block';
 					return JSON.parse(cached).data;
 				}
-				try {
-					const url = `https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,type`;
+                                try {
+                                        const url = `https://corsproxy.io/https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,type`;
 					const data = await fetchWithRetry(url, {
 						headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` }
 					});
@@ -4944,41 +4923,36 @@
 						renderLogs();
 					});
 
-				try {
-					const target = walletAddress || TOKEN_ADDRESS;
-					const tokenInfo = await fetchTokenInfo(target, CHAIN_ID);
-					if (tokenInfo) {
-						balancesData = tokenInfo.map((info) => ({
-							token: info.symbol,
-							balance: info.balance,
-							chainId: info.chain_id
-						}));
-						updateBalancesUI(balancesData);
-						DOM.balancesWarning.style.display = 'none';
+                                try {
+                                        const target = walletAddress || TOKEN_ADDRESS;
+                                        const tokenInfo = await fetchTokenInfo(target, CHAIN_ID);
+                                        if (tokenInfo) {
+                                                balancesData = tokenInfo.map((info) => ({
+                                                        token: info.symbol,
+                                                        balance: info.balance,
+                                                        chainId: info.chain_id
+                                                }));
+                                                updateBalancesUI(balancesData);
+                                                DOM.balancesWarning.style.display = 'none';
+                                        } else throw new Error('No token info received');
+                                } catch (error) {
+                                        console.error('Failed to load wallet data:', error);
+                                        balancesData = mockBalances;
+                                        updateBalancesUI(mockBalances);
+                                        DOM.balancesWarning.style.display = 'block';
+                                        DOM.balancesWarning.textContent = '> Using mock balances due to API failure';
+                                }
 
-						tokenInsightsData = tokenInfo.map((info) => ({
-							symbol: info.symbol,
-							name: info.name,
-							decimals: info.decimals,
-							chainId: info.chain_id
-						}));
-						updateTokenInsightsUI(tokenInsightsData);
-						DOM.tokenInsightsWarning.style.display = 'none';
-					} else throw new Error('No token info received');
-				} catch (error) {
-					console.error('Failed to load data from Dune API:', error);
-					balancesData = mockBalances;
-					updateBalancesUI(mockBalances);
-					DOM.balancesWarning.style.display = 'block';
-					DOM.balancesWarning.textContent =
-						'> Using mock balances due to API failure';
-
-					tokenInsightsData = mockTokenInsights;
-					updateTokenInsightsUI(mockTokenInsights);
-					DOM.tokenInsightsWarning.style.display = 'block';
-					DOM.tokenInsightsWarning.textContent =
-						'> Using mock insights due to API failure';
-				}
+                                try {
+                                        loadYouTubeFeed();
+                                        DOM.tokenInsightsWarning.style.display = 'none';
+                                } catch (error) {
+                                        console.error('Failed to load YouTube feed:', error);
+                                        if (DOM.tokenInsightsWarning) {
+                                                DOM.tokenInsightsWarning.style.display = 'block';
+                                                DOM.tokenInsightsWarning.textContent = '> YouTube feed unavailable';
+                                        }
+                                }
 			};
 
 			function updateUI(tokens) {
@@ -5109,27 +5083,13 @@
 					.join('');
 			}
 
-			function updateTokenInsightsUI(insights) {
-				if (!insights || insights.length === 0) {
-					console.error('No token insights provided');
-					DOM.loaderTokenInsights.textContent = '> No data available';
-					return;
-				}
-
-				DOM.loaderTokenInsights.style.display = 'none';
-				DOM.tokenInsightsList.innerHTML = insights
-					.map(
-						(insight) => `
-        <li class="p-2 rounded bg-gray-800">
-          <div>Token: ${insight.token}</div>
-          <div>Tx Hash: <a href="https://etherscan.io/tx/${insight.tx_hash}" target="_blank" class="text-blue-400">${insight.tx_hash.slice(0, 8)}...</a></div>
-          <div class="metric">Value: ${parseFloat(insight.value).toFixed(4)}</div>
-          <div class="metric">Chain ID: ${insight.chain_id}</div>
-        </li>
-      `
-					)
-					.join('');
-			}
+function loadYouTubeFeed() {
+        if (!DOM.youtubeFeed) return;
+        DOM.loaderYoutube.style.display = 'none';
+        DOM.youtubeFeed.src =
+                'https://www.youtube.com/embed?listType=search&list=crypto%20news%20world%20news';
+        DOM.youtubeFeed.style.display = 'block';
+}
 
 			function sanitizeInput(input) {
 				const div = document.createElement('div');
@@ -6144,9 +6104,6 @@
 					exportToCSV(balancesData, 'balances_data.csv');
 				});
 
-				DOM.exportTokenInsightsBtn.addEventListener('click', () => {
-					exportToCSV(tokenInsightsData, 'token_insights_data.csv');
-				});
 
 				const observer = new IntersectionObserver(
 					(entries) => {
