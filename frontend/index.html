@@ -391,7 +391,8 @@
                                 transform: none;
                                 width: 100%;
                                 padding: 0.5rem;
-                                font-size: clamp(24px, 6vw, 36px);
+                                font-size: clamp(18px, 4vw, 28px);
+
                         }
                         #btc-metrics-overlay .metrics-row {
                                 display: flex;
@@ -3179,17 +3180,18 @@
 				bgMusicPlayer = new YT.Player('music-player', {
 					host: 'https://www.youtube.com',
 					videoId: 'RkQ3m_uGwXE',
-					playerVars: {
-						listType: 'playlist',
-						list: PLAYLIST_A,
-						autoplay: 1,
-						mute: 1,
-						loop: 1,
-						controls: 0,
-						rel: 0,
-						modestbranding: 1,
-						origin: location.origin
-					},
+                                        playerVars: {
+                                                listType: 'playlist',
+                                                list: PLAYLIST_A,
+                                                autoplay: 1,
+                                                mute: 1,
+                                                loop: 1,
+                                                controls: 0,
+                                                rel: 0,
+                                                modestbranding: 1,
+                                                origin: location.origin,
+                                                enablejsapi: 1
+                                        },
 					events: {
 						onReady: (e) => {
 							e.target.setVolume(100);
@@ -3206,13 +3208,14 @@
 					host: 'https://www.youtube.com',
 					height: '100%',
 					width: '100%',
-					playerVars: {
-						listType: 'playlist',
-						list: PLAYLIST_A,
-						autoplay: 0,
-						mute: 1,
-						origin: location.origin
-					},
+                                        playerVars: {
+                                                listType: 'playlist',
+                                                list: PLAYLIST_A,
+                                                autoplay: 0,
+                                                mute: 1,
+                                                origin: location.origin,
+                                                enablejsapi: 1
+                                        },
 					events: {
 						onReady: (ev) => {
 							attachTrack(ev.target, 'A');
@@ -3235,13 +3238,14 @@
 					host: 'https://www.youtube.com',
 					height: '100%',
 					width: '100%',
-					playerVars: {
-						listType: 'playlist',
-						list: PLAYLIST_B,
-						autoplay: 0,
-						mute: 1,
-						origin: location.origin
-					},
+                                        playerVars: {
+                                                listType: 'playlist',
+                                                list: PLAYLIST_B,
+                                                autoplay: 0,
+                                                mute: 1,
+                                                origin: location.origin,
+                                                enablejsapi: 1
+                                        },
 					events: {
 						onReady: (ev) => {
 							attachTrack(ev.target, 'B');
@@ -4065,29 +4069,40 @@
                                 }
                         }
 
-			async function fetchTwitterData(query) {
-				const cacheKey = `tw_${query}`;
+                        async function fetchTwitterData() {
+                                const query = 'from:DIFF810489 OR retweets_of:DIFF810489';
+                                const cacheKey = `tw_${query}`;
 				const cached = localStorage.getItem(cacheKey);
 				if (cached && Date.now() - JSON.parse(cached).timestamp < 1800000) {
 					DOM.twitterWarning.style.display = 'block';
 					return JSON.parse(cached).data;
 				}
                                 try {
-                                        const url = `https://corsproxy.io/https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,type`;
+                                const url = `https://corsproxy.io/https://api.twitter.com/2/tweets/search/recent?query=${encodeURIComponent(query)}&max_results=10&tweet.fields=created_at,author_id,text,attachments&expansions=attachments.media_keys,author_id&media.fields=url,preview_image_url,type`;
 					const data = await fetchWithRetry(url, {
 						headers: { Authorization: `Bearer ${X_BEARER_TOKEN}` }
 					});
 					if (!data.data) throw new Error('No tweets found');
-					const result = data.data.map((tweet) => ({
-						text: tweet.text,
-						author:
-							data.includes.users.find((u) => u.id === tweet.author_id)
-								?.username || 'Unknown',
-						created_at: tweet.created_at,
-						video:
-							tweet.attachments?.media_keys &&
-							data.includes.media.find((m) => m.type === 'video')?.url
-					}));
+                                        const result = data.data.map((tweet) => {
+                                                const mediaKeys = tweet.attachments?.media_keys || [];
+                                                const mediaItems = mediaKeys
+                                                        .map((k) => data.includes.media.find((m) => m.media_key === k))
+                                                        .filter(Boolean);
+                                                const video = mediaItems.find((m) => m.type === 'video')?.url || null;
+                                                const image =
+                                                        mediaItems.find((m) => m.type === 'photo')?.url ||
+                                                        mediaItems.find((m) => m.type === 'animated_gif')?.preview_image_url ||
+                                                        null;
+                                                return {
+                                                        text: tweet.text,
+                                                        author:
+                                                                data.includes.users.find((u) => u.id === tweet.author_id)?.username ||
+                                                                'Unknown',
+                                                        created_at: tweet.created_at,
+                                                        video,
+                                                        image
+                                                };
+                                        });
 					localStorage.setItem(
 						cacheKey,
 						JSON.stringify({ timestamp: Date.now(), data: result })
@@ -4099,20 +4114,22 @@
 					DOM.twitterWarning.textContent =
 						'> Failed to load tweets, using fallback';
 					DOM.twitterWarning.style.display = 'block';
-					return [
-						{
-							text: 'Bitcoin surges to $105,000 amid market rally',
-							author: 'CoinDesk',
-							created_at: new Date().toISOString(),
-							video: null
-						},
-						{
-							text: 'Art auction features NFT collection for $2M',
-							author: 'ArtDaily',
-							created_at: new Date().toISOString(),
-							video: null
-						}
-					];
+                                        return [
+                                                {
+                                                        text: 'Bitcoin surges to $105,000 amid market rally',
+                                                        author: 'CoinDesk',
+                                                        created_at: new Date().toISOString(),
+                                                        video: null,
+                                                        image: null
+                                                },
+                                                {
+                                                        text: 'Art auction features NFT collection for $2M',
+                                                        author: 'ArtDaily',
+                                                        created_at: new Date().toISOString(),
+                                                        video: null,
+                                                        image: null
+                                                }
+                                        ];
 				}
 			}
 
@@ -5114,34 +5131,46 @@ function loadYouTubeFeed() {
 			async function loadTwitterData() {
 				if (!DOM.twitterTimeline || !DOM.twitterList) return;
 				const fallback = document.getElementById('twitter-fallback');
-				const script = document.createElement('script');
-				script.async = true;
-				script.src = 'https://platform.twitter.com/widgets.js';
+                                const script = document.createElement('script');
+                                script.async = true;
+                                script.src = 'https://platform.twitter.com/widgets.js';
 				script.onload = () => {
 					if (fallback) fallback.style.display = 'none';
 				};
 				script.onerror = () => {
 					if (fallback) fallback.style.display = 'block';
 				};
-				DOM.twitterTimeline.appendChild(script);
-				const tweets = await fetchTwitterData(
-					'from:verified (finance OR crypto OR "world news" OR "celebrity deals" OR "art auction")'
-				);
+                                DOM.twitterTimeline.innerHTML = '';
+                                const timeline = document.createElement('a');
+                                timeline.className = 'twitter-timeline';
+                                timeline.setAttribute('data-height', '400');
+                                timeline.setAttribute('data-theme', 'dark');
+                                timeline.href = 'https://x.com/DIFF810489';
+                                DOM.twitterTimeline.appendChild(timeline);
+                                DOM.twitterTimeline.appendChild(script);
+
+                                const tweets = await fetchTwitterData();
 				DOM.loaderTwitter.style.display = 'none';
-				DOM.twitterList.innerHTML = tweets
-					.map(
-						(t) => `
+                                DOM.twitterList.innerHTML = tweets
+                                        .map(
+                                                (t) => `
         <li class="p-2 rounded-lg bg-gray-800">
           <div class="flex justify-between">
             <span>@${sanitizeInput(t.author)}</span>
             <span class="text-gray-500 text-xs">${new Date(t.created_at).toLocaleString()}</span>
           </div>
           <div class="text-sm">${sanitizeInput(t.text)}</div>
-          ${t.video ? `<video src="${t.video}" controls class="w-full mt-2 rounded" autoplay muted playsinline></video>` : ''}
+          ${
+                                                t.video
+                                                        ? `<video src="${t.video}" controls class="w-full mt-2 rounded" autoplay muted playsinline></video>`
+                                                        : t.image
+                                                        ? `<img src="${t.image}" class="w-full mt-2 rounded" loading="lazy" />`
+                                                        : ''
+                                        }
         </li>
       `
-					)
-					.join('');
+                                        )
+                                        .join('');
 			}
 
 			document.addEventListener('DOMContentLoaded', () => {
