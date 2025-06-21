@@ -2391,41 +2391,38 @@
 					</button>
 				</div>
 			</section>
-			<section
-				class="rounded-lg twitter-section"
-				draggable="true"
-				id="balances-module"
-			>
+                        <section
+                                class="rounded-lg twitter-section"
+                                draggable="true"
+                                id="balances-module"
+                        >
                                 <div class="module-header">
                                         <h2 class="text-lg md:text-xl twitter-title typewriter">
-                                                &gt; BlueSky Feed
+                                                &gt; Finance Tweets
                                         </h2>
-					<button
-						aria-label="Toggle module visibility"
-						class="toggle-module-btn"
-						data-tooltip="Toggle module visibility"
-						role="button"
-					>
-						▼
-					</button>
-				</div>
-				<div class="module-content">
-					<div
-						class="loader text-center text-gray-500 text-sm"
-						id="loader-twitter"
-					>
-						&gt; Loading tweets...
-					</div>
-					<div class="data-warning" id="twitter-warning" style="display: none">
-						&gt; Using cached tweets
-					</div>
-                                <div id="bluesky-feed" class="bluesky-box">
-                                        <h3 class="bluesky-title">BlueSky Feed: finance/tech/world</h3>
-                                        <div id="posts">
-                                                <p>Loading posts...</p>
-                                        </div>
-                                        <a class="bluesky-link" href="https://bsky.app/" target="_blank">View on BlueSky</a>
+                                        <button
+                                                aria-label="Toggle module visibility"
+                                                class="toggle-module-btn"
+                                                data-tooltip="Toggle module visibility"
+                                                role="button"
+                                        >
+                                                ▼
+                                        </button>
                                 </div>
+                                <div class="module-content">
+                                        <div
+                                                class="loader text-center text-gray-500 text-sm"
+                                                id="loader-twitter"
+                                        >
+                                                &gt; Loading tweets...
+                                        </div>
+                                        <div class="data-warning" id="twitter-warning" style="display: none">
+                                                &gt; Using cached tweets
+                                        </div>
+                                        <div id="twitter-timeline">
+                                                <p>Loading timeline...</p>
+                                        </div>
+                                        <ul id="twitter-list" style="display: none"></ul>
                                 <div class="opensea-embed mt-4">
                                         <iframe src="https://opensea.io/collection/diffbydiff" allowfullscreen></iframe>
                                 </div>
@@ -3094,7 +3091,7 @@
 				loaderBalances: document.getElementById('loader-balances'),
 				balancesWarning: document.getElementById('balances-warning'),
                                 tokenInsightsWarning: document.getElementById('token-insights-warning'),
-                                twitterTimeline: document.getElementById('bluesky-feed'),
+                                twitterTimeline: document.getElementById('twitter-timeline'),
                                 loaderTwitter: document.getElementById('loader-twitter'),
                                 twitterWarning: document.getElementById('twitter-warning'),
 				duneVersion: document.getElementById('dune-version'),
@@ -3797,16 +3794,16 @@
 					}
 				});
 				DOM.djOverlay.addEventListener('touchmove', (e) => e.stopPropagation());
-				DOM.djDeactivateBtn.addEventListener('click', () => {
-					clickCount = 0;
-					DOM.djOverlay.style.display = 'flex';
-					DOM.djOverlay.classList.remove('fade-out');
-					DOM.djDashboard.classList.add('locked');
-					trackAPlayer?.pauseVideo();
-					trackBPlayer?.pauseVideo();
-					bgMusicPlayer?.pauseVideo();
-					document.querySelectorAll('video').forEach((v) => v.pause());
-				});
+                                ['click','touchstart'].forEach(ev => DOM.djDeactivateBtn.addEventListener(ev, () => {
+                                        clickCount = 0;
+                                        DOM.djOverlay.style.display = 'flex';
+                                        DOM.djOverlay.classList.remove('fade-out');
+                                        DOM.djDashboard.classList.add('locked');
+                                        trackAPlayer?.pauseVideo();
+                                        trackBPlayer?.pauseVideo();
+                                        bgMusicPlayer?.pauseVideo();
+                                        document.querySelectorAll('video').forEach((v) => v.pause());
+                                }));
 				setTimeout(handler, 5000);
 			}
 
@@ -5256,43 +5253,44 @@
 				return match ? match[1] : url;
 			}
 
-        async function loadBlueSkyPosts() {
-                const postsContainer = document.getElementById('posts');
-                if (!postsContainer) return;
-                postsContainer.innerHTML = '<p>Loading posts...</p>';
-                const cacheKey = 'bsky_fintech_news';
-                try {
-                        const cached = localStorage.getItem(cacheKey);
-                        if (cached && Date.now() - JSON.parse(cached).timestamp < 1800000) {
-                                renderBskyPosts(JSON.parse(cached).items, postsContainer);
-                                return;
-                        }
-                        const res = await fetch('https://bsky.social/xrpc/app.bsky.feed.searchPosts?term=finance%20tech%20world%20news&limit=5');
-                        const data = await res.json();
-                        const posts = data.feed || [];
-                        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), items: posts }));
-                        renderBskyPosts(posts, postsContainer);
-                } catch (err) {
-                        console.error('BlueSky fetch failed:', err);
-                        postsContainer.innerHTML = '<p>Posts unavailable.</p>';
+        async function loadTwitterTimeline() {
+                const container = document.getElementById('twitter-timeline');
+                const list = document.getElementById('twitter-list');
+                if (!container) return;
+                container.innerHTML =
+                        '<a class="twitter-timeline" href="https://x.com/DIFF810489" data-tweet-limit="10" data-chrome="nofooter transparent">Tweets by DIFF810489</a>';
+                function initWidget() {
+                        window.twttr && window.twttr.widgets && window.twttr.widgets.load(container);
                 }
-        }
-
-        function renderBskyPosts(feed, container) {
-                container.innerHTML = '';
-                if (!feed.length) {
-                        container.innerHTML = '<p>No posts found.</p>';
-                        return;
+                function loadTweetsFallback() {
+                        fetchTwitterData().then((tweets) => {
+                                container.style.display = 'none';
+                                if (list) list.style.display = 'block';
+                                if (list) list.innerHTML = '';
+                                tweets.forEach((t) => {
+                                        const li = document.createElement('li');
+                                        li.innerHTML = `<p class="metric">${sanitizeInput(t.text)}</p><div class="metric">${new Date(t.created_at).toLocaleString()}</div>`;
+                                        if (t.image)
+                                                li.innerHTML += `<img src="${t.image}" alt="tweet image" style="max-width:100%" />`;
+                                        if (t.video)
+                                                li.innerHTML += `<video src="${t.video}" controls style="max-width:100%"></video>`;
+                                        list.appendChild(li);
+                                });
+                        });
                 }
-                feed.forEach((post) => {
-                        const text = sanitizeInput(post.post.record?.text || '[No text]');
-                        const link = `https://bsky.app/profile/${post.post.author.handle}/post/${post.post.cid}`;
-                        const date = new Date(post.post.record.createdAt).toLocaleString();
-                        const div = document.createElement('div');
-                        div.className = 'bsky-post';
-                        div.innerHTML = `<p>${text}</p><a href="${link}" target="_blank">View post</a><div class="post-date">${date}</div>`;
-                        container.appendChild(div);
-                });
+                if (!window.twttr || !window.twttr.widgets) {
+                        const script = document.createElement('script');
+                        script.src = 'https://platform.twitter.com/widgets.js';
+                        script.async = true;
+                        script.onload = initWidget;
+                        script.onerror = loadTweetsFallback;
+                        document.body.appendChild(script);
+                } else {
+                        initWidget();
+                }
+                setTimeout(() => {
+                        if (!container.querySelector('iframe')) loadTweetsFallback();
+                }, 5000);
         }
 
 			document.addEventListener('DOMContentLoaded', () => {
@@ -5317,8 +5315,8 @@
 				loadModuleOrder();
 				setupModuleToggles();
                                 loadData();
-                                loadBlueSkyPosts();
-				init3D();
+                                loadTwitterTimeline();
+                                init3D();
 				updateBTCHash();
 				fetchTopCoin().then((c) => {
 					if (DOM.loadingTopcoin)
@@ -5563,21 +5561,21 @@
 					});
 				}
 
-				if (DOM.djDeactivateBtn) {
-					DOM.djDeactivateBtn.addEventListener('click', () => {
-						trackAPlayer && trackAPlayer.pauseVideo();
-						trackBPlayer && trackBPlayer.pauseVideo();
-						if (bgMusicPlayer && bgMusicPlayer.pauseVideo)
-							bgMusicPlayer.pauseVideo();
-						document.querySelectorAll('video').forEach((v) => v.pause());
-						DOM.djDashboard.classList.add('locked');
-						if (DOM.djOverlay) {
-							DOM.djOverlay.style.display = 'flex';
-							DOM.djOverlay.classList.remove('fade-out');
-							setupDjOverlay();
-						}
-					});
-				}
+                                if (DOM.djDeactivateBtn) {
+                                        ['click','touchstart'].forEach(ev => DOM.djDeactivateBtn.addEventListener(ev, () => {
+                                                trackAPlayer && trackAPlayer.pauseVideo();
+                                                trackBPlayer && trackBPlayer.pauseVideo();
+                                                if (bgMusicPlayer && bgMusicPlayer.pauseVideo)
+                                                        bgMusicPlayer.pauseVideo();
+                                                document.querySelectorAll('video').forEach((v) => v.pause());
+                                                DOM.djDashboard.classList.add('locked');
+                                                if (DOM.djOverlay) {
+                                                        DOM.djOverlay.style.display = 'flex';
+                                                        DOM.djOverlay.classList.remove('fade-out');
+                                                        setupDjOverlay();
+                                                }
+                                        }));
+                                }
 
 				if (DOM.djShuffleBtn) {
 					DOM.djShuffleBtn.addEventListener('click', () => {
