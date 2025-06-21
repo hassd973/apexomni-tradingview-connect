@@ -341,12 +341,15 @@
       text-align: center;
       font-size: clamp(12px, 2vw, 16px);
     }
-    .metrics-container {
+    #loading-screen .metrics-overlay .metrics-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 4px;
-      width: 100%;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
     }
     #loading-screen .metrics-overlay {
       position: absolute;
