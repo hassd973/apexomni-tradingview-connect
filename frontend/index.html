@@ -323,7 +323,36 @@
       gap: 4px;
       z-index: 15;
     }
-    .metrics-container {
+    #btc-metrics-overlay {
+      top: 0;
+      left: 0;
+      width: 100%;
+      padding: 0.5rem;
+    }
+    #btc-metrics-overlay .metrics-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 0.5rem;
+    }
+    #btc-metrics-overlay .metrics-row .metric {
+      flex: 1 1 auto;
+      text-align: center;
+      font-size: clamp(12px, 2vw, 16px);
+    }
+    #loading-screen .metrics-overlay .logo {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      width: 50px;
+      height: 50px;
+    }
+    #loading-screen .metrics-overlay .metrics-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -1658,10 +1687,12 @@
 <div class="btc-hash-svg relative" id="btc-hash-canvas">
   <canvas id="btc-audio-canvas" width="600" height="80" class="absolute top-0 left-0 w-full pointer-events-none"></canvas>
   <div id="btc-metrics-overlay" class="metrics-overlay">
-    <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo" />
-    <div class="metrics-container">
+    <div class="metrics-row">
       <span id="btc-overlay-price" class="metric metric-main"></span>
+      <img src="https://i.postimg.cc/R6HKW38z/q-logo.png" alt="QuantumI Logo" class="logo" />
       <span id="btc-overlay-loss" class="metric metric-main"></span>
+    </div>
+    <div class="metrics-row">
       <span id="btc-overlay-hashrate" class="metric metric-sub"></span>
       <span id="btc-overlay-difficulty" class="metric metric-sub"></span>
     </div>
@@ -2292,7 +2323,9 @@ let DJ_TRACKS = [
 
     const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
     const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
-    const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
+    const X_BEARER_TOKEN = 'AAAAAAAAAAAAAAAAAAAAADeW2gEAAAAAyWTCIUg8c2B35Ti%2FtSd7LQzfHJg%3DulkNwvMoe2IDBCmspA1QZ6aQp3BFkfmoflDxvCFuuawEsphKQn';
+    const X_ACCESS_TOKEN = '1936237883842576384-eikvHEUXy2YxGwryeLcEfhEUjTGLIO';
+    const X_ACCESS_SECRET = 'ajjdpdkdaM821iTcHx06bMJh2fAl7NoEBDBTM1UOdxSlv';
     const DUNE_MODULE_VERSION = '1.1.0.11';
     const CHAINS = [1, 42161, 8453, 10, 534352, 81457]; // Mainnet, Arbitrum, Base, Optimism, Scroll, Blast
     const TOKEN_ADDRESS = '0xd9aaec86b65d86f6a7b5b1b0c42ffa531710b6ca';
@@ -2825,7 +2858,7 @@ let DJ_TRACKS = [
     }
 
     async function fetchTokenInfo(tokenAddress, chainId) {
-      const url = `https://api.sim.dune.com/v1/evm/transactions?address=${tokenAddress}&chain_id=${chainId}`;
+      const url = `https://api.dune.com/api/v1/evm/transactions?address=${tokenAddress}&chain_id=${chainId}`;
       const cacheKey = `dune_tx_${tokenAddress}_${chainId}`;
       const cached = localStorage.getItem(cacheKey);
       if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
@@ -2833,7 +2866,7 @@ let DJ_TRACKS = [
         return JSON.parse(cached).data;
       }
       try {
-        const data = await fetchWithRetry(url, { headers: { 'X-Sim-Api-Key': DUNE_API_KEY } });
+        const data = await fetchWithRetry(url, { headers: { 'x-dune-api-key': DUNE_API_KEY } });
         if (!data || !data.data) throw new Error('Invalid response from Dune API');
         const result = data.data.map(tx => ({
           tx_hash: tx.transaction_hash,
@@ -4488,8 +4521,8 @@ async function trackWalletTransactions(addr) {
     }
   }
   try {
-    const url = `https://api.sim.dune.com/v1/evm/transactions/${addr}?chain_id=${CHAIN_ID}`;
-    const data = await fetchWithRetry(url, { headers: { 'X-Sim-Api-Key': DUNE_API_KEY } });
+    const url = `https://api.dune.com/api/v1/evm/transactions/${addr}?chain_id=${CHAIN_ID}`;
+    const data = await fetchWithRetry(url, { headers: { 'x-dune-api-key': DUNE_API_KEY } });
     localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data }));
     if (DOM.walletTrackStatus) DOM.walletTrackStatus.textContent = 'Tracked';
     return data;
