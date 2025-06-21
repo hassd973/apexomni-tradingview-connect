@@ -1945,7 +1945,7 @@
 					<a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
 					<a class="nav-link" href="#logs-module">Logs</a>
                                         <a class="nav-link" href="#balances-module">Finance Tweets</a>
-                                        <a class="nav-link" href="#world-module">World News</a>
+                                        <a class="nav-link" href="#world-module">QuantumI Insights</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
 					<a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
 					<a class="nav-link" href="#" id="undock-background-link"
@@ -2438,7 +2438,7 @@
                         >
                                 <div class="module-header">
                                 <h2 class="text-lg md:text-xl token-insights-title typewriter">
-                                                &gt; Asmongold Videos
+                                                &gt; QuantumI Insights
                                         </h2>
                                         <button
                                                 aria-label="Toggle module visibility"
@@ -2450,37 +2450,24 @@
                                         </button>
                                 </div>
                                 <div class="module-content">
-                                        <div id="youtube-playlist-module" class="youtube-container">
-                                                <div class="yt-main">
-                                                        <div class="yt-player-wrapper">
-                                                                <iframe
-                                                                        id="yt-player"
-                                                                        src="about:blank"
-                                                                        title="YouTube video player"
-                                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                                                        allowfullscreen
-                                                                ></iframe>
-                                                        </div>
-                                                        <div id="yt-playlist-thumbs" class="custom-scroll">
-                                                                <p>Loading playlist...</p>
-                                                        </div>
-                                                </div>
-                                        </div>
+                                        <p class="text-sm mb-4">
+                                                QuantumI Insights is your curated gateway to the cutting edge of technology and world events:<br /><br />
+                                                🎥 <strong>Y Combinator: Startup School &amp; AI Deep Dives</strong><br />
+                                                Get behind the curtain of emerging startups, hear live pitches, technical roundtables, and founder stories—all focusing on artificial intelligence, scaling products, and building the next generation of innovation.<br /><br />
+                                                🌍 <strong>The Guardian: World News &amp; Analysis</strong><br />
+                                                Stay informed with in-depth coverage from The Guardian—ranging from geopolitics and global crises to culture and policy shifts. Insights you can trust, delivered clearly and contextually.<br /><br />
+                                                📓 <strong>AI &amp; Tech Think Pieces</strong><br />
+                                                Explore interviews, panel discussions, and expert breakdowns on the future of AI, ethics, quantum computing, and technological impact on society. Broader than the headlines—more than just the buzz.<br /><br />
+                                                Every video in this playlist is hand-selected to spark curiosity and understanding—whether you’re a startup founder, AI researcher, policy-maker, or world citizen. Dive in, get inspired, and stay ahead.
+                                        </p>
                                         <div class="extra-playlists">
                                                 <div class="extra-playlist">
-                                                        <h3>Crypto Market Analysis</h3>
-                                                        <p>News coverage of the latest cryptocurrency stories.</p>
+                                                        <h3>Y Combinator: Startup School</h3>
                                                         <iframe src="https://www.youtube.com/embed/videoseries?list=PLQ-uHSnFig5NPx4adxl97CZb8vU4numwi" allowfullscreen></iframe>
                                                 </div>
                                                 <div class="extra-playlist">
-                                                        <h3>Tech & Finance Updates</h3>
-                                                        <p>Insights and commentary on technology and finance.</p>
+                                                        <h3>The Guardian</h3>
                                                         <iframe src="https://www.youtube.com/embed/videoseries?list=PLa_1MA_DEorHsfi3ntZ8ME6n3rTKM_uGQ" allowfullscreen></iframe>
-                                                </div>
-                                                <div class="extra-playlist">
-                                                        <h3>Global Economics Briefs</h3>
-                                                        <p>Worldwide economic events and market analysis.</p>
-                                                        <iframe src="https://www.youtube.com/embed/videoseries?list=PLPe5oHlbIf0yzGH8Vhye43DMQBf2TbHKi" allowfullscreen></iframe>
                                                 </div>
                                         </div>
                                 </div>
@@ -3106,10 +3093,6 @@
 				balancesList: document.getElementById('balances-list'),
 				loaderBalances: document.getElementById('loader-balances'),
 				balancesWarning: document.getElementById('balances-warning'),
-                                loaderYoutube: document.getElementById('loader-youtube'),
-                                youtubePlayer: document.getElementById('youtube-player'),
-                                youtubeList: document.getElementById('youtube-list'),
-                                youtubeWarning: document.getElementById('youtube-warning'),
                                 tokenInsightsWarning: document.getElementById('token-insights-warning'),
                                 twitterTimeline: document.getElementById('bluesky-feed'),
                                 loaderTwitter: document.getElementById('loader-twitter'),
@@ -3209,7 +3192,6 @@
                         let bgMusicPlayer;
                         let trackAPlayer;
                         let trackBPlayer;
-                        let youtubePlayer;
 			let djCtx,
 				gainA,
 				gainB,
@@ -3258,7 +3240,6 @@
 
                         const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
                         const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
-                        const NEWS_PLAYLIST = 'PLrhpR40o4n5wvhJXaYjkqb0B8ZYDcjeSY';
 			let DJ_TRACKS = [
 				{ id: 'RkQ3m_uGwXE', title: 'Intro' },
 				{ id: 'zHLmyJvSkaA', title: 'BORN FREE' }
@@ -3427,27 +3408,6 @@
                                                 }
                                         }
                                });
-
-                                youtubePlayer = new YT.Player('youtube-player', {
-                                        host: 'https://www.youtube.com',
-                                        height: '315',
-                                        width: '100%',
-                                        playerVars: {
-                                                autoplay: 0,
-                                                mute: 1,
-                                                origin: location.origin,
-                                                enablejsapi: 1
-                                        },
-                                        events: {
-                                                onReady: () => {
-                                                        DOM.youtubeWarning.style.display = 'none';
-                                                },
-                                                onError: () => {
-                                                        DOM.youtubeWarning.style.display = 'block';
-                                                }
-                                        }
-                                });
-
                                loadDJPlaylist();
 
 				enableQuantumSound();
@@ -5144,16 +5104,6 @@
                                         DOM.balancesWarning.textContent = '> Using mock balances due to API failure';
                                 }
 
-                                try {
-                                        loadPlaylistVideos();
-                                        if (DOM.youtubeWarning) DOM.youtubeWarning.style.display = 'none';
-                                } catch (error) {
-                                        console.error('Failed to load YouTube feed:', error);
-                                        if (DOM.youtubeWarning) {
-                                                DOM.youtubeWarning.style.display = 'block';
-                                                DOM.youtubeWarning.textContent = '> Videos unavailable, retrying...';
-                                        }
-                                }
 			};
 
 			function updateUI(tokens) {
@@ -5285,53 +5235,6 @@
 			}
 
 
-async function loadPlaylistVideos() {
-        const playlistId = NEWS_PLAYLIST;
-        const ytPlayer = document.getElementById('yt-player');
-        const thumbsContainer = document.getElementById('yt-playlist-thumbs');
-        const API_KEY = 'AIzaSyC4PW-SIRSy6pY2WrGz-PDqCu5-Rf7QPIU';
-        if (!thumbsContainer || !ytPlayer) return;
-        thumbsContainer.innerHTML = '<p>Loading playlist videos...</p>';
-        try {
-                let videos = [];
-                let nextPageToken = '';
-                do {
-                        const res = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${playlistId}&maxResults=50&pageToken=${nextPageToken}&key=${API_KEY}`);
-                        const data = await res.json();
-                        if (data.error) throw new Error(data.error.message);
-                        videos = videos.concat(data.items);
-                        nextPageToken = data.nextPageToken || '';
-                } while (nextPageToken);
-                if (!videos.length) {
-                        thumbsContainer.innerHTML = '<p>No videos found in playlist.</p>';
-                        return;
-                }
-                thumbsContainer.innerHTML = '';
-                videos.forEach((video, idx) => {
-                        const videoId = video.snippet.resourceId.videoId;
-                        const title = video.snippet.title;
-                        const thumbnail = video.snippet.thumbnails.medium.url;
-                        const thumbElem = document.createElement('div');
-                        thumbElem.classList.add('yt-thumb');
-                        thumbElem.innerHTML = `
-                                <img src="${thumbnail}" alt="${title}" />
-                                <span>${title}</span>
-                        `;
-                        if (idx === 0) {
-                                thumbElem.classList.add('active');
-                        }
-                        thumbElem.addEventListener('click', () => {
-                                ytPlayer.src = `https://www.youtube.com/embed/${videoId}?rel=0`;
-                                Array.from(thumbsContainer.children).forEach(child => child.classList.remove('active'));
-                                thumbElem.classList.add('active');
-                        });
-                        thumbsContainer.appendChild(thumbElem);
-                });
-                ytPlayer.src = `https://www.youtube.com/embed/${videos[0].snippet.resourceId.videoId}?rel=0`;
-        } catch (error) {
-                thumbsContainer.innerHTML = `<p style="color: red;">Error loading playlist: ${error.message}</p>`;
-        }
-}
 
 			function sanitizeInput(input) {
 				const div = document.createElement('div');
