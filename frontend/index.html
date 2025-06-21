@@ -1255,6 +1255,20 @@
                                 object-fit: cover;
                                 border-radius: 4px;
                         }
+                        .extra-playlist {
+                                margin-top: 1rem;
+                        }
+                        .extra-playlist iframe {
+                                width: 100%;
+                                height: 360px;
+                                border-radius: 8px;
+                                box-shadow: 0 0 6px var(--shadow-color);
+                        }
+                        .opensea-embed iframe {
+                                width: 100%;
+                                height: 420px;
+                                border: none;
+                        }
                         @media (max-width: 640px) {
                                 #youtube-list li {
                                         flex-direction: column;
@@ -2412,6 +2426,9 @@
                                         </div>
                                         <a class="bluesky-link" href="https://bsky.app/" target="_blank">View on BlueSky</a>
                                 </div>
+                                <div class="opensea-embed mt-4">
+                                        <iframe src="https://opensea.io/collection/diffbydiff" allowfullscreen></iframe>
+                                </div>
                                 </div>
                         </section>
                         <section
@@ -2447,6 +2464,23 @@
                                                         <div id="yt-playlist-thumbs" class="custom-scroll">
                                                                 <p>Loading playlist...</p>
                                                         </div>
+                                                </div>
+                                        </div>
+                                        <div class="extra-playlists">
+                                                <div class="extra-playlist">
+                                                        <h3>Crypto Market Analysis</h3>
+                                                        <p>News coverage of the latest cryptocurrency stories.</p>
+                                                        <iframe src="https://www.youtube.com/embed/videoseries?list=PLQ-uHSnFig5NPx4adxl97CZb8vU4numwi" allowfullscreen></iframe>
+                                                </div>
+                                                <div class="extra-playlist">
+                                                        <h3>Tech & Finance Updates</h3>
+                                                        <p>Insights and commentary on technology and finance.</p>
+                                                        <iframe src="https://www.youtube.com/embed/videoseries?list=PLa_1MA_DEorHsfi3ntZ8ME6n3rTKM_uGQ" allowfullscreen></iframe>
+                                                </div>
+                                                <div class="extra-playlist">
+                                                        <h3>Global Economics Briefs</h3>
+                                                        <p>Worldwide economic events and market analysis.</p>
+                                                        <iframe src="https://www.youtube.com/embed/videoseries?list=PLPe5oHlbIf0yzGH8Vhye43DMQBf2TbHKi" allowfullscreen></iframe>
                                                 </div>
                                         </div>
                                 </div>
