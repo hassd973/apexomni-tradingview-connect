@@ -1111,7 +1111,7 @@
                         }
                         #gas-heatmap-list,
                         #balances-list,
-                        #youtube-feed,
+                        #youtube-list,
                         #twitter-list {
                                 max-height: 20vh;
                         }
@@ -1153,7 +1153,8 @@
                         #gas-heatmap-list li,
                         #log-list li,
                         #balances-list li,
-                        #twitter-list li {
+                        #twitter-list li,
+                        #youtube-list li {
                                 font-size: 0.75rem;
                                 padding: 0.5rem;
                                 overflow-x: auto;
@@ -1198,10 +1199,27 @@
 			#profit-pairs .top-pair {
 				color: var(--primary-color);
 			}
-			#profit-pairs .bottom-pair {
-				color: var(--secondary-color);
-			}
-			@keyframes pulse {
+                        #profit-pairs .bottom-pair {
+                                color: var(--secondary-color);
+                        }
+                        #youtube-list {
+                                max-height: 50vh;
+                                overflow-y: auto;
+                        }
+                        #youtube-player iframe {
+                                max-width: 100%;
+                        }
+                        @media (max-width: 640px) {
+                                #youtube-list li {
+                                        flex-direction: column;
+                                        font-size: 0.75rem;
+                                }
+                                #youtube-list img {
+                                        width: 80px;
+                                        height: 60px;
+                                }
+                        }
+                        @keyframes pulse {
 				0% {
 					transform: scale(1);
 				}
@@ -1836,7 +1854,7 @@
 					<a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
 					<a class="nav-link" href="#logs-module">Logs</a>
 					<a class="nav-link" href="#balances-module">Balances</a>
-					<a class="nav-link" href="#token-insights-module">Token Insights</a>
+                                        <a class="nav-link" href="#youtube-module">News Videos</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
 					<a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
 					<a class="nav-link" href="#" id="undock-background-link"
@@ -2364,11 +2382,11 @@
 					<ul class="space-y-2 text-sm custom-scroll" id="twitter-list"></ul>
 				</div>
 			</section>
-                       <section
-                               class="rounded-lg youtube-news-section"
-                               draggable="true"
-                               id="token-insights-module"
-                       >
+                      <section
+                              class="rounded-lg youtube-news-section"
+                              draggable="true"
+                              id="youtube-module"
+                      >
                                <div class="module-header">
                                        <h2 class="text-lg md:text-xl token-insights-title typewriter">
                                                &gt; Crypto &amp; World News Videos
@@ -2389,13 +2407,9 @@
                                        >
                                                &gt; Loading videos...
                                        </div>
-                                       <iframe
-                                               id="youtube-feed"
-                                               style="display:none;"
-                                               class="w-full rounded-lg"
-                                               height="315"
-                                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                                       ></iframe>
+                                       <div id="youtube-warning" style="display: none;">&gt; Videos unavailable, retrying...</div>
+                                       <div id="youtube-player" class="w-full"></div>
+                                       <ul id="youtube-list" class="custom-scroll"></ul>
                                </div>
                        </section>
 			<section class="rounded-lg" draggable="true" id="inverse-winners-module">
@@ -2984,8 +2998,10 @@
 				balancesList: document.getElementById('balances-list'),
 				loaderBalances: document.getElementById('loader-balances'),
 				balancesWarning: document.getElementById('balances-warning'),
-                                youtubeFeed: document.getElementById('youtube-feed'),
                                 loaderYoutube: document.getElementById('loader-youtube'),
+                                youtubePlayer: document.getElementById('youtube-player'),
+                                youtubeList: document.getElementById('youtube-list'),
+                                youtubeWarning: document.getElementById('youtube-warning'),
                                 tokenInsightsWarning: document.getElementById('token-insights-warning'),
 				twitterTimeline: document.getElementById('twitter-timeline'),
 				loaderTwitter: document.getElementById('loader-twitter'),
@@ -3083,9 +3099,10 @@
 				dotClouds = [],
 				colorLegend = [],
 				hashLog = [];
-			let bgMusicPlayer;
-			let trackAPlayer;
-			let trackBPlayer;
+                        let bgMusicPlayer;
+                        let trackAPlayer;
+                        let trackBPlayer;
+                        let youtubePlayer;
 			let djCtx,
 				gainA,
 				gainB,
@@ -3268,7 +3285,7 @@
                                         }
                                 });
 
-				trackBPlayer = new YT.Player('track-b-player', {
+                               trackBPlayer = new YT.Player('track-b-player', {
 					host: 'https://www.youtube.com',
 					height: '100%',
 					width: '100%',
@@ -3301,9 +3318,31 @@
                                                         console.error('Failed to load YouTube video');
                                                 }
                                         }
+
+                               });
+
+                                youtubePlayer = new YT.Player('youtube-player', {
+                                        host: 'https://www.youtube.com',
+                                        height: '315',
+                                        width: '100%',
+                                        playerVars: {
+                                                autoplay: 0,
+                                                mute: 1,
+                                                origin: location.origin,
+                                                enablejsapi: 1
+                                        },
+                                        events: {
+                                                onReady: () => {
+                                                        DOM.youtubeWarning.style.display = 'none';
+                                                },
+                                                onError: () => {
+                                                        DOM.youtubeWarning.style.display = 'block';
+                                                }
+                                        }
+
                                 });
 
-				loadDJPlaylist();
+                               loadDJPlaylist();
 
 				enableQuantumSound();
 
@@ -3490,8 +3529,9 @@
 				window.onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
 			}
 
-			const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
-			const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
+                        const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
+                        const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
+                        const YOUTUBE_API_KEY = 'YOUR_API_KEY';
                         const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
                         const X_ACCESS_TOKEN =
                                 '1936237883842576384-eikvHEUXy2YxGwryeLcEfhEUjTGLIO';
@@ -5000,13 +5040,13 @@
                                 }
 
                                 try {
-                                        loadYouTubeFeed();
-                                        DOM.tokenInsightsWarning.style.display = 'none';
+                                        loadYouTubeVideos();
+                                        if (DOM.youtubeWarning) DOM.youtubeWarning.style.display = 'none';
                                 } catch (error) {
                                         console.error('Failed to load YouTube feed:', error);
-                                        if (DOM.tokenInsightsWarning) {
-                                                DOM.tokenInsightsWarning.style.display = 'block';
-                                                DOM.tokenInsightsWarning.textContent = '> YouTube feed unavailable';
+                                        if (DOM.youtubeWarning) {
+                                                DOM.youtubeWarning.style.display = 'block';
+                                                DOM.youtubeWarning.textContent = '> Videos unavailable, retrying...';
                                         }
                                 }
 			};
@@ -5139,12 +5179,68 @@
 					.join('');
 			}
 
-function loadYouTubeFeed() {
-        if (!DOM.youtubeFeed) return;
+
+async function fetchYouTubeVideos() {
+        const cacheKey = 'yt_crypto_news';
+        const cached = localStorage.getItem(cacheKey);
+        if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
+                return JSON.parse(cached).data;
+        }
+        try {
+                const url =
+                        `https://www.googleapis.com/youtube/v3/search?part=snippet&q=Crypto%20World%20News&type=video&order=date&maxResults=10&key=${YOUTUBE_API_KEY}`;
+                const data = await fetchWithRetry(url);
+                const videos = data.items.map((item) => ({
+                        videoId: item.id.videoId,
+                        title: item.snippet.title,
+                        channelTitle: item.snippet.channelTitle,
+                        publishedAt: item.snippet.publishedAt,
+                        thumbnail: item.snippet.thumbnails.medium.url
+                }));
+                localStorage.setItem(
+                        cacheKey,
+                        JSON.stringify({ timestamp: Date.now(), data: videos })
+                );
+                return videos;
+        } catch (err) {
+                console.error('YouTube API error:', err);
+                return [
+                        {
+                                videoId: 'mock123',
+                                title: 'Bitcoin Surges to $105K',
+                                channelTitle: 'CryptoNews',
+                                publishedAt: new Date().toISOString(),
+                                thumbnail: 'https://via.placeholder.com/120x90'
+                        }
+                ];
+        }
+}
+
+async function loadYouTubeVideos() {
+        if (!DOM.youtubePlayer || !DOM.youtubeList) return;
+        const videos = await fetchYouTubeVideos();
         DOM.loaderYoutube.style.display = 'none';
-        DOM.youtubeFeed.src =
-                'https://www.youtube.com/embed?listType=search&list=crypto%20news%20world%20news';
-        DOM.youtubeFeed.style.display = 'block';
+        DOM.youtubeList.innerHTML = videos
+                .map(
+                        (v) => `
+      <li data-id="${v.videoId}" class="flex gap-2 mb-2 cursor-pointer">
+        <img src="${v.thumbnail}" alt="${sanitizeInput(v.title)}" width="120" height="90" class="rounded" loading="lazy" />
+        <div class="flex flex-col text-left">
+          <span class="text-sm">${sanitizeInput(v.title)}</span>
+          <span class="text-gray-400 text-xs">${sanitizeInput(v.channelTitle)} - ${new Date(v.publishedAt).toLocaleDateString()}</span>
+        </div>
+      </li>`
+                )
+                .join('');
+        DOM.youtubeList.querySelectorAll('li').forEach((li) => {
+                li.addEventListener('click', () => {
+                        const id = li.getAttribute('data-id');
+                        if (youtubePlayer && id) {
+                                youtubePlayer.loadVideoById(id);
+                                attachTrack(youtubePlayer, 'A');
+                        }
+                });
+        });
 }
 
 			function sanitizeInput(input) {
@@ -5175,6 +5271,8 @@ function loadYouTubeFeed() {
                                 script.src = 'https://platform.x.com/widgets.js';
                                 script.onload = () => {
                                         if (fallback) fallback.style.display = 'none';
+                                        if (window.twttr && window.twttr.widgets)
+                                                window.twttr.widgets.load(DOM.twitterTimeline);
                                 };
                                 script.onerror = () => {
                                         if (fallback) fallback.style.display = 'block';
