@@ -1109,6 +1109,15 @@
                                 overflow-y: auto;
                                 padding-right: 4px;
                         }
+                        #token-search {
+                                background: rgba(35, 46, 46, 0.2);
+                                color: var(--text-color);
+                                width: 100%;
+                                border-radius: 4px;
+                        }
+                        #token-search::placeholder {
+                                color: #999;
+                        }
                         #gas-heatmap-list,
                         #balances-list,
                         #youtube-list,
@@ -1955,7 +1964,7 @@
 				<nav>
 					<a class="nav-link" href="#tokens-module">Tokens</a>
 					<a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
-					<a class="nav-link" href="#logs-module">Logs</a>
+                                        <a class="nav-link" href="#live-logs-module">Wallet</a>
                                         <a class="nav-link" href="#balances-module">Finance Tweets</a>
                                         <a class="nav-link" href="#world-module">QuantumI Insights</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
@@ -2284,10 +2293,16 @@
 					>
 						&gt; Loading...
 					</div>
-					<div class="data-warning" id="token-warning" style="display: none">
-						&gt; Live data from Dune API
-					</div>
-					<ul class="space-y-2 text-sm" id="token-list"></ul>
+                                        <div class="data-warning" id="token-warning" style="display: none">
+                                                &gt; Live data from Dune API
+                                        </div>
+                                        <input
+                                                type="text"
+                                                id="token-search"
+                                                placeholder="Search tokens"
+                                                class="w-full p-1 mb-2 rounded bg-gray-800 text-sm"
+                                        />
+                                        <ul class="space-y-2 text-sm" id="token-list"></ul>
 					<div class="mt-4">
 						<h3 class="text-base md:text-lg mb-2 typewriter">
 							&gt; Performers
@@ -2481,44 +2496,19 @@
                                                         <p class="playlist-desc hidden">
                                                                 Stay informed with in-depth coverage from The Guardian—ranging from geopolitics and global crises to culture and policy shifts. Insights you can trust, delivered clearly and contextually.
                                                         </p>
-                                                        <iframe src="https://www.youtube.com/embed/videoseries?list=PLa_1MA_DEorHsfi3ntZ8ME6n3rTKM_uGQ" allowfullscreen></iframe>
+                                                <iframe src="https://www.youtube.com/embed/videoseries?list=PLa_1MA_DEorHsfi3ntZ8ME6n3rTKM_uGQ" allowfullscreen></iframe>
+                                                </div>
+                                                <div class="extra-playlist">
+                                                        <div class="flex items-center justify-between">
+                                                                <h3>AI & Blockchain Research</h3>
+                                                                <button class="toggle-desc-btn" type="button">Info</button>
+                                                        </div>
+                                                        <p class="playlist-desc hidden">
+                                                                Lectures and discussions on cutting-edge AI and blockchain advancements.
+                                                        </p>
+                                                        <iframe src="https://www.youtube.com/embed/videoseries?list=PLvKrZQfu6htWeHwqRFQ9uBYVb2lLZURTS" allowfullscreen></iframe>
                                                 </div>
                                         </div>
-                                </div>
-                        </section>
-                        <section class="rounded-lg" draggable="true" id="logs-module">
-                                <div class="module-header">
-                                        <h2 class="text-lg md:text-xl typewriter">&gt; Live Logs</h2>
-                                        <button
-                                                aria-label="Toggle module visibility"
-                                                class="toggle-module-btn"
-                                                data-tooltip="Toggle module visibility"
-                                                role="button"
-                                        >
-                                                ▼
-                                        </button>
-                                </div>
-                                <div class="module-content">
-                                        <div class="flex justify-between items-center mb-2">
-                                                <div
-                                                        class="loader text-center text-gray-500 text-sm"
-                                                        id="loader-logs"
-                                                >
-                                                        &gt; Loading...
-                                                </div>
-                                                <button
-                                                        aria-label="Switch log data source"
-                                                        data-tooltip="Switch log data source"
-                                                        id="toggle-logs-data"
-                                                        role="button"
-                                                >
-                                                        Real Logs
-                                                </button>
-                                        </div>
-                                        <div class="data-warning" id="logs-warning" style="display: none">
-                                                &gt; Using mock logs due to connection issue
-                                        </div>
-                                        <ul class="space-y-2 text-sm" id="log-list"></ul>
                                 </div>
                         </section>
                         <section class="rounded-lg" draggable="true" id="inverse-winners-module">
@@ -2575,10 +2565,10 @@
 			<section
 				class="rounded-lg col-span-full"
 				draggable="true"
-				id="live-logs-module"
+                                id="live-logs-module"
 			>
 				<div class="module-header flex justify-between items-center">
-					<h2 class="text-lg md:text-xl text-white">🔐 Wallet Log Module</h2>
+                                        <h2 class="text-lg md:text-xl text-white">🔐 Wallet & Tokens</h2>
 					<div class="flex gap-2">
 						<button
 							class="text-white py-1 px-4 rounded text-sm"
@@ -2626,10 +2616,10 @@
 							<span id="wallet-track-status">-</span>
 						</p>
 					</div>
-					<ul
-						class="list-disc ml-4 text-sm text-gray-300"
-						id="open-trades"
-					></ul>
+                                        <ul
+                                                class="list-disc ml-4 text-sm text-gray-300"
+                                                id="balances-list"
+                                        ></ul>
 				</div>
 			</section>
 		</main>
@@ -3104,7 +3094,8 @@
 				undockBackgroundLink: document.getElementById('undock-background-link'),
 				exportHashLogBtn: document.getElementById('export-hash-log'),
 				exportBalancesBtn: document.getElementById('export-balances'),
-				balancesList: document.getElementById('balances-list'),
+                                balancesList: document.getElementById('balances-list'),
+                                tokenSearch: document.getElementById('token-search'),
 				loaderBalances: document.getElementById('loader-balances'),
 				balancesWarning: document.getElementById('balances-warning'),
                                 tokenInsightsWarning: document.getElementById('token-insights-warning'),
@@ -5148,7 +5139,7 @@ function setupModuleToggles() {
 						return `
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="flex justify-between items-center">
-              <span>${token.name} (${token.symbol})</span>
+              <span><a href="https://coinmarketcap.com/currencies/${token.id}/" target="_blank" class="token-link">${token.name}</a> (${token.symbol})</span>
               <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
             </div>
             <span class="cmc-link mt-1 text-xs" data-cmc="${token.id}" aria-label="Open CoinMarketCap page">CMC</span>
@@ -5171,12 +5162,12 @@ function setupModuleToggles() {
 					sortedTokens[sortedTokens.length - 1] || mockTokens[1];
 				profitPairs.innerHTML = `
         <li class="top-pair p-2 rounded">
-          <div>${topToken.name} (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
+          <div><a href="https://coinmarketcap.com/currencies/${topToken.id}/" target="_blank" class="token-link">${topToken.name}</a> (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
         </li>
         <li class="bottom-pair p-2 rounded">
-          <div>${bottomToken.name} (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
+          <div><a href="https://coinmarketcap.com/currencies/${bottomToken.id}/" target="_blank" class="token-link">${bottomToken.name}</a> (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
         </li>
@@ -5186,10 +5177,10 @@ function setupModuleToggles() {
 				topPairs.innerHTML = tokens
 					.filter((token) => token.symbol && token.symbol !== 'USDT')
 					.slice(0, 5)
-					.map(
-						(token) =>
-							`<li class="p-1 rounded-md">${token.symbol}/USDT (#${token.market_cap_rank})</li>`
-					)
+                                        .map(
+                                                (token) =>
+                                                        `<li class="p-1 rounded-md"><a href="https://coinmarketcap.com/currencies/${token.id}/" target="_blank" class="token-link">${token.symbol}/USDT (#${token.market_cap_rank})</a></li>`
+                                        )
 					.join('');
 
 				const uniquePun =
@@ -5344,6 +5335,19 @@ function setupModuleToggles() {
                                 setupModuleToggles();
                                 setupPlaylistDescriptions();
                                 loadData();
+                                if (DOM.tokenSearch) {
+                                        DOM.tokenSearch.addEventListener(
+                                                'input',
+                                                debounce(() => {
+                                                        const q = DOM.tokenSearch.value.toLowerCase();
+                                                        document.querySelectorAll('#token-list li').forEach((li) => {
+                                                                li.style.display = li.textContent.toLowerCase().includes(q)
+                                                                        ? ''
+                                                                        : 'none';
+                                                        });
+                                                }, 200)
+                                        );
+                                }
                                 loadTwitterTimeline();
                                 init3D();
 				updateBTCHash();
@@ -6405,8 +6409,8 @@ function setupModuleToggles() {
 
 			async function refreshWalletData() {
 				if (!walletAddress) {
-					document.getElementById('open-trades').innerHTML =
-						'<li>Connect wallet first</li>';
+                                        document.getElementById('balances-list').innerHTML =
+                                                '<li>Connect wallet first</li>';
 					return;
 				}
 				try {
@@ -6446,13 +6450,13 @@ function setupModuleToggles() {
 					).length;
 					document.getElementById('detected-exchange').innerText =
 						'No exchanges detected';
-					const tradesEl = document.getElementById('open-trades');
-					tradesEl.innerHTML = '';
+                                        const tradesEl = document.getElementById('balances-list');
+                                        tradesEl.innerHTML = '';
 					updateBalancesUI(holdings);
 				} catch (e) {
 					console.error('refreshWalletData error', e);
-					document.getElementById('open-trades').innerHTML =
-						'<li>Error loading wallet</li>';
+                                        document.getElementById('balances-list').innerHTML =
+                                                '<li>Error loading wallet</li>';
 					document.getElementById('wallet-balance').innerText = 'N/A';
 				}
 			}
@@ -6517,9 +6521,9 @@ function setupModuleToggles() {
 					: 'Show Address';
 			});
 
-			document
-				.getElementById('open-trades')
-				.addEventListener('click', async (e) => {
+                        document
+                                .getElementById('balances-list')
+                                .addEventListener('click', async (e) => {
 					const btn = e.target.closest('.close-trade');
 					if (!btn) return;
 					const symbol = btn.dataset.symbol;
