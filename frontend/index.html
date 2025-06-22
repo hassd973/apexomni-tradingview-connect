@@ -1285,10 +1285,13 @@
                                 cursor: pointer;
                                 margin-left: 0.5rem;
                         }
-                        .opensea-embed iframe {
+                        .rarible-embed iframe {
                                 width: 100%;
                                 height: 420px;
                                 border: none;
+                        }
+                        #token-performance-chart {
+                                cursor: pointer;
                         }
                         @media (max-width: 640px) {
                                 #youtube-list li {
@@ -2450,8 +2453,10 @@
                                                 <p>Loading timeline...</p>
                                         </div>
                                         <ul id="twitter-list" style="display: none"></ul>
-                                <div class="opensea-embed mt-4">
-                                        <iframe src="https://opensea.io/collection/diffbydiff" allowfullscreen></iframe>
+                                <div class="rarible-embed mt-4">
+                                        <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484291" loading="lazy" allowfullscreen></iframe>
+                                        <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484292" loading="lazy" allowfullscreen></iframe>
+                                        <iframe src="https://rarible.com/token/0xb66a603f4cfe17e3d27b87a8bfcad319856518b8:22936115272184638310144869580050457590453526233528138311905466789674025484289" loading="lazy" allowfullscreen></iframe>
                                 </div>
                                 </div>
                         </section>
@@ -4995,32 +5000,39 @@ function setupModuleToggles() {
 					logList.removeChild(logList.lastChild);
 			}
 
-			function renderTokenPerformanceChart(tokens) {
-				const ctx = DOM.tokenPerformanceChart.getContext('2d');
-				const labels = tokens.map((token) => token.symbol);
-				const data = tokens.map((token) => token.price_change_percentage_24h);
-				new Chart(ctx, {
-					type: 'bar',
-					data: {
-						labels: labels,
-						datasets: [
-							{
-								label: '24h Price Change (%)',
-								data: data,
-								backgroundColor: data.map((value) =>
-									value >= 0 ? '#87CEEB' : '#ff0000'
-								)
-							}
-						]
-					},
-					options: {
-						scales: {
-							y: {
-								beginAtZero: true
-							}
-						}
-					}
-				});
+                        function renderTokenPerformanceChart(tokens) {
+                                const ctx = DOM.tokenPerformanceChart.getContext('2d');
+                                const labels = tokens.map((token) => token.symbol);
+                                const data = tokens.map((token) => token.price_change_percentage_24h);
+                                new Chart(ctx, {
+                                        type: 'bar',
+                                        data: {
+                                                labels: labels,
+                                                datasets: [
+                                                        {
+                                                                label: '24h Price Change (%)',
+                                                                data: data,
+                                                                backgroundColor: data.map((value) =>
+                                                                        value >= 0 ? '#87CEEB' : '#ff0000'
+                                                                )
+                                                        }
+                                                ]
+                                        },
+                                        options: {
+                                                onClick: (_, elements) => {
+                                                        if (elements.length) {
+                                                                const index = elements[0].index;
+                                                                const token = tokens[index];
+                                                                window.open(`https://coinmarketcap.com/currencies/${token.id}/`, '_blank');
+                                                        }
+                                                },
+                                                scales: {
+                                                        y: {
+                                                                beginAtZero: true
+                                                        }
+                                                }
+                                        }
+                                });
 			}
 
 			function exportToCSV(data, filename) {
