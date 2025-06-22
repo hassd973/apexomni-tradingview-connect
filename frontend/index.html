@@ -1285,9 +1285,27 @@
                                 cursor: pointer;
                                 margin-left: 0.5rem;
                         }
+                        .rarible-embed {
+                                max-width: 500px;
+                                max-height: 360px;
+                                overflow-y: auto;
+                                margin: 0 auto;
+                                scrollbar-width: thin;
+                                scrollbar-color: var(--primary-color) #1e293b;
+                        }
+                        .rarible-embed::-webkit-scrollbar {
+                                width: 6px;
+                        }
+                        .rarible-embed::-webkit-scrollbar-thumb {
+                                background-color: var(--primary-color);
+                                border-radius: 6px;
+                        }
+                        .rarible-embed::-webkit-scrollbar-track {
+                                background: #1e293b;
+                        }
                         .rarible-embed iframe {
                                 width: 100%;
-                                height: 420px;
+                                height: 130px;
                                 border: none;
                         }
                         #token-performance-chart {
@@ -1986,9 +2004,10 @@
                                                 preload="auto"
                                                 playsinline
                                                 muted
-						crossorigin="anonymous"
-						class="w-full"
-					>
+                                                autoplay
+                                                crossorigin="anonymous"
+                                                class="w-full"
+                                        >
 						<source src="INTRO%20TRAILER.mp4" type="video/mp4" />
 					</video>
 					<div class="video-overlay metrics-overlay">
@@ -2453,7 +2472,7 @@
                                                 <p>Loading timeline...</p>
                                         </div>
                                         <ul id="twitter-list" style="display: none"></ul>
-                                <div class="rarible-embed mt-4">
+                                <div class="rarible-embed mt-4 custom-scroll">
                                         <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484291" loading="lazy" allowfullscreen></iframe>
                                         <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484292" loading="lazy" allowfullscreen></iframe>
                                         <iframe src="https://rarible.com/token/0xb66a603f4cfe17e3d27b87a8bfcad319856518b8:22936115272184638310144869580050457590453526233528138311905466789674025484289" loading="lazy" allowfullscreen></iframe>
@@ -5003,7 +5022,7 @@ function setupModuleToggles() {
                         function renderTokenPerformanceChart(tokens) {
                                 const ctx = DOM.tokenPerformanceChart.getContext('2d');
                                 const labels = tokens.map((token) => token.symbol);
-                                const data = tokens.map((token) => token.price_change_percentage_24h);
+                                const data = tokens.map((token) => parseFloat(token.price_change_percentage_24h) || 0);
                                 new Chart(ctx, {
                                         type: 'bar',
                                         data: {
