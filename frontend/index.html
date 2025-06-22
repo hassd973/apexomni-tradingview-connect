@@ -1964,7 +1964,7 @@
 				<nav>
 					<a class="nav-link" href="#tokens-module">Tokens</a>
 					<a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
-                                        <a class="nav-link" href="#live-logs-module">Wallet</a>
+                                       <a class="nav-link" href="#wallet-module">Wallet</a>
                                         <a class="nav-link" href="#balances-module">Finance Tweets</a>
                                         <a class="nav-link" href="#world-module">QuantumI Insights</a>
 					<a class="nav-link" href="#btc-hash-module">BTC Hash</a>
@@ -2565,7 +2565,7 @@
 			<section
 				class="rounded-lg col-span-full"
 				draggable="true"
-                                id="live-logs-module"
+                                id="wallet-module"
 			>
 				<div class="module-header flex justify-between items-center">
                                         <h2 class="text-lg md:text-xl text-white">🔐 Wallet & Tokens</h2>
@@ -2596,8 +2596,17 @@
 						</button>
 					</div>
 				</div>
-				<div class="module-content text-white">
-					<div class="wallet-info my-2">
+                                <div class="module-content text-white">
+                                        <div
+                                                class="loader text-center text-gray-500 text-sm"
+                                                id="loader-balances"
+                                        >
+                                                &gt; Loading wallet...
+                                        </div>
+                                        <div class="data-warning" id="balances-warning" style="display: none">
+                                                &gt; Using cached balances
+                                        </div>
+                                        <div class="wallet-info my-2">
 						<p>
 							<strong>Wallet Address:</strong>
 							<span id="wallet-address">Not connected</span>
