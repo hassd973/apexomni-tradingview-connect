@@ -1292,6 +1292,10 @@
                                 margin: 0 auto;
                                 scrollbar-width: thin;
                                 scrollbar-color: var(--primary-color) #1e293b;
+                                background: rgba(15, 23, 42, 0.6);
+                                border: 1px solid var(--shadow-color);
+                                border-radius: 8px;
+                                padding: 0.5rem;
                         }
                         .rarible-embed::-webkit-scrollbar {
                                 width: 6px;
@@ -1311,6 +1315,7 @@
                                 height: 500px;
                                 border: none;
                                 cursor: pointer;
+                                border-radius: 4px;
                         }
                         .twitter-feed,
                         .nft-gallery {
@@ -2630,7 +2635,10 @@
                                                 <ul id="twitter-list" style="display: none"></ul>
                                         </div>
                                 <div class="nft-gallery mt-4">
-                                        <div id="rarible-container" class="rarible-embed custom-scroll">
+                                        <div id="loader-rarible" class="loader text-center text-gray-500 text-sm">
+                                                &gt; Loading NFTs...
+                                        </div>
+                                        <div id="rarible-container" class="rarible-embed custom-scroll" style="display:none;">
                                                 <div class="nft-item">
                                                 <iframe data-src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484291" loading="lazy" allowfullscreen></iframe>
                                                 </div>
@@ -3329,7 +3337,8 @@
                                 raribleDockBtn: document.getElementById('rarible-dock-btn'),
                                 raribleModal: document.getElementById('rarible-modal'),
                                 raribleModalCloseBtn: document.getElementById('rarible-modal-close'),
-                                raribleContainer: document.getElementById('rarible-container')
+                                raribleContainer: document.getElementById('rarible-container'),
+                                raribleLoader: document.getElementById('loader-rarible')
                         };
 
 			let draggedModule = null;
@@ -6512,6 +6521,8 @@ function setupModuleToggles() {
                                                                         .forEach((f) => {
                                                                                 if (!f.src) f.src = f.dataset.src;
                                                                         });
+                                                                if (DOM.raribleLoader) DOM.raribleLoader.style.display = 'none';
+                                                                entry.target.style.display = 'block';
                                                                 observer.unobserve(entry.target);
                                                         }
                                                 });
