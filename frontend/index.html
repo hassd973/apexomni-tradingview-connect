@@ -1366,7 +1366,7 @@
                         .rarible-modal.active {
                                 display: flex;
                         }
-                        .rarible-modal-content {
+                                .rarible-modal-content {
                                 position: relative;
                                 width: 90%;
                                 max-width: 600px;
@@ -1376,6 +1376,9 @@
                                 border-radius: 8px;
                                 box-shadow: 0 0 8px var(--shadow-color);
                                 overflow-y: auto;
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
                         }
                         #rarible-modal-close {
                                 position: absolute;
@@ -3336,10 +3339,12 @@
                                 nftModalFrame: document.getElementById('nft-modal-frame'),
                                 raribleDockBtn: document.getElementById('rarible-dock-btn'),
                                 raribleModal: document.getElementById('rarible-modal'),
-                                raribleModalCloseBtn: document.getElementById('rarible-modal-close'),
-                                raribleContainer: document.getElementById('rarible-container'),
-                                raribleLoader: document.getElementById('loader-rarible')
-                        };
+                               raribleModalCloseBtn: document.getElementById('rarible-modal-close'),
+                               raribleContainer: document.getElementById('rarible-container'),
+                               raribleLoader: document.getElementById('loader-rarible')
+                       };
+
+                       let raribleOriginalParent = null;
 
 			let draggedModule = null;
 			let isIndicatorEnabledHeader = false;
@@ -6253,11 +6258,16 @@ function setupModuleToggles() {
                                 if (DOM.raribleDockBtn) {
                                         const raribleContent = DOM.raribleModal.querySelector('.rarible-modal-content');
                                         DOM.raribleDockBtn.addEventListener('click', () => {
+                                                if (!raribleOriginalParent) {
+                                                        raribleOriginalParent = DOM.raribleContainer.parentElement;
+                                                }
                                                 raribleContent.appendChild(DOM.raribleContainer);
                                                 DOM.raribleModal.classList.add('active');
                                         });
                                         DOM.raribleModalCloseBtn.addEventListener('click', () => {
-                                                document.querySelector('#balances-module .module-content').appendChild(DOM.raribleContainer);
+                                                if (raribleOriginalParent) {
+                                                        raribleOriginalParent.appendChild(DOM.raribleContainer);
+                                                }
                                                 DOM.raribleModal.classList.remove('active');
                                         });
                                         DOM.raribleModal.addEventListener('click', (ev) => {
