@@ -2638,15 +2638,15 @@
                                         <div id="loader-rarible" class="loader text-center text-gray-500 text-sm">
                                                 &gt; Loading NFTs...
                                         </div>
-                                        <div id="rarible-container" class="rarible-embed custom-scroll" style="display:none;">
+                                        <div id="rarible-container" class="rarible-embed custom-scroll" style="display:block;">
                                                 <div class="nft-item">
-                                                <iframe data-src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484291" loading="lazy" allowfullscreen></iframe>
+                                                <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484291" loading="lazy" allowfullscreen></iframe>
                                                 </div>
                                                 <div class="nft-item">
-                                                <iframe data-src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484292" loading="lazy" allowfullscreen></iframe>
+                                                <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484292" loading="lazy" allowfullscreen></iframe>
                                                 </div>
                                                 <div class="nft-item">
-                                                <iframe data-src="https://rarible.com/token/0xb66a603f4cfe17e3d27b87a8bfcad319856518b8:22936115272184638310144869580050457590453526233528138311905466789674025484289" loading="lazy" allowfullscreen></iframe>
+                                                <iframe src="https://rarible.com/token/0xb66a603f4cfe17e3d27b87a8bfcad319856518b8:22936115272184638310144869580050457590453526233528138311905466789674025484289" loading="lazy" allowfullscreen></iframe>
                                                 </div>
                                         </div>
                                 </div>
@@ -5500,6 +5500,16 @@ function setupModuleToggles() {
                                 setupModuleToggles();
                                 setupPlaylistDescriptions();
                                 loadData();
+                                if (DOM.raribleContainer) {
+                                        DOM.raribleContainer.querySelectorAll('iframe').forEach(f => {
+                                                if (!f.src && f.dataset.src) f.src = f.dataset.src;
+                                        });
+                                        DOM.raribleContainer.style.display = 'block';
+                                        if (DOM.raribleLoader) DOM.raribleLoader.style.display = 'none';
+                                }
+                                if (DOM.twitterTimeline) {
+                                        loadTwitterTimeline();
+                                }
                                 if (DOM.tokenSearch) {
                                         DOM.tokenSearch.addEventListener(
                                                 'input',
