@@ -1312,6 +1312,14 @@
                                 border: none;
                                 cursor: pointer;
                         }
+                        .twitter-feed,
+                        .nft-gallery {
+                                background: rgba(35, 46, 46, 0.2);
+                                border: 1px solid var(--shadow-color);
+                                border-radius: 8px;
+                                padding: 0.5rem;
+                                box-shadow: 0 0 6px var(--shadow-color);
+                        }
                         .nft-modal {
                                 display: none;
                                 position: fixed;
@@ -2615,19 +2623,23 @@
                                         <div class="data-warning" id="twitter-warning" style="display: none">
                                                 &gt; Using cached tweets
                                         </div>
-                                        <div id="twitter-timeline">
-                                                <p>Loading timeline...</p>
+                                        <div class="twitter-feed">
+                                                <div id="twitter-timeline">
+                                                        <p>Loading timeline...</p>
+                                                </div>
+                                                <ul id="twitter-list" style="display: none"></ul>
                                         </div>
-                                        <ul id="twitter-list" style="display: none"></ul>
-                                <div id="rarible-container" class="rarible-embed mt-4 custom-scroll">
-                                        <div class="nft-item">
-                                                <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484291" loading="lazy" allowfullscreen></iframe>
-                                        </div>
-                                        <div class="nft-item">
-                                                <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484292" loading="lazy" allowfullscreen></iframe>
-                                        </div>
-                                        <div class="nft-item">
-                                                <iframe src="https://rarible.com/token/0xb66a603f4cfe17e3d27b87a8bfcad319856518b8:22936115272184638310144869580050457590453526233528138311905466789674025484289" loading="lazy" allowfullscreen></iframe>
+                                <div class="nft-gallery mt-4">
+                                        <div id="rarible-container" class="rarible-embed custom-scroll">
+                                                <div class="nft-item">
+                                                <iframe data-src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484291" loading="lazy" allowfullscreen></iframe>
+                                                </div>
+                                                <div class="nft-item">
+                                                <iframe data-src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484292" loading="lazy" allowfullscreen></iframe>
+                                                </div>
+                                                <div class="nft-item">
+                                                <iframe data-src="https://rarible.com/token/0xb66a603f4cfe17e3d27b87a8bfcad319856518b8:22936115272184638310144869580050457590453526233528138311905466789674025484289" loading="lazy" allowfullscreen></iframe>
+                                                </div>
                                         </div>
                                 </div>
                                 </div>
@@ -5492,7 +5504,6 @@ function setupModuleToggles() {
                                                 }, 200)
                                         );
                                 }
-                                loadTwitterTimeline();
                                 init3D();
 				updateBTCHash();
 				fetchTopCoin().then((c) => {
@@ -6481,24 +6492,36 @@ function setupModuleToggles() {
 				});
 
 
-				const observer = new IntersectionObserver(
-					(entries) => {
-						entries.forEach((entry) => {
-							if (entry.isIntersecting) {
-								if (entry.target.id === 'spline-bg') {
-									entry.target
-										.querySelector('spline-viewer')
-										.load(
-											'https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode'
-										);
-								}
-							}
-						});
-					},
-					{ threshold: 0.1 }
-				);
+                                const observer = new IntersectionObserver(
+                                        (entries) => {
+                                                entries.forEach((entry) => {
+                                                        if (!entry.isIntersecting) return;
+                                                        if (entry.target.id === 'spline-bg') {
+                                                                entry.target
+                                                                        .querySelector('spline-viewer')
+                                                                        .load(
+                                                                                'https://prod.spline.design/fJRTSatt5qGHtFUW/scene.splinecode'
+                                                                        );
+                                                                observer.unobserve(entry.target);
+                                                        } else if (entry.target.id === 'twitter-timeline') {
+                                                                loadTwitterTimeline();
+                                                                observer.unobserve(entry.target);
+                                                        } else if (entry.target.id === 'rarible-container') {
+                                                                entry.target
+                                                                        .querySelectorAll('iframe[data-src]')
+                                                                        .forEach((f) => {
+                                                                                if (!f.src) f.src = f.dataset.src;
+                                                                        });
+                                                                observer.unobserve(entry.target);
+                                                        }
+                                                });
+                                        },
+                                        { threshold: 0.1 }
+                                );
 
-				observer.observe(document.getElementById('spline-bg'));
+                                observer.observe(document.getElementById('spline-bg'));
+                                if (DOM.twitterTimeline) observer.observe(DOM.twitterTimeline);
+                                if (DOM.raribleContainer) observer.observe(DOM.raribleContainer);
 			});
 		</script>
 		<script>
