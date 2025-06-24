@@ -3552,7 +3552,8 @@
                         }
 
                         function setupPasswordGate() {
-                                if (!DOM.passwordSubmit) return;
+                                if (!DOM.passwordSubmit || !DOM.passwordOverlay) return;
+                                DOM.passwordOverlay.style.display = 'flex';
                                 DOM.passwordSubmit.addEventListener('click', verifyPassword);
                                 if (DOM.passwordInput)
                                         DOM.passwordInput.addEventListener('keydown', (e) => {
@@ -6959,7 +6960,7 @@ function setupModuleToggles() {
 				loadInverseChart(parseInt(e.target.value));
 			});
 
-                        window.addEventListener('load', setupPasswordGate);
+                        document.addEventListener('DOMContentLoaded', setupPasswordGate);
                         window.addEventListener('load', () => loadInverseChart(10));
 		</script>
 	</body>
