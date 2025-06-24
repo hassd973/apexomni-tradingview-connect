@@ -91,20 +91,56 @@
 			.sixtyfour-font {
 				font-family: 'Sixtyfour', sans-serif;
 			}
-			#loading-screen {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: var(--bg-color);
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				align-items: center;
-				z-index: 1000;
-				transition: opacity 0.5s ease;
-			}
+                        #loading-screen {
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                background: var(--bg-color);
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: center;
+                                z-index: 1000;
+                                transition: opacity 0.5s ease;
+                        }
+                        #password-overlay {
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                background: var(--bg-color);
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: center;
+                                z-index: 2000;
+                        }
+                        #password-overlay input {
+                                background: #000;
+                                color: var(--text-color);
+                                border: 1px solid var(--primary-color);
+                                padding: 0.5rem;
+                                border-radius: 4px;
+                                margin-top: 0.5rem;
+                                width: 200px;
+                        }
+                        #password-overlay button {
+                                margin-top: 0.5rem;
+                                background: var(--primary-color);
+                                color: #1e2727;
+                                border: none;
+                                border-radius: 4px;
+                                padding: 0.5rem 1rem;
+                                cursor: pointer;
+                        }
+                        #password-overlay p {
+                                color: var(--secondary-color);
+                                margin-top: 0.5rem;
+                                display: none;
+                        }
 			#loading-screen .loading-video {
 				position: absolute;
 				top: 0;
@@ -2110,9 +2146,17 @@
 					>
 				</nav>
 			</div>
-		</div>
-		<div id="loading-screen">
-			<div class="loading-video">
+                </div>
+                <div id="password-overlay">
+                        <div class="password-box">
+                                <label for="site-password">Enter Password</label>
+                                <input id="site-password" type="password" />
+                                <button id="password-submit">Enter</button>
+                                <p id="password-error">Incorrect password</p>
+                        </div>
+                </div>
+                <div id="loading-screen">
+                        <div class="loading-video">
 				<div class="video-container">
                                         <video
                                                 id="intro-video"
@@ -3358,6 +3402,10 @@
                                raribleModalCloseBtn: document.getElementById('rarible-modal-close'),
                                raribleContainer: document.getElementById('rarible-container'),
                                raribleLoader: document.getElementById('loader-rarible')
+                               passwordOverlay: document.getElementById('password-overlay'),
+                               passwordInput: document.getElementById('site-password'),
+                               passwordSubmit: document.getElementById('password-submit'),
+                               passwordError: document.getElementById('password-error')
                        };
 
                        let raribleOriginalParent = null;
@@ -3419,8 +3467,9 @@
 			let balancesData = [];
 			let tokenInsightsData = [];
 			let isBTCPriceMock = false;
-			let cachedTopCoin = null;
-			let cachedInverseCoin = null;
+                        let cachedTopCoin = null;
+                        let cachedInverseCoin = null;
+                        const PASSWORD = 'Limitless_Hassd973';
 
                         const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
                         const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
@@ -3487,10 +3536,29 @@
                                         localStorage.setItem('introPlayed', '1');
                                         hideLoadingScreen();
                                 });
-				introVideo.addEventListener('error', () =>
-					console.warn('Intro trailer failed to load')
-				);
-			}
+                                introVideo.addEventListener('error', () =>
+                                        console.warn('Intro trailer failed to load')
+                                );
+                        }
+
+                        function verifyPassword() {
+                                if (!DOM.passwordInput || !DOM.passwordOverlay) return;
+                                if (DOM.passwordInput.value === PASSWORD) {
+                                        DOM.passwordOverlay.style.display = 'none';
+                                        initIntroVideo();
+                                } else {
+                                        if (DOM.passwordError) DOM.passwordError.style.display = 'block';
+                                }
+                        }
+
+                        function setupPasswordGate() {
+                                if (!DOM.passwordSubmit) return;
+                                DOM.passwordSubmit.addEventListener('click', verifyPassword);
+                                if (DOM.passwordInput)
+                                        DOM.passwordInput.addEventListener('keydown', (e) => {
+                                                if (e.key === 'Enter') verifyPassword();
+                                        });
+                        }
 
 			function onYouTubeIframeAPIReady() {
 				bgMusicPlayer = new YT.Player('music-player', {
@@ -6891,8 +6959,8 @@ function setupModuleToggles() {
 				loadInverseChart(parseInt(e.target.value));
 			});
 
-			window.addEventListener('load', initIntroVideo);
-			window.addEventListener('load', () => loadInverseChart(10));
+                        window.addEventListener('load', setupPasswordGate);
+                        window.addEventListener('load', () => loadInverseChart(10));
 		</script>
 	</body>
 </html>
