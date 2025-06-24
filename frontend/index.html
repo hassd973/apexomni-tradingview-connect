@@ -1715,42 +1715,12 @@
 			}
                         .gas-heatmap-section,
                         .twitter-section,
-                        .youtube-news-section {
-                                display: flex;
-                                flex-direction: column;
-                                gap: 0.75rem;
-                        }
-                        .bluesky-box {
-                                max-width: 500px;
-                                margin: auto;
-                                border: 1px solid var(--shadow-color);
-                                border-radius: 8px;
-                                padding: 16px;
-                                box-shadow: 0 0 6px var(--shadow-color);
-                                background: rgba(35, 46, 46, 0.2);
-                        }
-                        .bluesky-title {
-                                color: var(--primary-color);
-                                margin-bottom: 12px;
-                        }
-                        .bluesky-link {
-                                display: inline-block;
-                                margin-top: 12px;
-                                padding: 8px 16px;
-                                background-color: var(--primary-color);
-                                color: white;
-                                text-decoration: none;
-                                border-radius: 20px;
-                        }
-                        .bsky-post {
-                                border-bottom: 1px solid #444;
-                                padding: 8px 0;
-                                font-size: 0.85rem;
-                        }
-                        .bsky-post .post-date {
-                                font-size: 0.75rem;
-                                color: #888;
-                        }
+                        .youtube-news-section,
+                        .youtube-section {
+                               display: flex;
+                               flex-direction: column;
+                               gap: 0.75rem;
+                       }
 			.gas-heatmap-title,
 			.twitter-title,
 			.token-insights-title {
@@ -2135,9 +2105,10 @@
 				</p>
 				<nav>
                                         <a class="nav-link" href="#world-module">QuantumI Insights</a>
-                                        <a class="nav-link" href="#tokens-module">Tokens</a>
+                                       <a class="nav-link" href="#tokens-module">Tokens</a>
                                         <a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
                                        <a class="nav-link" href="#balances-module">Finance Tweets</a>
+                                       <a class="nav-link" href="#youtube-module">World News</a>
                                        <a class="nav-link" href="#wallet-module">Wallet</a>
                                         <a class="nav-link" href="#btc-hash-module">BTC Hash</a>
 					<a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
@@ -2713,6 +2684,18 @@
                                                 </div>
                                         </div>
                                 </div>
+                                </div>
+                        </section>
+                        <section class="rounded-lg youtube-section" draggable="true" id="youtube-module">
+                                <div class="module-header">
+                                        <h2 class="text-lg md:text-xl typewriter">&gt; Crypto &amp; World News Videos</h2>
+                                        <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
+                                </div>
+                                <div class="module-content">
+                                        <div id="loader-youtube" class="loader text-center text-gray-500 text-sm">&gt; Loading videos...</div>
+                                        <div id="youtube-warning" class="data-warning" style="display:none">&gt; Videos unavailable, retrying...</div>
+                                        <div id="youtube-player" class="mb-2"></div>
+                                        <ul id="youtube-list" class="custom-scroll"></ul>
                                 </div>
                         </section>
                         <section class="rounded-lg" draggable="true" id="inverse-winners-module">
@@ -3405,7 +3388,11 @@
                                passwordOverlay: document.getElementById('password-overlay'),
                                passwordInput: document.getElementById('site-password'),
                                passwordSubmit: document.getElementById('password-submit'),
-                               passwordError: document.getElementById('password-error')
+                               passwordError: document.getElementById('password-error'),
+                               youtubeList: document.getElementById('youtube-list'),
+                               youtubePlayer: document.getElementById('youtube-player'),
+                               loaderYoutube: document.getElementById('loader-youtube'),
+                               youtubeWarning: document.getElementById('youtube-warning')
                        };
 
                        let raribleOriginalParent = null;
@@ -3552,13 +3539,17 @@
                         }
 
                         function setupPasswordGate() {
-                                if (!DOM.passwordSubmit || !DOM.passwordOverlay) return;
+                                if (!DOM.passwordOverlay || !DOM.passwordSubmit) return;
                                 DOM.passwordOverlay.style.display = 'flex';
                                 DOM.passwordSubmit.addEventListener('click', verifyPassword);
-                                if (DOM.passwordInput)
+                                if (DOM.passwordInput) {
                                         DOM.passwordInput.addEventListener('keydown', (e) => {
                                                 if (e.key === 'Enter') verifyPassword();
                                         });
+                                        DOM.passwordInput.addEventListener('input', () => {
+                                                if (DOM.passwordError) DOM.passwordError.style.display = 'none';
+                                        });
+                                }
                         }
 
 			function onYouTubeIframeAPIReady() {
@@ -3849,6 +3840,7 @@
 			}
 
                         const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
+                        const YOUTUBE_API_KEY = 'YOUR_API_KEY';
                         const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
                         const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
                         const X_ACCESS_TOKEN =
@@ -4522,23 +4514,95 @@ function setupModuleToggles() {
                                         DOM.twitterWarning.textContent =
                                                 'Tweets unavailable, retrying...';
                                         DOM.twitterWarning.style.display = 'block';
+                                return [
+                                        {
+                                                text: 'Bitcoin surges to $105,000 amid market rally',
+                                                author: 'CoinDesk',
+                                                created_at: new Date().toISOString(),
+                                                video: null,
+                                                image: null
+                                        },
+                                        {
+                                                text: 'Art auction features NFT collection for $2M',
+                                                author: 'ArtDaily',
+                                                created_at: new Date().toISOString(),
+                                                video: null,
+                                                image: null
+                                        }
+                                ];
+                        }
+
+                        async function fetchYouTubeVideos() {
+                                const cacheKey = 'yt_crypto_news';
+                                const cached = localStorage.getItem(cacheKey);
+                                if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
+                                        DOM.youtubeWarning.style.display = 'block';
+                                        DOM.youtubeWarning.textContent = '> Using cached videos';
+                                        return JSON.parse(cached).data;
+                                }
+                                try {
+                                        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=Crypto%20World%20News&type=video&order=date&maxResults=10&key=${YOUTUBE_API_KEY}`;
+                                        const data = await fetchWithRetry(url);
+                                        const result = (data.items || []).map(v => ({
+                                                videoId: v.id.videoId,
+                                                title: v.snippet.title,
+                                                channel: v.snippet.channelTitle,
+                                                published: v.snippet.publishedAt,
+                                                thumbnail: v.snippet.thumbnails.medium.url
+                                        }));
+                                        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: result }));
+                                        DOM.youtubeWarning.style.display = 'none';
+                                        return result;
+                                } catch (err) {
+                                        console.error('YouTube API error:', err);
+                                        DOM.youtubeWarning.style.display = 'block';
+                                        DOM.youtubeWarning.textContent = '> Videos unavailable, retrying...';
                                         return [
                                                 {
-                                                        text: 'Bitcoin surges to $105,000 amid market rally',
-                                                        author: 'CoinDesk',
-                                                        created_at: new Date().toISOString(),
-                                                        video: null,
-                                                        image: null
-                                                },
-                                                {
-                                                        text: 'Art auction features NFT collection for $2M',
-                                                        author: 'ArtDaily',
-                                                        created_at: new Date().toISOString(),
-                                                        video: null,
-                                                        image: null
+                                                        videoId: 'NExbobK7XlY',
+                                                        title: 'Sample Crypto News',
+                                                        channel: 'Mock',
+                                                        published: new Date().toISOString(),
+                                                        thumbnail: 'https://via.placeholder.com/120x90'
                                                 }
                                         ];
-				}
+                                }
+                        }
+
+                        let newsPlayer;
+                        function loadVideo(id) {
+                                if (!window.YT || !DOM.youtubePlayer) return;
+                                if (!newsPlayer) {
+                                        newsPlayer = new YT.Player('youtube-player', {
+                                                videoId: id,
+                                                host: 'https://www.youtube.com',
+                                                playerVars: { enablejsapi: 1, origin: location.origin },
+                                                events: {
+                                                        onError: () => {
+                                                                DOM.youtubeWarning.style.display = 'block';
+                                                                DOM.youtubeWarning.textContent = '> Video unavailable, please try another track';
+                                                        }
+                                                }
+                                        });
+                                } else {
+                                        newsPlayer.loadVideoById(id);
+                                }
+                        }
+
+                        async function loadYouTubeVideos() {
+                                if (!DOM.youtubeList) return;
+                                const videos = await fetchYouTubeVideos();
+                                DOM.youtubeList.innerHTML = '';
+                                videos.forEach((v, i) => {
+                                        const li = document.createElement('li');
+                                        li.className = 'flex gap-2 items-start';
+                                        li.innerHTML = `<img src="${v.thumbnail}" alt="${sanitizeInput(v.title)}" width="120" height="90"/><div><span class="font-semibold">${sanitizeInput(v.title)}</span><br><span class="metric">${sanitizeInput(v.channel)} — ${new Date(v.published).toLocaleDateString()}</span></div>`;
+                                        li.addEventListener('click', () => loadVideo(v.videoId));
+                                        DOM.youtubeList.appendChild(li);
+                                });
+                                if (videos[0]) loadVideo(videos[0].videoId);
+                                if (DOM.loaderYoutube) DOM.loaderYoutube.style.display = 'none';
+                        }
 			}
 
 			async function fetchTopInverseToken() {
@@ -5597,10 +5661,13 @@ function setupModuleToggles() {
                                         DOM.raribleContainer.style.display = 'block';
                                         if (DOM.raribleLoader) DOM.raribleLoader.style.display = 'none';
                                 }
-                                if (DOM.twitterTimeline) {
-                                        loadTwitterTimeline();
-                                }
-                                if (DOM.tokenSearch) {
+                               if (DOM.twitterTimeline) {
+                                       loadTwitterTimeline();
+                               }
+                               if (DOM.youtubeList) {
+                                       loadYouTubeVideos();
+                               }
+                               if (DOM.tokenSearch) {
                                         DOM.tokenSearch.addEventListener(
                                                 'input',
                                                 debounce(() => {
@@ -6631,6 +6698,7 @@ function setupModuleToggles() {
                                                                 if (DOM.raribleLoader) DOM.raribleLoader.style.display = 'none';
                                                                 entry.target.style.display = 'block';
                                                                 observer.unobserve(entry.target);
+} else if (entry.target.id === 'youtube-list') {                                                                loadYouTubeVideos();                                                                observer.unobserve(entry.target);                                                        }
                                                         }
                                                 });
                                         },
@@ -6640,6 +6708,7 @@ function setupModuleToggles() {
                                 observer.observe(document.getElementById('spline-bg'));
                                 if (DOM.twitterTimeline) observer.observe(DOM.twitterTimeline);
                                 if (DOM.raribleContainer) observer.observe(DOM.raribleContainer);
+                                if (DOM.youtubeList) observer.observe(DOM.youtubeList);
 			});
 		</script>
 		<script>
@@ -6960,7 +7029,11 @@ function setupModuleToggles() {
 				loadInverseChart(parseInt(e.target.value));
 			});
 
-                        document.addEventListener('DOMContentLoaded', setupPasswordGate);
+                        if (document.readyState === 'loading') {
+                                document.addEventListener('DOMContentLoaded', setupPasswordGate);
+                        } else {
+                                setupPasswordGate();
+                        }
                         window.addEventListener('load', () => loadInverseChart(10));
 		</script>
 	</body>
