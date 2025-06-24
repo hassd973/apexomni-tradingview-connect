@@ -91,20 +91,20 @@
 			.sixtyfour-font {
 				font-family: 'Sixtyfour', sans-serif;
 			}
-			#loading-screen {
-				position: fixed;
-				top: 0;
-				left: 0;
-				width: 100%;
-				height: 100%;
-				background: var(--bg-color);
-				display: flex;
-				flex-direction: column;
-				justify-content: center;
-				align-items: center;
-				z-index: 1000;
-				transition: opacity 0.5s ease;
-			}
+                        #loading-screen {
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                background: var(--bg-color);
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;
+                                align-items: center;
+                                z-index: 1000;
+                                transition: opacity 0.5s ease;
+                        }
 			#loading-screen .loading-video {
 				position: absolute;
 				top: 0;
@@ -1679,11 +1679,12 @@
 			}
                         .gas-heatmap-section,
                         .twitter-section,
-                        .youtube-news-section {
-                                display: flex;
-                                flex-direction: column;
-                                gap: 0.75rem;
-                        }
+                        .youtube-news-section,
+                        .youtube-section {
+                               display: flex;
+                               flex-direction: column;
+                               gap: 0.75rem;
+                       }
 			.gas-heatmap-title,
 			.twitter-title,
 			.token-insights-title {
@@ -2079,9 +2080,9 @@
 					>
 				</nav>
 			</div>
-		</div>
-		<div id="loading-screen">
-			<div class="loading-video">
+                </div>
+                <div id="loading-screen">
+                        <div class="loading-video">
 				<div class="video-container">
                                         <video
                                                 id="intro-video"
@@ -3388,8 +3389,8 @@
 			let balancesData = [];
 			let tokenInsightsData = [];
 			let isBTCPriceMock = false;
-			let cachedTopCoin = null;
-			let cachedInverseCoin = null;
+                        let cachedTopCoin = null;
+                        let cachedInverseCoin = null;
 
                         const PLAYLIST_A = 'PLjyTw1v0Tp27WoFeOITARFdNy_bEyFQu2';
                         const PLAYLIST_B = 'PLjyTw1v0Tp242zNBCT6whi48bEK3gP3Yj';
@@ -3456,10 +3457,11 @@
                                         localStorage.setItem('introPlayed', '1');
                                         hideLoadingScreen();
                                 });
-				introVideo.addEventListener('error', () =>
-					console.warn('Intro trailer failed to load')
-				);
-			}
+                                introVideo.addEventListener('error', () =>
+                                        console.warn('Intro trailer failed to load')
+                                );
+                        }
+
 
 			function onYouTubeIframeAPIReady() {
 				bgMusicPlayer = new YT.Player('music-player', {
@@ -4424,21 +4426,50 @@ function setupModuleToggles() {
                                         DOM.twitterWarning.style.display = 'block';
                                         return [
                                                 {
-                                                        text: 'Bitcoin surges to $105,000 amid market rally',
-                                                        author: 'CoinDesk',
-                                                        created_at: new Date().toISOString(),
-                                                        video: null,
-                                                        image: null
-                                                },
-                                                {
-                                                        text: 'Art auction features NFT collection for $2M',
-                                                        author: 'ArtDaily',
-                                                        created_at: new Date().toISOString(),
-                                                        video: null,
-                                                        image: null
+                                                        videoId: 'NExbobK7XlY',
+                                                        title: 'Sample Crypto News',
+                                                        channel: 'Mock',
+                                                        published: new Date().toISOString(),
+                                                        thumbnail: 'https://via.placeholder.com/120x90'
                                                 }
                                         ];
-				}
+                                }
+                        }
+
+                        let newsPlayer;
+                        function loadVideo(id) {
+                                if (!window.YT || !DOM.youtubePlayer) return;
+                                if (!newsPlayer) {
+                                        newsPlayer = new YT.Player('youtube-player', {
+                                                videoId: id,
+                                                host: 'https://www.youtube.com',
+                                                playerVars: { enablejsapi: 1, origin: location.origin },
+                                                events: {
+                                                        onError: () => {
+                                                                DOM.youtubeWarning.style.display = 'block';
+                                                                DOM.youtubeWarning.textContent = '> Video unavailable, please try another track';
+                                                        }
+                                                }
+                                        });
+                                } else {
+                                        newsPlayer.loadVideoById(id);
+                                }
+                        }
+
+                        async function loadYouTubeVideos() {
+                                if (!DOM.youtubeList) return;
+                                const videos = await fetchYouTubeVideos();
+                                DOM.youtubeList.innerHTML = '';
+                                videos.forEach((v, i) => {
+                                        const li = document.createElement('li');
+                                        li.className = 'flex gap-2 items-start';
+                                        li.innerHTML = `<img src="${v.thumbnail}" alt="${sanitizeInput(v.title)}" width="120" height="90"/><div><span class="font-semibold">${sanitizeInput(v.title)}</span><br><span class="metric">${sanitizeInput(v.channel)} — ${new Date(v.published).toLocaleDateString()}</span></div>`;
+                                        li.addEventListener('click', () => loadVideo(v.videoId));
+                                        DOM.youtubeList.appendChild(li);
+                                });
+                                if (videos[0]) loadVideo(videos[0].videoId);
+                                if (DOM.loaderYoutube) DOM.loaderYoutube.style.display = 'none';
+                        }
 			}
 
 			async function fetchTopInverseToken() {
@@ -6860,8 +6891,7 @@ function setupModuleToggles() {
 				loadInverseChart(parseInt(e.target.value));
 			});
 
-			window.addEventListener('load', initIntroVideo);
-			window.addEventListener('load', () => loadInverseChart(10));
+                        window.addEventListener('load', () => loadInverseChart(10));
 		</script>
 	</body>
 </html>
