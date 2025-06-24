@@ -2069,10 +2069,9 @@
 				</p>
 				<nav>
                                         <a class="nav-link" href="#world-module">QuantumI Insights</a>
-                                       <a class="nav-link" href="#tokens-module">Tokens</a>
+                                        <a class="nav-link" href="#tokens-module">Tokens</a>
                                         <a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
                                        <a class="nav-link" href="#balances-module">Finance Tweets</a>
-                                       <a class="nav-link" href="#youtube-module">World News</a>
                                        <a class="nav-link" href="#wallet-module">Wallet</a>
                                         <a class="nav-link" href="#btc-hash-module">BTC Hash</a>
 					<a class="nav-link" href="#chat-logs-container">Chat &amp; Logs</a>
@@ -2640,18 +2639,6 @@
                                                 </div>
                                         </div>
                                 </div>
-                                </div>
-                        </section>
-                        <section class="rounded-lg youtube-section" draggable="true" id="youtube-module">
-                                <div class="module-header">
-                                        <h2 class="text-lg md:text-xl typewriter">&gt; Crypto &amp; World News Videos</h2>
-                                        <button aria-label="Toggle module visibility" class="toggle-module-btn" data-tooltip="Toggle module visibility" role="button">▼</button>
-                                </div>
-                                <div class="module-content">
-                                        <div id="loader-youtube" class="loader text-center text-gray-500 text-sm">&gt; Loading videos...</div>
-                                        <div id="youtube-warning" class="data-warning" style="display:none">&gt; Videos unavailable, retrying...</div>
-                                        <div id="youtube-player" class="mb-2"></div>
-                                        <ul id="youtube-list" class="custom-scroll"></ul>
                                 </div>
                         </section>
                         <section class="rounded-lg" draggable="true" id="inverse-winners-module">
@@ -3340,11 +3327,7 @@
                                 raribleModal: document.getElementById('rarible-modal'),
                                raribleModalCloseBtn: document.getElementById('rarible-modal-close'),
                                raribleContainer: document.getElementById('rarible-container'),
-                               raribleLoader: document.getElementById('loader-rarible'),
-                               youtubeList: document.getElementById('youtube-list'),
-                               youtubePlayer: document.getElementById('youtube-player'),
-                               loaderYoutube: document.getElementById('loader-youtube'),
-                               youtubeWarning: document.getElementById('youtube-warning')
+                               raribleLoader: document.getElementById('loader-rarible')
                        };
 
                        let raribleOriginalParent = null;
@@ -3768,7 +3751,6 @@
 			}
 
                         const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
-                        const YOUTUBE_API_KEY = 'YOUR_API_KEY';
                         const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
                         const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
                         const X_ACCESS_TOKEN =
@@ -4442,49 +4424,6 @@ function setupModuleToggles() {
                                         DOM.twitterWarning.textContent =
                                                 'Tweets unavailable, retrying...';
                                         DOM.twitterWarning.style.display = 'block';
-                                return [
-                                        {
-                                                text: 'Bitcoin surges to $105,000 amid market rally',
-                                                author: 'CoinDesk',
-                                                created_at: new Date().toISOString(),
-                                                video: null,
-                                                image: null
-                                        },
-                                        {
-                                                text: 'Art auction features NFT collection for $2M',
-                                                author: 'ArtDaily',
-                                                created_at: new Date().toISOString(),
-                                                video: null,
-                                                image: null
-                                        }
-                                ];
-                        }
-
-                        async function fetchYouTubeVideos() {
-                                const cacheKey = 'yt_crypto_news';
-                                const cached = localStorage.getItem(cacheKey);
-                                if (cached && Date.now() - JSON.parse(cached).timestamp < 3600000) {
-                                        DOM.youtubeWarning.style.display = 'block';
-                                        DOM.youtubeWarning.textContent = '> Using cached videos';
-                                        return JSON.parse(cached).data;
-                                }
-                                try {
-                                        const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&q=Crypto%20World%20News&type=video&order=date&maxResults=10&key=${YOUTUBE_API_KEY}`;
-                                        const data = await fetchWithRetry(url);
-                                        const result = (data.items || []).map(v => ({
-                                                videoId: v.id.videoId,
-                                                title: v.snippet.title,
-                                                channel: v.snippet.channelTitle,
-                                                published: v.snippet.publishedAt,
-                                                thumbnail: v.snippet.thumbnails.medium.url
-                                        }));
-                                        localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: result }));
-                                        DOM.youtubeWarning.style.display = 'none';
-                                        return result;
-                                } catch (err) {
-                                        console.error('YouTube API error:', err);
-                                        DOM.youtubeWarning.style.display = 'block';
-                                        DOM.youtubeWarning.textContent = '> Videos unavailable, retrying...';
                                         return [
                                                 {
                                                         videoId: 'NExbobK7XlY',
@@ -5589,13 +5528,10 @@ function setupModuleToggles() {
                                         DOM.raribleContainer.style.display = 'block';
                                         if (DOM.raribleLoader) DOM.raribleLoader.style.display = 'none';
                                 }
-                               if (DOM.twitterTimeline) {
-                                       loadTwitterTimeline();
-                               }
-                               if (DOM.youtubeList) {
-                                       loadYouTubeVideos();
-                               }
-                               if (DOM.tokenSearch) {
+                                if (DOM.twitterTimeline) {
+                                        loadTwitterTimeline();
+                                }
+                                if (DOM.tokenSearch) {
                                         DOM.tokenSearch.addEventListener(
                                                 'input',
                                                 debounce(() => {
@@ -6626,7 +6562,6 @@ function setupModuleToggles() {
                                                                 if (DOM.raribleLoader) DOM.raribleLoader.style.display = 'none';
                                                                 entry.target.style.display = 'block';
                                                                 observer.unobserve(entry.target);
-} else if (entry.target.id === 'youtube-list') {                                                                loadYouTubeVideos();                                                                observer.unobserve(entry.target);                                                        }
                                                         }
                                                 });
                                         },
@@ -6636,7 +6571,6 @@ function setupModuleToggles() {
                                 observer.observe(document.getElementById('spline-bg'));
                                 if (DOM.twitterTimeline) observer.observe(DOM.twitterTimeline);
                                 if (DOM.raribleContainer) observer.observe(DOM.raribleContainer);
-                                if (DOM.youtubeList) observer.observe(DOM.youtubeList);
 			});
 		</script>
 		<script>
