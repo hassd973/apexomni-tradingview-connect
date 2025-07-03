@@ -1990,7 +1990,7 @@
                         inset: 0;
                         width: 100%;
                         height: 100%;
-                        background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+                        background: rgba(15, 12, 41, 0.8);
                         z-index: 2000;
                         display: flex;
                         align-items: center;
@@ -2040,6 +2040,14 @@
                     #access-error {
                         color: #f87171;
                         margin-top: 0.75rem;
+                    }
+                    #nda-link {
+                        color: #3b82f6;
+                        text-decoration: underline;
+                    }
+                    #overlay-description {
+                        font-size: 0.875rem;
+                        margin-top: 0.5rem;
                     }
                 </style>
 		<style>
@@ -2136,6 +2144,10 @@
                                         <span>I agree to the NDA</span>
                                 </label>
                                 <button type="submit">Enter</button>
+                                <a id="nda-link" href="NDA.pdf" download class="block mt-2 text-blue-400 underline">Download NDA</a>
+                                <p id="overlay-description" class="mt-2 text-sm">
+                                        QuantumI visually standardizes and logs blockchain transactions, simplifying crypto analytics for everyone.
+                                </p>
                                 <div id="access-error" class="hidden"></div>
                         </form>
                 </div>
@@ -2885,17 +2897,25 @@
 					>
 						Show Log
 					</button>
-					<button
-						id="legend-toggle"
-						aria-label="Toggle legend"
-						class="ml-2 dj-btn"
-						data-tooltip="Toggle legend"
-						role="button"
-					>
-						Show Legend
-					</button>
-					<button id="dj-dock-btn" class="ml-2 dj-btn">Dock DJ</button>
-				</div>
+                                        <button
+                                                id="legend-toggle"
+                                                aria-label="Toggle legend"
+                                                class="ml-2 dj-btn"
+                                                data-tooltip="Toggle legend"
+                                                role="button"
+                                        >
+                                                Show Legend
+                                        </button>
+                                        <button
+                                                id="btc-fullscreen-btn"
+                                                aria-label="Toggle fullscreen"
+                                                class="ml-2 dj-btn"
+                                                role="button"
+                                        >
+                                                Fullscreen
+                                        </button>
+                                        <button id="dj-dock-btn" class="ml-2 dj-btn">Dock DJ</button>
+                                </div>
 				<div class="module-content">
 					<div class="data-warning" id="btc-hash-warning" style="display: none">
 						&gt; Live data from Dune API
@@ -2984,16 +3004,25 @@
 							price and time for each cluster.
 						</p>
 					</div>
-					<button
-						aria-label="Export as OBJ"
-						class="mt-2"
-						data-tooltip="Export as OBJ"
-						id="export-obj"
-						role="button"
-					>
-						Export OBJ
-					</button>
-					<div class="mt-4 hidden" id="btc-hash-log">
+                                        <button
+                                                aria-label="Export as OBJ"
+                                                class="mt-2"
+                                                data-tooltip="Export as OBJ"
+                                                id="export-obj"
+                                                role="button"
+                                        >
+                                                Export OBJ
+                                        </button>
+                                        <button
+                                                aria-label="Export as FBX"
+                                                class="mt-2"
+                                                data-tooltip="Export as FBX"
+                                                id="export-fbx"
+                                                role="button"
+                                        >
+                                                Export FBX
+                                        </button>
+                                        <div class="mt-4 hidden" id="btc-hash-log">
 						<h3 class="text-base md:text-lg mb-2">Hash Log</h3>
 						<ul class="space-y-2 text-sm" id="hash-log-list"></ul>
 						<button
@@ -3324,8 +3353,10 @@
 				tokenPerformanceChart: document.getElementById(
 					'token-performance-chart'
 				),
-				exportObjBtn: document.getElementById('export-obj'),
-				zoomInBtn: document.getElementById('btc-zoom-in'),
+                                exportObjBtn: document.getElementById('export-obj'),
+                                exportFbxBtn: document.getElementById('export-fbx'),
+                                btcFullscreenBtn: document.getElementById('btc-fullscreen-btn'),
+                                zoomInBtn: document.getElementById('btc-zoom-in'),
 				zoomOutBtn: document.getElementById('btc-zoom-out'),
 				zoomZ0Btn: document.getElementById('btc-zoom-z0'),
 				zoomZ1Btn: document.getElementById('btc-zoom-z1'),
@@ -6383,34 +6414,51 @@ function setupModuleToggles() {
 					DOM.navMenu.classList.remove('active');
 				});
 
-				DOM.splineFullscreenBtn.addEventListener('click', () => {
-					const splineModalContent = document.querySelector(
-						'.spline-modal-content'
-					);
-					if (!document.fullscreenElement) {
-						if (splineModalContent.requestFullscreen)
-							splineModalContent.requestFullscreen();
-						else if (splineModalContent.mozRequestFullScreen)
-							splineModalContent.mozRequestFullScreen();
-						else if (splineModalContent.webkitRequestFullscreen)
-							splineModalContent.webkitRequestFullscreen();
-						else if (splineModalContent.msRequestFullscreen)
-							splineModalContent.msRequestFullscreen();
-					} else {
-						if (document.exitFullscreen) document.exitFullscreen();
-						else if (document.mozCancelFullScreen)
-							document.mozCancelFullScreen();
-						else if (document.webkitExitFullscreen)
-							document.webkitExitFullscreen();
-						else if (document.msExitFullscreen) document.msExitFullscreen();
-					}
-				});
+                               DOM.splineFullscreenBtn.addEventListener('click', () => {
+                                       const splineModalContent = document.querySelector(
+                                               '.spline-modal-content'
+                                       );
+                                       if (!document.fullscreenElement) {
+                                               if (splineModalContent.requestFullscreen)
+                                                       splineModalContent.requestFullscreen();
+                                               else if (splineModalContent.mozRequestFullScreen)
+                                                       splineModalContent.mozRequestFullScreen();
+                                               else if (splineModalContent.webkitRequestFullscreen)
+                                                       splineModalContent.webkitRequestFullscreen();
+                                               else if (splineModalContent.msRequestFullscreen)
+                                                       splineModalContent.msRequestFullscreen();
+                                       } else {
+                                               if (document.exitFullscreen) document.exitFullscreen();
+                                               else if (document.mozCancelFullScreen)
+                                                       document.mozCancelFullScreen();
+                                               else if (document.webkitExitFullscreen)
+                                                       document.webkitExitFullscreen();
+                                               else if (document.msExitFullscreen) document.msExitFullscreen();
+                                       }
+                               });
 
-				const handleFullscreenChange = () => {
-					DOM.splineFullscreenBtn.textContent = document.fullscreenElement
-						? 'Exit Fullscreen'
-						: 'Fullscreen';
-				};
+                               if (DOM.btcFullscreenBtn) {
+                                       DOM.btcFullscreenBtn.addEventListener('click', () => {
+                                               const btcCanvas = document.getElementById('btc-hash-canvas');
+                                               if (!document.fullscreenElement) {
+                                                       if (btcCanvas.requestFullscreen) btcCanvas.requestFullscreen();
+                                                       else if (btcCanvas.mozRequestFullScreen) btcCanvas.mozRequestFullScreen();
+                                                       else if (btcCanvas.webkitRequestFullscreen) btcCanvas.webkitRequestFullscreen();
+                                                       else if (btcCanvas.msRequestFullscreen) btcCanvas.msRequestFullscreen();
+                                               } else {
+                                                       if (document.exitFullscreen) document.exitFullscreen();
+                                                       else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                                                       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                                                       else if (document.msExitFullscreen) document.msExitFullscreen();
+                                               }
+                                       });
+                               }
+
+                                const handleFullscreenChange = () => {
+                                        const label = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+                                        if (DOM.splineFullscreenBtn) DOM.splineFullscreenBtn.textContent = label;
+                                        if (DOM.btcFullscreenBtn) DOM.btcFullscreenBtn.textContent = label;
+                                };
 				document.addEventListener('fullscreenchange', handleFullscreenChange);
 				document.addEventListener(
 					'mozfullscreenchange',
@@ -6500,18 +6548,33 @@ function setupModuleToggles() {
 					exportToCSV(gasHistory, 'gas_data.csv');
 				});
 
-				DOM.exportObjBtn.addEventListener('click', () => {
-					const exportGroup = new THREE.Group();
-					dotClouds.forEach((cloud) => exportGroup.add(cloud.clone()));
-					const exporter = new THREE.OBJExporter();
-					const result = exporter.parse(exportGroup);
-					const blob = new Blob([result], { type: 'text/plain' });
-					const link = document.createElement('a');
-					link.href = URL.createObjectURL(blob);
-					link.download = 'btc_hash_visualization.obj';
-					link.click();
-					addSystemLog('Exported BTC Hash Visualization as OBJ');
-				});
+                               DOM.exportObjBtn.addEventListener('click', () => {
+                                       const exportGroup = new THREE.Group();
+                                       dotClouds.forEach((cloud) => exportGroup.add(cloud.clone()));
+                                       const exporter = new THREE.OBJExporter();
+                                       const result = exporter.parse(exportGroup);
+                                       const blob = new Blob([result], { type: 'text/plain' });
+                                       const link = document.createElement('a');
+                                       link.href = URL.createObjectURL(blob);
+                                       link.download = 'btc_hash_visualization.obj';
+                                       link.click();
+                                       addSystemLog('Exported BTC Hash Visualization as OBJ');
+                               });
+
+                               if (DOM.exportFbxBtn) {
+                                       DOM.exportFbxBtn.addEventListener('click', () => {
+                                               const exportGroup = new THREE.Group();
+                                               dotClouds.forEach((cloud) => exportGroup.add(cloud.clone()));
+                                               const exporter = new THREE.FBXExporter();
+                                               const result = exporter.parse(exportGroup);
+                                               const blob = new Blob([result], { type: 'text/plain' });
+                                               const link = document.createElement('a');
+                                               link.href = URL.createObjectURL(blob);
+                                               link.download = 'btc_hash_visualization.fbx';
+                                               link.click();
+                                               addSystemLog('Exported BTC Hash Visualization as FBX');
+                                       });
+                               }
 
 				if (DOM.btcThemeSelect) {
 					DOM.btcThemeSelect.addEventListener('change', (e) =>
