@@ -2201,7 +2201,6 @@
                                                 preload="auto"
                                                 playsinline
                                                 muted
-                                                autoplay
                                                 crossorigin="anonymous"
                                                 class="w-full"
                                         >
@@ -4013,9 +4012,6 @@
 				}, 500);
 			}
 
-			window.onload = function () {
-				setTimeout(hideLoadingScreen, 23000);
-			};
 
 			function shrinkHeader() {
 				const header = document.querySelector('header');
@@ -7024,7 +7020,6 @@ function setupModuleToggles() {
 				loadInverseChart(parseInt(e.target.value));
 			});
 
-			window.addEventListener('load', initIntroVideo);
                         window.addEventListener('load', () => loadInverseChart(10));
                 </script>
                 <script>
@@ -7041,7 +7036,10 @@ function setupModuleToggles() {
                                         if (pwd === 'Limitless-93' && nda && email) {
                                                 localStorage.setItem('quanti-email', email);
                                                 overlay.style.display = 'none';
-                                                if (typeof initIntroVideo === 'function') initIntroVideo();
+                                                if (typeof initIntroVideo === 'function') {
+                                                        initIntroVideo();
+                                                        setTimeout(hideLoadingScreen, 23000);
+                                                }
                                         } else {
                                                 error.textContent = 'Incorrect password or missing agreement';
                                                 error.classList.remove('hidden');
