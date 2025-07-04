@@ -12,7 +12,8 @@
 			content="crypto, dashboard, QuantumI, trading, analytics, multi-chain, Dune"
 			name="keywords"
 		/>
-		<meta content="xAI" name="author" />
+                <meta content="xAI" name="author" />
+                <meta name="robots" content="noindex" />
 		<title>QUANTUMI</title>
 		<link
 			href="https://i.postimg.cc/R6HKW38z/q-logo.png"
@@ -1980,11 +1981,75 @@
 				#dj-playlist .playlist-item span {
 					font-size: 0.75rem;
 				}
-				.dj-controls input[type='range'] {
-					width: 100%;
-				}
-			}
-		</style>
+                        .dj-controls input[type='range'] {
+                                width: 100%;
+                        }
+                    }
+                    #access-overlay {
+                        position: fixed;
+                        inset: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(15, 12, 41, 0.8);
+                        z-index: 2000;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: var(--text-color);
+                    }
+                    #access-form {
+                        background: rgba(0, 0, 0, 0.75);
+                        padding: 2rem;
+                        border-radius: 1rem;
+                        text-align: center;
+                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                        width: 90%;
+                        max-width: 22rem;
+                    }
+                    #access-form h2 {
+                        font-size: 1.5rem;
+                        margin-bottom: 1rem;
+                        font-family: 'Limelight', cursive;
+                    }
+                    #access-form input,
+                    #access-form button {
+                        width: 100%;
+                        margin-top: 0.75rem;
+                        padding: 0.5rem;
+                        border-radius: 0.25rem;
+                        border: none;
+                        color: #000;
+                    }
+                    #access-form button {
+                        background: var(--primary-color);
+                        cursor: pointer;
+                    }
+                    #access-form button:hover {
+                        background: #6fc8e9;
+                    }
+                    #access-form label {
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 0.875rem;
+                        margin-top: 0.75rem;
+                    }
+                    #access-form label span {
+                        margin-left: 0.5rem;
+                    }
+                    #access-error {
+                        color: #f87171;
+                        margin-top: 0.75rem;
+                    }
+                    #nda-link {
+                        color: #3b82f6;
+                        text-decoration: underline;
+                    }
+                    #overlay-description {
+                        font-size: 0.875rem;
+                        margin-top: 0.5rem;
+                    }
+                </style>
 		<style>
 			html,
 			body {
@@ -2066,9 +2131,26 @@
 			}
 		</style>
 	</head>
-	<body
-		class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600"
-	>
+        <body
+                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600"
+        >
+                <div id="access-overlay">
+                        <form id="access-form">
+                                <h2>QuantumI Pre-Launch</h2>
+                                <input type="password" id="access-password" placeholder="Password" required />
+                                <input type="email" id="access-email" placeholder="Email" required />
+                                <label>
+                                        <input type="checkbox" id="access-nda" required />
+                                        <span>I agree to the NDA</span>
+                                </label>
+                                <button type="submit">Enter</button>
+                                <a id="nda-link" href="./QuantumI_NDA_v3.pdf" download class="block mt-2 text-blue-400 underline">Download NDA</a>
+                                <p id="overlay-description" class="mt-2 text-sm">
+                                        QuantumI visually standardizes and logs blockchain transactions, simplifying crypto analytics for everyone.
+                                </p>
+                                <div id="access-error" class="hidden"></div>
+                        </form>
+                </div>
 		<button
 			aria-label="Toggle navigation menu"
 			class="nav-menu-toggle hidden"
@@ -2119,7 +2201,6 @@
                                                 preload="auto"
                                                 playsinline
                                                 muted
-                                                autoplay
                                                 crossorigin="anonymous"
                                                 class="w-full"
                                         >
@@ -2815,17 +2896,25 @@
 					>
 						Show Log
 					</button>
-					<button
-						id="legend-toggle"
-						aria-label="Toggle legend"
-						class="ml-2 dj-btn"
-						data-tooltip="Toggle legend"
-						role="button"
-					>
-						Show Legend
-					</button>
-					<button id="dj-dock-btn" class="ml-2 dj-btn">Dock DJ</button>
-				</div>
+                                        <button
+                                                id="legend-toggle"
+                                                aria-label="Toggle legend"
+                                                class="ml-2 dj-btn"
+                                                data-tooltip="Toggle legend"
+                                                role="button"
+                                        >
+                                                Show Legend
+                                        </button>
+                                        <button
+                                                id="btc-fullscreen-btn"
+                                                aria-label="Toggle fullscreen"
+                                                class="ml-2 dj-btn"
+                                                role="button"
+                                        >
+                                                Fullscreen
+                                        </button>
+                                        <button id="dj-dock-btn" class="ml-2 dj-btn">Dock DJ</button>
+                                </div>
 				<div class="module-content">
 					<div class="data-warning" id="btc-hash-warning" style="display: none">
 						&gt; Live data from Dune API
@@ -2914,16 +3003,25 @@
 							price and time for each cluster.
 						</p>
 					</div>
-					<button
-						aria-label="Export as OBJ"
-						class="mt-2"
-						data-tooltip="Export as OBJ"
-						id="export-obj"
-						role="button"
-					>
-						Export OBJ
-					</button>
-					<div class="mt-4 hidden" id="btc-hash-log">
+                                        <button
+                                                aria-label="Export as OBJ"
+                                                class="mt-2"
+                                                data-tooltip="Export as OBJ"
+                                                id="export-obj"
+                                                role="button"
+                                        >
+                                                Export OBJ
+                                        </button>
+                                        <button
+                                                aria-label="Export as FBX"
+                                                class="mt-2"
+                                                data-tooltip="Export as FBX"
+                                                id="export-fbx"
+                                                role="button"
+                                        >
+                                                Export FBX
+                                        </button>
+                                        <div class="mt-4 hidden" id="btc-hash-log">
 						<h3 class="text-base md:text-lg mb-2">Hash Log</h3>
 						<ul class="space-y-2 text-sm" id="hash-log-list"></ul>
 						<button
@@ -3254,8 +3352,10 @@
 				tokenPerformanceChart: document.getElementById(
 					'token-performance-chart'
 				),
-				exportObjBtn: document.getElementById('export-obj'),
-				zoomInBtn: document.getElementById('btc-zoom-in'),
+                                exportObjBtn: document.getElementById('export-obj'),
+                                exportFbxBtn: document.getElementById('export-fbx'),
+                                btcFullscreenBtn: document.getElementById('btc-fullscreen-btn'),
+                                zoomInBtn: document.getElementById('btc-zoom-in'),
 				zoomOutBtn: document.getElementById('btc-zoom-out'),
 				zoomZ0Btn: document.getElementById('btc-zoom-z0'),
 				zoomZ1Btn: document.getElementById('btc-zoom-z1'),
@@ -3912,9 +4012,6 @@
 				}, 500);
 			}
 
-			window.onload = function () {
-				setTimeout(hideLoadingScreen, 23000);
-			};
 
 			function shrinkHeader() {
 				const header = document.querySelector('header');
@@ -6313,34 +6410,51 @@ function setupModuleToggles() {
 					DOM.navMenu.classList.remove('active');
 				});
 
-				DOM.splineFullscreenBtn.addEventListener('click', () => {
-					const splineModalContent = document.querySelector(
-						'.spline-modal-content'
-					);
-					if (!document.fullscreenElement) {
-						if (splineModalContent.requestFullscreen)
-							splineModalContent.requestFullscreen();
-						else if (splineModalContent.mozRequestFullScreen)
-							splineModalContent.mozRequestFullScreen();
-						else if (splineModalContent.webkitRequestFullscreen)
-							splineModalContent.webkitRequestFullscreen();
-						else if (splineModalContent.msRequestFullscreen)
-							splineModalContent.msRequestFullscreen();
-					} else {
-						if (document.exitFullscreen) document.exitFullscreen();
-						else if (document.mozCancelFullScreen)
-							document.mozCancelFullScreen();
-						else if (document.webkitExitFullscreen)
-							document.webkitExitFullscreen();
-						else if (document.msExitFullscreen) document.msExitFullscreen();
-					}
-				});
+                               DOM.splineFullscreenBtn.addEventListener('click', () => {
+                                       const splineModalContent = document.querySelector(
+                                               '.spline-modal-content'
+                                       );
+                                       if (!document.fullscreenElement) {
+                                               if (splineModalContent.requestFullscreen)
+                                                       splineModalContent.requestFullscreen();
+                                               else if (splineModalContent.mozRequestFullScreen)
+                                                       splineModalContent.mozRequestFullScreen();
+                                               else if (splineModalContent.webkitRequestFullscreen)
+                                                       splineModalContent.webkitRequestFullscreen();
+                                               else if (splineModalContent.msRequestFullscreen)
+                                                       splineModalContent.msRequestFullscreen();
+                                       } else {
+                                               if (document.exitFullscreen) document.exitFullscreen();
+                                               else if (document.mozCancelFullScreen)
+                                                       document.mozCancelFullScreen();
+                                               else if (document.webkitExitFullscreen)
+                                                       document.webkitExitFullscreen();
+                                               else if (document.msExitFullscreen) document.msExitFullscreen();
+                                       }
+                               });
 
-				const handleFullscreenChange = () => {
-					DOM.splineFullscreenBtn.textContent = document.fullscreenElement
-						? 'Exit Fullscreen'
-						: 'Fullscreen';
-				};
+                               if (DOM.btcFullscreenBtn) {
+                                       DOM.btcFullscreenBtn.addEventListener('click', () => {
+                                               const btcCanvas = document.getElementById('btc-hash-canvas');
+                                               if (!document.fullscreenElement) {
+                                                       if (btcCanvas.requestFullscreen) btcCanvas.requestFullscreen();
+                                                       else if (btcCanvas.mozRequestFullScreen) btcCanvas.mozRequestFullScreen();
+                                                       else if (btcCanvas.webkitRequestFullscreen) btcCanvas.webkitRequestFullscreen();
+                                                       else if (btcCanvas.msRequestFullscreen) btcCanvas.msRequestFullscreen();
+                                               } else {
+                                                       if (document.exitFullscreen) document.exitFullscreen();
+                                                       else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                                                       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                                                       else if (document.msExitFullscreen) document.msExitFullscreen();
+                                               }
+                                       });
+                               }
+
+                                const handleFullscreenChange = () => {
+                                        const label = document.fullscreenElement ? 'Exit Fullscreen' : 'Fullscreen';
+                                        if (DOM.splineFullscreenBtn) DOM.splineFullscreenBtn.textContent = label;
+                                        if (DOM.btcFullscreenBtn) DOM.btcFullscreenBtn.textContent = label;
+                                };
 				document.addEventListener('fullscreenchange', handleFullscreenChange);
 				document.addEventListener(
 					'mozfullscreenchange',
@@ -6430,18 +6544,33 @@ function setupModuleToggles() {
 					exportToCSV(gasHistory, 'gas_data.csv');
 				});
 
-				DOM.exportObjBtn.addEventListener('click', () => {
-					const exportGroup = new THREE.Group();
-					dotClouds.forEach((cloud) => exportGroup.add(cloud.clone()));
-					const exporter = new THREE.OBJExporter();
-					const result = exporter.parse(exportGroup);
-					const blob = new Blob([result], { type: 'text/plain' });
-					const link = document.createElement('a');
-					link.href = URL.createObjectURL(blob);
-					link.download = 'btc_hash_visualization.obj';
-					link.click();
-					addSystemLog('Exported BTC Hash Visualization as OBJ');
-				});
+                               DOM.exportObjBtn.addEventListener('click', () => {
+                                       const exportGroup = new THREE.Group();
+                                       dotClouds.forEach((cloud) => exportGroup.add(cloud.clone()));
+                                       const exporter = new THREE.OBJExporter();
+                                       const result = exporter.parse(exportGroup);
+                                       const blob = new Blob([result], { type: 'text/plain' });
+                                       const link = document.createElement('a');
+                                       link.href = URL.createObjectURL(blob);
+                                       link.download = 'btc_hash_visualization.obj';
+                                       link.click();
+                                       addSystemLog('Exported BTC Hash Visualization as OBJ');
+                               });
+
+                               if (DOM.exportFbxBtn) {
+                                       DOM.exportFbxBtn.addEventListener('click', () => {
+                                               const exportGroup = new THREE.Group();
+                                               dotClouds.forEach((cloud) => exportGroup.add(cloud.clone()));
+                                               const exporter = new THREE.FBXExporter();
+                                               const result = exporter.parse(exportGroup);
+                                               const blob = new Blob([result], { type: 'text/plain' });
+                                               const link = document.createElement('a');
+                                               link.href = URL.createObjectURL(blob);
+                                               link.download = 'btc_hash_visualization.fbx';
+                                               link.click();
+                                               addSystemLog('Exported BTC Hash Visualization as FBX');
+                                       });
+                               }
 
 				if (DOM.btcThemeSelect) {
 					DOM.btcThemeSelect.addEventListener('change', (e) =>
@@ -6891,8 +7020,32 @@ function setupModuleToggles() {
 				loadInverseChart(parseInt(e.target.value));
 			});
 
-			window.addEventListener('load', initIntroVideo);
-			window.addEventListener('load', () => loadInverseChart(10));
-		</script>
-	</body>
+                        window.addEventListener('load', () => loadInverseChart(10));
+                </script>
+                <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                                const overlay = document.getElementById('access-overlay');
+                                const form = document.getElementById('access-form');
+                                const error = document.getElementById('access-error');
+                                if (!overlay || !form) return;
+                                form.addEventListener('submit', (e) => {
+                                        e.preventDefault();
+                                        const pwd = document.getElementById('access-password').value;
+                                        const nda = document.getElementById('access-nda').checked;
+                                        const email = document.getElementById('access-email').value;
+                                        if (pwd === 'Limitless-93' && nda && email) {
+                                                localStorage.setItem('quanti-email', email);
+                                                overlay.style.display = 'none';
+                                                if (typeof initIntroVideo === 'function') {
+                                                        initIntroVideo();
+                                                        setTimeout(hideLoadingScreen, 23000);
+                                                }
+                                        } else {
+                                                error.textContent = 'Incorrect password or missing agreement';
+                                                error.classList.remove('hidden');
+                                        }
+                                });
+                        });
+                </script>
+        </body>
 </html>
