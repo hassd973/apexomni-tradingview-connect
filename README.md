@@ -27,3 +27,16 @@ docker-compose up -d
 ```bash
 yarn start
 ```
+
+# Drift SDK Project
+
+The `drift-sdk-project` folder contains a minimal example showing how to use the
+[Drift Protocol](https://github.com/drift-labs/protocol-v2) SDK. To try it out:
+
+```bash
+cd drift-sdk-project
+npm install
+npm start
+```
+
+This script initializes a `DriftClient`. Extend it with your own trading logic.
