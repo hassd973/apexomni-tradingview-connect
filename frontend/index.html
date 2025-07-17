@@ -69,16 +69,19 @@
 				--secondary-color: #ffbb33;
 				--shadow-color: rgba(135, 206, 235, 0.3);
 			}
-			body {
-				font-family: 'Inconsolata', monospace;
-				background: var(--bg-color);
-				color: var(--text-color);
-				margin: 0;
-				min-height: 100vh;
-				display: flex;
-				flex-direction: column;
-				line-height: 1.6;
-			}
+                        body {
+                                font-family: 'Inconsolata', monospace;
+                                background: var(--bg-color);
+                                color: var(--text-color);
+                                margin: 0;
+                                min-height: 100vh;
+                                display: flex;
+                                flex-direction: column;
+                                line-height: 1.6;
+                        }
+                        body.locked > :not(#access-overlay) {
+                                display: none !important;
+                        }
 			h1,
 			h2,
 			h3 {
@@ -7024,8 +7027,16 @@ function setupModuleToggles() {
 				loadInverseChart(parseInt(e.target.value));
 			});
 
-			window.addEventListener('load', initIntroVideo);
-                        window.addEventListener('load', () => loadInverseChart(10));
+                        window.addEventListener('load', () => {
+                                const unlocked = localStorage.getItem('quanti-email');
+                                if (unlocked) {
+                                        document.body.classList.remove('locked');
+                                        initIntroVideo();
+                                        loadInverseChart(10);
+                                } else {
+                                        document.body.classList.add('locked');
+                                }
+                        });
                 </script>
                 <script>
                         document.addEventListener('DOMContentLoaded', () => {
@@ -7033,6 +7044,14 @@ function setupModuleToggles() {
                                 const form = document.getElementById('access-form');
                                 const error = document.getElementById('access-error');
                                 if (!overlay || !form) return;
+                                if (localStorage.getItem('quanti-email')) {
+                                        overlay.style.display = 'none';
+                                        document.body.classList.remove('locked');
+                                } else {
+                                        overlay.style.display = 'flex';
+                                        document.body.classList.add('locked');
+                                }
+
                                 form.addEventListener('submit', (e) => {
                                         e.preventDefault();
                                         const pwd = document.getElementById('access-password').value;
@@ -7041,7 +7060,9 @@ function setupModuleToggles() {
                                         if (pwd === 'Limitless-93' && nda && email) {
                                                 localStorage.setItem('quanti-email', email);
                                                 overlay.style.display = 'none';
+                                                document.body.classList.remove('locked');
                                                 if (typeof initIntroVideo === 'function') initIntroVideo();
+                                                loadInverseChart(10);
                                         } else {
                                                 error.textContent = 'Incorrect password or missing agreement';
                                                 error.classList.remove('hidden');
