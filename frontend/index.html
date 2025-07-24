@@ -2136,54 +2136,118 @@
                 <style>
   :root {
     --quantumi-green: #00FF7E;
-    --quantumi-black: #020202;
+    --quantumi-black: #010101;
     --quantumi-white: #F8F8F8;
-    --quantumi-gray: #2B2B2B;
+    --quantumi-gray: #1A1A1A;
     --quantumi-accent: #FFD966;
+    --quantumi-radius: 18px;
+    --quantumi-blur: 18px;
+    --quantumi-glow: 0 0 20px var(--quantumi-green);
   }
 
-  body {
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
     background-color: var(--quantumi-black);
     color: var(--quantumi-white);
-    font-family: 'Segoe UI', sans-serif;
-    overflow-x: hidden;
+    overflow: hidden;
   }
 
-  header, nav, footer {
-    background-color: rgba(0, 0, 0, 0.75);
-    color: var(--quantumi-white);
+  .container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    padding: 1rem;
   }
 
-  a, a:visited {
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    backdrop-filter: blur(var(--quantumi-blur));
+    background: rgba(0,0,0,0.6);
+    border-radius: var(--quantumi-radius);
+    box-shadow: var(--quantumi-glow);
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 1.8rem;
+    font-weight: 700;
     color: var(--quantumi-green);
-    text-decoration: none;
+    letter-spacing: 0.05em;
   }
 
-  .mode-toggle {
+  nav {
+    display: flex;
+    gap: 2rem;
+  }
+
+  nav a {
+    color: var(--quantumi-white);
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.3s ease;
+  }
+
+  nav a:hover {
+    color: var(--quantumi-green);
+  }
+
+  .mode-switch {
     position: fixed;
     top: 5rem;
     right: 2rem;
     background: var(--quantumi-gray);
     color: var(--quantumi-white);
-    padding: 0.5rem 1rem;
-    border-radius: 10px;
+    padding: 0.6rem 1.4rem;
+    border-radius: var(--quantumi-radius);
     font-size: 0.9rem;
     z-index: 10;
+    box-shadow: var(--quantumi-glow);
     cursor: pointer;
+    user-select: none;
   }
 
   #visualization {
     width: 100%;
-    height: 100vh;
+    height: 100%;
     background: black;
-    position: relative;
-    z-index: 1;
+    border-radius: var(--quantumi-radius);
+    overflow: hidden;
+  }
+
+  footer {
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--quantumi-gray);
+    padding: 0.5rem 0;
   }
 </style>
         </head>
-        <body
-                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600"
-        >
+        <body class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600">
+                <div class="container">
+                        <header>
+                                <div class="logo">QUANTUMI</div>
+                                <nav>
+                                        <a href="#">Home</a>
+                                        <a href="/investor.html">Investor Hub</a>
+                                        <a href="#">Mint</a>
+                                        <a href="#">Whitepaper</a>
+                                </nav>
+                        </header>
+
+                        <div id="visualization">
+                                <!-- Future 3D BTC Hash Visualizer -->
+                        </div>
+
+                        <!-- Existing content -->
                 <div id="access-overlay">
                         <form id="access-form">
                                 <h2>QuantumI Pre-Launch</h2>
@@ -7118,12 +7182,18 @@ function setupModuleToggles() {
                                 });
                         });
                 </script>
-                <!-- Mode toggle for BTC Hash visualization UI -->
-                <div class="mode-toggle">Mode: Raw Hash</div>
-
-                <!-- Placeholder for BTC 3D hash rendering -->
-                <div id="visualization">
-                  <!-- Three.js / Babylon.js hash visual will render here -->
+                        <footer>
+                                © QUANTUMI 2025. All Rights Reserved.
+                        </footer>
                 </div>
+
+                <div class="mode-switch">Mode: Raw Hash</div>
+
+                <script>
+                        // UVO / gesture-compatible placeholder
+                        document.querySelector('.mode-switch').addEventListener('click', () => {
+                                alert('Mode switch gesture detected');
+                        });
+                </script>
         </body>
 </html>
