@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QUANTUMI 2025 Login</title>
+  <title>QUANTUMI Login</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -28,6 +28,24 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      scroll-behavior: smooth;
+    }
+    #btc-background,
+    #trailer-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #btc-background {
+      filter: blur(8px);
+      z-index: -2;
+    }
+    #trailer-video {
+      display: none;
+      z-index: -1;
     }
     .login-box {
       background: rgba(0,0,0,0.6);
@@ -66,11 +84,30 @@
   </style>
 </head>
 <body>
-  <form class="login-box">
-    <h1>QUANTUMI 2025</h1>
+  <video id="btc-background" autoplay loop muted playsinline>
+    <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
+  </video>
+  <video id="trailer-video" autoplay muted playsinline>
+    <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
+  </video>
+  <form class="login-box" id="login-form">
+    <h1>QUANTUMI</h1>
     <input type="text" placeholder="Username" required>
     <input type="password" placeholder="Password" required>
     <button type="submit">Login</button>
   </form>
+  <footer style="position:absolute;bottom:1rem;width:100%;text-align:center;font-size:0.8rem;color:var(--quantumi-gray);">
+    © QUANTUMI 2025. All Rights Reserved.
+  </footer>
+  <script>
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.querySelector('.login-box').style.display = 'none';
+      document.getElementById('btc-background').style.display = 'none';
+      const trailer = document.getElementById('trailer-video');
+      trailer.style.display = 'block';
+      trailer.play();
+    });
+  </script>
 </body>
 </html>
