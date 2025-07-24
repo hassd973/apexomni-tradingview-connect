@@ -6,7 +6,8 @@ A static website displaying low-volume tokens and real-time TradingView alerts f
 
 1. **Verify Files**:
    - Ensure `frontend/` contains: `index.html, index-2025.html`, `script.js`, `styles.css`, `package.json`, `tailwind.config.js`, `README.md`.
-    - `index-2025.html` offers an experimental 2025-ready layout with gesture-ready controls.
+   - `index-2025.html` offers an experimental 2025-ready layout with gesture-ready controls.
+   - The primary `index.html` now incorporates the same Quantumi design tokens for consistent branding.
 
 2. **Configure Better Stack**:
    - `script.js` uses ClickHouse credentials (username: `ua439SvEJ8fzbFUfZLgfrngQ0hPAJWpeW`, password: `ACTAv2qyDnjVwEoeByXTZzY7LT0CBcT4Zd86AjYnE7fy6kPB5TYr4pjFqIfTjiPs`) for `t371838.ice_king_logs`.
