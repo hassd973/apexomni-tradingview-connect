@@ -14,7 +14,7 @@
 		/>
                 <meta content="xAI" name="author" />
                 <meta name="robots" content="noindex" />
-		<title>QUANTUMI</title>
+                <title>QUANTUMI</title>
 		<link
 			href="https://i.postimg.cc/R6HKW38z/q-logo.png"
 			rel="icon"
@@ -24,12 +24,16 @@
 			href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
 			rel="stylesheet"
 		/>
-		<link href="https://fonts.googleapis.com" rel="preconnect" />
-		<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-		<link
-			href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&amp;family=Limelight&amp;display=swap"
-			rel="stylesheet"
-		/>
+                <link href="https://fonts.googleapis.com" rel="preconnect" />
+                <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+                <link
+                        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
+                        rel="stylesheet"
+                />
+                <link
+                        href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&amp;family=Limelight&amp;display=swap"
+                        rel="stylesheet"
+                />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Sixtyfour&amp;display=swap"
 			rel="stylesheet"
@@ -61,16 +65,25 @@
 			src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/FBXExporter.js"
 		></script>
 		<script src="https://www.youtube.com/iframe_api"></script>
-		<style>
-			:root {
-				--bg-color: #121212;
-				--text-color: #e0f7fa;
-				--primary-color: #87ceeb;
-				--secondary-color: #ffbb33;
-				--shadow-color: rgba(135, 206, 235, 0.3);
-			}
+                <style>
+                        :root {
+                                --quantumi-green: #00FF7E;
+                                --quantumi-black: #010101;
+                                --quantumi-white: #F8F8F8;
+                                --quantumi-gray: #1A1A1A;
+                                --quantumi-accent: #FFD966;
+                                --quantumi-radius: 18px;
+                                --quantumi-blur: 18px;
+                                --quantumi-glow: 0 0 20px var(--quantumi-green);
+
+                                --bg-color: var(--quantumi-black);
+                                --text-color: var(--quantumi-white);
+                                --primary-color: var(--quantumi-green);
+                                --secondary-color: var(--quantumi-accent);
+                                --shadow-color: rgba(0, 255, 126, 0.3);
+                        }
                         body {
-                                font-family: 'Inconsolata', monospace;
+                                font-family: 'Inter', 'Segoe UI', sans-serif;
                                 background: var(--bg-color);
                                 color: var(--text-color);
                                 margin: 0;
@@ -325,11 +338,11 @@
 				box-shadow: 0 0 8px var(--secondary-color);
 			}
 			.dj-track {
-				background: linear-gradient(
-					135deg,
-					rgba(135, 206, 235, 0.1),
-					rgba(0, 0, 0, 0.2)
-				);
+                                background: linear-gradient(
+                                        135deg,
+                                        rgba(0, 255, 126, 0.1),
+                                        rgba(0, 0, 0, 0.2)
+                                );
 				border: 1px solid var(--shadow-color);
 				border-radius: 8px;
 				padding: 0.5rem;
@@ -514,7 +527,7 @@
 				background-color: rgba(33, 150, 243, 0.6);
 			}
 			.dj-btn:active {
-				background-color: #0b5fa5;
+                                background-color: var(--primary-color);
 			}
 			.dj-btn:hover {
 				background-color: rgba(255, 255, 255, 0.2);
@@ -528,12 +541,12 @@
 			.dj-btn:active {
 				background-color: rgba(255, 255, 255, 0.3);
 			}
-			.dj-btn:hover {
-				background-color: rgba(30, 144, 255, 0.2);
-				box-shadow: 0 0 8px #1e90ff;
-			}
+                        .dj-btn:hover {
+                                background-color: rgba(0, 255, 126, 0.2);
+                                box-shadow: 0 0 8px var(--primary-color);
+                        }
                         .dj-btn:active {
-                                background-color: rgba(30, 144, 255, 0.4);
+                                background-color: rgba(0, 255, 126, 0.4);
                         }
                         .dj-error {
                                 color: #f87171;
@@ -554,36 +567,15 @@
                                         max-width: 120px;
                                 }
                         }
-			.dj-btn:hover {
-				background-color: rgba(30, 144, 255, 0.2);
-				box-shadow: 0 0 8px #1e90ff;
-			}
-			.dj-btn:active {
-				background-color: rgba(30, 144, 255, 0.4);
-			}
-			.dj-btn:hover {
-				background-color: rgba(30, 144, 255, 0.2);
-				box-shadow: 0 0 8px #1e90ff;
-			}
-			.dj-btn:active {
-				background-color: rgba(30, 144, 255, 0.4);
-			}
-			.dj-btn:hover {
-				background-color: rgba(30, 144, 255, 0.2);
-				box-shadow: 0 0 8px #1e90ff;
-			}
-			.dj-btn:active {
-				background-color: rgba(30, 144, 255, 0.4);
-			}
-			.dj-btn:hover {
-				background-color: rgba(30, 144, 255, 0.2);
-				box-shadow: 0 0 8px #1e90ff;
-			}
-			.dj-btn:active {
-				background-color: rgba(30, 144, 255, 0.4);
-			}
+                        .dj-btn:hover {
+                                background-color: rgba(0, 255, 126, 0.2);
+                                box-shadow: 0 0 8px var(--primary-color);
+                        }
+                        .dj-btn:active {
+                                background-color: rgba(0, 255, 126, 0.4);
+                        }
 			.dj-btn.active {
-				box-shadow: 0 0 8px 2px #1e90ff;
+                                box-shadow: 0 0 8px 2px var(--primary-color);
 			}
 			.dj-btn.inactive {
 				box-shadow: 0 0 8px 2px orange;
@@ -675,8 +667,8 @@
 					rgba(255, 255, 255, 0.05) 40%,
 					rgba(0, 0, 0, 0.6) 80%
 				);
-				border: 3px solid rgba(135, 206, 235, 0.6);
-				box-shadow: 0 0 8px rgba(135, 206, 235, 0.4);
+                                border: 3px solid rgba(0, 255, 126, 0.6);
+                                box-shadow: 0 0 8px rgba(0, 255, 126, 0.4);
 				backdrop-filter: blur(4px);
 				opacity: 0.85;
 				transition:
@@ -844,7 +836,7 @@
 				position: absolute;
 				width: 1px;
 				height: 1px;
-				background: rgba(135, 206, 235, 0.3);
+                                background: rgba(0, 255, 126, 0.3);
 				border-radius: 50%;
 				animation: float 15s infinite linear;
 			}
@@ -1257,10 +1249,10 @@
                                 transition: background 0.2s;
                         }
                         #yt-playlist-thumbs .yt-thumb:hover {
-                                background: rgba(135, 206, 235, 0.1);
+                                background: rgba(0, 255, 126, 0.1);
                         }
                         #yt-playlist-thumbs .yt-thumb.active {
-                                background: rgba(135, 206, 235, 0.2);
+                                background: rgba(0, 255, 126, 0.2);
                         }
                         #yt-playlist-thumbs img {
                                 width: 80px;
@@ -1672,7 +1664,7 @@
 				bottom: 100%;
 				left: 50%;
 				transform: translateX(-50%);
-				background: rgba(135, 206, 235, 0.8);
+                                background: rgba(0, 255, 126, 0.8);
 				color: #1e2727;
 				padding: 0.25rem 0.5rem;
 				border-radius: 4px;
@@ -2054,12 +2046,13 @@
                     }
                 </style>
 		<style>
-			html,
-			body {
-				max-width: 100%;
-				overflow-x: hidden;
-				font-family: 'Inter', sans-serif;
-			}
+                        html,
+                        body {
+                                max-width: 100%;
+                                overflow-x: hidden;
+                                font-family: 'Inter', sans-serif;
+                                scroll-behavior: smooth;
+                        }
 			.module-card {
 				border-radius: 0.75rem;
 				background: linear-gradient(to bottom, #0f172a, #000);
@@ -2225,7 +2218,7 @@
 					<button id="mute-btn" aria-label="Toggle mute">🔇</button>
 				</div>
 				<div class="title-box">
-					<h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
+                                        <h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
 				</div>
 				<div class="intro-buttons">
 					<button id="play-intro-btn" aria-label="Play intro">
@@ -2251,7 +2244,7 @@
 		<header class="w-full flex justify-center items-center">
 			<div class="w-full max-w-[98vw] mx-auto px-4">
 				<div class="title-box">
-					<h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
+                                        <h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
 				</div>
 				<p class="text-base text-center">
 					Real-time cryptocurrency market data and analytics powered by
@@ -2656,11 +2649,11 @@
 							<canvas id="gas-heatmap-canvas"></canvas>
 							<div id="gas-heatmap-legend">
 								<div class="legend-item">
-									<div class="legend-color" style="background: #87ceeb"></div>
+                                                                        <div class="legend-color" style="background: var(--primary-color)"></div>
 									<span>Safe</span>
 								</div>
 								<div class="legend-item">
-									<div class="legend-color" style="background: #ffbb33"></div>
+                                                                        <div class="legend-color" style="background: var(--secondary-color)"></div>
 									<span>Propose</span>
 								</div>
 								<div class="legend-item">
@@ -3509,11 +3502,11 @@
 				filterNode,
 				bitcrusherNode,
 				gainNode;
-			const themes = {
-				original: ['#87CEEB', '#ffbb33', '#ff0000', '#e0f7fa'],
-				heatmap: ['#00ff00', '#ffff00', '#ff0000'],
-				lifecycle: ['#b3e5fc', '#81d4fa', '#4fc3f7']
-			};
+                        const themes = {
+                                original: ['#00FF7E', '#FFD966', '#ff0000', '#e0f7fa'],
+                                heatmap: ['#00FF7E', '#FFD966', '#ff0000'],
+                                lifecycle: ['#00FF7E', '#FFD966', '#00FF7E']
+                        };
 			let currentTheme = 'original';
 			let siteColors = themes.original;
 			let currentEthPrice = 0;
@@ -4336,16 +4329,16 @@ function setupModuleToggles() {
 							container_id: containerId,
 							overrides: {
 								'paneProperties.background': 'rgba(35, 46, 46, 0.2)',
-								'paneProperties.vertGridProperties.color': '#ffbb33',
-								'paneProperties.horzGridProperties.color': '#ffbb33',
-								'scalesProperties.textColor': '#ffbb33',
-								'scalesProperties.lineColor': '#ffbb33',
-								'mainSeriesProperties.candleStyle.upColor': '#87CEEB',
-								'mainSeriesProperties.candleStyle.downColor': '#ff0000',
-								'mainSeriesProperties.candleStyle.borderUpColor': '#87CEEB',
-								'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
-								'mainSeriesProperties.candleStyle.wickUpColor': '#87CEEB',
-								'mainSeriesProperties.candleStyle.wickDownColor': '#ff0000'
+                                                                'paneProperties.vertGridProperties.color': 'var(--secondary-color)',
+                                                                'paneProperties.horzGridProperties.color': 'var(--secondary-color)',
+                                                                'scalesProperties.textColor': 'var(--secondary-color)',
+                                                                'scalesProperties.lineColor': 'var(--secondary-color)',
+                                                                'mainSeriesProperties.candleStyle.upColor': 'var(--primary-color)',
+                                                                'mainSeriesProperties.candleStyle.downColor': '#ff0000',
+                                                                'mainSeriesProperties.candleStyle.borderUpColor': 'var(--primary-color)',
+                                                                'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
+                                                                'mainSeriesProperties.candleStyle.wickUpColor': 'var(--primary-color)',
+                                                                'mainSeriesProperties.candleStyle.wickDownColor': '#ff0000'
 							},
 							onChartReady: () => {
 								console.log(
@@ -4780,7 +4773,7 @@ function setupModuleToggles() {
 							tooltip.style.position = 'absolute';
 							tooltip.style.left = `${event.clientX + 10}px`;
 							tooltip.style.top = `${event.clientY + 10}px`;
-							tooltip.style.background = 'rgba(135, 206, 235, 0.8)';
+                                                   tooltip.style.background = 'rgba(0, 255, 126, 0.8)';
 							tooltip.style.color = '#1e2727';
 							tooltip.style.padding = '0.25rem 0.5rem';
 							tooltip.style.borderRadius = '4px';
@@ -5060,13 +5053,13 @@ function setupModuleToggles() {
 					resizeTimeout = setTimeout(resizeCanvas, 100);
 				});
 
-				const getColor = (type) => {
-					return type === 'safe'
-						? '#87CEEB'
-						: type === 'propose'
-							? '#ffbb33'
-							: '#ff0000';
-				};
+                                const getColor = (type) => {
+                                        return type === 'safe'
+                                                ? 'var(--primary-color)'
+                                                : type === 'propose'
+                                                        ? 'var(--secondary-color)'
+                                                        : '#ff0000';
+                                };
 
 				const updateHeatmapAndFees = async () => {
 					try {
@@ -5282,7 +5275,7 @@ function setupModuleToggles() {
                                                                 label: '24h Price Change (%)',
                                                                 data: data,
                                                                 backgroundColor: data.map((value) =>
-                                                                        value >= 0 ? '#87CEEB' : '#ff0000'
+                                                                        value >= 0 ? 'var(--primary-color)' : '#ff0000'
                                                                 )
                                                         }
                                                 ]
@@ -6017,7 +6010,7 @@ function setupModuleToggles() {
 					const draw = () => {
 						analyser.getByteTimeDomainData(buffer);
 						ctx.clearRect(0, 0, DOM.audioCanvas.width, DOM.audioCanvas.height);
-						ctx.strokeStyle = '#87CEEB';
+                                                ctx.strokeStyle = 'var(--primary-color)';
 						ctx.beginPath();
 						const step = DOM.audioCanvas.width / buffer.length;
 						for (let i = 0; i < buffer.length; i++) {
@@ -6967,10 +6960,10 @@ function setupModuleToggles() {
 				const labels = filteredTokens.map((t) => t.symbol.toUpperCase());
 				const data = filteredTokens.map((t) => t.price_change_percentage_24h);
 				const style = getComputedStyle(document.documentElement);
-				const blue =
-					style.getPropertyValue('--primary-color').trim() || '#87CEEB';
-				const orange =
-					style.getPropertyValue('--secondary-color').trim() || '#ffbb33';
+                                const blue =
+                                        style.getPropertyValue('--primary-color').trim() || '#00FF7E';
+                                const orange =
+                                        style.getPropertyValue('--secondary-color').trim() || '#FFD966';
 				const bgColor = data.map((change) =>
 					isMarketDown
 						? change > 0
@@ -7038,6 +7031,9 @@ function setupModuleToggles() {
                                 }
                         });
                 </script>
+                <footer style="text-align:center;padding:0.5rem 0;font-size:0.8rem;color:var(--quantumi-gray);">
+                        © QUANTUMI 2025. All Rights Reserved.
+                </footer>
                 <script>
                         document.addEventListener('DOMContentLoaded', () => {
                                 const overlay = document.getElementById('access-overlay');
@@ -7068,6 +7064,18 @@ function setupModuleToggles() {
                                                 error.classList.remove('hidden');
                                         }
                                 });
+                        });
+                </script>
+                <div class="mode-switch">Mode: Raw Hash</div>
+                <div id="visualization"><!-- Future 3D BTC Hash Visualizer --></div>
+                <script>
+                        document.querySelector('.mode-switch').addEventListener('click', () => {
+                                alert('Mode switch gesture detected');
+                        });
+                        window.addEventListener('keydown', (e) => {
+                                if (e.key === 'm') {
+                                        alert('Mode toggled via brain/keyboard');
+                                }
                         });
                 </script>
         </body>
