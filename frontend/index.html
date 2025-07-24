@@ -34,10 +34,14 @@
                         href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@200..900&amp;family=Limelight&amp;display=swap"
                         rel="stylesheet"
                 />
-		<link
-			href="https://fonts.googleapis.com/css2?family=Sixtyfour&amp;display=swap"
-			rel="stylesheet"
-		/>
+                <link
+                        href="https://fonts.googleapis.com/css2?family=Sixtyfour&amp;display=swap"
+                        rel="stylesheet"
+                />
+                <link
+                        href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap"
+                        rel="stylesheet"
+                />
 		<script
 			defer=""
 			src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"
@@ -95,15 +99,21 @@
                         body.locked > :not(#access-overlay) {
                                 display: none !important;
                         }
-			h1,
-			h2,
-			h3 {
-				font-family: 'Limelight', cursive;
-				color: var(--text-color);
-				text-shadow:
-					0 0 8px var(--shadow-color),
-					0 0 12px rgba(255, 187, 51, 0.3);
-			}
+                        h1,
+                        h2 {
+                                font-family: 'Satoshi', sans-serif;
+                                color: var(--text-color);
+                                text-shadow:
+                                        0 0 8px var(--shadow-color),
+                                        0 0 12px rgba(255, 187, 51, 0.3);
+                        }
+                        h3 {
+                                font-family: 'Limelight', cursive;
+                                color: var(--text-color);
+                                text-shadow:
+                                        0 0 8px var(--shadow-color),
+                                        0 0 12px rgba(255, 187, 51, 0.3);
+                        }
 			.main-title,
 			.sixtyfour-font {
 				font-family: 'Sixtyfour', sans-serif;
@@ -768,13 +778,22 @@
 				justify-content: center;
 				align-items: center;
 			}
-			header,
-			main,
-			footer,
-			#module-grid section {
-				opacity: 0;
-				transition: opacity 0.5s ease-in;
-			}
+                        header,
+                        main,
+                        footer {
+                                opacity: 0;
+                                transition: opacity 0.5s ease-in;
+                        }
+                        .scroll-module {
+                                opacity: 0;
+                                transform: translateY(20px);
+                                transition: opacity 0.6s ease-out,
+                                        transform 0.6s ease-out;
+                        }
+                        .scroll-module.in-view {
+                                opacity: 1;
+                                transform: none;
+                        }
 			#beta-banner {
 				background: linear-gradient(
 					90deg,
@@ -1287,8 +1306,8 @@
                                 overflow-y: auto;
                                 margin: 0 auto;
                                 scrollbar-width: thin;
-                                scrollbar-color: var(--primary-color) #1e293b;
-                                background: rgba(15, 23, 42, 0.6);
+                                scrollbar-color: var(--primary-color) var(--quantumi-black);
+                                background: rgba(1, 1, 1, 0.6);
                                 border: 1px solid var(--shadow-color);
                                 border-radius: 8px;
                                 padding: 0.5rem;
@@ -1306,7 +1325,7 @@
                                 border-radius: 6px;
                         }
                         .rarible-embed::-webkit-scrollbar-track {
-                                background: #1e293b;
+                                background: var(--quantumi-black);
                         }
                         .nft-item {
                                 margin-bottom: 1rem;
@@ -1346,7 +1365,7 @@
                                 width: 90%;
                                 max-width: 600px;
                                 height: 90vh;
-                                background: rgba(35, 46, 46, 0.9);
+                                background: rgba(1, 1, 1, 0.9);
                                 border: 1px solid var(--shadow-color);
                                 border-radius: 8px;
                                 box-shadow: 0 0 8px var(--shadow-color);
@@ -1380,7 +1399,7 @@
                                 justify-content: center;
                                 align-items: center;
                                 scrollbar-width: thin;
-                                scrollbar-color: var(--primary-color) #1e293b;
+                                scrollbar-color: var(--primary-color) var(--quantumi-black);
                         }
                         .rarible-modal-content::-webkit-scrollbar {
                                 width: 6px;
@@ -1390,7 +1409,7 @@
                                 border-radius: 6px;
                         }
                         .rarible-modal-content::-webkit-scrollbar-track {
-                                background: #1e293b;
+                                background: var(--quantumi-black);
                         }
                         #rarible-modal-close {
                                 position: absolute;
@@ -1898,13 +1917,14 @@
 				justify-content: center;
 				gap: 0.25rem;
 			}
-			.nav-link {
-				display: block;
-				padding: 0.5rem 0;
-				color: var(--text-color);
-				text-decoration: none;
-				transition: color 0.3s ease;
-			}
+                        .nav-link {
+                                display: block;
+                                padding: 0.5rem 0;
+                                color: var(--text-color);
+                                text-decoration: none;
+                                font-family: 'Satoshi', sans-serif;
+                                transition: color 0.3s ease;
+                        }
 			.nav-link:hover {
 				color: var(--secondary-color);
 			}
@@ -2128,7 +2148,7 @@
 		</style>
 	</head>
         <body
-                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-blue-600"
+                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF7E]"
         >
                 <div id="access-overlay">
                         <form id="access-form">
@@ -2177,7 +2197,7 @@
 				</p>
 				<nav>
                                         <a class="nav-link" href="#world-module">QuantumI Insights</a>
-                                        <a class="nav-link" href="#tokens-module">Tokens</a>
+                                        <a class="nav-link" href="#tokens-module">Tokens ✨</a>
                                         <a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
                                        <a class="nav-link" href="#balances-module">Finance Tweets</a>
                                        <a class="nav-link" href="#wallet-module">Wallet</a>
@@ -2218,7 +2238,7 @@
 					<button id="mute-btn" aria-label="Toggle mute">🔇</button>
 				</div>
 				<div class="title-box">
-                                        <h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
+                                        <h1 class="text-2xl md:text-3xl main-title">QUANTUMI 🌐</h1>
 				</div>
 				<div class="intro-buttons">
 					<button id="play-intro-btn" aria-label="Play intro">
@@ -2240,12 +2260,12 @@
 			></spline-viewer>
 		</div>
 		<div class="particles" id="particles"></div>
-		<div id="beta-banner">QuantumI Alpha Version Pro</div>
+                <div id="beta-banner">QuantumI Alpha Version Pro 🚀</div>
 		<header class="w-full flex justify-center items-center">
 			<div class="w-full max-w-[98vw] mx-auto px-4">
-				<div class="title-box">
-                                        <h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
-				</div>
+                                <div class="title-box">
+                                        <h1 class="text-2xl md:text-3xl main-title">QUANTUMI 🌐</h1>
+                                </div>
 				<p class="text-base text-center">
 					Real-time cryptocurrency market data and analytics powered by
 					CoinGecko, Etherscan, Dune, and TradingView across multiple chains.
@@ -2737,13 +2757,13 @@
                                         </div>
                                         <div id="rarible-container" class="rarible-embed custom-scroll" style="display:block;">
                                                 <div class="nft-item">
+                                                <iframe src="https://rarible.com/token/0xb66a603f4cfe17e3d27b87a8bfcad319856518b8:22936115272184638310144869580050457590453526233528138311905466789674025484289" loading="lazy" allowfullscreen></iframe>
+                                                </div>
+                                                <div class="nft-item">
                                                 <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484291" loading="lazy" allowfullscreen></iframe>
                                                 </div>
                                                 <div class="nft-item">
                                                 <iframe src="https://rarible.com/token/0xc9154424b823b10579895ccbe442d41b9abd96ed:22936115272184638310144869580050457590453526233528138311905466789674025484292" loading="lazy" allowfullscreen></iframe>
-                                                </div>
-                                                <div class="nft-item">
-                                                <iframe src="https://rarible.com/token/0xb66a603f4cfe17e3d27b87a8bfcad319856518b8:22936115272184638310144869580050457590453526233528138311905466789674025484289" loading="lazy" allowfullscreen></iframe>
                                                 </div>
                                         </div>
                                 </div>
@@ -6700,6 +6720,22 @@ function setupModuleToggles() {
                                 observer.observe(document.getElementById('spline-bg'));
                                 if (DOM.twitterTimeline) observer.observe(DOM.twitterTimeline);
                                 if (DOM.raribleContainer) observer.observe(DOM.raribleContainer);
+
+                                const scrollObserver = new IntersectionObserver(
+                                        (entries) => {
+                                                entries.forEach((entry) => {
+                                                        if (entry.isIntersecting) {
+                                                                entry.target.classList.add('in-view');
+                                                                scrollObserver.unobserve(entry.target);
+                                                        }
+                                                });
+                                        },
+                                        { threshold: 0.1 }
+                                );
+                                document.querySelectorAll('#module-grid section').forEach((sec) => {
+                                        sec.classList.add('scroll-module');
+                                        scrollObserver.observe(sec);
+                                });
 			});
 		</script>
 		<script>

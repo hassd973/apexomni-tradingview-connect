@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QUANTUMI Login</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
   <style>
     :root {
       --quantumi-green: #00FF7E;
@@ -22,7 +22,7 @@
       padding: 0;
       width: 100vw;
       height: 100vh;
-      font-family: 'Inter', 'Segoe UI', sans-serif;
+      font-family: 'Satoshi', 'Segoe UI', sans-serif;
       background-color: var(--quantumi-black);
       color: var(--quantumi-white);
       display: flex;
@@ -30,6 +30,7 @@
       align-items: center;
       scroll-behavior: smooth;
     }
+    #hash-background,
     #btc-background,
     #trailer-video {
       position: fixed;
@@ -38,6 +39,18 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+    }
+    #hash-background {
+      background-image: repeating-linear-gradient(
+          45deg,
+          var(--quantumi-green) 0,
+          var(--quantumi-green) 2px,
+          transparent 2px,
+          transparent 20px
+        );
+      animation: spin 40s linear infinite;
+      filter: blur(8px);
+      z-index: -3;
     }
     #btc-background {
       filter: blur(8px);
@@ -81,9 +94,19 @@
     .login-box button:hover {
       background: var(--quantumi-accent);
     }
+
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
 <body>
+  <div id="hash-background"></div>
   <video id="btc-background" autoplay loop muted playsinline>
     <source src="INTRO%20TRAILER.mp4" type="video/mp4" />
   </video>
@@ -104,6 +127,7 @@
       e.preventDefault();
       document.querySelector('.login-box').style.display = 'none';
       document.getElementById('btc-background').style.display = 'none';
+      document.getElementById('hash-background').style.display = 'none';
       const trailer = document.getElementById('trailer-video');
       trailer.style.display = 'block';
       trailer.play();
