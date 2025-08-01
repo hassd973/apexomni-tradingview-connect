@@ -169,7 +169,7 @@ async function renderGasHeatmap() {
 
     // Update list
     gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
-      <li class="p-2 rounded bg-black bg-opacity-50 glow-blue">
+      <li class="p-2 rounded bg-black bg-opacity-50 glow-green">
         <div>Gas Price: ${data.gasPrice} Gwei</div>
         <div class="metric">Time: ${new Date(data.timestamp).toLocaleTimeString()}</div>
       </li>
@@ -177,13 +177,15 @@ async function renderGasHeatmap() {
 
     // Render heatmap
     const maxGas = Math.max(...gasHistory.map(d => d.gasPrice), 100);
+    const minGas = Math.min(...gasHistory.map(d => d.gasPrice), 0);
     const cellWidth = canvas.width / maxHistory;
     const cellHeight = canvas.height;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     gasHistory.forEach((data, i) => {
-      const intensity = Math.min(data.gasPrice / maxGas, 1);
-      ctx.fillStyle = `rgba(0, 255, 0, ${intensity * 0.8})`;
+      const ratio = (data.gasPrice - minGas) / (maxGas - minGas || 1);
+      const light = 30 + ratio * 50;
+      ctx.fillStyle = `hsl(140, 100%, ${light}%)`;
       ctx.fillRect(i * cellWidth, 0, cellWidth, cellHeight);
       ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
       ctx.strokeRect(i * cellWidth, 0, cellWidth, cellHeight);
@@ -274,7 +276,7 @@ function updateLiveData(tokens) {
     const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
     const marqueeContent = [
       ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
-      `<span class="glow-purple">[${uniquePun}]</span>`
+        `<span class="glow-green">[${uniquePun}]</span>`
     ].join('');
     tickerMarqueeHeader.innerHTML = marqueeContent.repeat(3);
     tickerMarqueeHeader.style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
@@ -283,7 +285,7 @@ function updateLiveData(tokens) {
     const usdtPairs = tokens.filter(token => token.symbol && token.symbol !== 'USDT').slice(0, 5).map(token => `${token.symbol}/USDT (#${token.market_cap_rank})`);
     usdtPairs.forEach(pair => {
       const li = document.createElement('li');
-      li.className = 'gradient-bg p-1 rounded-md text-sm glow-blue';
+    li.className = 'gradient-bg p-1 rounded-md text-sm glow-green';
       li.innerHTML = `> 🧊 ${pair}`;
       topPairs.appendChild(li);
     });
