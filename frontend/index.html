@@ -3530,7 +3530,7 @@
 			let currentTheme = 'original';
 			let siteColors = themes.original;
 			let currentEthPrice = 0;
-			let isUsingMockLogs = true;
+                        let isUsingMockLogs = false;
 			let gasHistory = [];
 			let tokensData = [];
 			let balancesData = [];
@@ -3897,7 +3897,7 @@
 			}
 
                         const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
-                        const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
+                        const DUNE_API_KEY = 'sim_2TQdIjedEDThCDA7rd6EXofbaYQzBLGs';
                         const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
                         const X_ACCESS_TOKEN =
                                 '1936237883842576384-eikvHEUXy2YxGwryeLcEfhEUjTGLIO';
@@ -4331,9 +4331,12 @@ function setupModuleToggles() {
 					? isIndicatorEnabledHeader
 					: isIndicatorEnabledModal;
 
-				const initWidget = () => {
-					try {
-						const widget = new TradingView.widget({
+                                const initWidget = () => {
+                                        const style = getComputedStyle(document.documentElement);
+                                        const upColor = style.getPropertyValue('--primary-color').trim() || '#00FF7E';
+                                        const downColor = '#ff0000';
+                                        try {
+                                                const widget = new TradingView.widget({
 							autosize: true,
 							symbol: symbol,
 							interval: interval,
@@ -4353,12 +4356,12 @@ function setupModuleToggles() {
                                                                 'paneProperties.horzGridProperties.color': 'var(--secondary-color)',
                                                                 'scalesProperties.textColor': 'var(--secondary-color)',
                                                                 'scalesProperties.lineColor': 'var(--secondary-color)',
-                                                                'mainSeriesProperties.candleStyle.upColor': 'var(--primary-color)',
-                                                                'mainSeriesProperties.candleStyle.downColor': '#ff0000',
-                                                                'mainSeriesProperties.candleStyle.borderUpColor': 'var(--primary-color)',
-                                                                'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
-                                                                'mainSeriesProperties.candleStyle.wickUpColor': 'var(--primary-color)',
-                                                                'mainSeriesProperties.candleStyle.wickDownColor': '#ff0000'
+                                                                'mainSeriesProperties.candleStyle.upColor': upColor,
+                                                                'mainSeriesProperties.candleStyle.downColor': downColor,
+                                                                'mainSeriesProperties.candleStyle.borderUpColor': upColor,
+                                                                'mainSeriesProperties.candleStyle.borderDownColor': downColor,
+                                                                'mainSeriesProperties.candleStyle.wickUpColor': upColor,
+                                                                'mainSeriesProperties.candleStyle.wickDownColor': downColor
 							},
 							onChartReady: () => {
 								console.log(
@@ -5349,8 +5352,7 @@ function setupModuleToggles() {
 			}
 
 			const loadData = async () => {
-				const backendApiUrl =
-					'https://apexomni-backend-fppm.onrender.com/api/crypto';
+                                const backendApiUrl = '/api/crypto';
 				const tokenWarning = document.getElementById('token-warning');
 				const logsWarning = document.getElementById('logs-warning');
 				const gasFeesWarning = document.getElementById('gas-fees-warning');
@@ -7105,14 +7107,22 @@ function setupModuleToggles() {
                 <div class="mode-switch">Mode: Raw Hash</div>
                 <div id="visualization"><!-- Future 3D BTC Hash Visualizer --></div>
                 <script>
-                        document.querySelector('.mode-switch').addEventListener('click', () => {
-                                alert('Mode switch gesture detected');
+                        const modeSwitch = document.querySelector('.mode-switch');
+                        let brainMode = false;
+                        const updateModeLabel = () => {
+                                modeSwitch.textContent = brainMode ? 'Mode: Brain' : 'Mode: Raw Hash';
+                        };
+                        modeSwitch.addEventListener('click', () => {
+                                brainMode = !brainMode;
+                                updateModeLabel();
                         });
                         window.addEventListener('keydown', (e) => {
-                                if (e.key === 'm') {
-                                        alert('Mode toggled via brain/keyboard');
+                                if (e.key === 'm' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+                                        brainMode = !brainMode;
+                                        updateModeLabel();
                                 }
                         });
+                        updateModeLabel();
                 </script>
         </body>
 </html>
