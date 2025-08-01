@@ -1082,18 +1082,21 @@
                                         padding: 0.25rem 0.5rem;
                                 }
                         }
-			.toggle-module-btn {
-				background: none;
-				border: none;
-				color: var(--primary-color);
-				font-size: 0.875rem;
-				cursor: pointer;
-				padding: 0.25rem;
-				transition: color 0.3s ease;
-			}
-			.toggle-module-btn:hover {
-				color: var(--secondary-color);
-			}
+                        .toggle-module-btn {
+                                background: rgba(255, 255, 255, 0.05);
+                                border: 1px solid var(--secondary-color);
+                                border-radius: 9999px;
+                                color: var(--primary-color);
+                                font-size: 0.875rem;
+                                cursor: pointer;
+                                padding: 0.25rem 0.75rem;
+                                transition: background-color 0.3s ease,
+                                        color 0.3s ease;
+                        }
+                        .toggle-module-btn:hover {
+                                background: var(--primary-color);
+                                color: var(--bg-color);
+                        }
 			.module-content.hidden {
 				display: none;
 			}
@@ -6773,7 +6776,7 @@ function setupModuleToggles() {
 			// === Live Logs ===
 			async function loadLiveLogs() {
 				try {
-					const res = await fetch('https://quantumi.site/api/live-logs');
+                                const res = await fetch('/api/live-logs');
 					const data = await res.json();
 					const logList = document.getElementById('live-logs-list');
 					if (!logList) return;
