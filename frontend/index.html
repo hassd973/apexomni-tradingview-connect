@@ -2958,13 +2958,17 @@
 									id="btc-overlay-hashrate"
 									class="metric metric-sub"
 								></span>
-								<span
-									id="btc-overlay-difficulty"
-									class="metric metric-sub"
-								></span>
-							</div>
-						</div>
-					</div>
+                                                                <span
+                                                                        id="btc-overlay-difficulty"
+                                                                        class="metric metric-sub"
+                                                                ></span>
+                                                                <span
+                                                                        id="btc-overlay-mode"
+                                                                        class="metric metric-sub"
+                                                                ></span>
+                                                        </div>
+                                                </div>
+                                        </div>
 					<div id="btc-legend">
 						<span id="btc-price">Price: Loading...</span>
 						<span id="btc-time">Time: Loading...</span>
@@ -2987,7 +2991,7 @@
 							class="bg-gray-800 text-white text-sm px-2 py-1 rounded"
 						>
 							<option value="original">Original</option>
-							<option value="heatmap">Heat Map</option>
+                                                        <option value="heatmap" selected>Heat Map</option>
 							<option value="lifecycle">Life Cycle</option>
 						</select>
 					</div>
@@ -3467,6 +3471,7 @@
                                 btcOverlayLoss: document.getElementById('btc-overlay-loss'),
                                 btcOverlayHashrate: document.getElementById('btc-overlay-hashrate'),
                                 btcOverlayDifficulty: document.getElementById('btc-overlay-difficulty'),
+                                btcOverlayMode: document.getElementById('btc-overlay-mode'),
                                 nftModal: document.getElementById('nft-modal'),
                                 nftModalCloseBtn: document.getElementById('nft-modal-close'),
                                 nftModalFrame: document.getElementById('nft-modal-frame'),
@@ -3527,7 +3532,7 @@
                                 heatmap: ['#00FF7E', '#FFD966', '#ff0000'],
                                 lifecycle: ['#00FF7E', '#FFD966', '#00FF7E']
                         };
-			let currentTheme = 'original';
+                        let currentTheme = 'heatmap';
 			let siteColors = themes.original;
 			let currentEthPrice = 0;
                         let isUsingMockLogs = false;
@@ -4976,8 +4981,15 @@ function setupModuleToggles() {
 					if (DOM.btcOverlayLoss) DOM.btcOverlayLoss.textContent = lossText;
 					if (DOM.btcOverlayHashrate)
 						DOM.btcOverlayHashrate.textContent = `Hash: ${hashRate.toFixed(2)} EH/s`;
-					if (DOM.btcOverlayDifficulty)
-						DOM.btcOverlayDifficulty.textContent = `Diff: ${difficulty.toFixed(0)}`;
+                                        if (DOM.btcOverlayDifficulty)
+                                                DOM.btcOverlayDifficulty.textContent = `Diff: ${difficulty.toFixed(0)}`;
+                                        if (DOM.btcOverlayMode)
+                                                DOM.btcOverlayMode.textContent =
+                                                        currentTheme === 'heatmap'
+                                                                ? 'Heat Map'
+                                                                : currentTheme === 'lifecycle'
+                                                                ? 'Life Cycle'
+                                                                : 'Original';
 
 					const hashId = generateHashFromPrice(latestPrice);
 					addHashLog(hashId, latestTime);
@@ -5028,15 +5040,24 @@ function setupModuleToggles() {
 				}
 			}
 
-			function setTheme(name) {
-				currentTheme = name;
-				siteColors = themes[name] || themes.original;
-				colorLegend = [];
-				dotClouds.forEach((c) => scene.remove(c));
-				dotClouds = [];
-				updateColorLegend();
-				updateBTCHash();
-			}
+                        function setTheme(name) {
+                                currentTheme = name;
+                                siteColors = themes[name] || themes.original;
+                                colorLegend = [];
+                                dotClouds.forEach((c) => scene.remove(c));
+                                dotClouds = [];
+                                updateColorLegend();
+                                if (DOM.btcThemeSelect)
+                                        DOM.btcThemeSelect.value = name;
+                                if (DOM.btcOverlayMode)
+                                        DOM.btcOverlayMode.textContent =
+                                                name === 'heatmap'
+                                                        ? 'Heat Map'
+                                                        : name === 'lifecycle'
+                                                        ? 'Life Cycle'
+                                                        : 'Original';
+                                updateBTCHash();
+                        }
 
 			async function renderGasHeatmapAndFees() {
 				const canvas = document.getElementById('gas-heatmap-canvas');
@@ -6203,8 +6224,15 @@ function setupModuleToggles() {
 					'<div>QuantGpt: Welcome to QuantumI! Ask me for insights.<br><span class="text-xs opacity-70">QuantGPT is a resource, not a financial advisor. Always conduct your own research.</span></div>';
 				DOM.chatList.appendChild(welcome);
 
-				initBtcOverlay();
-				applyTheme(currentTheme);
+                               initBtcOverlay();
+                               applyTheme(currentTheme);
+                                if (DOM.btcOverlayMode)
+                                        DOM.btcOverlayMode.textContent =
+                                                currentTheme === 'heatmap'
+                                                        ? 'Heat Map'
+                                                        : currentTheme === 'lifecycle'
+                                                        ? 'Life Cycle'
+                                                        : 'Original';
 
 				setInterval(updateBTCHash, 60000);
 				setInterval(() => {
@@ -6594,11 +6622,12 @@ function setupModuleToggles() {
                                        });
                                }
 
-				if (DOM.btcThemeSelect) {
-					DOM.btcThemeSelect.addEventListener('change', (e) =>
-						setTheme(e.target.value)
-					);
-				}
+                                if (DOM.btcThemeSelect) {
+                                        DOM.btcThemeSelect.value = currentTheme;
+                                        DOM.btcThemeSelect.addEventListener('change', (e) =>
+                                                setTheme(e.target.value)
+                                        );
+                                }
 
 				let zoomDirection = 0;
 				let zoomSpeed = 0;
