@@ -75,7 +75,7 @@
                                 --quantumi-black: #010101;
                                 --quantumi-white: #F8F8F8;
                                 --quantumi-gray: #1A1A1A;
-                                --quantumi-accent: #FFD966;
+                                --quantumi-accent: #00FF7E;
                                 --quantumi-radius: 18px;
                                 --quantumi-blur: 18px;
                                 --quantumi-glow: 0 0 20px var(--quantumi-green);
@@ -83,7 +83,7 @@
                                 --bg-color: var(--quantumi-black);
                                 --text-color: var(--quantumi-white);
                                 --primary-color: var(--quantumi-green);
-                                --secondary-color: var(--quantumi-accent);
+                                --secondary-color: var(--quantumi-green);
                                 --shadow-color: rgba(0, 255, 126, 0.3);
                         }
                         body {
@@ -105,14 +105,14 @@
                                 color: var(--text-color);
                                 text-shadow:
                                         0 0 8px var(--shadow-color),
-                                        0 0 12px rgba(255, 187, 51, 0.3);
+                                        0 0 12px rgba(0, 255, 126, 0.3);
                         }
                         h3 {
                                 font-family: 'Limelight', cursive;
                                 color: var(--text-color);
                                 text-shadow:
                                         0 0 8px var(--shadow-color),
-                                        0 0 12px rgba(255, 187, 51, 0.3);
+                                        0 0 12px rgba(0, 255, 126, 0.3);
                         }
 			.main-title,
 			.sixtyfour-font {
@@ -1072,14 +1072,15 @@
                         }
 
                         @media (max-width: 640px) {
-                                #btc-hash-module .module-header {
+                                .module-header {
                                         flex-direction: column;
                                         align-items: stretch;
+                                        gap: 0.25rem;
                                 }
-                                #btc-hash-module .module-header .dj-btn,
-                                #btc-hash-module .module-header button {
+                                .module-header button {
                                         font-size: 0.75rem;
                                         padding: 0.25rem 0.5rem;
+                                        width: 100%;
                                 }
                         }
                         .toggle-module-btn {
@@ -1493,7 +1494,7 @@
 				transition: all 0.3s ease;
 			}
 			.hover-transition:hover {
-				background: rgba(255, 187, 51, 0.1);
+                                background: rgba(0, 255, 126, 0.1);
 			}
 			.drop-target {
 				border: 2px dashed var(--secondary-color);
@@ -1538,7 +1539,7 @@
 				background-color: var(--secondary-color);
 				box-shadow:
 					0 0 8px var(--secondary-color),
-					0 0 12px rgba(255, 187, 51, 0.6);
+                                        0 0 12px rgba(0, 255, 126, 0.6);
 				border: 1px solid var(--secondary-color);
 			}
 			#chat-input {
@@ -1785,7 +1786,7 @@
 				background: rgba(35, 46, 46, 0.2);
 			}
 			.data-warning {
-				background: rgba(255, 187, 51, 0.2);
+                                background: rgba(0, 255, 126, 0.2);
 				color: var(--secondary-color);
 				padding: 0.5rem;
 				border-radius: 6px;
@@ -3287,7 +3288,7 @@
 				<div class="mt-4">
 					<h3 class="text-base md:text-lg mb-2">System Logs</h3>
 					<div
-                                                class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-amber-400 p-2 rounded text-sm"
+                                                class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-400 p-2 rounded text-sm"
 						id="live-logs-container"
 					>
 						<ul class="space-y-2" id="system-logs-list">
@@ -3314,7 +3315,7 @@
 					&gt; Loading...
 				</div>
 				<div
-                                        class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-amber-400 text-sm"
+                                        class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-400 text-sm"
 					id="chat-list"
 				></div>
 				<div class="mt-4 flex flex-col sm:flex-row gap-2">
@@ -3531,9 +3532,9 @@
 				bitcrusherNode,
 				gainNode;
                         const themes = {
-                                original: ['#00FF7E', '#FFD966', '#ff0000', '#e0f7fa'],
-                                heatmap: ['#00FF7E', '#FFD966', '#ff0000'],
-                                lifecycle: ['#00FF7E', '#FFD966', '#00FF7E']
+                                original: ['#00FF7E', '#00cc5b', '#009944', '#e0f7fa'],
+                                heatmap: ['#003a1c', '#00cc5b', '#00FF7E'],
+                                lifecycle: ['#003a1c', '#00cc5b', '#00FF7E']
                         };
                         let currentTheme = 'heatmap';
 			let siteColors = themes.original;
@@ -5015,33 +5016,46 @@ function setupModuleToggles() {
 				if (hashLog.length > 10) hashLog.pop();
 			}
 
-			function updateColorLegend() {
-				document.getElementById('btc-color-legend').innerHTML = colorLegend
-					.map(
-						(item, index) => `
+                        function updateColorLegend() {
+                                document.getElementById('btc-color-legend').innerHTML = colorLegend
+                                        .map(
+                                                (item, index) => `
         <div class="legend-item" data-tooltip="Price: $${item.price.toLocaleString()}\nVolume: ${item.volume.toLocaleString()}\nTime: ${item.time}">
           <div class="legend-color" style="background: ${item.color}"></div>
         </div>
       `
 					)
-					.join('');
-			}
+                                        .join('');
+                        }
 
-			function getThemeColor(vol, volume, minV, maxV) {
-				if (currentTheme === 'heatmap') {
-					if (vol < 1) return themes.heatmap[0];
-					if (vol < 3) return themes.heatmap[1];
-					return themes.heatmap[2];
-				} else if (currentTheme === 'lifecycle') {
-					const ratio = (volume - minV) / (maxV - minV);
-					if (ratio < 0.25) return themes.lifecycle[0];
-					if (ratio < 0.5) return themes.lifecycle[1];
-					return themes.lifecycle[2];
-				} else {
-					const idx = dotClouds.length % themes.original.length;
-					return themes.original[idx];
-				}
-			}
+                        function interpolateColor(c1, c2, ratio) {
+                                const hex = (c) => parseInt(c.replace('#', ''), 16);
+                                const r1 = (hex(c1) >> 16) & 255;
+                                const g1 = (hex(c1) >> 8) & 255;
+                                const b1 = hex(c1) & 255;
+                                const r2 = (hex(c2) >> 16) & 255;
+                                const g2 = (hex(c2) >> 8) & 255;
+                                const b2 = hex(c2) & 255;
+                                const r = Math.round(r1 + (r2 - r1) * ratio);
+                                const g = Math.round(g1 + (g2 - g1) * ratio);
+                                const b = Math.round(b1 + (b2 - b1) * ratio);
+                                return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+                        }
+
+                        function getThemeColor(vol, volume, minV, maxV) {
+                                if (currentTheme === 'heatmap') {
+                                        const ratio = Math.min(vol / 5, 1);
+                                        return interpolateColor(themes.heatmap[0], themes.heatmap[2], ratio);
+                                } else if (currentTheme === 'lifecycle') {
+                                        const ratio = (volume - minV) / (maxV - minV);
+                                        if (ratio < 0.25) return themes.lifecycle[0];
+                                        if (ratio < 0.5) return themes.lifecycle[1];
+                                        return themes.lifecycle[2];
+                                } else {
+                                        const idx = dotClouds.length % themes.original.length;
+                                        return themes.original[idx];
+                                }
+                        }
 
                         function setTheme(name) {
                                 currentTheme = name;
@@ -5101,11 +5115,9 @@ function setupModuleToggles() {
 				});
 
                                 const getColor = (type) => {
-                                        return type === 'safe'
-                                                ? 'var(--primary-color)'
-                                                : type === 'propose'
-                                                        ? 'var(--secondary-color)'
-                                                        : '#ff0000';
+                                        if (type === 'safe') return 'hsl(140, 100%, 25%)';
+                                        if (type === 'propose') return 'hsl(140, 100%, 40%)';
+                                        return 'hsl(140, 100%, 55%)';
                                 };
 
 				const updateHeatmapAndFees = async () => {
