@@ -75,7 +75,7 @@
                                 --quantumi-black: #010101;
                                 --quantumi-white: #F8F8F8;
                                 --quantumi-gray: #1A1A1A;
-                                --quantumi-accent: #FFD966;
+                                --quantumi-accent: #00FF7E;
                                 --quantumi-radius: 18px;
                                 --quantumi-blur: 18px;
                                 --quantumi-glow: 0 0 20px var(--quantumi-green);
@@ -83,7 +83,7 @@
                                 --bg-color: var(--quantumi-black);
                                 --text-color: var(--quantumi-white);
                                 --primary-color: var(--quantumi-green);
-                                --secondary-color: var(--quantumi-accent);
+                                --secondary-color: var(--quantumi-green);
                                 --shadow-color: rgba(0, 255, 126, 0.3);
                         }
                         body {
@@ -105,14 +105,14 @@
                                 color: var(--text-color);
                                 text-shadow:
                                         0 0 8px var(--shadow-color),
-                                        0 0 12px rgba(255, 187, 51, 0.3);
+                                        0 0 12px rgba(0, 255, 126, 0.3);
                         }
                         h3 {
                                 font-family: 'Limelight', cursive;
                                 color: var(--text-color);
                                 text-shadow:
                                         0 0 8px var(--shadow-color),
-                                        0 0 12px rgba(255, 187, 51, 0.3);
+                                        0 0 12px rgba(0, 255, 126, 0.3);
                         }
 			.main-title,
 			.sixtyfour-font {
@@ -1493,7 +1493,7 @@
 				transition: all 0.3s ease;
 			}
 			.hover-transition:hover {
-				background: rgba(255, 187, 51, 0.1);
+                                background: rgba(0, 255, 126, 0.1);
 			}
 			.drop-target {
 				border: 2px dashed var(--secondary-color);
@@ -1538,7 +1538,7 @@
 				background-color: var(--secondary-color);
 				box-shadow:
 					0 0 8px var(--secondary-color),
-					0 0 12px rgba(255, 187, 51, 0.6);
+                                        0 0 12px rgba(0, 255, 126, 0.6);
 				border: 1px solid var(--secondary-color);
 			}
 			#chat-input {
@@ -1785,7 +1785,7 @@
 				background: rgba(35, 46, 46, 0.2);
 			}
 			.data-warning {
-				background: rgba(255, 187, 51, 0.2);
+                                background: rgba(0, 255, 126, 0.2);
 				color: var(--secondary-color);
 				padding: 0.5rem;
 				border-radius: 6px;
@@ -3287,7 +3287,7 @@
 				<div class="mt-4">
 					<h3 class="text-base md:text-lg mb-2">System Logs</h3>
 					<div
-                                                class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-amber-400 p-2 rounded text-sm"
+                                                class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-400 p-2 rounded text-sm"
 						id="live-logs-container"
 					>
 						<ul class="space-y-2" id="system-logs-list">
@@ -3314,7 +3314,7 @@
 					&gt; Loading...
 				</div>
 				<div
-                                        class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-amber-400 text-sm"
+                                        class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-green-400 text-sm"
 					id="chat-list"
 				></div>
 				<div class="mt-4 flex flex-col sm:flex-row gap-2">
