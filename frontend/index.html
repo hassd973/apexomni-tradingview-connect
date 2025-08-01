@@ -587,9 +587,9 @@
 			.dj-btn.active {
                                 box-shadow: 0 0 8px 2px var(--primary-color);
 			}
-			.dj-btn.inactive {
-				box-shadow: 0 0 8px 2px orange;
-			}
+                        .dj-btn.inactive {
+                                box-shadow: 0 0 8px 2px var(--secondary-color);
+                        }
 			#crossfader {
 				background: linear-gradient(
 					90deg,
@@ -1193,15 +1193,15 @@
                         #log-list li:hover,
                         #balances-list li:hover,
                         #twitter-list li:hover {
-                                background: rgba(255, 187, 51, 0.1);
-				transform: translateX(2px);
-				box-shadow: 0 0 6px var(--shadow-color);
-			}
-			#token-list li.selected-token {
-				border: 1px solid var(--secondary-color);
-				background: rgba(255, 187, 51, 0.1);
-				box-shadow: 0 0 6px var(--shadow-color);
-			}
+                                background: rgba(0, 255, 126, 0.1);
+                                transform: translateX(2px);
+                                box-shadow: 0 0 6px var(--shadow-color);
+                        }
+                        #token-list li.selected-token {
+                                border: 1px solid var(--secondary-color);
+                                background: rgba(0, 255, 126, 0.1);
+                                box-shadow: 0 0 6px var(--shadow-color);
+                        }
 			#token-list .metric,
                         #profit-pairs .metric,
                         #gas-heatmap-list .metric,
@@ -2043,7 +2043,7 @@
                         cursor: pointer;
                     }
                     #access-form button:hover {
-                        background: #6fc8e9;
+                        background: var(--secondary-color);
                     }
                     #access-form label {
                         display: flex;
@@ -2060,7 +2060,7 @@
                         margin-top: 0.75rem;
                     }
                     #nda-link {
-                        color: #3b82f6;
+                        color: var(--secondary-color);
                         text-decoration: underline;
                     }
                     #overlay-description {
@@ -2079,7 +2079,7 @@
 			.module-card {
 				border-radius: 0.75rem;
 				background: linear-gradient(to bottom, #0f172a, #000);
-				border: 1px solid #0ea5e9;
+                                border: 1px solid var(--secondary-color);
 				padding: 1rem;
 				margin-bottom: 1rem;
 			}
@@ -2087,7 +2087,7 @@
 				width: 6px;
 			}
 			.custom-scroll::-webkit-scrollbar-thumb {
-				background-color: #06b6d4;
+                                background-color: var(--secondary-color);
 				border-radius: 6px;
 			}
 			.custom-scroll::-webkit-scrollbar-track {
@@ -2109,7 +2109,7 @@
 			#connectWallet:hover,
 			#toggleBalance:hover,
 			#toggleAddress:hover {
-				background-color: #6fc8e9 !important;
+                                background-color: var(--secondary-color) !important;
 			}
 			.cmc-link {
 				color: var(--primary-color);
@@ -2133,9 +2133,9 @@
 				border-radius: 4px;
 				cursor: pointer;
 			}
-			.zoom-btn:hover {
-				background-color: #6fc8e9;
-			}
+                        .zoom-btn:hover {
+                                background-color: var(--secondary-color);
+                        }
 			.dj-cue-btn {
 				background-color: var(--primary-color);
 				color: #1e2727;
@@ -2163,7 +2163,7 @@
                                         <span>I agree to the NDA</span>
                                 </label>
                                 <button type="submit">Enter</button>
-                                <a id="nda-link" href="QuantumI_NDA_v3.pdf" download class="block mt-2 text-blue-400 underline">Download NDA</a>
+                                <a id="nda-link" href="QuantumI_NDA_v3.pdf" download class="block mt-2 underline">Download NDA</a>
                                 <p id="overlay-description" class="mt-2 text-sm">
                                         QuantumI visually standardizes and logs blockchain transactions, simplifying crypto analytics for everyone.
                                 </p>
@@ -3287,7 +3287,7 @@
 				<div class="mt-4">
 					<h3 class="text-base md:text-lg mb-2">System Logs</h3>
 					<div
-						class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 p-2 rounded text-sm"
+                                                class="max-h-[30vh] overflow-y-auto scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-amber-400 p-2 rounded text-sm"
 						id="live-logs-container"
 					>
 						<ul class="space-y-2" id="system-logs-list">
@@ -3314,7 +3314,7 @@
 					&gt; Loading...
 				</div>
 				<div
-					class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-blue-600 text-sm"
+                                        class="flex-grow overflow-y-auto p-2 space-y-2 scroll-smooth scrollbar-thin scrollbar-track-gray-800 scrollbar-thumb-amber-400 text-sm"
 					id="chat-list"
 				></div>
 				<div class="mt-4 flex flex-col sm:flex-row gap-2">
@@ -5469,7 +5469,7 @@ function setupModuleToggles() {
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="flex justify-between items-center">
               <span><a href="https://coinmarketcap.com/currencies/${token.id}/" target="_blank" class="token-link">${token.name}</a> (${token.symbol})</span>
-              <span class="performance ${isPositive ? 'text-green-400' : 'text-orange-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
+              <span class="performance ${isPositive ? 'text-green-400' : 'text-red-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
             </div>
             <span class="cmc-link mt-1 text-xs" data-cmc="${token.id}" aria-label="Open CoinMarketCap page">CMC</span>
             <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
@@ -5571,7 +5571,7 @@ function setupModuleToggles() {
 							.replace(/\s+/g, '-');
 						return `
         <li class="p-2 rounded">
-          <a href="https://coinmarketcap.com/currencies/${slug}/" target="_blank" class="text-blue-400 underline token-link">${balance.token}</a>
+          <a href="https://coinmarketcap.com/currencies/${slug}/" target="_blank" class="underline token-link">${balance.token}</a>
           <div>Balance: ${balance.balance.toLocaleString()}</div>
           <div class="metric">Chain ID: ${balance.chainId}</div>
         </li>`;
@@ -6579,8 +6579,8 @@ function setupModuleToggles() {
 							DOM.chatList.scrollTop = DOM.chatList.scrollHeight;
 						} catch (error) {
 							console.error('ChatGPT API error:', error);
-							const errorMessage = document.createElement('li');
-							errorMessage.className = 'p-2 rounded text-orange-400';
+                                                        const errorMessage = document.createElement('li');
+                                                        errorMessage.className = 'p-2 rounded text-red-400';
 							errorMessage.innerHTML = `<div>QuantGpt: Error processing request - ${error.message}<br>${disclaimer}</div>`;
 							DOM.chatList.appendChild(errorMessage);
 						}
@@ -6808,7 +6808,7 @@ function setupModuleToggles() {
 					const chat = document.getElementById('chat-list');
 					const msg = input.value.trim();
 					if (!msg) return;
-					chat.innerHTML += `<div class='text-xs text-blue-300'>You: ${msg}</div>`;
+                                        chat.innerHTML += `<div class='text-xs text-green-300'>You: ${msg}</div>`;
 					input.value = '';
 					const res = await fetch('/api/grok', {
 						method: 'POST',
