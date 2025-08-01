@@ -1082,18 +1082,21 @@
                                         padding: 0.25rem 0.5rem;
                                 }
                         }
-			.toggle-module-btn {
-				background: none;
-				border: none;
-				color: var(--primary-color);
-				font-size: 0.875rem;
-				cursor: pointer;
-				padding: 0.25rem;
-				transition: color 0.3s ease;
-			}
-			.toggle-module-btn:hover {
-				color: var(--secondary-color);
-			}
+                        .toggle-module-btn {
+                                background: rgba(255, 255, 255, 0.05);
+                                border: 1px solid var(--secondary-color);
+                                border-radius: 9999px;
+                                color: var(--primary-color);
+                                font-size: 0.875rem;
+                                cursor: pointer;
+                                padding: 0.25rem 0.75rem;
+                                transition: background-color 0.3s ease,
+                                        color 0.3s ease;
+                        }
+                        .toggle-module-btn:hover {
+                                background: var(--primary-color);
+                                color: var(--bg-color);
+                        }
 			.module-content.hidden {
 				display: none;
 			}
@@ -2958,13 +2961,17 @@
 									id="btc-overlay-hashrate"
 									class="metric metric-sub"
 								></span>
-								<span
-									id="btc-overlay-difficulty"
-									class="metric metric-sub"
-								></span>
-							</div>
-						</div>
-					</div>
+                                                                <span
+                                                                        id="btc-overlay-difficulty"
+                                                                        class="metric metric-sub"
+                                                                ></span>
+                                                                <span
+                                                                        id="btc-overlay-mode"
+                                                                        class="metric metric-sub"
+                                                                ></span>
+                                                        </div>
+                                                </div>
+                                        </div>
 					<div id="btc-legend">
 						<span id="btc-price">Price: Loading...</span>
 						<span id="btc-time">Time: Loading...</span>
@@ -2987,7 +2994,7 @@
 							class="bg-gray-800 text-white text-sm px-2 py-1 rounded"
 						>
 							<option value="original">Original</option>
-							<option value="heatmap">Heat Map</option>
+                                                        <option value="heatmap" selected>Heat Map</option>
 							<option value="lifecycle">Life Cycle</option>
 						</select>
 					</div>
@@ -3467,6 +3474,7 @@
                                 btcOverlayLoss: document.getElementById('btc-overlay-loss'),
                                 btcOverlayHashrate: document.getElementById('btc-overlay-hashrate'),
                                 btcOverlayDifficulty: document.getElementById('btc-overlay-difficulty'),
+                                btcOverlayMode: document.getElementById('btc-overlay-mode'),
                                 nftModal: document.getElementById('nft-modal'),
                                 nftModalCloseBtn: document.getElementById('nft-modal-close'),
                                 nftModalFrame: document.getElementById('nft-modal-frame'),
@@ -3527,10 +3535,10 @@
                                 heatmap: ['#00FF7E', '#FFD966', '#ff0000'],
                                 lifecycle: ['#00FF7E', '#FFD966', '#00FF7E']
                         };
-			let currentTheme = 'original';
+                        let currentTheme = 'heatmap';
 			let siteColors = themes.original;
 			let currentEthPrice = 0;
-			let isUsingMockLogs = true;
+                        let isUsingMockLogs = false;
 			let gasHistory = [];
 			let tokensData = [];
 			let balancesData = [];
@@ -3897,7 +3905,7 @@
 			}
 
                         const API_KEY = 'RVPGIBU418J84F5SMP52JKIRXWD2JE3YGZ';
-                        const DUNE_API_KEY = 'sim_7tXuiV9HVKnJzN7uc8ac5g7R3vqSFgf6';
+                        const DUNE_API_KEY = 'sim_2TQdIjedEDThCDA7rd6EXofbaYQzBLGs';
                         const X_BEARER_TOKEN = 'UyUFBJrmBNqcJfaoW9pWZzhmG';
                         const X_ACCESS_TOKEN =
                                 '1936237883842576384-eikvHEUXy2YxGwryeLcEfhEUjTGLIO';
@@ -4331,9 +4339,12 @@ function setupModuleToggles() {
 					? isIndicatorEnabledHeader
 					: isIndicatorEnabledModal;
 
-				const initWidget = () => {
-					try {
-						const widget = new TradingView.widget({
+                                const initWidget = () => {
+                                        const style = getComputedStyle(document.documentElement);
+                                        const upColor = style.getPropertyValue('--primary-color').trim() || '#00FF7E';
+                                        const downColor = '#ff0000';
+                                        try {
+                                                const widget = new TradingView.widget({
 							autosize: true,
 							symbol: symbol,
 							interval: interval,
@@ -4353,12 +4364,12 @@ function setupModuleToggles() {
                                                                 'paneProperties.horzGridProperties.color': 'var(--secondary-color)',
                                                                 'scalesProperties.textColor': 'var(--secondary-color)',
                                                                 'scalesProperties.lineColor': 'var(--secondary-color)',
-                                                                'mainSeriesProperties.candleStyle.upColor': 'var(--primary-color)',
-                                                                'mainSeriesProperties.candleStyle.downColor': '#ff0000',
-                                                                'mainSeriesProperties.candleStyle.borderUpColor': 'var(--primary-color)',
-                                                                'mainSeriesProperties.candleStyle.borderDownColor': '#ff0000',
-                                                                'mainSeriesProperties.candleStyle.wickUpColor': 'var(--primary-color)',
-                                                                'mainSeriesProperties.candleStyle.wickDownColor': '#ff0000'
+                                                                'mainSeriesProperties.candleStyle.upColor': upColor,
+                                                                'mainSeriesProperties.candleStyle.downColor': downColor,
+                                                                'mainSeriesProperties.candleStyle.borderUpColor': upColor,
+                                                                'mainSeriesProperties.candleStyle.borderDownColor': downColor,
+                                                                'mainSeriesProperties.candleStyle.wickUpColor': upColor,
+                                                                'mainSeriesProperties.candleStyle.wickDownColor': downColor
 							},
 							onChartReady: () => {
 								console.log(
@@ -4973,8 +4984,15 @@ function setupModuleToggles() {
 					if (DOM.btcOverlayLoss) DOM.btcOverlayLoss.textContent = lossText;
 					if (DOM.btcOverlayHashrate)
 						DOM.btcOverlayHashrate.textContent = `Hash: ${hashRate.toFixed(2)} EH/s`;
-					if (DOM.btcOverlayDifficulty)
-						DOM.btcOverlayDifficulty.textContent = `Diff: ${difficulty.toFixed(0)}`;
+                                        if (DOM.btcOverlayDifficulty)
+                                                DOM.btcOverlayDifficulty.textContent = `Diff: ${difficulty.toFixed(0)}`;
+                                        if (DOM.btcOverlayMode)
+                                                DOM.btcOverlayMode.textContent =
+                                                        currentTheme === 'heatmap'
+                                                                ? 'Heat Map'
+                                                                : currentTheme === 'lifecycle'
+                                                                ? 'Life Cycle'
+                                                                : 'Original';
 
 					const hashId = generateHashFromPrice(latestPrice);
 					addHashLog(hashId, latestTime);
@@ -5025,15 +5043,24 @@ function setupModuleToggles() {
 				}
 			}
 
-			function setTheme(name) {
-				currentTheme = name;
-				siteColors = themes[name] || themes.original;
-				colorLegend = [];
-				dotClouds.forEach((c) => scene.remove(c));
-				dotClouds = [];
-				updateColorLegend();
-				updateBTCHash();
-			}
+                        function setTheme(name) {
+                                currentTheme = name;
+                                siteColors = themes[name] || themes.original;
+                                colorLegend = [];
+                                dotClouds.forEach((c) => scene.remove(c));
+                                dotClouds = [];
+                                updateColorLegend();
+                                if (DOM.btcThemeSelect)
+                                        DOM.btcThemeSelect.value = name;
+                                if (DOM.btcOverlayMode)
+                                        DOM.btcOverlayMode.textContent =
+                                                name === 'heatmap'
+                                                        ? 'Heat Map'
+                                                        : name === 'lifecycle'
+                                                        ? 'Life Cycle'
+                                                        : 'Original';
+                                updateBTCHash();
+                        }
 
 			async function renderGasHeatmapAndFees() {
 				const canvas = document.getElementById('gas-heatmap-canvas');
@@ -5349,8 +5376,7 @@ function setupModuleToggles() {
 			}
 
 			const loadData = async () => {
-				const backendApiUrl =
-					'https://apexomni-backend-fppm.onrender.com/api/crypto';
+                                const backendApiUrl = '/api/crypto';
 				const tokenWarning = document.getElementById('token-warning');
 				const logsWarning = document.getElementById('logs-warning');
 				const gasFeesWarning = document.getElementById('gas-fees-warning');
@@ -6201,8 +6227,15 @@ function setupModuleToggles() {
 					'<div>QuantGpt: Welcome to QuantumI! Ask me for insights.<br><span class="text-xs opacity-70">QuantGPT is a resource, not a financial advisor. Always conduct your own research.</span></div>';
 				DOM.chatList.appendChild(welcome);
 
-				initBtcOverlay();
-				applyTheme(currentTheme);
+                               initBtcOverlay();
+                               applyTheme(currentTheme);
+                                if (DOM.btcOverlayMode)
+                                        DOM.btcOverlayMode.textContent =
+                                                currentTheme === 'heatmap'
+                                                        ? 'Heat Map'
+                                                        : currentTheme === 'lifecycle'
+                                                        ? 'Life Cycle'
+                                                        : 'Original';
 
 				setInterval(updateBTCHash, 60000);
 				setInterval(() => {
@@ -6592,11 +6625,12 @@ function setupModuleToggles() {
                                        });
                                }
 
-				if (DOM.btcThemeSelect) {
-					DOM.btcThemeSelect.addEventListener('change', (e) =>
-						setTheme(e.target.value)
-					);
-				}
+                                if (DOM.btcThemeSelect) {
+                                        DOM.btcThemeSelect.value = currentTheme;
+                                        DOM.btcThemeSelect.addEventListener('change', (e) =>
+                                                setTheme(e.target.value)
+                                        );
+                                }
 
 				let zoomDirection = 0;
 				let zoomSpeed = 0;
@@ -6742,7 +6776,7 @@ function setupModuleToggles() {
 			// === Live Logs ===
 			async function loadLiveLogs() {
 				try {
-					const res = await fetch('https://quantumi.site/api/live-logs');
+                                const res = await fetch('/api/live-logs');
 					const data = await res.json();
 					const logList = document.getElementById('live-logs-list');
 					if (!logList) return;
@@ -7105,14 +7139,22 @@ function setupModuleToggles() {
                 <div class="mode-switch">Mode: Raw Hash</div>
                 <div id="visualization"><!-- Future 3D BTC Hash Visualizer --></div>
                 <script>
-                        document.querySelector('.mode-switch').addEventListener('click', () => {
-                                alert('Mode switch gesture detected');
+                        const modeSwitch = document.querySelector('.mode-switch');
+                        let brainMode = false;
+                        const updateModeLabel = () => {
+                                modeSwitch.textContent = brainMode ? 'Mode: Brain' : 'Mode: Raw Hash';
+                        };
+                        modeSwitch.addEventListener('click', () => {
+                                brainMode = !brainMode;
+                                updateModeLabel();
                         });
                         window.addEventListener('keydown', (e) => {
-                                if (e.key === 'm') {
-                                        alert('Mode toggled via brain/keyboard');
+                                if (e.key === 'm' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+                                        brainMode = !brainMode;
+                                        updateModeLabel();
                                 }
                         });
+                        updateModeLabel();
                 </script>
         </body>
 </html>
