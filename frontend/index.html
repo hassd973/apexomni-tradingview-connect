@@ -1908,19 +1908,31 @@
 				font-size: 1.5rem;
 				cursor: pointer;
 			}
-			#btc-legend,
-			#balances-legend,
-			#token-insights-legend {
-				margin-top: 0.5rem;
-				font-size: 0.75rem;
-				background: rgba(35, 46, 46, 0.2);
-				padding: 0.5rem;
-				border-radius: 6px;
-				display: flex;
-				flex-wrap: wrap;
-				justify-content: center;
-				gap: 0.25rem;
-			}
+                        #balances-legend,
+                        #token-insights-legend {
+                                margin-top: 0.5rem;
+                                font-size: 0.75rem;
+                                background: rgba(35, 46, 46, 0.2);
+                                padding: 0.5rem;
+                                border-radius: 6px;
+                                display: flex;
+                                flex-wrap: wrap;
+                                justify-content: center;
+                                gap: 0.25rem;
+                        }
+                        #btc-legend {
+                                position: absolute;
+                                bottom: 0;
+                                left: 0;
+                                margin-top: 0;
+                                width: 100%;
+                                background: rgba(0, 0, 0, 0.4);
+                                z-index: 20;
+                                display: flex;
+                                flex-wrap: wrap;
+                                justify-content: center;
+                                gap: 0.25rem;
+                        }
                         .nav-link {
                                 display: block;
                                 padding: 0.5rem 0;
@@ -2940,28 +2952,28 @@
 					<div class="data-warning" id="btc-hash-warning" style="display: none">
 						&gt; Live data from Dune API
 					</div>
-					<div class="btc-hash-svg relative" id="btc-hash-canvas">
-						<canvas
-							id="btc-audio-canvas"
-							width="600"
-							height="80"
-							class="absolute top-0 left-0 w-full pointer-events-none"
-						></canvas>
-						<div id="btc-metrics-overlay" class="metrics-overlay">
-							<div class="metrics-row">
-								<span id="btc-overlay-price" class="metric metric-main"></span>
-								<img
-									src="https://i.postimg.cc/R6HKW38z/q-logo.png"
-									alt="QuantumI Logo"
-									class="logo"
-								/>
-								<span id="btc-overlay-loss" class="metric metric-main"></span>
-							</div>
-							<div class="metrics-row">
-								<span
-									id="btc-overlay-hashrate"
-									class="metric metric-sub"
-								></span>
+                                        <div class="btc-hash-svg relative" id="btc-hash-canvas">
+                                                <canvas
+                                                        id="btc-audio-canvas"
+                                                        width="600"
+                                                        height="80"
+                                                        class="absolute top-0 left-0 w-full pointer-events-none"
+                                                ></canvas>
+                                                <div id="btc-metrics-overlay" class="metrics-overlay">
+                                                        <div class="metrics-row">
+                                                                <span id="btc-overlay-price" class="metric metric-main"></span>
+                                                                <img
+                                                                        src="https://i.postimg.cc/R6HKW38z/q-logo.png"
+                                                                        alt="QuantumI Logo"
+                                                                        class="logo"
+                                                                />
+                                                                <span id="btc-overlay-loss" class="metric metric-main"></span>
+                                                        </div>
+                                                        <div class="metrics-row">
+                                                                <span
+                                                                        id="btc-overlay-hashrate"
+                                                                        class="metric metric-sub"
+                                                                ></span>
                                                                 <span
                                                                         id="btc-overlay-difficulty"
                                                                         class="metric metric-sub"
@@ -2972,16 +2984,16 @@
                                                                 ></span>
                                                         </div>
                                                 </div>
+                                                <div id="btc-legend">
+                                                        <span id="btc-price">Price: Loading...</span>
+                                                        <span id="btc-time">Time: Loading...</span>
+                                                        <span id="btc-date">Date: Loading...</span>
+                                                        <span id="btc-volume">Volume: Loading...</span>
+                                                        <span id="btc-volatility">Volatility: Loading...</span>
+                                                        <span id="btc-momentum">Momentum: Loading...</span>
+                                                        <span id="camera-pos">Pos: 0,0,0</span>
+                                                </div>
                                         </div>
-					<div id="btc-legend">
-						<span id="btc-price">Price: Loading...</span>
-						<span id="btc-time">Time: Loading...</span>
-						<span id="btc-date">Date: Loading...</span>
-						<span id="btc-volume">Volume: Loading...</span>
-						<span id="btc-volatility">Volatility: Loading...</span>
-						<span id="btc-momentum">Momentum: Loading...</span>
-						<span id="camera-pos">Pos: 0,0,0</span>
-					</div>
 					<div
 						class="mt-2 flex justify-center gap-2"
 						id="btc-color-legend"
