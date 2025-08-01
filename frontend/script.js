@@ -177,13 +177,15 @@ async function renderGasHeatmap() {
 
     // Render heatmap
     const maxGas = Math.max(...gasHistory.map(d => d.gasPrice), 100);
+    const minGas = Math.min(...gasHistory.map(d => d.gasPrice), 0);
     const cellWidth = canvas.width / maxHistory;
     const cellHeight = canvas.height;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     gasHistory.forEach((data, i) => {
-      const intensity = Math.min(data.gasPrice / maxGas, 1);
-      ctx.fillStyle = `rgba(0, 255, 0, ${intensity * 0.8})`;
+      const ratio = (data.gasPrice - minGas) / (maxGas - minGas || 1);
+      const light = 30 + ratio * 50;
+      ctx.fillStyle = `hsl(140, 100%, ${light}%)`;
       ctx.fillRect(i * cellWidth, 0, cellWidth, cellHeight);
       ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
       ctx.strokeRect(i * cellWidth, 0, cellWidth, cellHeight);
