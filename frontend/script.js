@@ -169,7 +169,7 @@ async function renderGasHeatmap() {
 
     // Update list
     gasList.innerHTML = gasHistory.slice(-5).reverse().map(data => `
-      <li class="p-2 rounded bg-black bg-opacity-50 glow-blue">
+      <li class="p-2 rounded bg-black bg-opacity-50 glow-green">
         <div>Gas Price: ${data.gasPrice} Gwei</div>
         <div class="metric">Time: ${new Date(data.timestamp).toLocaleTimeString()}</div>
       </li>
@@ -274,7 +274,7 @@ function updateLiveData(tokens) {
     const uniquePun = iceKingPuns[Math.floor(Math.random() * iceKingPuns.length)] || 'Chill out, I’ve got this! 🧊😎';
     const marqueeContent = [
       ...tokens.slice(0, 5).map(token => `<span class="glow-green">[${token.symbol}] $${token.current_price.toLocaleString()} (${token.price_change_percentage_24h.toFixed(2)}%)</span>`),
-      `<span class="glow-purple">[${uniquePun}]</span>`
+        `<span class="glow-green">[${uniquePun}]</span>`
     ].join('');
     tickerMarqueeHeader.innerHTML = marqueeContent.repeat(3);
     tickerMarqueeHeader.style.animationDuration = `${Math.max(60, tokens.length * 5)}s`;
@@ -283,7 +283,7 @@ function updateLiveData(tokens) {
     const usdtPairs = tokens.filter(token => token.symbol && token.symbol !== 'USDT').slice(0, 5).map(token => `${token.symbol}/USDT (#${token.market_cap_rank})`);
     usdtPairs.forEach(pair => {
       const li = document.createElement('li');
-      li.className = 'gradient-bg p-1 rounded-md text-sm glow-blue';
+    li.className = 'gradient-bg p-1 rounded-md text-sm glow-green';
       li.innerHTML = `> 🧊 ${pair}`;
       topPairs.appendChild(li);
     });
