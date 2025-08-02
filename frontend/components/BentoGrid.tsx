@@ -16,12 +16,17 @@ const initialCards: Card[] = [
 
 const BentoGrid = () => {
   const [cards, setCards] = useState(initialCards);
+
   useEffect(() => {
-    const handleResize = () => {
+    const shuffle = () =>
       setCards((prev) => [...prev].sort(() => Math.random() - 0.5));
-    };
+    const handleResize = () => shuffle();
+    const interval = setInterval(shuffle, 8000);
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      clearInterval(interval);
+    };
   }, []);
 
   return (
@@ -30,8 +35,11 @@ const BentoGrid = () => {
         {cards.map((card) => (
           <motion.div
             key={card.id}
-            whileHover={{ scale: 1.03 }}
+            layout
+            whileHover={{ scale: 1.05 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             className={`flex items-center justify-center bg-carbon rounded-xl text-white p-4 ${card.className}`}
+            aria-label={card.title}
           >
             <h3 className="text-lg font-semibold">{card.title}</h3>
           </motion.div>

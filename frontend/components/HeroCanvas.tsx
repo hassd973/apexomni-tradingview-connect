@@ -1,7 +1,11 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-const HeroCanvas = () => {
+interface Props {
+  onCanvasRef?: (el: HTMLCanvasElement | null) => void;
+}
+
+const HeroCanvas = ({ onCanvasRef }: Props) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -31,9 +35,16 @@ const HeroCanvas = () => {
     resize();
     window.addEventListener('resize', resize);
 
+    const pointerMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = (e.clientY / window.innerHeight) * 2 - 1;
+      mesh.rotation.x = y * 0.5;
+      mesh.rotation.y = x * 0.8;
+    };
+    window.addEventListener('pointermove', pointerMove);
+
     const animate = () => {
-      mesh.rotation.x += 0.005;
-      mesh.rotation.y += 0.01;
+      mesh.rotation.z += 0.005;
       renderer.render(scene, camera);
       requestAnimationFrame(animate);
     };
@@ -41,11 +52,20 @@ const HeroCanvas = () => {
 
     return () => {
       window.removeEventListener('resize', resize);
+      window.removeEventListener('pointermove', pointerMove);
       renderer.dispose();
     };
   }, []);
 
-  return <canvas ref={canvasRef} className="w-full h-[40vh]" />;
+  return (
+    <canvas
+      ref={(el) => {
+        canvasRef.current = el;
+        onCanvasRef?.(el);
+      }}
+      className="w-full h-[40vh]"
+    />
+  );
 };
 
 export default HeroCanvas;
