@@ -1,15 +1,26 @@
 {
-  "name": "ice-king-trading-dashboard",
+  "name": "apex-omni-frontend",
   "version": "1.0.0",
-  "description": "Static website for ICE KING trading dashboard with CoinGecko data and TradingView alerts",
+  "private": true,
   "scripts": {
-    "start": "npx serve .",
-    "build": "npm run zip",
-    "zip": "zip -r ice-king-trading-dashboard.zip . -x '*.git*'"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
-    "serve": "^14.2.3"
+    "framer-motion": "^10.16.4",
+    "gsap": "^3.12.2",
+    "next": "^14.0.0",
+    "next-themes": "^0.2.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "three": "^0.158.0"
   },
-  "author": "",
-  "license": "MIT"
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.23",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.2.2"
+  }
 }
