@@ -2,12 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-  @apply bg-navy text-white;
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
 }
 
 body {
-  @apply transition-colors duration-300 bg-navy text-white;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Grain overlay */
