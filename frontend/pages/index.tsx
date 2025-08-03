@@ -1,8 +1,10 @@
 import Head from 'next/head';
+import Navbar from '../components/Navbar';
 import Hero from '../components/Hero';
-import BentoGrid from '../components/BentoGrid';
-import KineticText from '../components/KineticText';
-import ThemeToggle from '../components/ThemeToggle';
+import AlertModule from '../components/AlertModule';
+import WebhookForm from '../components/WebhookForm';
+import WalletConnect from '../components/WalletConnect';
+import Footer from '../components/Footer';
 
 export default function Home() {
   return (
@@ -10,14 +12,16 @@ export default function Home() {
       <Head>
         <title>APEX Omni Trading</title>
         <meta name="description" content="Next-gen trading dashboard" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
       </Head>
-      <ThemeToggle />
-      <main className="min-h-screen bg-navy text-white">
-        
+      <Navbar />
+      <main>
         <Hero />
-        <KineticText text='Automate Your Strategy' />
-        <BentoGrid />
+        <AlertModule />
+        <WebhookForm />
+        <WalletConnect />
       </main>
+      <Footer />
     </>
   );
 }

@@ -1,0 +1,18 @@
+.alerts {
+  margin: var(--spacing-lg) auto;
+  max-width: 800px;
+  background: var(--color-bg-alt);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius);
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.item {
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid #333;
+}

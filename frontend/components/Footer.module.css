@@ -1,0 +1,25 @@
+.footer {
+  background: var(--color-bg-alt);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  text-align: center;
+}
+
+.links,
+.social {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+}
+
+.link {
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.link:hover,
+.link:focus {
+  color: var(--color-primary);
+}
