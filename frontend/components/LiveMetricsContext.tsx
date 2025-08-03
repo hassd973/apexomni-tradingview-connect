@@ -27,7 +27,9 @@ export const LiveMetricsProvider = ({ children }: { children: ReactNode }) => {
   const fetchMetrics = async () => {
     try {
       const timestamp = Date.now().toString();
-      const res = await fetch('https://omni.apex.exchange/api/v3/account-balance', {
+      const baseUrl = process.env.NEXT_PUBLIC_APEX_API_BASE ||
+        'https://omni.apex.exchange';
+      const res = await fetch(`${baseUrl}/api/v3/account-balance`, {
         headers: {
           'APEX-SIGNATURE': process.env.NEXT_PUBLIC_APEX_SIGNATURE || '',
           'APEX-API-KEY': process.env.NEXT_PUBLIC_APEX_API_KEY || '',
@@ -52,6 +54,7 @@ export const LiveMetricsProvider = ({ children }: { children: ReactNode }) => {
       });
       setError(null);
     } catch (err) {
+      console.error('fetchMetrics failed', err);
       setError('Live data failed to load');
     }
   };
