@@ -7,12 +7,13 @@
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-md) var(--spacing-lg);
-  border-bottom: 1px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+  box-shadow: 0 2px 20px rgba(39, 174, 96, 0.25);
 }
 
 .logo {
   color: var(--color-primary);
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 700;
 }
 
@@ -24,10 +25,11 @@
 .link {
   color: var(--color-text);
   text-decoration: none;
-  font-size: 1rem;
+  font-size: 1.125rem;
 }
 
 .link:hover,
 .link:focus {
   color: var(--color-primary);
+  text-shadow: 0 0 5px rgba(39, 174, 96, 0.6);
 }
