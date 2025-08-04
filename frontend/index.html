@@ -2171,11 +2171,59 @@
 				background-color: var(--secondary-color);
 				box-shadow: 0 0 4px var(--secondary-color);
 			}
-		</style>
-	</head>
+                </style>
+                <style>
+                        body {
+                                background: linear-gradient(135deg, #1a0933, #2a1b4f);
+                        }
+                        body::before {
+                                content: "";
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                pointer-events: none;
+                                background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyB2aWV3Qm94PScwIDAgMTAwIDEwMCc+PGZpbHRlciBpZD0nbic+PGZlVHVyYnVsZW5jZSB0eXBlPSdmcmFjdGFsTm9pc2UnIGJhc2VGcmVxdWVuY3k9JzEuMicgbnVtT2N0YXZlcz0nNCcgc3RpdGNoVGlsZXM9J3N0aXRjaCc+PC9mZVR1cmJ1bGVuY2U+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nMTAwJScgZmlsdGVyPSd1cmwoI25pKScgLz48L3N2Zz4=");
+                                opacity: 0.05;
+                                z-index: -1;
+                        }
+                        #bg-canvas {
+                                position: fixed;
+                                top: 0;
+                                left: 0;
+                                width: 100%;
+                                height: 100%;
+                                z-index: -2;
+                                filter: blur(2px);
+                        }
+                        .bento-grid {
+                                display: grid;
+                                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                                grid-auto-rows: 1fr;
+                                gap: 1rem;
+                                grid-auto-flow: dense;
+                        }
+                        .bento-grid > section {
+                                background: rgba(31, 41, 55, 0.5);
+                                backdrop-filter: blur(10px);
+                                border: 1px solid rgba(0, 255, 126, 0.1);
+                                border-radius: var(--quantumi-radius);
+                                overflow: hidden;
+                        }
+                        .kinetic-text {
+                                display: inline-block;
+                        }
+                </style>
+                <script
+                        defer
+                        src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"
+                ></script>
+        </head>
         <body
                 class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF7E]"
         >
+                <canvas id="bg-canvas"></canvas>
                 <div id="access-overlay">
                         <form id="access-form">
                                 <h2>QuantumI Pre-Launch</h2>
@@ -2264,7 +2312,7 @@
 					<button id="mute-btn" aria-label="Toggle mute">🔇</button>
 				</div>
 				<div class="title-box">
-                                        <h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
+                                        <h1 class="text-2xl md:text-3xl main-title kinetic-text">QUANTUMI</h1>
 				</div>
 				<div class="intro-buttons">
 					<button id="play-intro-btn" aria-label="Play intro">
@@ -2290,7 +2338,7 @@
 		<header class="w-full flex justify-center items-center">
 			<div class="w-full max-w-[98vw] mx-auto px-4">
                                 <div class="title-box">
-                                        <h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
+                                        <h1 class="text-2xl md:text-3xl main-title kinetic-text">QUANTUMI</h1>
                                 </div>
 				<p class="text-base text-center">
 					Real-time cryptocurrency market data and analytics powered by
@@ -2543,7 +2591,7 @@
                         </div>
                 </div>
                 <main
-                        class="flex-1 p-4 w-full max-w-[98vw] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                        class="flex-1 p-4 w-full max-w-[98vw] mx-auto bento-grid"
                         id="module-grid"
                 >
                         <section class="rounded-lg youtube-news-section" draggable="true" id="world-module">
@@ -7200,6 +7248,54 @@ function setupModuleToggles() {
                                 }
                         });
                         updateModeLabel();
+                </script>
+                <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                                if (window.gsap) {
+                                        gsap.from('.kinetic-text', {
+                                                y: 50,
+                                                opacity: 0,
+                                                duration: 1.5,
+                                                ease: 'power4.out',
+                                                stagger: 0.2,
+                                        });
+                                }
+                                const canvas = document.getElementById('bg-canvas');
+                                if (canvas && window.THREE) {
+                                        const scene = new THREE.Scene();
+                                        const camera = new THREE.PerspectiveCamera(
+                                                60,
+                                                window.innerWidth / window.innerHeight,
+                                                0.1,
+                                                1000,
+                                        );
+                                        const renderer = new THREE.WebGLRenderer({
+                                                canvas,
+                                                alpha: true,
+                                        });
+                                        renderer.setSize(window.innerWidth, window.innerHeight);
+                                        const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
+                                        const material = new THREE.MeshBasicMaterial({
+                                                color: 0x00ff7e,
+                                                wireframe: true,
+                                        });
+                                        const mesh = new THREE.Mesh(geometry, material);
+                                        scene.add(mesh);
+                                        camera.position.z = 40;
+                                        function animate() {
+                                                requestAnimationFrame(animate);
+                                                mesh.rotation.x += 0.01;
+                                                mesh.rotation.y += 0.01;
+                                                renderer.render(scene, camera);
+                                        }
+                                        animate();
+                                        window.addEventListener('resize', () => {
+                                                camera.aspect = window.innerWidth / window.innerHeight;
+                                                camera.updateProjectionMatrix();
+                                                renderer.setSize(window.innerWidth, window.innerHeight);
+                                        });
+                                }
+                        });
                 </script>
         </body>
 </html>
