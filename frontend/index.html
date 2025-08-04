@@ -2173,38 +2173,8 @@
 			}
                 </style>
                 <style>
-                        body {
-                                background: linear-gradient(135deg, #1a0933, #2a1b4f);
-                        }
-                        body::before {
-                                content: "";
-                                position: fixed;
-                                top: 0;
-                                left: 0;
-                                width: 100%;
-                                height: 100%;
-                                pointer-events: none;
-                                background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScxMDAnIGhlaWdodD0nMTAwJyB2aWV3Qm94PScwIDAgMTAwIDEwMCc+PGZpbHRlciBpZD0nbic+PGZlVHVyYnVsZW5jZSB0eXBlPSdmcmFjdGFsTm9pc2UnIGJhc2VGcmVxdWVuY3k9JzEuMicgbnVtT2N0YXZlcz0nNCcgc3RpdGNoVGlsZXM9J3N0aXRjaCc+PC9mZVR1cmJ1bGVuY2U+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9JzEwMCUnIGhlaWdodD0nMTAwJScgZmlsdGVyPSd1cmwoI25pKScgLz48L3N2Zz4=");
-                                opacity: 0.05;
-                                z-index: -1;
-                        }
-                        #bg-canvas {
-                                position: fixed;
-                                top: 0;
-                                left: 0;
-                                width: 100%;
-                                height: 100%;
-                                z-index: -2;
-                                filter: blur(2px);
-                        }
-                        .bento-grid {
-                                display: grid;
-                                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-                                grid-auto-rows: 1fr;
-                                gap: 1rem;
-                                grid-auto-flow: dense;
-                        }
-                        .bento-grid > section {
+                        /* Transparent module styling */
+                        #module-grid > section {
                                 background: rgba(31, 41, 55, 0.5);
                                 backdrop-filter: blur(10px);
                                 border: 1px solid rgba(0, 255, 126, 0.1);
@@ -7258,41 +7228,6 @@ function setupModuleToggles() {
                                                 duration: 1.5,
                                                 ease: 'power4.out',
                                                 stagger: 0.2,
-                                        });
-                                }
-                                const canvas = document.getElementById('bg-canvas');
-                                if (canvas && window.THREE) {
-                                        const scene = new THREE.Scene();
-                                        const camera = new THREE.PerspectiveCamera(
-                                                60,
-                                                window.innerWidth / window.innerHeight,
-                                                0.1,
-                                                1000,
-                                        );
-                                        const renderer = new THREE.WebGLRenderer({
-                                                canvas,
-                                                alpha: true,
-                                        });
-                                        renderer.setSize(window.innerWidth, window.innerHeight);
-                                        const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
-                                        const material = new THREE.MeshBasicMaterial({
-                                                color: 0x00ff7e,
-                                                wireframe: true,
-                                        });
-                                        const mesh = new THREE.Mesh(geometry, material);
-                                        scene.add(mesh);
-                                        camera.position.z = 40;
-                                        function animate() {
-                                                requestAnimationFrame(animate);
-                                                mesh.rotation.x += 0.01;
-                                                mesh.rotation.y += 0.01;
-                                                renderer.render(scene, camera);
-                                        }
-                                        animate();
-                                        window.addEventListener('resize', () => {
-                                                camera.aspect = window.innerWidth / window.innerHeight;
-                                                camera.updateProjectionMatrix();
-                                                renderer.setSize(window.innerWidth, window.innerHeight);
                                         });
                                 }
                         });
