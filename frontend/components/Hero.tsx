@@ -13,7 +13,7 @@ const Hero = () => {
       transition={{ duration: 0.6 }}
     >
       <motion.h1
-        className={styles.heading}
+        className="text-5xl sm:text-6xl font-bold mb-6 text-brand"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -22,7 +22,7 @@ const Hero = () => {
         ApexOmni Trading
       </motion.h1>
       <motion.p
-        className={styles.subheading}
+        className="text-2xl sm:text-3xl font-semibold mb-4 leading-relaxed"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -31,7 +31,7 @@ const Hero = () => {
         Automate your strategies and monitor markets with real-time TradingView integration.
       </motion.p>
       <motion.button
-        className={styles.cta}
+        className="bg-brand text-black rounded-2xl px-8 py-4 shadow-lg transition hover:shadow-[0_0_12px_var(--green)]"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}

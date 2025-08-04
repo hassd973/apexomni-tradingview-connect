@@ -18,7 +18,7 @@ export default function Home() {
         />
       </Head>
       <Navbar />
-      <main>
+      <main className="overflow-y-auto">
         <Hero />
         <AlertModule />
         <WebhookForm />

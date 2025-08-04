@@ -8,36 +8,6 @@
   background: var(--color-bg);
 }
 
-.heading {
-  font-size: clamp(3.5rem, 8vw, 5rem);
-  font-weight: 700;
-  color: var(--color-primary);
-  margin: 0;
-}
-
-.subheading {
-  font-size: 1.5rem;
-  max-width: 600px;
-  margin: 0 auto;
-}
-
-.cta {
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: var(--color-primary);
-  color: var(--color-bg);
-  border: none;
-  border-radius: var(--radius);
-  font-size: 1.125rem;
-  cursor: pointer;
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-}
-
-.cta:hover,
-.cta:focus {
-  background: #1e8c4e;
-  box-shadow: 0 0 15px rgba(39, 174, 96, 0.5);
-}
-
 .content {
   display: flex;
   flex-direction: column;
