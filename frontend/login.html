@@ -16,8 +16,8 @@
       align-items: center; justify-content: center;
     }
     .q-hero-canvas {
-      width: 100vw; max-width: 420px;
-      height: 56vh; min-height: 320px; max-height: 600px;
+      width: 90vw; max-width: 800px;
+      height: 60vh; min-height: 400px; max-height: 700px;
       display: block; background: #111215;
       margin: 0 auto 1.5em auto;
     }
@@ -63,33 +63,6 @@
     .login-btn:hover, .login-btn:focus {
       background: #35e1ad; color: #111;
     }
-    .buttons {
-      display: flex; justify-content: center;
-      gap: 1.2em; margin-top: 1.2em;
-    }
-    .btn {
-      padding: 0.65em 1.5em;
-      font-size: clamp(13px, 2vw, 19px);
-      background: #25272a;
-      color: #e3e3e3cc;
-      border: 1.5px solid transparent;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: inherit;
-      font-weight: 500;
-      box-shadow: 0 1px 8px #0002;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
-      outline: none;
-    }
-    .btn.selected, .btn:focus {
-      background: #555;
-      color: #fff;
-      border-color: #a5b5ff44;
-    }
-    .btn:hover:not(.selected) {
-      background: #393a41;
-      color: #fff;
-    }
     @media (max-width: 600px) {
       .subtext { margin-bottom: 1.3em; }
       .branding { font-size: 8vw; }
@@ -107,11 +80,6 @@
     <input type="password" placeholder="Password" required>
     <button class="login-btn" type="submit">Sign In</button>
   </form>
-  <div class="buttons">
-    <button class="btn" id="layer1" onclick="setLayer(0)">Layer I</button>
-    <button class="btn selected" id="layer2" onclick="setLayer(1)">Layer II</button>
-    <button class="btn" id="layer3" onclick="setLayer(2)">Layer III</button>
-  </div>
   <script>
     const Q_GRID = [
       [0,1,1,1,1,1,1,1,0].reverse(),
@@ -129,12 +97,7 @@
     const GRID_COLS = Q_GRID[0].length;
     const GRID_ROWS = Q_GRID.length;
 
-    const LAYER_CONFIG = [
-      {subX: 1, subY: 1, dotRadius: 0.32},
-      {subX: 3, subY: 2, dotRadius: 0.13},
-      {subX: 4, subY: 3, dotRadius: 0.092}
-    ];
-    let currentLayer = 1;
+    const LAYER = {subX: 3, subY: 2, dotRadius: 0.13};
 
     const canvas = document.getElementById('q-hero');
     const ctx = canvas.getContext('2d');
@@ -156,8 +119,8 @@
     window.addEventListener('resize', resize);
     resize();
 
-    function getLogoDots(layerIdx) {
-      const config = LAYER_CONFIG[layerIdx];
+    function getLogoDots() {
+      const config = LAYER;
       let dots = [];
       for (let y = 0; y < GRID_ROWS; y++) {
         for (let x = 0; x < GRID_COLS; x++) {
@@ -188,7 +151,7 @@
     let animating = false;
 
     function initDots(assemble) {
-      const logoDots = getLogoDots(currentLayer);
+      const logoDots = getLogoDots();
       dots = [];
       const totalPixels = logoDots.length;
       let scatterPositions = [];
@@ -210,7 +173,7 @@
     function drawLogoDots(progress) {
       currentProgress = progress;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const config = LAYER_CONFIG[currentLayer];
+      const config = LAYER;
       for (let i = 0; i < dots.length; i++) {
         let d = dots[i];
         let t = Math.max(0, Math.min(1, (progress - d.delay) / 1.3));
