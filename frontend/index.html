@@ -5613,8 +5613,12 @@ function setupModuleToggles() {
                                                                 label: '24h Price Change (%)',
                                                                 data: data,
                                                                 backgroundColor: data.map((value) =>
-                                                                        value >= 0 ? 'var(--primary-color)' : '#ff0000'
-                                                                )
+                                                                        value >= 0 ? '#00FF7E' : '#FF0000'
+                                                                ),
+                                                                borderColor: data.map((value) =>
+                                                                        value >= 0 ? '#00FF7E' : '#FF0000'
+                                                                ),
+                                                                borderWidth: 1
                                                         }
                                                 ]
                                         },

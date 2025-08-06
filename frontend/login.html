@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>QUANTUMI Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet">
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -14,12 +15,13 @@
     body {
       min-height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
+      padding: 4vh 0;
     }
     .q-hero-canvas {
-      width: 90vw; max-width: 800px;
-      height: 60vh; min-height: 400px; max-height: 700px;
+      width: 100vw; max-width: 420px;
+      height: 50vh; min-height: 300px; max-height: 560px;
       display: block; background: #111215;
-      margin: 0 auto 1.5em auto;
+      margin: 2vh auto 1.5em auto;
     }
     .center-content {
       text-align: center;
@@ -33,6 +35,7 @@
       text-shadow: 0 1px 6px #000c;
       opacity: 0.92;
       margin-bottom: 0.3em;
+      font-family: 'Sixtyfour', sans-serif;
     }
     .subtext {
       font-size: clamp(12px, 2vw, 22px);
@@ -62,6 +65,33 @@
     }
     .login-btn:hover, .login-btn:focus {
       background: #35e1ad; color: #111;
+    }
+    .buttons {
+      display: flex; justify-content: center;
+      gap: 1.2em; margin-top: 1.2em; margin-bottom: 2em;
+    }
+    .btn {
+      padding: 0.65em 1.5em;
+      font-size: clamp(13px, 2vw, 19px);
+      background: #25272a;
+      color: #e3e3e3cc;
+      border: 1.5px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 500;
+      box-shadow: 0 1px 8px #0002;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      outline: none;
+    }
+    .btn.selected, .btn:focus {
+      background: #555;
+      color: #fff;
+      border-color: #a5b5ff44;
+    }
+    .btn:hover:not(.selected) {
+      background: #393a41;
+      color: #fff;
     }
     @media (max-width: 600px) {
       .subtext { margin-bottom: 1.3em; }
