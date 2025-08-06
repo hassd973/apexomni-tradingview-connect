@@ -109,6 +109,26 @@ button:active {
   color: #000;
 }
 
+/* Arrow buttons in modules */
+.module-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #25272a;
+  color: #e3e3e3cc;
+  border: 1.5px solid transparent;
+  border-radius: 8px;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.module-arrow:hover,
+.module-arrow:focus {
+  background: #393a41;
+  color: #fff;
+  border-color: #a5b5ff44;
+}
+
 .loader {
   padding: 1rem;
 }

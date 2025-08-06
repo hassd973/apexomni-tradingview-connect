@@ -1,5 +1,5 @@
 (function(){
-  const Q_GRID = [
+  const RAW_Q_GRID = [
     [0,1,1,1,1,1,1,1,0],
     [1,1,0,0,0,0,0,1,1],
     [1,0,1,1,1,1,1,0,1],
@@ -12,6 +12,7 @@
     [0,0,0,0,1,1,1,0,0],
     [0,0,0,0,0,1,0,0,0]
   ];
+  const Q_GRID = RAW_Q_GRID.map(r => r.slice().reverse());
   const GRID_COLS = Q_GRID[0].length, GRID_ROWS = Q_GRID.length;
   const config = {subX:4, subY:3, dotRadius:0.092};
   function drawLogo(ctx, w, h){
