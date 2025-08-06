@@ -1091,19 +1091,28 @@
                                 }
                         }
                         .toggle-module-btn {
-                                background: rgba(255, 255, 255, 0.05);
-                                border: 1px solid var(--secondary-color);
-                                border-radius: 9999px;
-                                color: var(--primary-color);
-                                font-size: 0.875rem;
+                                padding: 0.65em 1.5em;
+                                font-size: clamp(13px, 2vw, 19px);
+                                background: #25272a;
+                                color: #e3e3e3cc;
+                                border: 1.5px solid transparent;
+                                border-radius: 8px;
                                 cursor: pointer;
-                                padding: 0.25rem 0.75rem;
-                                transition: background-color 0.3s ease,
-                                        color 0.3s ease;
+                                font-family: inherit;
+                                font-weight: 500;
+                                box-shadow: 0 1px 8px #0002;
+                                transition: background 0.2s, color 0.2s, border-color 0.2s;
+                                outline: none;
                         }
-                        .toggle-module-btn:hover {
-                                background: var(--primary-color);
-                                color: var(--bg-color);
+                        .toggle-module-btn:hover,
+                        .toggle-module-btn:focus {
+                                background: #393a41;
+                                color: #fff;
+                        }
+                        .toggle-module-btn.active {
+                                background: #555;
+                                color: #fff;
+                                border-color: #a5b5ff44;
                         }
 			.module-content.hidden {
 				display: none;
@@ -2034,64 +2043,136 @@
                         inset: 0;
                         width: 100%;
                         height: 100%;
-                        background: rgba(15, 12, 41, 0.8);
+                        background: #111215;
                         z-index: 2000;
                         display: flex;
+                        flex-direction: column;
                         align-items: center;
                         justify-content: center;
-                        color: var(--text-color);
+                        color: #e3e3e3cc;
                     }
-                    #access-form {
-                        background: rgba(0, 0, 0, 0.75);
-                        padding: 2rem;
-                        border-radius: 1rem;
+                    .q-hero-canvas {
+                        width: 100vw;
+                        max-width: 420px;
+                        height: 56vh;
+                        min-height: 320px;
+                        max-height: 600px;
+                        display: block;
+                        background: #111215;
+                        margin: 0 auto 1.5em auto;
+                    }
+                    .center-content {
                         text-align: center;
-                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-                        width: 90%;
-                        max-width: 22rem;
+                        margin-bottom: 1.5em;
                     }
-                    #access-form h2 {
-                        font-size: 1.5rem;
-                        margin-bottom: 1rem;
-                        font-family: 'Limelight', cursive;
+                    .branding {
+                        font-size: clamp(24px, 6vw, 54px);
+                        font-weight: 700;
+                        letter-spacing: 2px;
+                        text-shadow: 0 1px 6px #000c;
+                        opacity: 0.92;
+                        margin-bottom: 0.3em;
                     }
-                    #access-form input,
-                    #access-form button {
-                        width: 100%;
-                        margin-top: 0.75rem;
-                        padding: 0.5rem;
-                        border-radius: 0.25rem;
-                        border: none;
-                        color: #000;
+                    .subtext {
+                        font-size: clamp(12px, 2vw, 22px);
+                        letter-spacing: 1px;
+                        text-shadow: 0 1px 6px #000b;
+                        margin-bottom: 1.2em;
                     }
-                    #access-form button {
-                        background: var(--primary-color);
-                        cursor: pointer;
+                    .login-form {
+                        width: 94vw;
+                        max-width: 340px;
+                        margin: 0 auto;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 1.2em;
+                        background: rgba(12,12,12,0.94);
+                        padding: 2em 1.6em 2.2em 1.6em;
+                        border-radius: 12px;
+                        box-shadow: 0 2px 20px #000a;
                     }
-                    #access-form button:hover {
-                        background: var(--secondary-color);
+                    .login-form input {
+                        background: #000;
+                        color: #fff;
+                        border: 1.5px solid #444;
+                        border-radius: 6px;
+                        font-size: 1.1rem;
+                        padding: 0.7em 0.9em;
+                        outline: none;
+                        transition: border-color .2s;
                     }
-                    #access-form label {
+                    .login-form input:focus {
+                        border-color: #fff;
+                    }
+                    .login-form label {
                         display: flex;
                         align-items: center;
-                        justify-content: center;
                         font-size: 0.875rem;
-                        margin-top: 0.75rem;
                     }
-                    #access-form label span {
+                    .login-form label span {
                         margin-left: 0.5rem;
+                    }
+                    .login-btn {
+                        background: #fff;
+                        color: #000;
+                        font-weight: 600;
+                        border: none;
+                        border-radius: 6px;
+                        font-size: 1.15em;
+                        padding: 0.7em;
+                        cursor: pointer;
+                        transition: background 0.18s, color 0.18s;
+                    }
+                    .login-btn:hover,
+                    .login-btn:focus {
+                        background: #35e1ad;
+                        color: #111;
+                    }
+                    .buttons {
+                        display: flex;
+                        justify-content: center;
+                        gap: 1.2em;
+                        margin-top: 1.2em;
+                    }
+                    .btn {
+                        padding: 0.65em 1.5em;
+                        font-size: clamp(13px, 2vw, 19px);
+                        background: #25272a;
+                        color: #e3e3e3cc;
+                        border: 1.5px solid transparent;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-family: inherit;
+                        font-weight: 500;
+                        box-shadow: 0 1px 8px #0002;
+                        transition: background 0.2s, color 0.2s, border-color 0.2s;
+                        outline: none;
+                    }
+                    .btn.selected,
+                    .btn:focus {
+                        background: #555;
+                        color: #fff;
+                        border-color: #a5b5ff44;
+                    }
+                    .btn:hover:not(.selected) {
+                        background: #393a41;
+                        color: #fff;
+                    }
+                    #nda-link {
+                        color: #35e1ad;
+                        text-decoration: underline;
                     }
                     #access-error {
                         color: #f87171;
                         margin-top: 0.75rem;
                     }
-                    #nda-link {
-                        color: var(--secondary-color);
-                        text-decoration: underline;
-                    }
                     #overlay-description {
                         font-size: 0.875rem;
                         margin-top: 0.5rem;
+                    }
+                    @media (max-width: 600px) {
+                        .subtext { margin-bottom: 1.3em; }
+                        .branding { font-size: 8vw; }
                     }
                 </style>
 		<style>
@@ -2180,22 +2261,194 @@
                 class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF7E]"
         >
                 <div id="access-overlay">
-                        <form id="access-form">
-                                <h2>QuantumI Pre-Launch</h2>
+                        <canvas id="q-hero" class="q-hero-canvas"></canvas>
+                        <div class="center-content">
+                                <div class="branding">QUANTUMI</div>
+                                <div class="subtext">08:50 PM BST, August 06, 2025 — BTC Price: [Price], Volatility: [Volatility]</div>
+                        </div>
+                        <form id="access-form" class="login-form">
                                 <input type="password" id="access-password" placeholder="Password" required />
                                 <input type="email" id="access-email" placeholder="Email" required />
                                 <label>
                                         <input type="checkbox" id="access-nda" required />
                                         <span>I agree to the NDA</span>
                                 </label>
-                                <button type="submit">Enter</button>
-                                <a id="nda-link" href="QuantumI_NDA_v3.pdf" download class="block mt-2 underline">Download NDA</a>
-                                <p id="overlay-description" class="mt-2 text-sm">
-                                        QuantumI visually standardizes and logs blockchain transactions, simplifying crypto analytics for everyone.
-                                </p>
+                                <button class="login-btn" type="submit">Enter</button>
+                                <a id="nda-link" href="QuantumI_NDA_v3.pdf" download>Download NDA</a>
+                                <p id="overlay-description">QuantumI visually standardizes and logs blockchain transactions, simplifying crypto analytics for everyone.</p>
                                 <div id="access-error" class="hidden"></div>
                         </form>
+                        <div class="buttons">
+                                <button class="btn" id="layer1" onclick="setLayer(0)">Layer I</button>
+                                <button class="btn selected" id="layer2" onclick="setLayer(1)">Layer II</button>
+                                <button class="btn" id="layer3" onclick="setLayer(2)">Layer III</button>
+                        </div>
                 </div>
+                <script>
+                        const Q_GRID = [
+                                [0,1,1,1,1,1,1,1,0].reverse(),
+                                [1,1,0,0,0,0,0,1,1].reverse(),
+                                [1,0,1,1,1,1,1,0,1].reverse(),
+                                [1,0,1,0,0,0,1,0,1].reverse(),
+                                [1,0,1,0,0,0,1,0,1].reverse(),
+                                [1,0,1,0,0,0,1,0,1].reverse(),
+                                [1,0,1,1,1,1,1,0,1].reverse(),
+                                [1,1,0,0,0,1,0,1,1].reverse(),
+                                [0,1,1,1,1,0,1,1,0].reverse(),
+                                [0,0,0,0,1,1,1,0,0].reverse(),
+                                [0,0,0,0,0,1,0,0,0].reverse()
+                        ];
+                        const GRID_COLS = Q_GRID[0].length;
+                        const GRID_ROWS = Q_GRID.length;
+
+                        const LAYER_CONFIG = [
+                                {subX: 1, subY: 1, dotRadius: 0.32},
+                                {subX: 3, subY: 2, dotRadius: 0.13},
+                                {subX: 4, subY: 3, dotRadius: 0.092}
+                        ];
+                        let currentLayer = 1;
+
+                        const canvas = document.getElementById('q-hero');
+                        const ctx = canvas.getContext('2d');
+                        let W = 0, H = 0, CELL = 0, X0 = 0, Y0 = 0;
+
+                        function resize() {
+                                W = canvas.offsetWidth;
+                                H = Math.max(canvas.offsetHeight * 0.55, 320);
+                                canvas.width = W * window.devicePixelRatio;
+                                canvas.height = H * window.devicePixelRatio;
+                                ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+                                const margin = 1.4;
+                                CELL = Math.min(W / (GRID_COLS + margin * 2), H / (GRID_ROWS + margin * 2));
+                                X0 = (W - GRID_COLS * CELL) / 2;
+                                Y0 = (H - GRID_ROWS * CELL) / 2;
+                        }
+                        window.addEventListener('resize', resize);
+                        resize();
+
+                        function getLogoDots(layerIdx) {
+                                const config = LAYER_CONFIG[layerIdx];
+                                let dots = [];
+                                for (let y = 0; y < GRID_ROWS; y++) {
+                                        for (let x = 0; x < GRID_COLS; x++) {
+                                                if (Q_GRID[y][x]) {
+                                                        for (let iy = 0; iy < config.subY; iy++) {
+                                                                for (let ix = 0; ix < config.subX; ix++) {
+                                                                        const offsetX = (ix - (config.subX - 1) / 2) / config.subX;
+                                                                        const offsetY = (iy - (config.subY - 1) / 2) / config.subY;
+                                                                        dots.push({x, y, offsetX, offsetY});
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                }
+                                return dots;
+                        }
+
+                        function getRandomScatterPos() {
+                                return {
+                                        x: Math.random() * (GRID_COLS + 2) - 1,
+                                        y: Math.random() * (GRID_ROWS + 2) - 1
+                                };
+                        }
+
+                        let dots = [];
+                        let isHovering = false;
+                        let startTime = null;
+                        let animating = false;
+
+                        function initDots(assemble) {
+                                const logoDots = getLogoDots(currentLayer);
+                                dots = [];
+                                const totalPixels = logoDots.length;
+                                let scatterPositions = [];
+                                for (let i = 0; i < totalPixels; i++) {
+                                        scatterPositions.push(getRandomScatterPos());
+                                }
+                                for (let i = 0; i < totalPixels; i++) {
+                                        const target = logoDots[i];
+                                        const delay = Math.random() * 0.18;
+                                        dots.push({
+                                                from: assemble ? scatterPositions[i] : target,
+                                                to: assemble ? target : scatterPositions[i],
+                                                progress: 0,
+                                                delay: delay
+                                        });
+                                }
+                        }
+
+                        function drawLogoDots(progress) {
+                                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                                const config = LAYER_CONFIG[currentLayer];
+                                for (let i = 0; i < dots.length; i++) {
+                                        let d = dots[i];
+                                        let t = Math.max(0, Math.min(1, (progress - d.delay) / 1.3));
+                                        t = t < 1 ? 1 - Math.pow(1 - t, 2.5) : 1;
+                                        d.progress = t;
+
+                                        let x = d.from.x + (d.to.x - d.from.x) * t;
+                                        let y = d.from.y + (d.to.y - d.from.y) * t;
+                                        let cx = X0 + (x + 0.5 + (d.to.offsetX || 0)) * CELL;
+                                        let cy = Y0 + (y + 0.5 + (d.to.offsetY || 0)) * CELL;
+
+                                        ctx.save();
+                                        ctx.beginPath();
+                                        ctx.arc(cx, cy, CELL * config.dotRadius, 0, 2 * Math.PI);
+                                        ctx.fillStyle = "#e3e3e3";
+                                        ctx.shadowColor = "#fff";
+                                        ctx.shadowBlur = 10;
+                                        ctx.globalAlpha = 0.97;
+                                        ctx.fill();
+                                        ctx.restore();
+                                }
+                        }
+
+                        function animateLogo(ts) {
+                                if (!startTime) startTime = ts;
+                                const elapsed = (ts - startTime) / 1000;
+                                drawLogoDots(elapsed);
+                                if (elapsed < 1.5) {
+                                        animating = true;
+                                        requestAnimationFrame(animateLogo);
+                                } else if (!isHovering) {
+                                        drawLogoDots(1.5);
+                                        animating = false;
+                                }
+                        }
+
+                        function setLayer(idx) {
+                                if (currentLayer === idx) return;
+                                currentLayer = idx;
+                                document.querySelectorAll('.btn').forEach((b, i) => {
+                                        b.classList.toggle('selected', i === idx);
+                                });
+                                startTime = null;
+                                initDots(isHovering);
+                                animating = true;
+                                requestAnimationFrame(animateLogo);
+                        }
+
+                        canvas.addEventListener('mouseover', () => {
+                                if (!isHovering && !animating) {
+                                        isHovering = true;
+                                        startTime = null;
+                                        initDots(true);
+                                        requestAnimationFrame(animateLogo);
+                                }
+                        });
+
+                        canvas.addEventListener('mouseout', () => {
+                                if (isHovering && !animating) {
+                                        isHovering = false;
+                                        startTime = null;
+                                        initDots(false);
+                                        requestAnimationFrame(animateLogo);
+                                }
+                        });
+
+                        initDots(false);
+                        setLayer(1); // Default to Layer II
+                </script>
 		<button
 			aria-label="Toggle navigation menu"
 			class="nav-menu-toggle hidden"
@@ -4290,21 +4543,23 @@
 			}
 
 function setupModuleToggles() {
-				document.querySelectorAll('.toggle-module-btn').forEach((btn) => {
-					btn.addEventListener('click', () => {
-						const moduleContent = btn
-							.closest('.chat-logs-container, section')
-							.querySelector('.module-content');
-						const isHidden = moduleContent.classList.toggle('hidden');
-						btn.textContent = isHidden ? '▶' : '▼';
-						btn.setAttribute(
-							'data-tooltip',
-							isHidden ? 'Show module content' : 'Hide module content'
-						);
-						btn.setAttribute(
-							'aria-label',
-							isHidden ? 'Show module content' : 'Hide module content'
-						);
+                                document.querySelectorAll('.toggle-module-btn').forEach((btn) => {
+                                        const moduleContent = btn
+                                                .closest('.chat-logs-container, section')
+                                                .querySelector('.module-content');
+                                        btn.classList.toggle('active', !moduleContent.classList.contains('hidden'));
+                                        btn.addEventListener('click', () => {
+                                                const isHidden = moduleContent.classList.toggle('hidden');
+                                                btn.textContent = isHidden ? '▶' : '▼';
+                                                btn.classList.toggle('active', !isHidden);
+                                                btn.setAttribute(
+                                                        'data-tooltip',
+                                                        isHidden ? 'Show module content' : 'Hide module content'
+                                                );
+                                                btn.setAttribute(
+                                                        'aria-label',
+                                                        isHidden ? 'Show module content' : 'Hide module content'
+                                                );
                                        });
                                });
                        }
@@ -5358,8 +5613,12 @@ function setupModuleToggles() {
                                                                 label: '24h Price Change (%)',
                                                                 data: data,
                                                                 backgroundColor: data.map((value) =>
-                                                                        value >= 0 ? 'var(--primary-color)' : '#ff0000'
-                                                                )
+                                                                        value >= 0 ? '#00FF7E' : '#FF0000'
+                                                                ),
+                                                                borderColor: data.map((value) =>
+                                                                        value >= 0 ? '#00FF7E' : '#FF0000'
+                                                                ),
+                                                                borderWidth: 1
                                                         }
                                                 ]
                                         },
@@ -7063,22 +7322,11 @@ function setupModuleToggles() {
 					)
 					.slice(0, topCount);
 
-				const labels = filteredTokens.map((t) => t.symbol.toUpperCase());
-				const data = filteredTokens.map((t) => t.price_change_percentage_24h);
-				const style = getComputedStyle(document.documentElement);
-                                const blue =
-                                        style.getPropertyValue('--primary-color').trim() || '#00FF7E';
-                                const orange =
-                                        style.getPropertyValue('--secondary-color').trim() || '#FFD966';
-				const bgColor = data.map((change) =>
-					isMarketDown
-						? change > 0
-							? blue
-							: orange
-						: change < 0
-							? orange
-							: blue
-				);
+                                const labels = filteredTokens.map((t) => t.symbol.toUpperCase());
+                                const data = filteredTokens.map((t) => t.price_change_percentage_24h);
+                                const green = '#2ecc71';
+                                const red = '#e74c3c';
+                                const bgColor = data.map((change) => (change >= 0 ? green : red));
 
 				const ctx = document.getElementById('inverseChart').getContext('2d');
 				if (inverseChart) inverseChart.destroy();
