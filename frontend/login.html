@@ -4,18 +4,18 @@
   <meta charset="UTF-8">
   <title>QUANTUMI Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:wght@400..700&display=swap" rel="stylesheet">
   <style>
     html, body {
       margin: 0; padding: 0;
-      width: 100vw; height: 100vh;
+      width: 100%; min-height: 100%;
       background: #111215;
       font-family: 'Inter', Arial, sans-serif;
     }
     body {
       min-height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: 2vh 0;
+      padding: 2vh 0; overflow-y: auto;
     }
     .q-hero-canvas {
       width: 100vw; max-width: 420px;
@@ -28,14 +28,19 @@
       color: #e3e3e3cc;
       margin-bottom: 1.5em;
     }
+    @keyframes weightCycle {
+      0%, 100% { font-variation-settings: 'wght' 400; }
+      50% { font-variation-settings: 'wght' 700; }
+    }
     .branding {
       font-size: clamp(24px, 6vw, 54px);
-      font-weight: 700;
+      font-variation-settings: 'wght' 400;
       letter-spacing: 2px;
       text-shadow: 0 1px 6px #000c;
       opacity: 0.92;
       margin-bottom: 0.3em;
       font-family: 'Sixtyfour', sans-serif;
+      animation: weightCycle 6s ease-in-out infinite;
     }
     .subtext {
       font-size: clamp(12px, 2vw, 22px);
@@ -137,7 +142,7 @@
 
     function resize() {
       W = canvas.offsetWidth;
-      H = Math.max(canvas.offsetHeight * 0.55, 320);
+      H = Math.max(canvas.offsetHeight, 320);
       canvas.width = W * window.devicePixelRatio;
       canvas.height = H * window.devicePixelRatio;
       ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
