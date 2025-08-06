@@ -61,7 +61,6 @@
       opacity: 0.92;
       margin-bottom: 0.3em;
       font-family: 'Sixtyfour', sans-serif;
-      font-variation-settings: 'wght' 400;
       animation: weightCycle 6s ease-in-out infinite;
     }
     .subtext {
@@ -201,12 +200,7 @@
     const GRID_COLS = Q_GRID[0].length;
     const GRID_ROWS = Q_GRID.length;
 
-    const LAYER_CONFIG = [
-      {subX: 1, subY: 1, dotRadius: 0.32},
-      {subX: 3, subY: 2, dotRadius: 0.13},
-      {subX: 4, subY: 3, dotRadius: 0.092}
-    ];
-    let currentLayer = 1;
+    const LAYER = {subX: 3, subY: 2, dotRadius: 0.13};
 
     const canvas = document.getElementById('q-hero');
     const ctx = canvas.getContext('2d');
@@ -228,8 +222,8 @@
     window.addEventListener('resize', resize);
     resize();
 
-    function getLogoDots(layerIdx) {
-      const config = LAYER_CONFIG[layerIdx];
+    function getLogoDots() {
+      const config = LAYER;
       let dots = [];
       for (let y = 0; y < GRID_ROWS; y++) {
         for (let x = 0; x < GRID_COLS; x++) {
@@ -260,7 +254,7 @@
     let animating = false;
 
     function initDots(assemble) {
-      const logoDots = getLogoDots(currentLayer);
+      const logoDots = getLogoDots();
       dots = [];
       const totalPixels = logoDots.length;
       let scatterPositions = [];
@@ -282,7 +276,7 @@
     function drawLogoDots(progress) {
       currentProgress = progress;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const config = LAYER_CONFIG[currentLayer];
+      const config = LAYER;
       for (let i = 0; i < dots.length; i++) {
         let d = dots[i];
         let t = Math.max(0, Math.min(1, (progress - d.delay) / 1.3));
