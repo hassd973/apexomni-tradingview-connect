@@ -4,9 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QUANTUMI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:wght@400..700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&display=swap" rel="stylesheet">
   <style>
     :root {
       --quantumi-green: #00FF7E;
@@ -56,9 +57,19 @@
       font-size: 1.8rem;
       color: var(--quantumi-green);
       letter-spacing: 0.05em;
-      font-family: 'Sixtyfour', sans-serif;
-      font-variation-settings: 'wght' 400;
-      animation: titleWeightCycle 6s ease-in-out infinite;
+      font-family: "Sixtyfour", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-style: normal;
+      font-variation-settings: "BLED" 0, "SCAN" 0;
+    }
+
+    .sixtyfour-font {
+      font-family: "Sixtyfour", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-style: normal;
+      font-variation-settings: "BLED" 0, "SCAN" 0;
     }
 
     .sixtyfour-font {
@@ -113,10 +124,6 @@
       padding: 0.5rem 0;
     }
 
-    @keyframes titleWeightCycle {
-      0%, 100% { font-variation-settings: 'wght' 400; }
-      50% { font-variation-settings: 'wght' 700; }
-    }
   </style>
 </head>
 <body>

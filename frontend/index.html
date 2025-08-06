@@ -35,7 +35,7 @@
                         rel="stylesheet"
                 />
                 <link
-                        href="https://fonts.googleapis.com/css2?family=Sixtyfour:wght@400..700&display=swap"
+                        href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&display=swap"
                         rel="stylesheet"
                 />
                 <link
@@ -114,17 +114,15 @@
                                         0 0 8px var(--shadow-color),
                                         0 0 12px rgba(0, 255, 126, 0.3);
                         }
-                        @keyframes titleWeightCycle {
-                                0%, 100% { font-variation-settings: 'wght' 400; }
-                                50% { font-variation-settings: 'wght' 700; }
-                        }
                         .main-title,
                         .sixtyfour-font {
-                                font-family: 'Sixtyfour', sans-serif;
-                                font-variation-settings: 'wght' 400;
-                                animation: titleWeightCycle 6s ease-in-out infinite;
+                                font-family: "Sixtyfour", sans-serif;
+                                font-optical-sizing: auto;
+                                font-weight: 400;
+                                font-style: normal;
+                                font-variation-settings: "BLED" 0, "SCAN" 0;
                         }
-			#loading-screen {
+                        #loading-screen {
 				position: fixed;
 				top: 0;
 				left: 0;
@@ -2077,15 +2075,6 @@
                         text-shadow: 0 1px 6px #000c;
                         opacity: 0.92;
                         margin-bottom: 0.3em;
-                        font-family: 'Sixtyfour', sans-serif;
-                        font-variation-settings: 'wght' 400;
-                        animation: titleWeightCycle 6s ease-in-out infinite;
-                    }
-                    .subtext {
-                        font-size: clamp(12px, 2vw, 22px);
-                        letter-spacing: 1px;
-                        text-shadow: 0 1px 6px #000b;
-                        margin-bottom: 1.2em;
                     }
                     .login-form {
                         width: 94vw;
@@ -2178,10 +2167,9 @@
                         font-size: 0.875rem;
                         margin-top: 0.5rem;
                     }
-                    @media (max-width: 600px) {
-                        .subtext { margin-bottom: 1.3em; }
-                        .branding { font-size: 8vw; }
-                    }
+                      @media (max-width: 600px) {
+                          .branding { font-size: 8vw; }
+                      }
                 </style>
 		<style>
                         html,
@@ -2271,8 +2259,7 @@
                 <div id="access-overlay">
                         <canvas id="q-hero" class="q-hero-canvas"></canvas>
                         <div class="center-content">
-                                <div class="branding">QUANTUMI</div>
-                                <div class="subtext">08:50 PM BST, August 06, 2025 — BTC Price: [Price], Volatility: [Volatility]</div>
+                                  <div class="branding sixtyfour-font">QUANTUMI</div>
                         </div>
                         <form id="access-form" class="login-form">
                                 <input type="password" id="access-password" placeholder="Password" required />

@@ -5,8 +5,9 @@
   <title>QUANTUMI Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:wght@400..700&display=swap" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&family=Sora:wght@100..800&display=swap" rel="stylesheet">
   <style>
     html, body {
       width: 100%;
@@ -14,7 +15,7 @@
       height: 100%;
       margin: 0;
       padding: 0;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Sora', sans-serif;
       background: #111215;
       color: #f8f8f8;
       overflow-x: hidden;
@@ -38,19 +39,22 @@
     .q-hero-canvas {
       width: 100%;
       max-width: 420px;
-      height: clamp(200px, 40vh, 460px);
+      height: clamp(180px, 33vh, 360px);
       display: block;
       background: #111215;
-      margin: 0 auto 1.5em auto;
+      margin: 0 auto 1.2em auto;
     }
     .center-content {
       text-align: center;
       color: #e3e3e3cc;
-      margin-bottom: 1.5em;
+      margin-bottom: 1.2em;
     }
-    @keyframes weightCycle {
-      0%, 100% { font-variation-settings: 'wght' 400; }
-      50% { font-variation-settings: 'wght' 700; }
+    .sixtyfour-font {
+      font-family: "Sixtyfour", sans-serif;
+      font-optical-sizing: auto;
+      font-weight: 400;
+      font-style: normal;
+      font-variation-settings: "BLED" 0, "SCAN" 0;
     }
     .sixtyfour-font {
       font-family: 'Sixtyfour', sans-serif;
@@ -61,14 +65,7 @@
       letter-spacing: 2px;
       text-shadow: 0 1px 6px #000c;
       opacity: 0.92;
-      margin-bottom: 0.3em;
-      animation: weightCycle 6s ease-in-out infinite;
-    }
-    .subtext {
-      font-size: clamp(12px, 2vw, 22px);
-      letter-spacing: 1px;
-      text-shadow: 0 1px 6px #000b;
-      margin-bottom: 1.2em;
+      margin-bottom: 0.6em;
     }
     .login-form {
       width: 100%;
@@ -158,12 +155,11 @@
         padding: 1.2em 0.5em 1.6em 0.5em;
         font-size: 1em;
       }
-      .subtext { margin-bottom: 1.3em; }
       .branding { font-size: 8vw; }
     }
     @media (max-height: 700px) {
       .q-hero-canvas {
-        height: clamp(150px, 30vh, 260px);
+        height: clamp(150px, 25vh, 240px);
       }
       .buttons {
         margin-top: 0.8em;
@@ -176,7 +172,6 @@
     <canvas id="q-hero" class="q-hero-canvas"></canvas>
     <div class="center-content">
       <div class="branding sixtyfour-font">QUANTUMI</div>
-      <div class="subtext" id="market-info">Loading market data...</div>
     </div>
     <form class="login-form">
       <input type="text" placeholder="Username or Email" required />
@@ -219,7 +214,7 @@
 
     function resize() {
       W = canvas.offsetWidth;
-      H = Math.max(canvas.offsetHeight, 320);
+      H = canvas.offsetHeight;
       canvas.width = W * window.devicePixelRatio;
       canvas.height = H * window.devicePixelRatio;
       ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
@@ -362,24 +357,6 @@
       requestAnimationFrame(animateLogo);
     }
 
-    const marketInfoEl = document.getElementById('market-info');
-    async function updateMarketData() {
-      try {
-        const res = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=false');
-        const data = await res.json();
-        const price = data.market_data.current_price.usd;
-        const vol = data.market_data.price_change_percentage_24h;
-        const now = new Date();
-        const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', timeZoneName:'short'});
-        const dateStr = now.toLocaleDateString(undefined, {year:'numeric', month:'long', day:'2-digit'});
-        marketInfoEl.textContent = `${timeStr}, ${dateStr} — BTC Price: $${price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}, Volatility: ${vol.toFixed(2)}%`;
-      } catch (err) {
-        marketInfoEl.textContent = 'Market data unavailable';
-      }
-    }
-
-    updateMarketData();
-    setInterval(updateMarketData, 60000);
   </script>
 </body>
 </html>
