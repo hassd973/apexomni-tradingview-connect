@@ -1,27 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>QUANTUMI Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:wght@400..700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:wght@400..700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     html, body {
-      margin: 0; padding: 0;
-      width: 100%; min-height: 100%;
+      width: 100%;
+      min-height: 100vh;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
       background: #111215;
-      font-family: 'Inter', Arial, sans-serif;
+      color: #f8f8f8;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
     }
     body {
-      min-height: 100vh; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 2vh 0; overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+    main {
+      flex: 1 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2em 1em 3em 1em;
+      min-height: 0;
     }
     .q-hero-canvas {
-      width: 100vw; max-width: 420px;
-      height: 44vh; min-height: 260px; max-height: 520px;
-      display: block; background: #111215;
-      margin: 1vh auto 1.5em auto;
+      width: 100%;
+      max-width: 420px;
+      height: 56vh;
+      min-height: 320px;
+      max-height: 600px;
+      display: block;
+      background: #111215;
+      margin: 0 auto 1.5em auto;
     }
     .center-content {
       text-align: center;
@@ -34,7 +56,6 @@
     }
     .branding {
       font-size: clamp(24px, 6vw, 54px);
-      font-variation-settings: 'wght' 400;
       letter-spacing: 2px;
       text-shadow: 0 1px 6px #000c;
       opacity: 0.92;
@@ -49,31 +70,51 @@
       margin-bottom: 1.2em;
     }
     .login-form {
-      width: 94vw; max-width: 340px;
-      margin: 0 auto; display: flex; flex-direction: column; gap: 1.2em;
-      background: rgba(12,12,12,0.94); padding: 2em 1.6em 2.2em 1.6em;
-      border-radius: 12px; box-shadow: 0 2px 20px #000a;
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2em;
+      background: rgba(12,12,12,0.94);
+      padding: 2em 1.6em 2.2em 1.6em;
+      border-radius: 12px;
+      box-shadow: 0 2px 20px #000a;
     }
     .login-form input {
-      background: #000; color: #fff;
+      background: #000;
+      color: #fff;
       border: 1.5px solid #444;
-      border-radius: 6px; font-size: 1.1rem;
+      border-radius: 6px;
+      font-size: 1.1rem;
       padding: 0.7em 0.9em;
-      outline: none; transition: border-color .2s;
+      outline: none;
+      transition: border-color .2s;
     }
-    .login-form input:focus { border-color: #fff; }
+    .login-form input:focus {
+      border-color: #fff;
+    }
     .login-btn {
-      background: #fff; color: #000;
-      font-weight: 600; border: none; border-radius: 6px;
-      font-size: 1.15em; padding: 0.7em;
-      cursor: pointer; transition: background 0.18s, color 0.18s;
+      background: #fff;
+      color: #000;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.15em;
+      padding: 0.7em;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
     }
-    .login-btn:hover, .login-btn:focus {
-      background: #35e1ad; color: #111;
+    .login-btn:hover,
+    .login-btn:focus {
+      background: #35e1ad;
+      color: #111;
     }
     .buttons {
-      display: flex; justify-content: center;
-      gap: 1.2em; margin-top: 1.2em; margin-bottom: 4vh;
+      display: flex;
+      justify-content: center;
+      gap: 1.2em;
+      margin-top: 1.2em;
     }
     .btn {
       padding: 0.65em 1.5em;
@@ -89,7 +130,8 @@
       transition: background 0.2s, color 0.2s, border-color 0.2s;
       outline: none;
     }
-    .btn.selected, .btn:focus {
+    .btn.selected,
+    .btn:focus {
       background: #555;
       color: #fff;
       border-color: #a5b5ff44;
@@ -98,23 +140,49 @@
       background: #393a41;
       color: #fff;
     }
+    footer {
+      flex-shrink: 0;
+      background: #181b1e;
+      color: #aaa;
+      text-align: center;
+      padding: 1.2em 0 1.5em 0;
+      border-top: 1px solid #222;
+      font-size: 0.95em;
+    }
     @media (max-width: 600px) {
+      main {
+        padding: 1em 0.3em 2.5em 0.3em;
+      }
+      .login-form {
+        padding: 1.2em 0.5em 1.6em 0.5em;
+        font-size: 1em;
+      }
       .subtext { margin-bottom: 1.3em; }
       .branding { font-size: 8vw; }
     }
   </style>
 </head>
 <body>
-  <canvas id="q-hero" class="q-hero-canvas"></canvas>
-  <div class="center-content">
-    <div class="branding">QUANTUMI</div>
-    <div class="subtext" id="market-info">Loading market data...</div>
-  </div>
-  <form class="login-form">
-    <input type="text" placeholder="Username or Email" required>
-    <input type="password" placeholder="Password" required>
-    <button class="login-btn" type="submit">Sign In</button>
-  </form>
+  <main>
+    <canvas id="q-hero" class="q-hero-canvas"></canvas>
+    <div class="center-content">
+      <div class="branding">QUANTUMI</div>
+      <div class="subtext" id="market-info">Loading market data...</div>
+    </div>
+    <form class="login-form">
+      <input type="text" placeholder="Username or Email" required />
+      <input type="password" placeholder="Password" required />
+      <button class="login-btn" type="submit">Sign In</button>
+    </form>
+    <div class="buttons">
+      <button class="btn" id="layer1" onclick="setLayer(0)">Layer I</button>
+      <button class="btn selected" id="layer2" onclick="setLayer(1)">Layer II</button>
+      <button class="btn" id="layer3" onclick="setLayer(2)">Layer III</button>
+    </div>
+  </main>
+  <footer>
+    &copy; 2025 QuantumI &mdash; All Rights Reserved.
+  </footer>
   <script>
     const Q_GRID = [
       [0,1,1,1,1,1,1,1,0].reverse(),
