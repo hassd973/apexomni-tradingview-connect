@@ -110,11 +110,6 @@
     <input type="password" placeholder="Password" required>
     <button class="login-btn" type="submit">Sign In</button>
   </form>
-  <div class="buttons">
-    <button class="btn" id="layer1" onclick="setLayer(0)">Layer I</button>
-    <button class="btn selected" id="layer2" onclick="setLayer(1)">Layer II</button>
-    <button class="btn" id="layer3" onclick="setLayer(2)">Layer III</button>
-  </div>
   <script>
     const Q_GRID = [
       [0,1,1,1,1,1,1,1,0].reverse(),
@@ -132,12 +127,7 @@
     const GRID_COLS = Q_GRID[0].length;
     const GRID_ROWS = Q_GRID.length;
 
-    const LAYER_CONFIG = [
-      {subX: 1, subY: 1, dotRadius: 0.32},
-      {subX: 3, subY: 2, dotRadius: 0.13},
-      {subX: 4, subY: 3, dotRadius: 0.092}
-    ];
-    let currentLayer = 1;
+    const LAYER = {subX: 3, subY: 2, dotRadius: 0.13};
 
     const canvas = document.getElementById('q-hero');
     const ctx = canvas.getContext('2d');
@@ -159,8 +149,8 @@
     window.addEventListener('resize', resize);
     resize();
 
-    function getLogoDots(layerIdx) {
-      const config = LAYER_CONFIG[layerIdx];
+    function getLogoDots() {
+      const config = LAYER;
       let dots = [];
       for (let y = 0; y < GRID_ROWS; y++) {
         for (let x = 0; x < GRID_COLS; x++) {
@@ -191,7 +181,7 @@
     let animating = false;
 
     function initDots(assemble) {
-      const logoDots = getLogoDots(currentLayer);
+      const logoDots = getLogoDots();
       dots = [];
       const totalPixels = logoDots.length;
       let scatterPositions = [];
@@ -213,7 +203,7 @@
     function drawLogoDots(progress) {
       currentProgress = progress;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const config = LAYER_CONFIG[currentLayer];
+      const config = LAYER;
       for (let i = 0; i < dots.length; i++) {
         let d = dots[i];
         let t = Math.max(0, Math.min(1, (progress - d.delay) / 1.3));
