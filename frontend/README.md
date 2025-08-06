@@ -9,7 +9,7 @@ A static website displaying low-volume tokens and real-time TradingView alerts f
    - `index-2025.html` offers an experimental 2025-ready layout with gesture-ready controls.
    - The primary `index.html` now incorporates the same Quantumi design tokens for consistent branding.
    - Headings and navigation use the **Satoshi** font from Fontshare for a sleek feel.
-   - `login.html` and the NDA access overlay showcase a kinetic Q-logo animation rendered on a canvas background and now display live BTC price and 24h volatility data.
+   - `login.html` and the NDA access overlay showcase a full-viewport kinetic Q-logo with Layer I/II/III toggles and display live BTC price and 24h volatility data.
 
 2. **Configure Better Stack**:
    - `script.js` uses ClickHouse credentials (username: `ua439SvEJ8fzbFUfZLgfrngQ0hPAJWpeW`, password: `ACTAv2qyDnjVwEoeByXTZzY7LT0CBcT4Zd86AjYnE7fy6kPB5TYr4pjFqIfTjiPs`) for `t371838.ice_king_logs`.
@@ -152,6 +152,7 @@ If stuck at `Connecting to Better Stack...` or seeing errors:
   - Responsive for web and mobile (Tailwind CSS).
   - Visual hierarchy with large headers (`text-4xl`, `text-2xl`) and fitting text.
   - Custom scrollbar and chart styling.
+  - Module visibility buttons share the login page styling; inverse metrics chart uses red/green bars for clarity.
 
 ## Notes
 

@@ -1091,19 +1091,28 @@
                                 }
                         }
                         .toggle-module-btn {
-                                background: rgba(255, 255, 255, 0.05);
-                                border: 1px solid var(--secondary-color);
-                                border-radius: 9999px;
-                                color: var(--primary-color);
-                                font-size: 0.875rem;
+                                padding: 0.65em 1.5em;
+                                font-size: clamp(13px, 2vw, 19px);
+                                background: #25272a;
+                                color: #e3e3e3cc;
+                                border: 1.5px solid transparent;
+                                border-radius: 8px;
                                 cursor: pointer;
-                                padding: 0.25rem 0.75rem;
-                                transition: background-color 0.3s ease,
-                                        color 0.3s ease;
+                                font-family: inherit;
+                                font-weight: 500;
+                                box-shadow: 0 1px 8px #0002;
+                                transition: background 0.2s, color 0.2s, border-color 0.2s;
+                                outline: none;
                         }
-                        .toggle-module-btn:hover {
-                                background: var(--primary-color);
-                                color: var(--bg-color);
+                        .toggle-module-btn:hover,
+                        .toggle-module-btn:focus {
+                                background: #393a41;
+                                color: #fff;
+                        }
+                        .toggle-module-btn.active {
+                                background: #555;
+                                color: #fff;
+                                border-color: #a5b5ff44;
                         }
 			.module-content.hidden {
 				display: none;
@@ -4534,21 +4543,23 @@
 			}
 
 function setupModuleToggles() {
-				document.querySelectorAll('.toggle-module-btn').forEach((btn) => {
-					btn.addEventListener('click', () => {
-						const moduleContent = btn
-							.closest('.chat-logs-container, section')
-							.querySelector('.module-content');
-						const isHidden = moduleContent.classList.toggle('hidden');
-						btn.textContent = isHidden ? '▶' : '▼';
-						btn.setAttribute(
-							'data-tooltip',
-							isHidden ? 'Show module content' : 'Hide module content'
-						);
-						btn.setAttribute(
-							'aria-label',
-							isHidden ? 'Show module content' : 'Hide module content'
-						);
+                                document.querySelectorAll('.toggle-module-btn').forEach((btn) => {
+                                        const moduleContent = btn
+                                                .closest('.chat-logs-container, section')
+                                                .querySelector('.module-content');
+                                        btn.classList.toggle('active', !moduleContent.classList.contains('hidden'));
+                                        btn.addEventListener('click', () => {
+                                                const isHidden = moduleContent.classList.toggle('hidden');
+                                                btn.textContent = isHidden ? '▶' : '▼';
+                                                btn.classList.toggle('active', !isHidden);
+                                                btn.setAttribute(
+                                                        'data-tooltip',
+                                                        isHidden ? 'Show module content' : 'Hide module content'
+                                                );
+                                                btn.setAttribute(
+                                                        'aria-label',
+                                                        isHidden ? 'Show module content' : 'Hide module content'
+                                                );
                                        });
                                });
                        }
@@ -7307,22 +7318,11 @@ function setupModuleToggles() {
 					)
 					.slice(0, topCount);
 
-				const labels = filteredTokens.map((t) => t.symbol.toUpperCase());
-				const data = filteredTokens.map((t) => t.price_change_percentage_24h);
-				const style = getComputedStyle(document.documentElement);
-                                const blue =
-                                        style.getPropertyValue('--primary-color').trim() || '#00FF7E';
-                                const orange =
-                                        style.getPropertyValue('--secondary-color').trim() || '#FFD966';
-				const bgColor = data.map((change) =>
-					isMarketDown
-						? change > 0
-							? blue
-							: orange
-						: change < 0
-							? orange
-							: blue
-				);
+                                const labels = filteredTokens.map((t) => t.symbol.toUpperCase());
+                                const data = filteredTokens.map((t) => t.price_change_percentage_24h);
+                                const green = '#2ecc71';
+                                const red = '#e74c3c';
+                                const bgColor = data.map((change) => (change >= 0 ? green : red));
 
 				const ctx = document.getElementById('inverseChart').getContext('2d');
 				if (inverseChart) inverseChart.destroy();

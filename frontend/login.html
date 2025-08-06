@@ -238,6 +238,18 @@
     initDots(false);
     drawLogoDots(0);
 
+    function setLayer(idx) {
+      if (currentLayer === idx) return;
+      currentLayer = idx;
+      document.querySelectorAll('.btn').forEach((b, i) => {
+        b.classList.toggle('selected', i === idx);
+      });
+      startTime = null;
+      initDots(isHovering);
+      animating = true;
+      requestAnimationFrame(animateLogo);
+    }
+
     const marketInfoEl = document.getElementById('market-info');
     async function updateMarketData() {
       try {
