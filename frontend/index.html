@@ -496,11 +496,14 @@
 				font-size: clamp(12px, 2vw, 18px);
 				opacity: 0.85;
 			}
-			.logo {
-				width: 40px;
-				height: 40px;
-				margin: 0 auto 2px;
-			}
+                        .logo {
+                                width: 40px;
+                                height: 40px;
+                                margin: 0 auto 2px;
+                                background: #000;
+                                border-radius: 12px;
+                                display: block;
+                        }
 			@keyframes logoPulse {
 				0%,
 				100% {
@@ -668,42 +671,39 @@
 				pointer-events: none;
 				z-index: 1;
 			}
-			.vinyl-disk {
-				position: relative;
-				width: 80%;
-				max-width: 400px;
-				aspect-ratio: 1 / 1;
-				border-radius: 50%;
-				margin: 0.5rem auto;
-				background: radial-gradient(
-					circle,
-					rgba(255, 255, 255, 0.15) 5%,
-					rgba(255, 255, 255, 0.05) 40%,
-					rgba(0, 0, 0, 0.6) 80%
-				);
+                        .vinyl-disk {
+                                position: relative;
+                                width: 80%;
+                                max-width: 400px;
+                                aspect-ratio: 1 / 1;
+                                border-radius: 50%;
+                                margin: 0.5rem auto;
+                                background: radial-gradient(
+                                        circle,
+                                        rgba(255, 255, 255, 0.15) 5%,
+                                        rgba(255, 255, 255, 0.05) 40%,
+                                        rgba(0, 0, 0, 0.6) 80%
+                                );
                                 border: 3px solid rgba(0, 255, 126, 0.6);
                                 box-shadow: 0 0 8px rgba(0, 255, 126, 0.4);
-				backdrop-filter: blur(4px);
-				opacity: 0.85;
-				transition:
-					box-shadow 0.3s ease,
-					border-color 0.3s ease;
-			}
-			.vinyl-disk::before {
-				content: '';
-				position: absolute;
-				top: 50%;
-				left: 50%;
-				width: 40%;
-				height: 40%;
-				border-radius: 50%;
-				background: url('https://i.postimg.cc/R6HKW38z/q-logo.png') no-repeat
-					center/contain;
-				opacity: 0.9;
-				transform: translate(-50%, -50%);
-				pointer-events: none;
-			}
-			.vinyl-disk::after {
+                                backdrop-filter: blur(4px);
+                                opacity: 0.85;
+                                transition:
+                                        box-shadow 0.3s ease,
+                                        border-color 0.3s ease;
+                        }
+                        .vinyl-logo {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                width: 40%;
+                                height: 40%;
+                                transform: translate(-50%, -50%);
+                                border-radius: 50%;
+                                background: #000;
+                                display: block;
+                        }
+                        .vinyl-disk::after {
 				content: '';
 				position: absolute;
 				top: 50%;
@@ -1003,33 +1003,36 @@
 			}
 			.spline-modal-close,
 			.spline-fullscreen-btn,
-			button,
-			#chat-send,
-			#toggle-indicator-header,
-			#toggle-indicator-modal,
-			#toggle-background,
-			#toggle-background-dock {
-				background-color: var(--primary-color);
-				color: #1e2727;
-				border: 1px solid var(--shadow-color);
-				font-size: 0.875rem;
-				border-radius: 6px;
-				padding: 0.5rem 1rem;
-				transition:
-					background-color 0.3s ease,
-					box-shadow 0.3s ease;
-			}
-			.spline-modal-close:hover,
-			.spline-fullscreen-btn:hover,
-			button:hover,
-			#chat-send:hover,
-			#toggle-indicator-header:hover,
-			#toggle-indicator-modal:hover,
-			#toggle-background:hover,
-			#toggle-background-dock:hover {
-				background-color: var(--secondary-color);
-				box-shadow: 0 0 8px var(--secondary-color);
-			}
+                        button,
+                        #chat-send,
+                        #toggle-indicator-header,
+                        #toggle-indicator-modal,
+                        #toggle-background,
+                        #toggle-background-dock {
+                                background-color: #25272a;
+                                color: #e3e3e3;
+                                border: 1.5px solid transparent;
+                                font-size: 0.875rem;
+                                border-radius: 6px;
+                                padding: 0.5rem 1rem;
+                                transition:
+                                        background-color 0.3s ease,
+                                        box-shadow 0.3s ease;
+                        }
+                        .spline-modal-close:hover,
+                        .spline-fullscreen-btn:hover,
+                        button:hover,
+                        button:focus,
+                        button:active,
+                        #chat-send:hover,
+                        #toggle-indicator-header:hover,
+                        #toggle-indicator-modal:hover,
+                        #toggle-background:hover,
+                        #toggle-background-dock:hover {
+                                background-color: var(--secondary-color);
+                                color: #000;
+                                box-shadow: 0 0 8px var(--secondary-color);
+                        }
 			.spline-modal-close {
 				position: absolute;
 				top: 1rem;
@@ -2211,11 +2214,9 @@
 				×
 			</button>
 			<div class="nav-menu-content">
-				<img
-					alt="QuantumI Logo"
-					class="w-16 h-16 mb-4"
-					src="https://i.postimg.cc/R6HKW38z/q-logo.png"
-				/>
+                                <canvas
+                                        class="w-16 h-16 mb-4 logo quantumi-logo"
+                                ></canvas>
 				<h2 class="text-xl mb-2">QuantumI Dashboard</h2>
 				<p>
 					Real-time crypto analytics with CoinGecko, Etherscan, Dune, and
@@ -2250,11 +2251,9 @@
 						<source src="INTRO%20TRAILER.mp4" type="video/mp4" />
 					</video>
 					<div class="video-overlay metrics-overlay">
-						<img
-							src="https://i.postimg.cc/R6HKW38z/q-logo.png"
-							alt="QuantumI Logo"
-							class="logo"
-						/>
+                                                <canvas
+                                                        class="logo quantumi-logo"
+                                                ></canvas>
 						<span id="loading-price"></span>
 						<span id="loading-topcoin"></span>
 						<span id="loading-inverse"></span>
@@ -2972,11 +2971,9 @@
                                                 <div id="btc-metrics-overlay" class="metrics-overlay">
                                                         <div class="metrics-row">
                                                                 <span id="btc-overlay-price" class="metric metric-main"></span>
-                                                                <img
-                                                                        src="https://i.postimg.cc/R6HKW38z/q-logo.png"
-                                                                        alt="QuantumI Logo"
-                                                                        class="logo"
-                                                                />
+                                                                <canvas
+                                                                        class="logo quantumi-logo"
+                                                                ></canvas>
                                                                 <span id="btc-overlay-loss" class="metric metric-main"></span>
                                                         </div>
                                                         <div class="metrics-row">
@@ -3092,11 +3089,9 @@
 				id="dj-activation-overlay"
 				class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center cursor-pointer z-20 text-white"
 			>
-				<img
-					src="https://i.postimg.cc/R6HKW38z/q-logo.png"
-					alt="QuantumI Logo"
-					class="logo"
-				/>
+                                <canvas
+                                        class="logo quantumi-logo"
+                                ></canvas>
 				<span>Tap to activate DJ</span>
 			</div>
 			<div class="flex justify-between items-center">
@@ -3118,11 +3113,9 @@
                                         <div class="playlist-container video-container">
                                                 <div id="track-a-player"></div>
                                                 <div class="metrics-overlay">
-                                                        <img
-                                                                src="https://i.postimg.cc/R6HKW38z/q-logo.png"
-                                                                alt="QuantumI Logo"
-								class="logo pulse"
-							/>
+                                                        <canvas
+                                                                class="logo pulse quantumi-logo"
+                                                        ></canvas>
                                                         <div class="metrics-container">
                                                                 <span id="track-a-price" class="metric metric-main"></span>
                                                                 <span id="track-a-topcoin" class="metric metric-main"></span>
@@ -3154,7 +3147,7 @@
 							class="w-24 fx-knob"
 						/>
 					</div>
-					<div class="vinyl-disk paused" id="vinyl-a"></div>
+                                        <div class="vinyl-disk paused" id="vinyl-a"><canvas class="vinyl-logo quantumi-logo"></canvas></div>
 				</div>
 				<div class="dj-track flex-1" draggable="true">
 					<div class="mb-1 flex justify-center gap-2">
@@ -3170,11 +3163,9 @@
                                         <div class="playlist-container video-container">
                                                 <div id="track-b-player"></div>
                                                 <div class="metrics-overlay">
-                                                        <img
-                                                                src="https://i.postimg.cc/R6HKW38z/q-logo.png"
-                                                                alt="QuantumI Logo"
-								class="logo pulse"
-							/>
+                                                        <canvas
+                                                                class="logo pulse quantumi-logo"
+                                                        ></canvas>
                                                         <div class="metrics-container">
                                                                 <span id="track-b-price" class="metric metric-main"></span>
                                                                 <span id="track-b-topcoin" class="metric metric-main"></span>
@@ -3206,7 +3197,7 @@
 							class="w-24 fx-knob"
 						/>
 					</div>
-					<div class="vinyl-disk paused" id="vinyl-b"></div>
+                                        <div class="vinyl-disk paused" id="vinyl-b"><canvas class="vinyl-logo quantumi-logo"></canvas></div>
 				</div>
 			</div>
 			<div
@@ -7183,6 +7174,7 @@ function setupModuleToggles() {
                 </script>
                 <div class="mode-switch">Mode: Raw Hash</div>
                 <div id="visualization"><!-- Future 3D BTC Hash Visualizer --></div>
+                <script src="quantumi-logo.js"></script>
                 <script>
                         const modeSwitch = document.querySelector('.mode-switch');
                         let brainMode = false;
