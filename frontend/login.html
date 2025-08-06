@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>QUANTUMI Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour&display=swap" rel="stylesheet">
   <style>
     html, body {
       margin: 0; padding: 0;
@@ -14,12 +15,13 @@
     body {
       min-height: 100vh; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
+      padding: 4vh 0;
     }
     .q-hero-canvas {
       width: 100vw; max-width: 420px;
-      height: 56vh; min-height: 320px; max-height: 600px;
+      height: 50vh; min-height: 300px; max-height: 560px;
       display: block; background: #111215;
-      margin: 0 auto 1.5em auto;
+      margin: 2vh auto 1.5em auto;
     }
     .center-content {
       text-align: center;
@@ -33,6 +35,7 @@
       text-shadow: 0 1px 6px #000c;
       opacity: 0.92;
       margin-bottom: 0.3em;
+      font-family: 'Sixtyfour', sans-serif;
     }
     .subtext {
       font-size: clamp(12px, 2vw, 22px);
@@ -65,7 +68,7 @@
     }
     .buttons {
       display: flex; justify-content: center;
-      gap: 1.2em; margin-top: 1.2em;
+      gap: 1.2em; margin-top: 1.2em; margin-bottom: 2em;
     }
     .btn {
       padding: 0.65em 1.5em;
@@ -100,7 +103,7 @@
   <canvas id="q-hero" class="q-hero-canvas"></canvas>
   <div class="center-content">
     <div class="branding">QUANTUMI</div>
-    <div class="subtext">08:50 PM BST, August 06, 2025 — BTC Price: [Price], Volatility: [Volatility]</div>
+    <div class="subtext" id="market-info">Loading market data...</div>
   </div>
   <form class="login-form">
     <input type="text" placeholder="Username or Email" required>
@@ -139,6 +142,8 @@
     const canvas = document.getElementById('q-hero');
     const ctx = canvas.getContext('2d');
     let W = 0, H = 0, CELL = 0, X0 = 0, Y0 = 0;
+    let currentProgress = 0;
+    let mouseOffsetX = 0, mouseOffsetY = 0;
 
     function resize() {
       W = canvas.offsetWidth;
@@ -206,6 +211,7 @@
     }
 
     function drawLogoDots(progress) {
+      currentProgress = progress;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const config = LAYER_CONFIG[currentLayer];
       for (let i = 0; i < dots.length; i++) {
@@ -216,8 +222,8 @@
 
         let x = d.from.x + (d.to.x - d.from.x) * t;
         let y = d.from.y + (d.to.y - d.from.y) * t;
-        let cx = X0 + (x + 0.5 + (d.to.offsetX || 0)) * CELL;
-        let cy = Y0 + (y + 0.5 + (d.to.offsetY || 0)) * CELL;
+        let cx = X0 + (x + 0.5 + (d.to.offsetX || 0)) * CELL + mouseOffsetX * 20;
+        let cy = Y0 + (y + 0.5 + (d.to.offsetY || 0)) * CELL + mouseOffsetY * 20;
 
         ctx.save();
         ctx.beginPath();
@@ -244,18 +250,6 @@
       }
     }
 
-    function setLayer(idx) {
-      if (currentLayer === idx) return;
-      currentLayer = idx;
-      document.querySelectorAll('.btn').forEach((b, i) => {
-        b.classList.toggle('selected', i === idx);
-      });
-      startTime = null;
-      initDots(isHovering);
-      animating = true;
-      requestAnimationFrame(animateLogo);
-    }
-
     canvas.addEventListener('mouseover', () => {
       if (!isHovering && !animating) {
         isHovering = true;
@@ -274,8 +268,46 @@
       }
     });
 
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouseOffsetX = (e.clientX - rect.left - rect.width / 2) / rect.width;
+      mouseOffsetY = (e.clientY - rect.top - rect.height / 2) / rect.height;
+      if (!animating) drawLogoDots(currentProgress);
+    });
+
     initDots(false);
-    setLayer(1);
+    drawLogoDots(0);
+
+    function setLayer(idx) {
+      if (currentLayer === idx) return;
+      currentLayer = idx;
+      document.querySelectorAll('.btn').forEach((b, i) => {
+        b.classList.toggle('selected', i === idx);
+      });
+      startTime = null;
+      initDots(isHovering);
+      animating = true;
+      requestAnimationFrame(animateLogo);
+    }
+
+    const marketInfoEl = document.getElementById('market-info');
+    async function updateMarketData() {
+      try {
+        const res = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=false');
+        const data = await res.json();
+        const price = data.market_data.current_price.usd;
+        const vol = data.market_data.price_change_percentage_24h;
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', timeZoneName:'short'});
+        const dateStr = now.toLocaleDateString(undefined, {year:'numeric', month:'long', day:'2-digit'});
+        marketInfoEl.textContent = `${timeStr}, ${dateStr} — BTC Price: $${price.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}, Volatility: ${vol.toFixed(2)}%`;
+      } catch (err) {
+        marketInfoEl.textContent = 'Market data unavailable';
+      }
+    }
+
+    updateMarketData();
+    setInterval(updateMarketData, 60000);
   </script>
 </body>
 </html>
