@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>QUANTUMI Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,6 @@
     html, body {
       width: 100%;
       min-height: 100vh;
-      height: 100%;
       margin: 0;
       padding: 0;
       font-family: 'Sora', sans-serif;
@@ -34,6 +33,7 @@
       align-items: center;
       justify-content: center;
       padding: clamp(1.5em, 5vh, 3em) 1em;
+      padding-bottom: calc(env(safe-area-inset-bottom) + clamp(1.5em, 5vh, 3em));
       box-sizing: border-box;
     }
     .q-hero-canvas {
@@ -117,59 +117,35 @@
     .btn {
       padding: 0.65em 1.5em;
       font-size: clamp(13px, 2vw, 19px);
-      background: #25272a;
-      color: #e3e3e3cc;
+      background: rgba(37,39,42,0.55);
+      color: rgba(227,227,227,0.8);
       border: 1.5px solid transparent;
       border-radius: 8px;
       cursor: pointer;
       font-family: inherit;
       font-weight: 500;
       box-shadow: 0 1px 8px #0002;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
       outline: none;
     }
-    .btn.selected,
-    .btn:focus {
-      background: #555;
+    .btn.selected {
+      background: rgba(0,255,126,0.3);
       color: #fff;
-      border-color: #a5b5ff44;
+      border-color: rgba(0,255,126,0.4);
     }
-    .btn:hover:not(.selected) {
-      background: #393a41;
+    .btn:hover:not(.selected),
+    .btn:focus:not(.selected) {
+      background: rgba(0,255,126,0.2);
       color: #fff;
+      transform: scale(1.04);
     }
 
-    /* small mobile scroll toggles */
-    .mobile-scroll-controls {
-      position: fixed;
-      right: 0.75rem;
-      bottom: 0.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      z-index: 50;
-    }
-    .scroll-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 1.1rem;
-      user-select: none;
-    }
-    @media (min-width: 768px) {
-      .mobile-scroll-controls { display: none; }
-    }
     footer {
       flex-shrink: 0;
       background: #181b1e;
       color: #aaa;
       text-align: center;
-      padding: 1.2em 0 1.5em 0;
+      padding: 1.2em 0 calc(1.5em + env(safe-area-inset-bottom)) 0;
       border-top: 1px solid #222;
       font-size: 0.95em;
     }
@@ -184,6 +160,10 @@
       .branding { font-size: 8vw; }
     }
     @media (max-height: 700px) {
+      main {
+        justify-content: flex-start;
+        padding-top: 1em;
+      }
       .q-hero-canvas {
         height: clamp(150px, 25vh, 240px);
       }
@@ -208,10 +188,6 @@
       <button class="btn" id="layer1" onclick="setLayer(0)">Layer I</button>
       <button class="btn selected" id="layer2" onclick="setLayer(1)">Layer II</button>
       <button class="btn" id="layer3" onclick="setLayer(2)">Layer III</button>
-    </div>
-    <div class="mobile-scroll-controls">
-      <div class="scroll-btn" id="scroll-up">&#9650;</div>
-      <div class="scroll-btn" id="scroll-down">&#9660;</div>
     </div>
   </main>
   <footer>
@@ -242,7 +218,6 @@
     let currentProgress = 0;
     let mouseOffsetX = 0, mouseOffsetY = 0;
     let currentLayer = 1;
-    let scrollInterval = null;
 
     function resize() {
       W = canvas.offsetWidth;
@@ -388,29 +363,6 @@
       animating = true;
       requestAnimationFrame(animateLogo);
     }
-
-    function startScroll(direction) {
-      stopScroll();
-      scrollInterval = setInterval(() => {
-        window.scrollBy({ top: direction * 40, behavior: 'smooth' });
-      }, 50);
-    }
-
-    function stopScroll() {
-      if (scrollInterval) clearInterval(scrollInterval);
-      scrollInterval = null;
-    }
-
-    const upBtn = document.getElementById('scroll-up');
-    const downBtn = document.getElementById('scroll-down');
-    ['mousedown', 'touchstart'].forEach(ev => {
-      upBtn.addEventListener(ev, () => startScroll(-1));
-      downBtn.addEventListener(ev, () => startScroll(1));
-    });
-    ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(ev => {
-      upBtn.addEventListener(ev, stopScroll);
-      downBtn.addEventListener(ev, stopScroll);
-    });
 
   </script>
 </body>

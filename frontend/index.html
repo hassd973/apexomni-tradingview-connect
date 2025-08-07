@@ -3,7 +3,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+                <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport" />
 		<meta
 			content="QuantumI Dashboard: Live crypto market analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains."
 			name="description"
@@ -1097,26 +1097,30 @@
                         .toggle-module-btn {
                                 padding: 0.65em 1.5em;
                                 font-size: clamp(13px, 2vw, 19px);
-                                background: #25272a;
-                                color: #e3e3e3cc;
+                                background: rgba(37,39,42,0.55);
+                                color: rgba(227,227,227,0.8);
                                 border: 1.5px solid transparent;
                                 border-radius: 8px;
                                 cursor: pointer;
                                 font-family: inherit;
                                 font-weight: 500;
                                 box-shadow: 0 1px 8px #0002;
-                                transition: background 0.2s, color 0.2s, border-color 0.2s;
+                                transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s, opacity 0.2s;
                                 outline: none;
+                                opacity: 0.6;
                         }
                         .toggle-module-btn:hover,
                         .toggle-module-btn:focus {
-                                background: #393a41;
+                                background: rgba(0,255,126,0.2);
                                 color: #fff;
+                                transform: scale(1.04);
+                                opacity: 1;
                         }
                         .toggle-module-btn.active {
-                                background: #555;
+                                background: rgba(0,255,126,0.3);
                                 color: #fff;
-                                border-color: #a5b5ff44;
+                                border-color: rgba(0,255,126,0.4);
+                                opacity: 1;
                         }
 			.module-content.hidden {
 				display: none;
@@ -2046,7 +2050,7 @@
                         position: fixed;
                         inset: 0;
                         width: 100%;
-                        height: 100%;
+                        min-height: 100vh;
                         background: #111215;
                         z-index: 2000;
                         display: flex;
@@ -2054,13 +2058,15 @@
                         align-items: center;
                         justify-content: center;
                         color: #e3e3e3cc;
+                        padding: clamp(1.5em, 5vh, 3em) 1em;
+                        padding-bottom: calc(env(safe-area-inset-bottom) + clamp(1.5em, 5vh, 3em));
+                        box-sizing: border-box;
+                        overflow-y: auto;
                     }
                     .q-hero-canvas {
-                        width: 100vw;
+                        width: 100%;
                         max-width: 420px;
-                        height: 56vh;
-                        min-height: 320px;
-                        max-height: 600px;
+                        height: clamp(180px, 33vh, 360px);
                         display: block;
                         background: #111215;
                         margin: 0 auto 1.5em auto;
@@ -2077,7 +2083,7 @@
                         margin-bottom: 0.3em;
                     }
                     .login-form {
-                        width: 94vw;
+                        width: 100%;
                         max-width: 340px;
                         margin: 0 auto;
                         display: flex;
@@ -2134,26 +2140,27 @@
                     .btn {
                         padding: 0.65em 1.5em;
                         font-size: clamp(13px, 2vw, 19px);
-                        background: #25272a;
-                        color: #e3e3e3cc;
+                        background: rgba(37,39,42,0.55);
+                        color: rgba(227,227,227,0.8);
                         border: 1.5px solid transparent;
                         border-radius: 8px;
                         cursor: pointer;
                         font-family: inherit;
                         font-weight: 500;
                         box-shadow: 0 1px 8px #0002;
-                        transition: background 0.2s, color 0.2s, border-color 0.2s;
+                        transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s;
                         outline: none;
                     }
-                    .btn.selected,
-                    .btn:focus {
-                        background: #555;
+                    .btn.selected {
+                        background: rgba(0,255,126,0.3);
                         color: #fff;
-                        border-color: #a5b5ff44;
+                        border-color: rgba(0,255,126,0.4);
                     }
-                    .btn:hover:not(.selected) {
-                        background: #393a41;
+                    .btn:hover:not(.selected),
+                    .btn:focus:not(.selected) {
+                        background: rgba(0,255,126,0.2);
                         color: #fff;
+                        transform: scale(1.04);
                     }
                     #nda-link {
                         color: #35e1ad;
@@ -2166,6 +2173,12 @@
                     #overlay-description {
                         font-size: 0.875rem;
                         margin-top: 0.5rem;
+                    }
+                    @media (max-height: 700px) {
+                        #access-overlay {
+                            justify-content: flex-start;
+                            padding-top: 1em;
+                        }
                     }
                       @media (max-width: 600px) {
                           .branding { font-size: 8vw; }
