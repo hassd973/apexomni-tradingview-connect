@@ -106,7 +106,7 @@
     }
     .login-btn:hover,
     .login-btn:focus {
-      background: #35e1ad;
+      background: #00FF00;
       color: #111;
     }
     .buttons {
@@ -130,13 +130,13 @@
       outline: none;
     }
     .btn.selected {
-      background: rgba(0,255,126,0.3);
+      background: rgba(0,255,0,0.3);
       color: #fff;
-      border-color: rgba(0,255,126,0.4);
+      border-color: rgba(0,255,0,0.4);
     }
     .btn:hover:not(.selected),
     .btn:focus:not(.selected) {
-      background: rgba(0,255,126,0.2);
+      background: rgba(0,255,0,0.2);
       color: #fff;
       transform: scale(1.04);
     }
@@ -188,8 +188,8 @@
     </form>
     <div class="buttons">
       <button class="btn layer-btn" onclick="setLayer(0)" id="btn0">Layer I</button>
-      <button class="btn layer-btn selected" onclick="setLayer(1)" id="btn1">Layer II</button>
-      <button class="btn layer-btn" onclick="setLayer(2)" id="btn2">Layer III</button>
+      <button class="btn layer-btn" onclick="setLayer(1)" id="btn1">Layer II</button>
+      <button class="btn layer-btn selected" onclick="setLayer(2)" id="btn2">Layer III</button>
     </div>
   </main>
   <footer>
@@ -218,7 +218,7 @@
     const ROWS = 7;
     const COLS = 6;
     let dots = [];
-    let currentLayer = 1;
+    let currentLayer = 2;
 
     function setLayer(index) {
       currentLayer = index;

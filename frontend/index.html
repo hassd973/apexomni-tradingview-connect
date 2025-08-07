@@ -71,11 +71,11 @@
 		<script src="https://www.youtube.com/iframe_api"></script>
                 <style>
                         :root {
-                                --quantumi-green: #00FF7E;
+                                --quantumi-green: #00FF00;
                                 --quantumi-black: #010101;
                                 --quantumi-white: #F8F8F8;
                                 --quantumi-gray: #1A1A1A;
-                                --quantumi-accent: #00FF7E;
+                                --quantumi-accent: #00FF00;
                                 --quantumi-radius: 18px;
                                 --quantumi-blur: 18px;
                                 --quantumi-glow: 0 0 20px var(--quantumi-green);
@@ -84,7 +84,7 @@
                                 --text-color: var(--quantumi-white);
                                 --primary-color: var(--quantumi-green);
                                 --secondary-color: var(--quantumi-green);
-                                --shadow-color: rgba(0, 255, 126, 0.3);
+                                --shadow-color: rgba(0, 255, 0, 0.3);
                         }
                         body {
                                 font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -1100,7 +1100,7 @@
                         #legend-toggle {
                                 padding: 0.65em 1.5em;
                                 font-size: clamp(13px, 2vw, 19px);
-                                background: #333;
+                                background: rgba(0, 255, 0, 0.1);
                                 color: #fff;
                                 border: none;
                                 border-radius: 8px;
@@ -1125,7 +1125,7 @@
                         #legend-toggle:focus,
                         #legend-toggle:active,
                         #legend-toggle.active {
-                                background: #00ff00;
+                                background: rgba(0, 255, 0, 0.4);
                                 color: #000;
                         }
 			.module-content.hidden {
@@ -2160,13 +2160,13 @@
                         outline: none;
                     }
                     .btn.selected {
-                        background: rgba(0,255,126,0.3);
+                        background: rgba(0,255,0,0.3);
                         color: #fff;
-                        border-color: rgba(0,255,126,0.4);
+                        border-color: rgba(0,255,0,0.4);
                     }
                     .btn:hover:not(.selected),
                     .btn:focus:not(.selected) {
-                        background: rgba(0,255,126,0.2);
+                        background: rgba(0,255,0,0.2);
                         color: #fff;
                         transform: scale(1.04);
                     }
@@ -2276,7 +2276,7 @@
 		</style>
 	</head>
         <body
-                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF7E]"
+                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF00]"
         >
                 <div id="access-overlay">
                         <canvas id="qCanvas" class="q-hero-canvas" width="600" height="600"></canvas>
@@ -2297,8 +2297,8 @@
                         </form>
                         <div class="buttons">
                                 <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
-                                <button class="btn layer-btn selected" id="btn1" onclick="setLayer(1)">Layer II</button>
-                                <button class="btn layer-btn" id="btn2" onclick="setLayer(2)">Layer III</button>
+                                <button class="btn layer-btn" id="btn1" onclick="setLayer(1)">Layer II</button>
+                                <button class="btn layer-btn selected" id="btn2" onclick="setLayer(2)">Layer III</button>
                         </div>
                   </div>
                 <script>
@@ -2324,7 +2324,7 @@
     const ROWS = 7;
     const COLS = 6;
     let dots = [];
-    let currentLayer = 1;
+    let currentLayer = 2;
 
     function setLayer(index) {
       currentLayer = index;
@@ -3768,9 +3768,9 @@
 				bitcrusherNode,
 				gainNode;
                         const themes = {
-                                original: ['#00FF7E', '#00cc5b', '#009944', '#e0f7fa'],
-                                heatmap: ['#66ff66', '#ffff00', '#ff0000'],
-                                lifecycle: ['#003a1c', '#00cc5b', '#00FF7E']
+original: ['#00FF00', '#00cc00', '#009900', '#e0ffe0'],
+heatmap: ['#66ff66', '#ffff00', '#ff0000'],
+lifecycle: ['#003a00', '#00cc00', '#00FF00']
                         };
                         let currentTheme = 'heatmap';
 			let siteColors = themes.original;
@@ -4580,7 +4580,7 @@ function setupModuleToggles() {
 
                                 const initWidget = () => {
                                         const style = getComputedStyle(document.documentElement);
-                                        const upColor = style.getPropertyValue('--primary-color').trim() || '#00FF7E';
+                                        const upColor = style.getPropertyValue('--primary-color').trim() || '#00FF00';
                                         const downColor = '#ff0000';
                                         try {
                                                 const widget = new TradingView.widget({
@@ -5583,10 +5583,10 @@ function setupModuleToggles() {
                                                                 label: '24h Price Change (%)',
                                                                 data: data,
                                                                 backgroundColor: data.map((value) =>
-                                                                        value >= 0 ? '#00FF7E' : '#FF0000'
+                                                                        value >= 0 ? '#00FF00' : '#FF0000'
                                                                 ),
                                                                 borderColor: data.map((value) =>
-                                                                        value >= 0 ? '#00FF7E' : '#FF0000'
+                                                                        value >= 0 ? '#00FF00' : '#FF0000'
                                                                 ),
                                                                 borderWidth: 1
                                                         }
@@ -7294,7 +7294,7 @@ function setupModuleToggles() {
 
                                 const labels = filteredTokens.map((t) => t.symbol.toUpperCase());
                                 const data = filteredTokens.map((t) => t.price_change_percentage_24h);
-                                const green = '#2ecc71';
+                                const green = '#00FF00';
                                 const red = '#e74c3c';
                                 const bgColor = data.map((change) => (change >= 0 ? green : red));
 
