@@ -283,6 +283,8 @@
 
     function animate(now) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.shadowColor = currentLayer === 2 ? "#fff" : "transparent";
+      ctx.shadowBlur = currentLayer === 2 ? 12 : 0;
       let complete = true;
 
       for (let dot of dots) {
