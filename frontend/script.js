@@ -181,13 +181,28 @@ async function renderGasHeatmap() {
     const cellWidth = canvas.width / maxHistory;
     const cellHeight = canvas.height;
 
+    const interpolate = (c1, c2, t) => {
+      const toRGB = c => c.match(/\w\w/g).map(x => parseInt(x, 16));
+      const [r1, g1, b1] = toRGB(c1);
+      const [r2, g2, b2] = toRGB(c2);
+      const r = Math.round(r1 + (r2 - r1) * t);
+      const g = Math.round(g1 + (g2 - g1) * t);
+      const b = Math.round(b1 + (b2 - b1) * t);
+      return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+    };
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     gasHistory.forEach((data, i) => {
       const ratio = (data.gasPrice - minGas) / (maxGas - minGas || 1);
-      const light = 30 + ratio * 50;
-      ctx.fillStyle = `hsl(140, 100%, ${light}%)`;
+      let color;
+      if (ratio < 0.5) {
+        color = interpolate('#00ff00', '#ffff00', ratio * 2);
+      } else {
+        color = interpolate('#ffff00', '#ff0000', (ratio - 0.5) * 2);
+      }
+      ctx.fillStyle = color;
       ctx.fillRect(i * cellWidth, 0, cellWidth, cellHeight);
-      ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
       ctx.strokeRect(i * cellWidth, 0, cellWidth, cellHeight);
     });
 

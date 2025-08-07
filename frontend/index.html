@@ -2294,8 +2294,8 @@
                         </form>
                                 <div class="buttons">
                                 <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
-                                <button class="btn layer-btn selected" id="btn1" onclick="setLayer(1)">Layer II</button>
-                                <button class="btn layer-btn" id="btn2" onclick="setLayer(2)">Layer III</button>
+                                <button class="btn layer-btn" id="btn1" onclick="setLayer(1)">Layer II</button>
+                                <button class="btn layer-btn selected" id="btn2" onclick="setLayer(2)">Layer III</button>
                         </div>
                   </div>
                 <script>
@@ -2321,7 +2321,7 @@
     const ROWS = 7;
     const COLS = 6;
     let dots = [];
-    let currentLayer = 1;
+    let currentLayer = 2;
 
     function setLayer(index) {
       currentLayer = index;
@@ -2912,20 +2912,20 @@
 								Gas Heatmap (Multi-Chain)
 							</h3>
 							<canvas id="gas-heatmap-canvas"></canvas>
-							<div id="gas-heatmap-legend">
-								<div class="legend-item">
-                                                                        <div class="legend-color" style="background: var(--primary-color)"></div>
-									<span>Safe</span>
-								</div>
-								<div class="legend-item">
-                                                                        <div class="legend-color" style="background: var(--secondary-color)"></div>
-									<span>Propose</span>
-								</div>
-								<div class="legend-item">
-									<div class="legend-color" style="background: #ff0000"></div>
-									<span>Fast</span>
-								</div>
-							</div>
+                                                        <div id="gas-heatmap-legend">
+                                                                <div class="legend-item">
+                                                                        <div class="legend-color" style="background: #00ff00"></div>
+                                                                        <span>Safe</span>
+                                                                </div>
+                                                                <div class="legend-item">
+                                                                        <div class="legend-color" style="background: #ffff00"></div>
+                                                                        <span>Propose</span>
+                                                                </div>
+                                                                <div class="legend-item">
+                                                                        <div class="legend-color" style="background: #ff0000"></div>
+                                                                        <span>Fast</span>
+                                                                </div>
+                                                        </div>
 							<ul class="space-y-2 text-sm mt-2" id="gas-heatmap-list"></ul>
 						</div>
 						<div>
@@ -3765,9 +3765,9 @@
 				bitcrusherNode,
 				gainNode;
                         const themes = {
-original: ['#00FF00', '#00cc00', '#009900', '#e0ffe0'],
-heatmap: ['#66ff66', '#ffff00', '#ff0000'],
-lifecycle: ['#003a00', '#00cc00', '#00FF00']
+                                original: ['#add8e6', '#7ec8e3', '#55a7d5', '#e0f7ff'],
+                                heatmap: ['#00ff00', '#ffff00', '#ff0000'],
+                                lifecycle: ['#003366', '#0077cc', '#00ccff']
                         };
                         let currentTheme = 'heatmap';
 			let siteColors = themes.original;
@@ -5252,15 +5252,34 @@ function setupModuleToggles() {
 			}
 
                         function updateColorLegend() {
-                                document.getElementById('btc-color-legend').innerHTML = colorLegend
+                                const legend = document.getElementById('btc-color-legend');
+                                if (!legend) return;
+                                let themeLegend = '';
+                                if (currentTheme === 'heatmap') {
+                                        themeLegend = `
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.heatmap[0]}"></div><span>Low</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.heatmap[1]}"></div><span>Medium</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.heatmap[2]}"></div><span>High</span></div>`;
+                                } else if (currentTheme === 'lifecycle') {
+                                        themeLegend = `
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.lifecycle[0]}"></div><span>New</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.lifecycle[1]}"></div><span>Maturing</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.lifecycle[2]}"></div><span>Old</span></div>`;
+                                } else {
+                                        themeLegend = `
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.original[0]}"></div><span>Start</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.original[themes.original.length - 1]}"></div><span>Fade</span></div>`;
+                                }
+                                const dataLegend = colorLegend
                                         .map(
-                                                (item, index) => `
+                                                (item) => `
         <div class="legend-item" data-tooltip="Price: $${item.price.toLocaleString()}\nVolume: ${item.volume.toLocaleString()}\nTime: ${item.time}">
           <div class="legend-color" style="background: ${item.color}"></div>
         </div>
       `
-					)
+                                        )
                                         .join('');
+                                legend.innerHTML = themeLegend + dataLegend;
                         }
 
                         function interpolateColor(c1, c2, ratio) {
@@ -5361,9 +5380,9 @@ function setupModuleToggles() {
 				});
 
                                 const getColor = (type) => {
-                                        if (type === 'safe') return 'hsl(140, 100%, 25%)';
-                                        if (type === 'propose') return 'hsl(140, 100%, 40%)';
-                                        return 'hsl(140, 100%, 55%)';
+                                        if (type === 'safe') return '#00ff00';
+                                        if (type === 'propose') return '#ffff00';
+                                        return '#ff0000';
                                 };
 
 				const updateHeatmapAndFees = async () => {
@@ -6491,6 +6510,7 @@ function setupModuleToggles() {
 
                                initBtcOverlay();
                                applyTheme(currentTheme);
+                               updateColorLegend();
                                 if (DOM.btcOverlayMode)
                                         DOM.btcOverlayMode.textContent =
                                                 currentTheme === 'heatmap'
