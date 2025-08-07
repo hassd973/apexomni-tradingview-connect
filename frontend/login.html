@@ -31,7 +31,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: flex-start;
       padding: clamp(1.5em, 5vh, 3em) 1em;
       padding-bottom: calc(env(safe-area-inset-bottom) + clamp(1.5em, 5vh, 3em));
       box-sizing: border-box;
@@ -44,6 +44,9 @@
       display: block;
       background: #111215;
       margin: 0 auto 1.2em auto;
+    }
+    .q-hero-canvas.glow {
+      box-shadow: 0 0 24px #00FF00;
     }
     .center-content {
       text-align: center;
@@ -163,7 +166,6 @@
     }
     @media (max-height: 700px) {
       main {
-        justify-content: flex-start;
         padding-top: 1em;
       }
       .q-hero-canvas {
@@ -188,8 +190,8 @@
     </form>
     <div class="buttons">
       <button class="btn layer-btn" onclick="setLayer(0)" id="btn0">Layer I</button>
-      <button class="btn layer-btn" onclick="setLayer(1)" id="btn1">Layer II</button>
-      <button class="btn layer-btn selected" onclick="setLayer(2)" id="btn2">Layer III</button>
+      <button class="btn layer-btn selected" onclick="setLayer(1)" id="btn1">Layer II</button>
+      <button class="btn layer-btn" onclick="setLayer(2)" id="btn2">Layer III</button>
     </div>
   </main>
   <footer>
@@ -218,13 +220,14 @@
     const ROWS = 7;
     const COLS = 6;
     let dots = [];
-    let currentLayer = 2;
+    let currentLayer = 1;
 
     function setLayer(index) {
       currentLayer = index;
       document.querySelectorAll(".layer-btn").forEach((btn, i) =>
         btn.classList.toggle("selected", i === index)
       );
+      canvas.classList.toggle("glow", index === 2);
       generateDots();
       requestAnimationFrame(animate);
     }
@@ -312,6 +315,7 @@
 
     // Init
     generateDots();
+    canvas.classList.toggle("glow", currentLayer === 2);
     requestAnimationFrame(animate);
   </script>
 </body>

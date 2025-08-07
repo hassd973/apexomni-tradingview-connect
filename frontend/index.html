@@ -1100,33 +1100,29 @@
                         #legend-toggle {
                                 padding: 0.65em 1.5em;
                                 font-size: clamp(13px, 2vw, 19px);
-                                background: rgba(0, 255, 0, 0.1);
+                                background: transparent;
                                 color: #fff;
-                                border: none;
+                                border: 1.5px solid rgba(0, 255, 0, 0.3);
                                 border-radius: 8px;
                                 cursor: pointer;
                                 font-family: inherit;
                                 font-weight: 500;
-                                transition: background-color 0.3s ease, color 0.3s ease;
+                                transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
                         }
-                        .toggle-module-btn:hover,
-                        .toggle-module-btn:focus,
-                        .toggle-module-btn:active,
+                        .toggle-module-btn:hover:not(.active),
+                        .toggle-desc-btn:hover:not(.active),
+                        #hash-log-toggle:hover:not(.active),
+                        #legend-toggle:hover:not(.active) {
+                                background: rgba(0, 255, 0, 0.15);
+                        }
                         .toggle-module-btn.active,
-                        .toggle-desc-btn:hover,
-                        .toggle-desc-btn:focus,
-                        .toggle-desc-btn:active,
                         .toggle-desc-btn.active,
-                        #hash-log-toggle:hover,
-                        #hash-log-toggle:focus,
-                        #hash-log-toggle:active,
                         #hash-log-toggle.active,
-                        #legend-toggle:hover,
-                        #legend-toggle:focus,
-                        #legend-toggle:active,
                         #legend-toggle.active {
                                 background: rgba(0, 255, 0, 0.4);
                                 color: #000;
+                                box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+                                border-color: rgba(0, 255, 0, 0.8);
                         }
 			.module-content.hidden {
 				display: none;
@@ -2062,7 +2058,7 @@
                         display: flex;
                         flex-direction: column;
                         align-items: center;
-                        justify-content: center;
+                        justify-content: flex-start;
                         color: #e3e3e3cc;
                         padding: clamp(1.5em, 5vh, 3em) 1em;
                         padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
@@ -2077,6 +2073,9 @@
                         display: block;
                         background: #111215;
                         margin: 0 auto 1.5em auto;
+                    }
+                    .q-hero-canvas.glow {
+                        box-shadow: 0 0 24px #00FF00;
                     }
                     .center-content {
                         text-align: center;
@@ -2184,7 +2183,6 @@
                     }
                     @media (max-height: 700px) {
                         #access-overlay {
-                            justify-content: flex-start;
                             padding-top: 1em;
                         }
                     }
@@ -2295,10 +2293,10 @@
                                 <p id="overlay-description">QuantumI visually standardizes and logs blockchain transactions, simplifying crypto analytics for everyone.</p>
                                 <div id="access-error" class="hidden"></div>
                         </form>
-                        <div class="buttons">
+                                <div class="buttons">
                                 <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
-                                <button class="btn layer-btn" id="btn1" onclick="setLayer(1)">Layer II</button>
-                                <button class="btn layer-btn selected" id="btn2" onclick="setLayer(2)">Layer III</button>
+                                <button class="btn layer-btn selected" id="btn1" onclick="setLayer(1)">Layer II</button>
+                                <button class="btn layer-btn" id="btn2" onclick="setLayer(2)">Layer III</button>
                         </div>
                   </div>
                 <script>
@@ -2324,13 +2322,14 @@
     const ROWS = 7;
     const COLS = 6;
     let dots = [];
-    let currentLayer = 2;
+    let currentLayer = 1;
 
     function setLayer(index) {
       currentLayer = index;
       document.querySelectorAll(".layer-btn").forEach((btn, i) =>
         btn.classList.toggle("selected", i === index)
       );
+      canvas.classList.toggle("glow", index === 2);
       generateDots();
       requestAnimationFrame(animate);
     }
@@ -2417,6 +2416,7 @@
     });
 
     generateDots();
+    canvas.classList.toggle("glow", currentLayer === 2);
     requestAnimationFrame(animate);
                 </script>
                   <button
