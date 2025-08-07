@@ -3,7 +3,7 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-                <meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta
 			content="QuantumI Dashboard: Live crypto market analytics powered by CoinGecko, Etherscan, Dune, and TradingView across multiple chains."
 			name="description"
@@ -1094,33 +1094,39 @@
                                         width: 100%;
                                 }
                         }
-                        .toggle-module-btn {
+                        .toggle-module-btn,
+                        .toggle-desc-btn,
+                        #hash-log-toggle,
+                        #legend-toggle {
                                 padding: 0.65em 1.5em;
                                 font-size: clamp(13px, 2vw, 19px);
-                                background: rgba(37,39,42,0.55);
-                                color: rgba(227,227,227,0.8);
-                                border: 1.5px solid transparent;
+                                background: #333;
+                                color: #fff;
+                                border: none;
                                 border-radius: 8px;
                                 cursor: pointer;
                                 font-family: inherit;
                                 font-weight: 500;
-                                box-shadow: 0 1px 8px #0002;
-                                transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.15s, opacity 0.2s;
-                                outline: none;
-                                opacity: 0.6;
+                                transition: background-color 0.3s ease, color 0.3s ease;
                         }
                         .toggle-module-btn:hover,
-                        .toggle-module-btn:focus {
-                                background: rgba(0,255,126,0.2);
-                                color: #fff;
-                                transform: scale(1.04);
-                                opacity: 1;
-                        }
-                        .toggle-module-btn.active {
-                                background: rgba(0,255,126,0.3);
-                                color: #fff;
-                                border-color: rgba(0,255,126,0.4);
-                                opacity: 1;
+                        .toggle-module-btn:focus,
+                        .toggle-module-btn:active,
+                        .toggle-module-btn.active,
+                        .toggle-desc-btn:hover,
+                        .toggle-desc-btn:focus,
+                        .toggle-desc-btn:active,
+                        .toggle-desc-btn.active,
+                        #hash-log-toggle:hover,
+                        #hash-log-toggle:focus,
+                        #hash-log-toggle:active,
+                        #hash-log-toggle.active,
+                        #legend-toggle:hover,
+                        #legend-toggle:focus,
+                        #legend-toggle:active,
+                        #legend-toggle.active {
+                                background: #00ff00;
+                                color: #000;
                         }
 			.module-content.hidden {
 				display: none;
@@ -2059,14 +2065,15 @@
                         justify-content: center;
                         color: #e3e3e3cc;
                         padding: clamp(1.5em, 5vh, 3em) 1em;
-                        padding-bottom: calc(env(safe-area-inset-bottom) + clamp(1.5em, 5vh, 3em));
+                        padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
                         box-sizing: border-box;
                         overflow-y: auto;
                     }
                     .q-hero-canvas {
                         width: 100%;
                         max-width: 420px;
-                        height: clamp(180px, 33vh, 360px);
+                        height: auto;
+                        aspect-ratio: 1 / 1;
                         display: block;
                         background: #111215;
                         margin: 0 auto 1.5em auto;
@@ -2093,6 +2100,7 @@
                         padding: 2em 1.6em 2.2em 1.6em;
                         border-radius: 12px;
                         box-shadow: 0 2px 20px #000a;
+                        margin-bottom: 2rem;
                     }
                     .login-form input {
                         background: #000;
