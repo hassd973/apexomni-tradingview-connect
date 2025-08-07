@@ -159,6 +159,7 @@
         font-size: 1em;
       }
       .branding { font-size: 8vw; }
+      .buttons { margin-top: 0.6em; }
     }
     @media (max-height: 700px) {
       main {
@@ -211,14 +212,19 @@
     const GRID_COLS = Q_GRID[0].length;
     const GRID_ROWS = Q_GRID.length;
 
-    const LAYER = {subX: 3, subY: 2, dotRadius: 0.13};
+    const LAYER_CONFIG = [
+      {subX: 1, subY: 1, dotRadius: 0.32},
+      {subX: 3, subY: 2, dotRadius: 0.13},
+      {subX: 4, subY: 3, dotRadius: 0.092}
+    ];
+    let currentLayer = 1;
+    const LAYER = {...LAYER_CONFIG[currentLayer]};
 
     const canvas = document.getElementById('q-hero');
     const ctx = canvas.getContext('2d');
     let W = 0, H = 0, CELL = 0, X0 = 0, Y0 = 0;
     let currentProgress = 0;
     let mouseOffsetX = 0, mouseOffsetY = 0;
-    let currentLayer = 1;
 
     function resize() {
       W = canvas.offsetWidth;
@@ -359,11 +365,16 @@
       document.querySelectorAll('.btn').forEach((b, i) => {
         b.classList.toggle('selected', i === idx);
       });
+      Object.assign(LAYER, LAYER_CONFIG[idx]);
       startTime = null;
       initDots(isHovering);
       animating = true;
       requestAnimationFrame(animateLogo);
     }
+
+    canvas.addEventListener('click', () => {
+      setLayer((currentLayer + 1) % LAYER_CONFIG.length);
+    });
 
   </script>
 </body>

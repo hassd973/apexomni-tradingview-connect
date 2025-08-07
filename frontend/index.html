@@ -2188,9 +2188,10 @@
                             padding-top: 1em;
                         }
                     }
-                      @media (max-width: 600px) {
-                          .branding { font-size: 8vw; }
-                      }
+                    @media (max-width: 600px) {
+                        .branding { font-size: 8vw; }
+                        .buttons { margin-top: 0.6em; }
+                    }
                 </style>
 		<style>
                         html,
@@ -2443,6 +2444,10 @@
                                 animating = true;
                                 requestAnimationFrame(animateLogo);
                         }
+
+                        canvas.addEventListener('click', () => {
+                                setLayer((currentLayer + 1) % LAYER_CONFIG.length);
+                        });
 
                         canvas.addEventListener('mouseover', () => {
                                 if (!isHovering && !animating) {
