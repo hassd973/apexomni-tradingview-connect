@@ -11,6 +11,12 @@ module.exports = {
         carbon: '#1c1f23',
         accent: '#38bdf8',
         muted: '#64748b',
+        green: {
+          300: '#00FF00',
+          400: '#00FF00',
+          500: '#00FF00',
+          DEFAULT: '#00FF00'
+        },
         brand: {
           light: 'var(--green-light)',
           DEFAULT: 'var(--green)',
