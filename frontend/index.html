@@ -71,11 +71,11 @@
 		<script src="https://www.youtube.com/iframe_api"></script>
                 <style>
                         :root {
-                                --quantumi-green: #00FF7E;
+                                --quantumi-green: #00FF00;
                                 --quantumi-black: #010101;
                                 --quantumi-white: #F8F8F8;
                                 --quantumi-gray: #1A1A1A;
-                                --quantumi-accent: #00FF7E;
+                                --quantumi-accent: #00FF00;
                                 --quantumi-radius: 18px;
                                 --quantumi-blur: 18px;
                                 --quantumi-glow: 0 0 20px var(--quantumi-green);
@@ -84,7 +84,7 @@
                                 --text-color: var(--quantumi-white);
                                 --primary-color: var(--quantumi-green);
                                 --secondary-color: var(--quantumi-green);
-                                --shadow-color: rgba(0, 255, 126, 0.3);
+                                --shadow-color: rgba(0, 255, 0, 0.3);
                         }
                         body {
                                 font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -1100,7 +1100,7 @@
                         #legend-toggle {
                                 padding: 0.65em 1.5em;
                                 font-size: clamp(13px, 2vw, 19px);
-                                background: #333;
+                                background: rgba(0, 255, 0, 0.1);
                                 color: #fff;
                                 border: none;
                                 border-radius: 8px;
@@ -1125,7 +1125,7 @@
                         #legend-toggle:focus,
                         #legend-toggle:active,
                         #legend-toggle.active {
-                                background: #00ff00;
+                                background: rgba(0, 255, 0, 0.4);
                                 color: #000;
                         }
 			.module-content.hidden {
@@ -2160,13 +2160,13 @@
                         outline: none;
                     }
                     .btn.selected {
-                        background: rgba(0,255,126,0.3);
+                        background: rgba(0,255,0,0.3);
                         color: #fff;
-                        border-color: rgba(0,255,126,0.4);
+                        border-color: rgba(0,255,0,0.4);
                     }
                     .btn:hover:not(.selected),
                     .btn:focus:not(.selected) {
-                        background: rgba(0,255,126,0.2);
+                        background: rgba(0,255,0,0.2);
                         color: #fff;
                         transform: scale(1.04);
                     }
@@ -2276,10 +2276,10 @@
 		</style>
 	</head>
         <body
-                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF7E]"
+                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF00]"
         >
                 <div id="access-overlay">
-                        <canvas id="q-hero" class="q-hero-canvas"></canvas>
+                        <canvas id="qCanvas" class="q-hero-canvas" width="600" height="600"></canvas>
                         <div class="center-content">
                                   <div class="branding sixtyfour-font">QUANTUMI</div>
                         </div>
@@ -2296,181 +2296,130 @@
                                 <div id="access-error" class="hidden"></div>
                         </form>
                         <div class="buttons">
-                                <button class="btn" id="layer1" onclick="setLayer(0)">Layer I</button>
-                                <button class="btn selected" id="layer2" onclick="setLayer(1)">Layer II</button>
-                                <button class="btn" id="layer3" onclick="setLayer(2)">Layer III</button>
+                                <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
+                                <button class="btn layer-btn" id="btn1" onclick="setLayer(1)">Layer II</button>
+                                <button class="btn layer-btn selected" id="btn2" onclick="setLayer(2)">Layer III</button>
                         </div>
-                </div>
+                  </div>
                 <script>
-                        const Q_GRID = [
-                                [0,1,1,1,1,1,1,1,0].reverse(),
-                                [1,1,0,0,0,0,0,1,1].reverse(),
-                                [1,0,1,1,1,1,1,0,1].reverse(),
-                                [1,0,1,0,0,0,1,0,1].reverse(),
-                                [1,0,1,0,0,0,1,0,1].reverse(),
-                                [1,0,1,0,0,0,1,0,1].reverse(),
-                                [1,0,1,1,1,1,1,0,1].reverse(),
-                                [1,1,0,0,0,1,0,1,1].reverse(),
-                                [0,1,1,1,1,0,1,1,0].reverse(),
-                                [0,0,0,0,1,1,1,0,0].reverse(),
-                                [0,0,0,0,0,1,0,0,0].reverse()
-                        ];
-                        const GRID_COLS = Q_GRID[0].length;
-                        const GRID_ROWS = Q_GRID.length;
+    // Updated layout with 6 columns, third column removed
+    const Q_LAYOUT = [
+      { row: 0, cols: [1, 2, 3, 4] },
+      { row: 1, cols: [0, 5] },
+      { row: 2, cols: [0, 5] },
+      { row: 3, cols: [0, 5] },
+      { row: 4, cols: [0, 5] },
+      { row: 5, cols: [1, 2, 3] },
+      { row: 6, cols: [4] }
+    ];
 
-                        const LAYER_CONFIG = [
-                                {subX: 1, subY: 1, dotRadius: 0.32},
-                                {subX: 3, subY: 2, dotRadius: 0.13},
-                                {subX: 4, subY: 3, dotRadius: 0.092}
-                        ];
-                        let currentLayer = 1;
+    const layers = [
+      { spacing: 1.0, radius: 0.14 },
+      { spacing: 0.5, radius: 0.14 },
+      { spacing: 0.3, radius: 0.14 }
+    ];
 
-                        const canvas = document.getElementById('q-hero');
-                        const ctx = canvas.getContext('2d');
-                        let W = 0, H = 0, CELL = 0, X0 = 0, Y0 = 0;
+    const canvas = document.getElementById("qCanvas");
+    const ctx = canvas.getContext("2d");
+    const ROWS = 7;
+    const COLS = 6;
+    let dots = [];
+    let currentLayer = 2;
 
-                        function resize() {
-                                W = canvas.offsetWidth;
-                                H = Math.max(canvas.offsetHeight * 0.55, 320);
-                                canvas.width = W * window.devicePixelRatio;
-                                canvas.height = H * window.devicePixelRatio;
-                                ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
-                                const margin = 1.4;
-                                CELL = Math.min(W / (GRID_COLS + margin * 2), H / (GRID_ROWS + margin * 2));
-                                X0 = (W - GRID_COLS * CELL) / 2;
-                                Y0 = (H - GRID_ROWS * CELL) / 2;
-                        }
-                        window.addEventListener('resize', resize);
-                        resize();
+    function setLayer(index) {
+      currentLayer = index;
+      document.querySelectorAll(".layer-btn").forEach((btn, i) =>
+        btn.classList.toggle("selected", i === index)
+      );
+      generateDots();
+      requestAnimationFrame(animate);
+    }
 
-                        function getLogoDots(layerIdx) {
-                                const config = LAYER_CONFIG[layerIdx];
-                                let dots = [];
-                                for (let y = 0; y < GRID_ROWS; y++) {
-                                        for (let x = 0; x < GRID_COLS; x++) {
-                                                if (Q_GRID[y][x]) {
-                                                        for (let iy = 0; iy < config.subY; iy++) {
-                                                                for (let ix = 0; ix < config.subX; ix++) {
-                                                                        const offsetX = (ix - (config.subX - 1) / 2) / config.subX;
-                                                                        const offsetY = (iy - (config.subY - 1) / 2) / config.subY;
-                                                                        dots.push({x, y, offsetX, offsetY});
-                                                                }
-                                                        }
-                                                }
-                                        }
-                                }
-                                return dots;
-                        }
+    function generateDots() {
+      const spacing = layers[currentLayer].spacing;
+      const cellSize = Math.min(canvas.width / (COLS + 2), canvas.height / (ROWS + 2));
+      const offsetX = (canvas.width - COLS * cellSize) / 2;
+      const offsetY = (canvas.height - ROWS * cellSize) / 2;
+      const dotWidth = cellSize * 0.4;
+      const dotHeight = cellSize * 0.2;
+      const dotRadius = cellSize * 0.1;
+      dots = [];
 
-                        function getRandomScatterPos() {
-                                return {
-                                        x: Math.random() * (GRID_COLS + 2) - 1,
-                                        y: Math.random() * (GRID_ROWS + 2) - 1
-                                };
-                        }
+      for (let item of Q_LAYOUT) {
+        let y = item.row;
+        for (let x of item.cols) {
+          const baseX = offsetX + x * cellSize + cellSize / 2;
+          const baseY = offsetY + y * cellSize + cellSize / 2;
+          const count = Math.floor(1 / spacing);
 
-                        let dots = [];
-                        let isHovering = false;
-                        let startTime = null;
-                        let animating = false;
+          for (let i = 0; i <= count; i++) {
+            const dx = (i - count / 2) * spacing * cellSize;
+            dots.push({
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              tx: baseX + dx,
+              ty: baseY,
+              width: dotWidth,
+              height: dotHeight,
+              radius: dotRadius,
+              alpha: 0,
+              start: performance.now() + Math.random() * 300
+            });
+          }
+        }
+      }
+    }
 
-                        function initDots(assemble) {
-                                const logoDots = getLogoDots(currentLayer);
-                                dots = [];
-                                const totalPixels = logoDots.length;
-                                let scatterPositions = [];
-                                for (let i = 0; i < totalPixels; i++) {
-                                        scatterPositions.push(getRandomScatterPos());
-                                }
-                                for (let i = 0; i < totalPixels; i++) {
-                                        const target = logoDots[i];
-                                        const delay = Math.random() * 0.18;
-                                        dots.push({
-                                                from: assemble ? scatterPositions[i] : target,
-                                                to: assemble ? target : scatterPositions[i],
-                                                progress: 0,
-                                                delay: delay
-                                        });
-                                }
-                        }
+    function drawRoundedRect(x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.arcTo(x + width, y, x + width, y + radius, radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+      ctx.lineTo(x + radius, y + height);
+      ctx.arcTo(x, y + height, x, y + height - radius, radius);
+      ctx.lineTo(x, y + radius);
+      ctx.arcTo(x, y, x + radius, y, radius);
+      ctx.closePath();
+      ctx.fill();
+    }
 
-                        function drawLogoDots(progress) {
-                                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                                const config = LAYER_CONFIG[currentLayer];
-                                for (let i = 0; i < dots.length; i++) {
-                                        let d = dots[i];
-                                        let t = Math.max(0, Math.min(1, (progress - d.delay) / 1.3));
-                                        t = t < 1 ? 1 - Math.pow(1 - t, 2.5) : 1;
-                                        d.progress = t;
+    function animate(now) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let complete = true;
 
-                                        let x = d.from.x + (d.to.x - d.from.x) * t;
-                                        let y = d.from.y + (d.to.y - d.from.y) * t;
-                                        let cx = X0 + (x + 0.5 + (d.to.offsetX || 0)) * CELL;
-                                        let cy = Y0 + (y + 0.5 + (d.to.offsetY || 0)) * CELL;
+      for (let dot of dots) {
+        let elapsed = now - dot.start;
+        if (elapsed < 0) {
+          complete = false;
+          continue;
+        }
+        const t = Math.min(1, elapsed / 800);
+        const ease = 1 - Math.pow(1 - t, 3);
 
-                                        ctx.save();
-                                        ctx.beginPath();
-                                        ctx.arc(cx, cy, CELL * config.dotRadius, 0, 2 * Math.PI);
-                                        ctx.fillStyle = "#e3e3e3";
-                                        ctx.shadowColor = "#fff";
-                                        ctx.shadowBlur = 10;
-                                        ctx.globalAlpha = 0.97;
-                                        ctx.fill();
-                                        ctx.restore();
-                                }
-                        }
+      const cx = dot.x + (dot.tx - dot.x) * ease;
+      const cy = dot.y + (dot.ty - dot.y) * ease;
 
-                        function animateLogo(ts) {
-                                if (!startTime) startTime = ts;
-                                const elapsed = (ts - startTime) / 1000;
-                                drawLogoDots(elapsed);
-                                if (elapsed < 1.5) {
-                                        animating = true;
-                                        requestAnimationFrame(animateLogo);
-                                } else if (!isHovering) {
-                                        drawLogoDots(1.5);
-                                        animating = false;
-                                }
-                        }
+        ctx.fillStyle = `rgba(227,227,227,${ease})`;
+        ctx.shadowColor = "#fff";
+        ctx.shadowBlur = 12;
+        drawRoundedRect(cx - dot.width / 2, cy - dot.height / 2, dot.width, dot.height, dot.radius);
 
-                        function setLayer(idx) {
-                                if (currentLayer === idx) return;
-                                currentLayer = idx;
-                                document.querySelectorAll('.btn').forEach((b, i) => {
-                                        b.classList.toggle('selected', i === idx);
-                                });
-                                startTime = null;
-                                initDots(isHovering);
-                                animating = true;
-                                requestAnimationFrame(animateLogo);
-                        }
+        if (t < 1) complete = false;
+      }
 
-                        canvas.addEventListener('click', () => {
-                                setLayer((currentLayer + 1) % LAYER_CONFIG.length);
-                        });
+      if (!complete) requestAnimationFrame(animate);
+    }
 
-                        canvas.addEventListener('mouseover', () => {
-                                if (!isHovering && !animating) {
-                                        isHovering = true;
-                                        startTime = null;
-                                        initDots(true);
-                                        requestAnimationFrame(animateLogo);
-                                }
-                        });
+    canvas.addEventListener('click', () => {
+      setLayer((currentLayer + 1) % layers.length);
+    });
 
-                        canvas.addEventListener('mouseout', () => {
-                                if (isHovering && !animating) {
-                                        isHovering = false;
-                                        startTime = null;
-                                        initDots(false);
-                                        requestAnimationFrame(animateLogo);
-                                }
-                        });
-
-                        initDots(false);
-                        setLayer(1); // Default to Layer II
+    generateDots();
+    requestAnimationFrame(animate);
                 </script>
-		<button
+                  <button
 			aria-label="Toggle navigation menu"
 			class="nav-menu-toggle hidden"
 			id="nav-menu-toggle"
@@ -3819,9 +3768,9 @@
 				bitcrusherNode,
 				gainNode;
                         const themes = {
-                                original: ['#00FF7E', '#00cc5b', '#009944', '#e0f7fa'],
-                                heatmap: ['#66ff66', '#ffff00', '#ff0000'],
-                                lifecycle: ['#003a1c', '#00cc5b', '#00FF7E']
+original: ['#00FF00', '#00cc00', '#009900', '#e0ffe0'],
+heatmap: ['#66ff66', '#ffff00', '#ff0000'],
+lifecycle: ['#003a00', '#00cc00', '#00FF00']
                         };
                         let currentTheme = 'heatmap';
 			let siteColors = themes.original;
@@ -4631,7 +4580,7 @@ function setupModuleToggles() {
 
                                 const initWidget = () => {
                                         const style = getComputedStyle(document.documentElement);
-                                        const upColor = style.getPropertyValue('--primary-color').trim() || '#00FF7E';
+                                        const upColor = style.getPropertyValue('--primary-color').trim() || '#00FF00';
                                         const downColor = '#ff0000';
                                         try {
                                                 const widget = new TradingView.widget({
@@ -5634,10 +5583,10 @@ function setupModuleToggles() {
                                                                 label: '24h Price Change (%)',
                                                                 data: data,
                                                                 backgroundColor: data.map((value) =>
-                                                                        value >= 0 ? '#00FF7E' : '#FF0000'
+                                                                        value >= 0 ? '#00FF00' : '#FF0000'
                                                                 ),
                                                                 borderColor: data.map((value) =>
-                                                                        value >= 0 ? '#00FF7E' : '#FF0000'
+                                                                        value >= 0 ? '#00FF00' : '#FF0000'
                                                                 ),
                                                                 borderWidth: 1
                                                         }
@@ -7345,7 +7294,7 @@ function setupModuleToggles() {
 
                                 const labels = filteredTokens.map((t) => t.symbol.toUpperCase());
                                 const data = filteredTokens.map((t) => t.price_change_percentage_24h);
-                                const green = '#2ecc71';
+                                const green = '#00FF00';
                                 const red = '#e74c3c';
                                 const bgColor = data.map((change) => (change >= 0 ? green : red));
 

@@ -1,7 +1,7 @@
 :root {
-  --green-light: #E0FFE8;
-  --green: #00FF7E;
-  --green-dark: #00CC65;
+  --green-light: #E0FFE0;
+  --green: #00FF00;
+  --green-dark: #00CC00;
   --color-primary: var(--green);
   --color-bg: #0a0a0a;
   --color-bg-alt: #1a1a1a;

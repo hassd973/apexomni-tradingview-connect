@@ -385,7 +385,7 @@ function updateChart(symbol) {
       studies: ['Volume@tv-basicstudies'],
       overrides: {
         "paneProperties.background": "#0a0f14",
-        "mainSeriesProperties.candleStyle.upColor": "#00ff00",
+        "mainSeriesProperties.candleStyle.upColor": "#00FF00",
         "mainSeriesProperties.candleStyle.downColor": "#ff0000"
       }
     });
