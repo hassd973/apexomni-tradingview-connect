@@ -138,6 +138,32 @@
       background: #393a41;
       color: #fff;
     }
+
+    /* small mobile scroll toggles */
+    .mobile-scroll-controls {
+      position: fixed;
+      right: 0.75rem;
+      bottom: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 50;
+    }
+    .scroll-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.1rem;
+      user-select: none;
+    }
+    @media (min-width: 768px) {
+      .mobile-scroll-controls { display: none; }
+    }
     footer {
       flex-shrink: 0;
       background: #181b1e;
@@ -183,6 +209,10 @@
       <button class="btn selected" id="layer2" onclick="setLayer(1)">Layer II</button>
       <button class="btn" id="layer3" onclick="setLayer(2)">Layer III</button>
     </div>
+    <div class="mobile-scroll-controls">
+      <div class="scroll-btn" id="scroll-up">&#9650;</div>
+      <div class="scroll-btn" id="scroll-down">&#9660;</div>
+    </div>
   </main>
   <footer>
     &copy; 2025 <span class="sixtyfour-font">QUANTUMI</span> &mdash; All Rights Reserved.
@@ -211,6 +241,8 @@
     let W = 0, H = 0, CELL = 0, X0 = 0, Y0 = 0;
     let currentProgress = 0;
     let mouseOffsetX = 0, mouseOffsetY = 0;
+    let currentLayer = 1;
+    let scrollInterval = null;
 
     function resize() {
       W = canvas.offsetWidth;
@@ -356,6 +388,29 @@
       animating = true;
       requestAnimationFrame(animateLogo);
     }
+
+    function startScroll(direction) {
+      stopScroll();
+      scrollInterval = setInterval(() => {
+        window.scrollBy({ top: direction * 40, behavior: 'smooth' });
+      }, 50);
+    }
+
+    function stopScroll() {
+      if (scrollInterval) clearInterval(scrollInterval);
+      scrollInterval = null;
+    }
+
+    const upBtn = document.getElementById('scroll-up');
+    const downBtn = document.getElementById('scroll-down');
+    ['mousedown', 'touchstart'].forEach(ev => {
+      upBtn.addEventListener(ev, () => startScroll(-1));
+      downBtn.addEventListener(ev, () => startScroll(1));
+    });
+    ['mouseup', 'mouseleave', 'touchend', 'touchcancel'].forEach(ev => {
+      upBtn.addEventListener(ev, stopScroll);
+      downBtn.addEventListener(ev, stopScroll);
+    });
 
   </script>
 </body>
