@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Q Tube Logo Layer II</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      background: #111215;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      flex-direction: column;
+      color: #e3e3e3;
+      font-family: sans-serif;
+    }
+    canvas {
+      background: #000;
+      border-radius: 16px;
+      box-shadow: 0 0 24px #000b;
+      width: 80vmin;
+      height: 80vmin;
+    }
+    a {
+      margin-top: 1rem;
+      color: #00FF00;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="qCanvas" width="600" height="600"></canvas>
+  <a id="download" href="#" download="layer2-logo.png">Download PNG</a>
+  <script>
+    const Q_LAYOUT = [
+      { row: 0, cols: [1, 2, 3, 4] },
+      { row: 1, cols: [0, 5] },
+      { row: 2, cols: [0, 5] },
+      { row: 3, cols: [0, 5] },
+      { row: 4, cols: [0, 5] },
+      { row: 5, cols: [1, 2, 3] },
+      { row: 6, cols: [4] }
+    ];
+    const layers = [
+      { spacing: 1.0, radius: 0.14 },
+      { spacing: 0.5, radius: 0.14 },
+      { spacing: 0.3, radius: 0.14 }
+    ];
+    const canvas = document.getElementById('qCanvas');
+    const ctx = canvas.getContext('2d');
+    const ROWS = 7;
+    const COLS = 6;
+    let dots = [];
+    let currentLayer = 1;
+
+    function generateDots() {
+      const spacing = layers[currentLayer].spacing;
+      const cellSize = Math.min(canvas.width / (COLS + 2), canvas.height / (ROWS + 2));
+      const offsetX = (canvas.width - COLS * cellSize) / 2;
+      const offsetY = (canvas.height - ROWS * cellSize) / 2;
+      const dotWidth = cellSize * 0.4;
+      const dotHeight = cellSize * 0.2;
+      const dotRadius = cellSize * 0.1;
+      dots = [];
+      for (let item of Q_LAYOUT) {
+        let y = item.row;
+        for (let x of item.cols) {
+          const baseX = offsetX + x * cellSize + cellSize / 2;
+          const baseY = offsetY + y * cellSize + cellSize / 2;
+          const count = Math.floor(1 / spacing);
+          for (let i = 0; i <= count; i++) {
+            const dx = (i - count / 2) * spacing * cellSize;
+            dots.push({
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              tx: baseX + dx,
+              ty: baseY,
+              width: dotWidth,
+              height: dotHeight,
+              radius: dotRadius,
+              alpha: 0,
+              start: performance.now() + Math.random() * 300
+            });
+          }
+        }
+      }
+    }
+    function drawRoundedRect(x, y, width, height, radius) {
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.lineTo(x + width - radius, y);
+      ctx.arcTo(x + width, y, x + width, y + radius, radius);
+      ctx.lineTo(x + width, y + height - radius);
+      ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+      ctx.lineTo(x + radius, y + height);
+      ctx.arcTo(x, y + height, x, y + height - radius, radius);
+      ctx.lineTo(x, y + radius);
+      ctx.arcTo(x, y, x + radius, y, radius);
+      ctx.closePath();
+      ctx.fill();
+    }
+    function animate(now) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let complete = true;
+      for (let dot of dots) {
+        let elapsed = now - dot.start;
+        if (elapsed < 0) { complete = false; continue; }
+        const t = Math.min(1, elapsed / 800);
+        const ease = 1 - Math.pow(1 - t, 3);
+        const cx = dot.x + (dot.tx - dot.x) * ease;
+        const cy = dot.y + (dot.ty - dot.y) * ease;
+        ctx.fillStyle = `rgba(227,227,227,${ease})`;
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur = 12;
+        drawRoundedRect(cx - dot.width / 2, cy - dot.height / 2, dot.width, dot.height, dot.radius);
+        if (t < 1) complete = false;
+      }
+      if (!complete) {
+        requestAnimationFrame(animate);
+      } else {
+        document.getElementById('download').href = canvas.toDataURL('image/png');
+      }
+    }
+    generateDots();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>

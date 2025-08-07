@@ -79,7 +79,7 @@ canvas {
 
 .glow-blue,
 .glow-purple {
-  box-shadow: 0 0 10px rgba(0, 255, 126, 0.3);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
 }
 
 .fade-in {
@@ -105,7 +105,7 @@ button {
 button:hover,
 button:focus,
 button:active {
-  background: #00ff7e;
+  background: #00FF00;
   color: #000;
 }
 
