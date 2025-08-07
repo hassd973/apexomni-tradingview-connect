@@ -2046,7 +2046,7 @@
                         position: fixed;
                         inset: 0;
                         width: 100%;
-                        height: 100%;
+                        min-height: 100vh;
                         background: #111215;
                         z-index: 2000;
                         display: flex;
@@ -2054,6 +2054,10 @@
                         align-items: center;
                         justify-content: center;
                         color: #e3e3e3cc;
+                        padding: clamp(1.5em, 5vh, 3em) 1em;
+                        padding-bottom: calc(env(safe-area-inset-bottom) + clamp(1.5em, 5vh, 3em));
+                        box-sizing: border-box;
+                        overflow-y: auto;
                     }
                     .q-hero-canvas {
                         width: 100vw;
@@ -2077,7 +2081,7 @@
                         margin-bottom: 0.3em;
                     }
                     .login-form {
-                        width: 94vw;
+                        width: 100%;
                         max-width: 340px;
                         margin: 0 auto;
                         display: flex;
@@ -2166,6 +2170,12 @@
                     #overlay-description {
                         font-size: 0.875rem;
                         margin-top: 0.5rem;
+                    }
+                    @media (max-height: 700px) {
+                        #access-overlay {
+                            justify-content: flex-start;
+                            padding-top: 1em;
+                        }
                     }
                       @media (max-width: 600px) {
                           .branding { font-size: 8vw; }
