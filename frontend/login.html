@@ -219,9 +219,6 @@
     const COLS = 6;
     let dots = [];
     let currentLayer = 1;
-    let isHovering = false;
-    let mouseX = null;
-    let mouseY = null;
 
     function setLayer(index) {
       currentLayer = index;
@@ -295,24 +292,8 @@
         const t = Math.min(1, elapsed / 800);
         const ease = 1 - Math.pow(1 - t, 3);
 
-        // Adjust target position based on mouse hover
-        let targetX = dot.tx;
-        let targetY = dot.ty;
-        if (isHovering && mouseX !== null && mouseY !== null) {
-          const dx = mouseX - dot.tx;
-          const dy = mouseY - dot.ty;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          if (distance < 150) {
-            targetX += dx * 0.02;
-            targetY += dy * 0.02;
-          } else {
-            targetX = Math.random() * canvas.width;
-            targetY = Math.random() * canvas.height;
-          }
-        }
-
-        const cx = dot.x + (targetX - dot.x) * ease;
-        const cy = dot.y + (targetY - dot.y) * ease;
+        const cx = dot.x + (dot.tx - dot.x) * ease;
+        const cy = dot.y + (dot.ty - dot.y) * ease;
 
         ctx.fillStyle = `rgba(227,227,227,${ease})`;
         ctx.shadowColor = "#fff";
@@ -325,23 +306,8 @@
       if (!complete) requestAnimationFrame(animate);
     }
 
-    canvas.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      mouseX = e.clientX - rect.left;
-      mouseY = e.clientY - rect.top;
-      if (!isHovering) {
-        isHovering = true;
-        generateDots();
-        requestAnimationFrame(animate);
-      }
-    });
-
-    canvas.addEventListener('mouseleave', () => {
-      isHovering = false;
-      mouseX = null;
-      mouseY = null;
-      generateDots();
-      requestAnimationFrame(animate);
+    canvas.addEventListener('click', () => {
+      setLayer((currentLayer + 1) % layers.length);
     });
 
     // Init
