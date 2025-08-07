@@ -34,7 +34,9 @@
       align-items: center;
       justify-content: center;
       padding: clamp(1.5em, 5vh, 3em) 1em;
+      padding-bottom: calc(env(safe-area-inset-bottom) + clamp(1.5em, 5vh, 3em));
       box-sizing: border-box;
+      overflow-y: auto;
     }
     .q-hero-canvas {
       width: 100%;
@@ -169,7 +171,7 @@
       background: #181b1e;
       color: #aaa;
       text-align: center;
-      padding: 1.2em 0 1.5em 0;
+      padding: 1.2em 0 calc(1.5em + env(safe-area-inset-bottom)) 0;
       border-top: 1px solid #222;
       font-size: 0.95em;
     }
@@ -184,6 +186,10 @@
       .branding { font-size: 8vw; }
     }
     @media (max-height: 700px) {
+      main {
+        justify-content: flex-start;
+        padding-top: 1em;
+      }
       .q-hero-canvas {
         height: clamp(150px, 25vh, 240px);
       }
