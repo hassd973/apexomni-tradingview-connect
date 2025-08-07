@@ -227,7 +227,6 @@
       document.querySelectorAll(".layer-btn").forEach((btn, i) =>
         btn.classList.toggle("selected", i === index)
       );
-      canvas.classList.toggle("glow", index === 2);
       generateDots();
       requestAnimationFrame(animate);
     }
@@ -299,8 +298,6 @@
         const cy = dot.y + (dot.ty - dot.y) * ease;
 
         ctx.fillStyle = `rgba(227,227,227,${ease})`;
-        ctx.shadowColor = "#fff";
-        ctx.shadowBlur = 12;
         drawRoundedRect(cx - dot.width / 2, cy - dot.height / 2, dot.width, dot.height, dot.radius);
 
         if (t < 1) complete = false;
@@ -315,7 +312,6 @@
 
     // Init
     generateDots();
-    canvas.classList.toggle("glow", currentLayer === 2);
     requestAnimationFrame(animate);
   </script>
 </body>
