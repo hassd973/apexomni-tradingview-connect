@@ -8,7 +8,7 @@
     { row: 5, cols: [1, 2, 3] },
     { row: 6, cols: [4] }
   ];
-  const LAYER = { spacing: 0.5, radius: 0.14 }; // Layer II
+  const LAYER = { spacing: 0.3, radius: 0.14 }; // Layer III
   const ROWS = 7;
   const COLS = 6;
 
