@@ -2063,7 +2063,12 @@
                         padding: clamp(1.5em, 5vh, 3em) 1em;
                         padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
                         box-sizing: border-box;
-                        overflow-y: auto;
+                        overflow: hidden;
+                    }
+                    #overlay-content {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
                     }
                     #overlay-content {
                         display: flex;
