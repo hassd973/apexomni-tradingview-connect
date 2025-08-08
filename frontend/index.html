@@ -2052,6 +2052,7 @@
                         inset: 0;
                         width: 100%;
                         min-height: 100vh;
+                        height: 100vh;
                         background: #111215;
                         z-index: 2000;
                         display: flex;
@@ -2069,14 +2070,18 @@
                         flex-direction: column;
                         align-items: center;
                     }
+                    #overlay-content {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                    }
                     .q-hero-canvas {
-                        width: 100%;
-                        max-width: 420px;
-                        height: auto;
+                        width: min(420px, 35vh);
+                        height: min(420px, 35vh);
                         aspect-ratio: 1 / 1;
                         display: block;
                         background: #111215;
-                        margin: 0 auto 1.5em auto;
+                        margin: 0 auto 1em auto;
                     }
                     .q-hero-canvas.glow {
                         box-shadow: 0 0 24px #00FF00;
@@ -2098,12 +2103,12 @@
                         margin: 0 auto;
                         display: flex;
                         flex-direction: column;
-                        gap: 1.2em;
+                        gap: 1em;
                         background: rgba(12,12,12,0.94);
-                        padding: 2em 1.6em 2.2em 1.6em;
+                        padding: 1.5em 1.4em 1.7em 1.4em;
                         border-radius: 12px;
                         box-shadow: 0 2px 20px #000a;
-                        margin-bottom: 1rem;
+                        margin-bottom: 0.75rem;
                     }
                     .login-form input {
                         background: #000;
@@ -2305,7 +2310,7 @@
                                        <button class="login-btn" type="submit">Enter</button>
                                        <a id="nda-link" href="QuantumI_NDA_v3.pdf" download>Download NDA</a>
                                        <button id="toggle-description" type="button">Show Description</button>
-                                       <p id="overlay-description" class="hidden">QuantumI visually standardizes and logs blockchain transactions, simplifying crypto analytics for everyone.</p>
+                                       <p id="overlay-description" class="hidden">I lurk in ledgers unseen; observe me and profits convene. Guess who? QuantumI—where quantum trading cracks a grin.</p>
                                        <div id="access-error" class="hidden"></div>
                                </form>
                                <div class="buttons">
@@ -7410,6 +7415,7 @@ function setupModuleToggles() {
                                };
 
                                window.addEventListener('resize', rescale);
+                               window.addEventListener('load', rescale);
                                rescale();
 
                                if (toggleDesc && desc) {
