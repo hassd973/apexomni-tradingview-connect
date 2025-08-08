@@ -2060,10 +2060,15 @@
                         align-items: center;
                         justify-content: flex-start;
                         color: #e3e3e3cc;
-                        padding: clamp(1.5em, 5vh, 3em) 1em;
-                        padding-bottom: calc(env(safe-area-inset-bottom) + 2rem);
+                        padding: clamp(0.5em, 2vh, 1.5em) 1em;
+                        padding-bottom: calc(env(safe-area-inset-bottom) + 3rem);
                         box-sizing: border-box;
                         overflow: hidden;
+                    }
+                    #overlay-content {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
                     }
                     #overlay-content {
                         display: flex;
@@ -2360,8 +2365,8 @@
       const offsetX = (canvas.width - COLS * cellSize) / 2;
       const offsetY = (canvas.height - ROWS * cellSize) / 2;
       const dotWidth = cellSize * 0.4;
-      const dotHeight = cellSize * 0.2;
-      const dotRadius = cellSize * 0.1;
+      const dotHeight = cellSize * 0.3;
+      const dotRadius = cellSize * 0.15;
       dots = [];
 
       for (let item of Q_LAYOUT) {
