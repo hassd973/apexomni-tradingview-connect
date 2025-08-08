@@ -33,9 +33,9 @@
     const cellSize = Math.min(w/(COLS+2), h/(ROWS+2));
     const offsetX = (w - COLS*cellSize)/2;
     const offsetY = (h - ROWS*cellSize)/2;
-    const dotWidth = cellSize*0.4;
-    const dotHeight = cellSize*0.2;
-    const dotRadius = cellSize*0.1;
+    const dotWidth = cellSize*0.5;
+    const dotHeight = cellSize*0.3;
+    const dotRadius = cellSize*0.15;
     ctx.fillStyle = '#e3e3e3';
     ctx.shadowColor = '#fff';
     ctx.shadowBlur = 6;
