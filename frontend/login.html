@@ -44,6 +44,8 @@
       display: block;
       background: #111215;
       margin: 0 auto 1.2em auto;
+      transform: scale(1.05);
+      transform-origin: center;
     }
     .q-hero-canvas.glow {
       box-shadow: 0 0 24px #00FF00;
@@ -116,7 +118,8 @@
       display: flex;
       justify-content: center;
       gap: 1.2em;
-      margin-top: 1.2em;
+      margin-top: auto;
+      margin-bottom: clamp(1.5em, 5vh, 3em);
     }
     .btn {
       padding: 0.65em 1.5em;

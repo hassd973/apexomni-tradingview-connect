@@ -1160,7 +1160,7 @@
                                 border-radius: 4px;
                         }
                         #token-search::placeholder {
-                                color: #999;
+                                color: rgba(0,255,0,0.6);
                         }
                         #gas-heatmap-list,
                         #balances-list,
@@ -2087,6 +2087,8 @@
                         display: block;
                         background: #111215;
                         margin: 0 auto 1em auto;
+                        transform: scale(1.05);
+                        transform-origin: center;
                     }
                     .q-hero-canvas.glow {
                         box-shadow: 0 0 24px #00FF00;
@@ -2156,7 +2158,8 @@
                         display: flex;
                         justify-content: center;
                         gap: 1.2em;
-                        margin-top: 1.2em;
+                        margin-top: auto;
+                        margin-bottom: clamp(1.5em, 5vh, 3em);
                     }
                     .btn {
                         padding: 0.65em 1.5em;
@@ -2869,7 +2872,7 @@
                                         <input
                                                 type="text"
                                                 id="token-search"
-                                                placeholder="Search tokens"
+                                                placeholder="Search"
                                                 class="w-full p-1 mb-2 rounded bg-gray-800 text-sm"
                                         />
                                         <ul class="space-y-2 text-sm" id="token-list"></ul>
