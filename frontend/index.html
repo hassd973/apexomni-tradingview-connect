@@ -2052,6 +2052,7 @@
                         inset: 0;
                         width: 100%;
                         min-height: 100vh;
+                        height: 100vh;
                         background: #111215;
                         z-index: 2000;
                         display: flex;
@@ -2064,14 +2065,18 @@
                         box-sizing: border-box;
                         overflow-y: auto;
                     }
+                    #overlay-content {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                    }
                     .q-hero-canvas {
-                        width: 100%;
-                        max-width: 420px;
-                        height: auto;
+                        width: min(420px, 35vh);
+                        height: min(420px, 35vh);
                         aspect-ratio: 1 / 1;
                         display: block;
                         background: #111215;
-                        margin: 0 auto 1.5em auto;
+                        margin: 0 auto 1em auto;
                     }
                     .q-hero-canvas.glow {
                         box-shadow: 0 0 24px #00FF00;
@@ -2093,12 +2098,12 @@
                         margin: 0 auto;
                         display: flex;
                         flex-direction: column;
-                        gap: 1.2em;
+                        gap: 1em;
                         background: rgba(12,12,12,0.94);
-                        padding: 2em 1.6em 2.2em 1.6em;
+                        padding: 1.5em 1.4em 1.7em 1.4em;
                         border-radius: 12px;
                         box-shadow: 0 2px 20px #000a;
-                        margin-bottom: 2rem;
+                        margin-bottom: 0.75rem;
                     }
                     .login-form input {
                         background: #000;
@@ -2179,6 +2184,15 @@
                     #overlay-description {
                         font-size: 0.875rem;
                         margin-top: 0.5rem;
+                    }
+                    #toggle-description {
+                        color: #35e1ad;
+                        text-decoration: underline;
+                        font-size: 0.875rem;
+                        background: none;
+                        border: none;
+                        cursor: pointer;
+                        align-self: flex-start;
                     }
                     @media (max-height: 700px) {
                         #access-overlay {
@@ -2275,29 +2289,32 @@
         <body
                 class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF00]"
         >
-                <div id="access-overlay">
-                        <canvas id="qCanvas" class="q-hero-canvas" width="600" height="600"></canvas>
-                        <div class="center-content">
-                                  <div class="branding sixtyfour-font">QUANTUMI</div>
-                        </div>
-                        <form id="access-form" class="login-form">
-                                <input type="password" id="access-password" placeholder="Password" required />
-                                <input type="email" id="access-email" placeholder="Email" required />
-                                <label>
-                                        <input type="checkbox" id="access-nda" required />
-                                        <span>I agree to the NDA</span>
-                                </label>
-                                <button class="login-btn" type="submit">Enter</button>
-                                <a id="nda-link" href="QuantumI_NDA_v3.pdf" download>Download NDA</a>
-                                <p id="overlay-description">QuantumI visually standardizes and logs blockchain transactions, simplifying crypto analytics for everyone.</p>
-                                <div id="access-error" class="hidden"></div>
-                        </form>
-                                <div class="buttons">
-                                <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
-                                <button class="btn layer-btn" id="btn1" onclick="setLayer(1)">Layer II</button>
-                                <button class="btn layer-btn selected" id="btn2" onclick="setLayer(2)">Layer III</button>
-                        </div>
-                  </div>
+               <div id="access-overlay">
+                       <div id="overlay-content">
+                               <canvas id="qCanvas" class="q-hero-canvas" width="600" height="600"></canvas>
+                               <div class="center-content">
+                                         <div class="branding sixtyfour-font">QUANTUMI</div>
+                               </div>
+                               <form id="access-form" class="login-form">
+                                       <input type="password" id="access-password" placeholder="Password" required />
+                                       <input type="email" id="access-email" placeholder="Email" required />
+                                       <label>
+                                               <input type="checkbox" id="access-nda" required />
+                                               <span>I agree to the NDA</span>
+                                       </label>
+                                       <button class="login-btn" type="submit">Enter</button>
+                                       <a id="nda-link" href="QuantumI_NDA_v3.pdf" download>Download NDA</a>
+                                       <button id="toggle-description" type="button">Show Description</button>
+                                       <p id="overlay-description" class="hidden">I lurk in ledgers unseen; observe me and profits convene. Guess who? QuantumI—where quantum trading cracks a grin.</p>
+                                       <div id="access-error" class="hidden"></div>
+                               </form>
+                               <div class="buttons">
+                               <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
+                               <button class="btn layer-btn" id="btn1" onclick="setLayer(1)">Layer II</button>
+                               <button class="btn layer-btn selected" id="btn2" onclick="setLayer(2)">Layer III</button>
+                               </div>
+                       </div>
+                 </div>
                 <script>
     // Updated layout with 6 columns, third column removed
     const Q_LAYOUT = [
@@ -7375,38 +7392,61 @@ function setupModuleToggles() {
                 <footer style="text-align:center;padding:0.5rem 0;font-size:0.8rem;color:var(--quantumi-gray);">
                         © <span class="sixtyfour-font">QUANTUMI</span> 2025. All Rights Reserved.
                 </footer>
-                <script>
-                        document.addEventListener('DOMContentLoaded', () => {
-                                const overlay = document.getElementById('access-overlay');
-                                const form = document.getElementById('access-form');
-                                const error = document.getElementById('access-error');
-                                if (!overlay || !form) return;
-                                if (localStorage.getItem('quanti-email')) {
-                                        overlay.style.display = 'none';
-                                        document.body.classList.remove('locked');
-                                } else {
-                                        overlay.style.display = 'flex';
-                                        document.body.classList.add('locked');
-                                }
+               <script>
+                       document.addEventListener('DOMContentLoaded', () => {
+                               const overlay = document.getElementById('access-overlay');
+                               const form = document.getElementById('access-form');
+                               const error = document.getElementById('access-error');
+                               const desc = document.getElementById('overlay-description');
+                               const toggleDesc = document.getElementById('toggle-description');
+                               const content = document.getElementById('overlay-content');
+                               if (!overlay || !form) return;
 
-                                form.addEventListener('submit', (e) => {
-                                        e.preventDefault();
-                                        const pwd = document.getElementById('access-password').value;
-                                        const nda = document.getElementById('access-nda').checked;
-                                        const email = document.getElementById('access-email').value;
-                                        if (pwd === 'Limitless-93' && nda && email) {
-                                                localStorage.setItem('quanti-email', email);
-                                                overlay.style.display = 'none';
-                                                document.body.classList.remove('locked');
-                                                if (typeof initIntroVideo === 'function') initIntroVideo();
-                                                loadInverseChart(10);
-                                        } else {
-                                                error.textContent = 'Incorrect password or missing agreement';
-                                                error.classList.remove('hidden');
-                                        }
-                                });
-                        });
-                </script>
+                               const rescale = () => {
+                                       if (!content) return;
+                                       const scale = Math.min(window.innerHeight / content.offsetHeight, 1);
+                                       content.style.transform = `scale(${scale})`;
+                                       content.style.transformOrigin = 'top center';
+                               };
+
+                               window.addEventListener('resize', rescale);
+                               window.addEventListener('load', rescale);
+                               rescale();
+
+                               if (toggleDesc && desc) {
+                                       toggleDesc.addEventListener('click', () => {
+                                               desc.classList.toggle('hidden');
+                                               toggleDesc.textContent = desc.classList.contains('hidden') ? 'Show Description' : 'Hide Description';
+                                               rescale();
+                                       });
+                               }
+
+                               if (localStorage.getItem('quanti-email')) {
+                                       overlay.style.display = 'none';
+                                       document.body.classList.remove('locked');
+                               } else {
+                                       overlay.style.display = 'flex';
+                                       document.body.classList.add('locked');
+                               }
+
+                               form.addEventListener('submit', (e) => {
+                                       e.preventDefault();
+                                       const pwd = document.getElementById('access-password').value;
+                                       const nda = document.getElementById('access-nda').checked;
+                                       const email = document.getElementById('access-email').value;
+                                       if (pwd === 'Limitless-93' && nda && email) {
+                                               localStorage.setItem('quanti-email', email);
+                                               overlay.style.display = 'none';
+                                               document.body.classList.remove('locked');
+                                               if (typeof initIntroVideo === 'function') initIntroVideo();
+                                               loadInverseChart(10);
+                                       } else {
+                                               error.textContent = 'Incorrect password or missing agreement';
+                                               error.classList.remove('hidden');
+                                       }
+                               });
+                       });
+               </script>
                 <div class="mode-switch">Mode: Raw Hash</div>
                 <div id="visualization"><!-- Future 3D BTC Hash Visualizer --></div>
                 <script src="quantumi-logo.js"></script>
