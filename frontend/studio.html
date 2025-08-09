@@ -49,12 +49,16 @@
     footer{ flex-shrink:0; border-top:1px solid #1b1d21; background:#0e1114; padding:10px 14px; font-size:12px; color:#aaa; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
     @media (max-width: 1100px){ main{ grid-template-columns: 1fr; grid-template-rows: minmax(60vh,1fr) auto; } #stagePanel{ height:60vh; } }
     @media (max-width: 640px){
-      header{ position:relative; }
-      .controls-wrap{ padding:8px; overflow-x:auto; }
-      .controls{ grid-template-columns: 1fr; }
-      .ctrl{ grid-column: span 1 / span 1; flex-direction:column; align-items:stretch; }
-      .brand{ flex-direction: column; align-items: flex-start; }
+      /* Keep navigation visible on small screens */
+      header{ position:sticky; top:0; }
+      /* Allow horizontal scrolling if controls overflow */
+      .controls-wrap{ padding:8px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+      .controls{ grid-template-columns:1fr; }
+      .ctrl{ grid-column:span 1 / span 1; flex-direction:column; align-items:stretch; }
+      .brand{ flex-direction:column; align-items:flex-start; }
       main{ display:flex; flex-direction:column; gap:8px; padding:8px; }
+      /* Ensure panels span full width */
+      .panel, .aside{ width:100%; }
       #stagePanel{ height:50vh; }
       .overlay{ left:4px; top:4px; right:4px; }
       .chip{ font-size:10px; }
