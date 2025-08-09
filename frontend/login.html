@@ -202,6 +202,9 @@
       <button class="btn layer-btn" onclick="setLayer(1)" id="btn1">Layer II</button>
       <button class="btn layer-btn selected" onclick="setLayer(2)" id="btn2">Layer III</button>
     </div>
+    <div id="studio-entry" class="mt-4 hidden fade-in" style="animation-delay:1.2s">
+      <a href="studio.html" class="btn">Enter BTC Hash Studio</a>
+    </div>
   </main>
   <footer class="fade-in" style="animation-delay:1.2s">
     &copy; 2025 <span class="sixtyfour-font">QUANTUMI</span> &mdash; All Rights Reserved.
@@ -236,6 +239,7 @@
       document.querySelectorAll(".layer-btn").forEach((btn, i) =>
         btn.classList.toggle("selected", i === index)
       );
+      document.getElementById("studio-entry").classList.toggle("hidden", index !== 1);
       generateDots();
       requestAnimationFrame(animate);
     }
