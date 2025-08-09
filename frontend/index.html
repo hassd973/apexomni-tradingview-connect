@@ -1861,11 +1861,16 @@
                                 overflow: hidden;
                         }
                         #btc-hash-canvas:fullscreen,
-                        #btc-hash-canvas:-webkit-full-screen {
+                        #btc-hash-canvas:-webkit-full-screen,
+                        #btc-hash-canvas:-moz-full-screen,
+                        #btc-hash-canvas:-ms-fullscreen {
                                 width: 100vw;
                                 height: 100vh;
                         }
                         #btc-hash-canvas.fs-active {
+                                position: fixed;
+                                top: 0;
+                                left: 0;
                                 width: 100vw;
                                 height: 100vh;
                         }

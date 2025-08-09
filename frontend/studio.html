@@ -47,9 +47,13 @@
       .ctrl{ width:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:10px; min-height:52px; }
       .ctrl label{ font-size:12px; white-space:nowrap; opacity:.9; }
       .ctrl input[type="text"], .ctrl input[type="number"], .ctrl input[type="range"], .ctrl select, .ctrl input[type="email"], .ctrl input[type="file"]{ flex:1 1 auto; min-width:0; background:#000; border:1px solid #333; color:#fff; border-radius:8px; padding:10px; outline:none; }
-      .ctrl input[type="range"]{ padding:0; }
-      .btn{ background:#14171a; border:1px solid rgba(255,255,255,.10); color:#e7e7e7; border-radius:10px; padding:10px 12px; cursor:pointer; transition:background .18s, transform .06s; min-width:44px; min-height:44px; }
-      .btn:hover{ background:rgba(0,255,120,.22); color:#001; border-color:var(--border); }
+      .ctrl input[type="range"]{ padding:0; -webkit-appearance:none; appearance:none; background:transparent; }
+      .ctrl input[type="range"]::-webkit-slider-runnable-track{ height:4px; background:rgba(0,255,0,.3); border-radius:2px; }
+      .ctrl input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#00ff00; cursor:pointer; margin-top:-5px; }
+      .ctrl input[type="range"]::-moz-range-track{ height:4px; background:rgba(0,255,0,.3); border-radius:2px; }
+      .ctrl input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border-radius:50%; background:#00ff00; cursor:pointer; }
+      .btn{ background:rgba(0,255,0,.15); border:1px solid rgba(0,255,0,.3); color:#e7e7e7; border-radius:10px; padding:10px 12px; cursor:pointer; transition:background .18s, transform .06s; min-width:44px; min-height:44px; }
+      .btn:hover{ background:rgba(0,255,0,.3); color:#001; border-color:var(--border); }
       .btn:active{ transform: translateY(1px); }
 
       /* Mobile controls drawer */
@@ -91,7 +95,9 @@
       .chip{ display:flex; align-items:center; gap:6px; pointer-events:auto; background:rgba(0,0,0,.55); border:1px solid var(--border); border-radius:10px; padding:6px 8px; font-size:12px; }
       .legend{ position:absolute; left:12px; right:12px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; pointer-events:none; }
       .legend .swatch{ width:12px; height:12px; border-radius:3px; margin-right:4px; border:1px solid rgba(255,255,255,.4); }
-      canvas#gl{ width:100%; height:100%; display:block; background:#000; touch-action:none; }
+      canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background:#000; touch-action:none; }
+      .mobile-fs-btn{ display:none; position:absolute; right:12px; top:12px; background:rgba(0,255,0,.15); border:1px solid rgba(0,255,0,.3); color:var(--accent); border-radius:8px; padding:6px; z-index:20; }
+      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } }
       .aside{ display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
       .card{ background:#0c0f12; border:1px solid rgba(255,255,255,.06); border-radius:10px; padding:10px; }
       .log{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
@@ -186,6 +192,7 @@
     <main id="main">
       <section class="panel fs-target" id="stagePanel" aria-label="3D stage">
         <div class="stage">
+          <button id="mobile-fs-toggle" class="mobile-fs-btn" aria-label="Toggle fullscreen">⤢</button>
           <div class="overlay" id="metrics">
             <div class="chip" id="m-price">Price —</div>
             <div class="chip" id="m-change">24h —</div>
@@ -194,7 +201,7 @@
             <div class="chip" id="m-mode">Mode — Original</div>
             <div class="chip" id="m-status">Status — Init…</div>
           </div>
-          <canvas id="gl"></canvas>
+          <canvas id="btc-hash-canvas"></canvas>
           <div class="legend" id="legend"></div>
         </div>
       </section>
@@ -237,7 +244,7 @@
       const $ = (id) => document.getElementById(id);
       const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
       const nfPct = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 });
-      const canvas = $('gl'); const stagePanel = $('stagePanel');
+      const canvas = $('btc-hash-canvas'); const stagePanel = $('stagePanel');
 
       // Mobile controls drawer toggle (match reference layout)
       const drawerBtn = $('controls-toggle');
@@ -768,12 +775,14 @@
       });
 
       // Fullscreen
-      const btnFS=$('btn-fullscreen'); const btnExit=$('btn-exitfs');
+      const btnFS=$('btn-fullscreen'); const btnExit=$('btn-exitfs'); const mobileFSBtn=$('mobile-fs-toggle');
       function isFullscreen(){ return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement; }
       function requestFS(el){ const req= el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen; if(req) req.call(el); document.body.classList.add('fs-active'); setTimeout(resize, 100); }
       function exitFS(){ const ex= document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen; if(ex) ex.call(document); document.body.classList.remove('fs-active'); setTimeout(resize, 100); }
-      btnFS.addEventListener('click', ()=> requestFS(stagePanel)); btnExit.addEventListener('click', exitFS);
-      document.addEventListener('fullscreenchange', ()=>{ const active=!!isFullscreen(); document.body.classList.toggle('fs-active', active); setTimeout(resize, 80); });
+      btnFS.addEventListener('click', ()=> requestFS(stagePanel));
+      btnExit.addEventListener('click', exitFS);
+      if(mobileFSBtn){ mobileFSBtn.addEventListener('click', ()=>{ if(!isFullscreen()) requestFS(stagePanel); else exitFS(); }); }
+      document.addEventListener('fullscreenchange', ()=>{ const active=!!isFullscreen(); document.body.classList.toggle('fs-active', active); if(mobileFSBtn){ mobileFSBtn.textContent = active ? '✕' : '⤢'; mobileFSBtn.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen'); } setTimeout(resize, 80); });
 
       // Export
       $('export-png').addEventListener('click', ()=>{
