@@ -2116,6 +2116,10 @@
                         border-radius: 12px;
                         box-shadow: 0 2px 20px #000a;
                         margin-bottom: 0.75rem;
+                        transition: transform .4s;
+                    }
+                    .login-form.slide-out {
+                        transform: translateX(-150%);
                     }
                     .login-form input {
                         background: #000;
@@ -2323,8 +2327,18 @@
                                </form>
                                <div class="buttons">
                                <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
-                               <button class="btn layer-btn" id="btn1" onclick="setLayer(1)">Layer II</button>
-                               <button class="btn layer-btn selected" id="btn2" onclick="setLayer(2)">Layer III</button>
+                               <button class="btn layer-btn selected" id="btn1" onclick="setLayer(1)">Layer II</button>
+                               <button class="btn layer-btn" id="btn2" onclick="setLayer(2)">Layer III</button>
+                               </div>
+                               <div id="layer-entry" class="mt-4">
+                                       <a id="enter-link" href="studio.html" class="btn">Enter BTC Hash Studio</a>
+                                       <form id="mailing-form" class="mt-3 flex flex-col sm:flex-row gap-2 justify-center">
+                                               <input id="mailing-email" type="email" placeholder="Email for updates" class="flex-1 rounded px-3 py-2 text-black" required />
+                                               <button type="submit" class="btn">Join Mailing List</button>
+                                       </form>
+                                       <div class="mt-2 text-center">
+                                               <a href="https://www.instagram.com/quantumi.space/" target="_blank" class="text-xs text-green-400 underline">Instagram</a>
+                                       </div>
                                </div>
                        </div>
                  </div>
@@ -2351,13 +2365,36 @@
     const ROWS = 7;
     const COLS = 6;
     let dots = [];
-    let currentLayer = 2;
+    let currentLayer = 1;
 
     function setLayer(index) {
       currentLayer = index;
       document.querySelectorAll(".layer-btn").forEach((btn, i) =>
         btn.classList.toggle("selected", i === index)
       );
+      const entry = document.getElementById("layer-entry");
+      const enterLink = document.getElementById("enter-link");
+      const mailForm = document.getElementById("mailing-form");
+      const form = document.getElementById("access-form");
+
+      if (index === 1) {
+        entry.classList.remove("hidden");
+        enterLink.href = "studio.html";
+        enterLink.textContent = "Enter BTC Hash Studio";
+        mailForm.classList.remove("hidden");
+        form.classList.add("slide-out");
+      } else if (index === 0) {
+        entry.classList.remove("hidden");
+        enterLink.href = "index-2025.html";
+        enterLink.textContent = "Enter QUANTUMI";
+        mailForm.classList.add("hidden");
+        form.classList.remove("slide-out");
+      } else {
+        entry.classList.add("hidden");
+        mailForm.classList.add("hidden");
+        form.classList.remove("slide-out");
+      }
+
       generateDots();
       requestAnimationFrame(animate);
     }
@@ -2443,8 +2480,19 @@
       setLayer((currentLayer + 1) % layers.length);
     });
 
-    generateDots();
-    requestAnimationFrame(animate);
+    document.getElementById("mailing-form").addEventListener("submit", e => {
+      e.preventDefault();
+      const email = document.getElementById("mailing-email").value.trim();
+      if (email) {
+        const list = JSON.parse(localStorage.getItem("studioMails") || "[]");
+        list.push({ email, time: new Date().toISOString() });
+        localStorage.setItem("studioMails", JSON.stringify(list));
+        alert("Thanks for joining!");
+      }
+      e.target.reset();
+    });
+
+    setLayer(1);
                 </script>
                   <button
 			aria-label="Toggle navigation menu"
