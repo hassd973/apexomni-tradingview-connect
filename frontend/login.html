@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>QUANTUMI Login</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&family=Sora:wght@100..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&family=Sora:wght@100..800&display=swap" rel="stylesheet" />
   <style>
     html, body {
       width: 100%;
@@ -16,34 +16,65 @@
       padding: 0;
       font-family: 'Sora', sans-serif;
       background: #111215;
-      color: #f8f8f8;
-      overflow-x: hidden;
+      color: #e3e3e3cc;
+      overflow: hidden;
       scroll-behavior: smooth;
     }
-    body {
-      display: flex;
-      flex-direction: column;
+    #access-overlay {
+      position: fixed;
+      inset: 0;
+      width: 100%;
       min-height: 100vh;
-      overflow-y: auto;
-    }
-    main {
-      flex: 1;
+      height: 100vh;
+      background: #111215;
+      z-index: 2000;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      padding: clamp(1.5em, 5vh, 3em) 1em;
-      padding-bottom: calc(env(safe-area-inset-bottom) + clamp(1.5em, 5vh, 3em));
+      padding: clamp(0.5em, 2vh, 1.5em) 1em;
+      padding-bottom: calc(env(safe-area-inset-bottom) + 3rem);
       box-sizing: border-box;
-      overflow-y: auto;
+      overflow: hidden;
+    }
+    #overlay-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #access-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+    #access-modules {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      min-height: 260px;
+      transition: height .4s;
+    }
+    .module-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      pointer-events: none;
+      opacity: 0;
+      transition: transform .4s, opacity .4s;
+    }
+    .module-panel.slide-out {
+      transform: translateX(-150%);
+      opacity: 0;
     }
     .q-hero-canvas {
-      width: 100%;
-      max-width: 420px;
-      height: clamp(180px, 33vh, 360px);
+      width: min(420px, 35vh);
+      height: min(420px, 35vh);
+      aspect-ratio: 1 / 1;
       display: block;
       background: #111215;
-      margin: 0 auto 1.2em auto;
+      margin: 0 auto 1em auto;
       transform: scale(1.05);
       transform-origin: center;
     }
@@ -52,22 +83,14 @@
     }
     .center-content {
       text-align: center;
-      color: #e3e3e3cc;
-      margin-bottom: 1.2em;
-    }
-    .sixtyfour-font {
-      font-family: "Sixtyfour", sans-serif;
-      font-optical-sizing: auto;
-      font-weight: 400;
-      font-style: normal;
-      font-variation-settings: "BLED" 0, "SCAN" 0;
+      margin-bottom: 1.5em;
     }
     .branding {
       font-size: clamp(24px, 6vw, 54px);
       letter-spacing: 2px;
       text-shadow: 0 1px 6px #000c;
       opacity: 0.92;
-      margin-bottom: 0.6em;
+      margin-bottom: 0.3em;
     }
     .login-form {
       width: 100%;
@@ -75,9 +98,9 @@
       margin: 0;
       display: flex;
       flex-direction: column;
-      gap: 1.2em;
+      gap: 1em;
       background: rgba(12,12,12,0.94);
-      padding: 2em 1.6em 2.2em 1.6em;
+      padding: 1.5em 1.4em 1.7em 1.4em;
       border-radius: 12px;
       box-shadow: 0 2px 20px #000a;
       transition: transform .4s;
@@ -98,6 +121,14 @@
     .login-form input:focus {
       border-color: #fff;
     }
+    .login-form label {
+      display: flex;
+      align-items: center;
+      font-size: 0.875rem;
+    }
+    .login-form label span {
+      margin-left: 0.5rem;
+    }
     .login-btn {
       background: #fff;
       color: #000;
@@ -111,7 +142,7 @@
     }
     .login-btn:hover,
     .login-btn:focus {
-      background: #00FF00;
+      background: #35e1ad;
       color: #111;
     }
     .buttons {
@@ -145,123 +176,82 @@
       color: #fff;
       transform: scale(1.04);
     }
-
-    #access-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
+    #nda-link {
+      color: #35e1ad;
+      text-decoration: underline;
     }
-
-    #access-modules {
-      position: relative;
-      width: 100%;
-      max-width: 340px;
-      min-height: 260px;
-      transition: height .4s;
+    #access-error {
+      color: #f87171;
+      margin-top: 0.75rem;
     }
-
-    .module-panel {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      transition: transform .4s, opacity .4s;
+    #overlay-description {
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
     }
-
-    .module-panel.slide-out {
-      transform: translateX(-150%);
-      opacity: 0;
-    }
-
-    footer {
-      flex-shrink: 0;
-      background: #181b1e;
-      color: #aaa;
-      text-align: center;
-      padding: 1.2em 0 calc(1.5em + env(safe-area-inset-bottom)) 0;
-      border-top: 1px solid #222;
-      font-size: 0.95em;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .fade-in {
-      opacity: 0;
-      animation: fadeIn 0.8s ease forwards;
+    #toggle-description {
+      color: #35e1ad;
+      text-decoration: underline;
+      font-size: 0.875rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      align-self: flex-start;
     }
     @media (max-width: 600px) {
-      main {
-        padding: 1em 0.3em 2.5em 0.3em;
-      }
-      .login-form {
-        padding: 1.2em 0.5em 1.6em 0.5em;
-        font-size: 1em;
-      }
       .branding { font-size: 8vw; }
       .buttons { margin-top: 0.6em; }
     }
     @media (max-height: 700px) {
-      main {
-        padding-top: 1em;
-      }
-      .q-hero-canvas {
-        height: clamp(150px, 25vh, 240px);
-      }
-      .buttons {
-        margin-top: 0.8em;
-      }
+      #access-overlay { padding-top: 1em; }
     }
   </style>
 </head>
 <body>
-  <main>
-    <canvas id="qCanvas" class="q-hero-canvas fade-in" width="600" height="600" style="animation-delay:0s"></canvas>
-    <div class="center-content">
-      <div class="branding sixtyfour-font fade-in" style="animation-delay:0.2s">QUANTUMI</div>
-      <p id="login-description" class="mt-2 text-sm text-gray-400 fade-in" style="animation-delay:0.4s">Access the QUANTUMI network.</p>
-      <button id="toggle-desc" class="mt-2 text-xs underline fade-in" style="animation-delay:0.6s">Hide Description</button>
-    </div>
-    <div id="access-area">
-      <div id="access-modules">
-        <form id="access-form" class="login-form module-panel fade-in" style="animation-delay:0.8s">
-          <input type="password" id="access-password" placeholder="Password" required />
-          <input type="email" id="access-email" placeholder="Email" required />
-          <label>
-            <input type="checkbox" id="access-nda" required />
-            <span>I agree to the NDA</span>
-          </label>
-          <button class="login-btn" type="submit">Enter</button>
-          <a id="nda-link" href="QuantumI_NDA_v3.pdf" download>Download NDA</a>
-          <button id="toggle-description" type="button">Show Description</button>
-          <p id="overlay-description" class="hidden">I lurk in ledgers unseen; observe me and profits convene. Guess who? QuantumI—where quantum trading cracks a grin.</p>
-          <div id="access-error" class="hidden"></div>
-        </form>
-        <div id="layer1-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
-          <a href="index-2025.html" class="login-btn w-full text-center">Enter QUANTUMI 2025</a>
-        </div>
-        <div id="layer2-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
-          <a href="studio.html" class="login-btn w-full text-center">Enter BTC Hash Studio</a>
-          <form id="mailing-form" class="mt-2 flex flex-col gap-2 w-full">
-            <input id="mailing-email" type="email" placeholder="Email for updates" class="rounded px-3 py-2 text-black w-full" required />
-            <button type="submit" class="login-btn">Join Mailing List</button>
+  <div id="access-overlay">
+    <div id="overlay-content">
+      <canvas id="qCanvas" class="q-hero-canvas fade-in" width="600" height="600" style="animation-delay:0s"></canvas>
+      <div class="center-content">
+        <div class="branding sixtyfour-font fade-in" style="animation-delay:0.2s">QUANTUMI</div>
+        <p id="login-description" class="mt-2 text-sm text-gray-400 fade-in" style="animation-delay:0.4s">Access the QUANTUMI network.</p>
+        <button id="toggle-desc" class="mt-2 text-xs underline fade-in" style="animation-delay:0.6s">Hide Description</button>
+      </div>
+      <div id="access-area">
+        <div id="access-modules">
+          <form id="access-form" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
+            <input type="password" id="access-password" placeholder="Password" required />
+            <input type="email" id="access-email" placeholder="Email" required />
+            <label>
+              <input type="checkbox" id="access-nda" required />
+              <span>I agree to the NDA</span>
+            </label>
+            <button class="login-btn" type="submit">Enter</button>
+            <a id="nda-link" href="QuantumI_NDA_v3.pdf" download>Download NDA</a>
+            <button id="toggle-description" type="button">Show Description</button>
+            <p id="overlay-description" class="hidden">I lurk in ledgers unseen; observe me and profits convene. Guess who? QuantumI—where quantum trading cracks a grin.</p>
+            <div id="access-error" class="hidden"></div>
           </form>
-          <div class="mt-2 text-center">
-            <a href="https://www.instagram.com/quantumi.space/" target="_blank" class="text-xs text-green-400 underline">Instagram</a>
+          <div id="layer1-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
+            <a href="index-2025.html" class="login-btn w-full text-center">Enter QUANTUMI 2025</a>
+          </div>
+          <div id="layer2-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
+            <a id="enter-studio" href="studio.html" class="login-btn w-full text-center">Enter BTC Hash Studio</a>
+            <form id="mailing-form" class="mt-2 flex flex-col gap-2 w-full">
+              <input id="mailing-email" type="email" placeholder="Email for updates" class="rounded px-3 py-2 text-black w-full" required />
+              <button type="submit" class="login-btn">Join Mailing List</button>
+            </form>
+            <div class="mt-2 text-center">
+              <a href="https://www.instagram.com/quantumi.space/" target="_blank" class="text-xs text-green-400 underline">Instagram</a>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="buttons fade-in" style="animation-delay:1s">
-        <button class="btn layer-btn" onclick="setLayer(0)" id="btn0">Layer I</button>
-        <button class="btn layer-btn selected" onclick="setLayer(1)" id="btn1">Layer II</button>
-        <button class="btn layer-btn" onclick="setLayer(2)" id="btn2">Layer III</button>
+        <div class="buttons fade-in" style="animation-delay:1s">
+          <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
+          <button class="btn layer-btn selected" id="btn1" onclick="setLayer(1)">Layer II</button>
+          <button class="btn layer-btn" id="btn2" onclick="setLayer(2)">Layer III</button>
+        </div>
       </div>
     </div>
-  </main>
-  <footer class="fade-in" style="animation-delay:1.2s">
-    &copy; 2025 <span class="sixtyfour-font">QUANTUMI</span> &mdash; All Rights Reserved.
-  </footer>
+  </div>
   <script>
     // Updated layout with 6 columns, third column removed
     const Q_LAYOUT = [
@@ -280,16 +270,24 @@
       { spacing: 0.3, radius: 0.14 }
     ];
 
-    if (localStorage.getItem('quanti-email')) {
-      window.location.href = 'index.html';
-    }
-
     const canvas = document.getElementById("qCanvas");
     const ctx = canvas.getContext("2d");
     const ROWS = 7;
     const COLS = 6;
     let dots = [];
     let currentLayer = 1;
+
+    function fadeIn(el) {
+      el.classList.remove("hidden", "fade-out");
+      void el.offsetWidth;
+      el.classList.add("fade-in");
+    }
+
+    function fadeOut(el) {
+      el.classList.remove("fade-in");
+      el.classList.add("fade-out");
+      el.addEventListener("animationend", () => el.classList.add("hidden"), { once: true });
+    }
 
     const panels = {
       0: document.getElementById("layer1-entry"),
@@ -300,10 +298,14 @@
 
     function showPanel(el) {
       el.classList.remove("hidden", "slide-out");
+      el.style.pointerEvents = "auto";
+      el.style.opacity = "1";
     }
 
     function hidePanel(el) {
       if (el.classList.contains("hidden")) return;
+      el.style.pointerEvents = "none";
+      el.style.opacity = "0";
       el.classList.add("slide-out");
       el.addEventListener("transitionend", () => el.classList.add("hidden"), { once: true });
     }
@@ -323,7 +325,6 @@
       });
       const active = panels[index];
       accessModules.style.height = active.offsetHeight + "px";
-
       generateDots();
       requestAnimationFrame(animate);
     }
@@ -333,7 +334,7 @@
       const cellSize = Math.min(canvas.width / (COLS + 2), canvas.height / (ROWS + 2));
       const offsetX = (canvas.width - COLS * cellSize) / 2;
       const offsetY = (canvas.height - ROWS * cellSize) / 2;
-      const dotWidth = cellSize * 0.5;
+      const dotWidth = cellSize * 0.4;
       const dotHeight = cellSize * 0.3;
       const dotRadius = cellSize * 0.15;
       dots = [];
@@ -380,8 +381,6 @@
 
     function animate(now) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.shadowColor = currentLayer === 2 ? "#fff" : "transparent";
-      ctx.shadowBlur = currentLayer === 2 ? 12 : 0;
       let complete = true;
 
       for (let dot of dots) {
@@ -397,6 +396,8 @@
         const cy = dot.y + (dot.ty - dot.y) * ease;
 
         ctx.fillStyle = `rgba(227,227,227,${ease})`;
+        ctx.shadowColor = "#fff";
+        ctx.shadowBlur = 12;
         drawRoundedRect(cx - dot.width / 2, cy - dot.height / 2, dot.width, dot.height, dot.radius);
 
         if (t < 1) complete = false;
@@ -410,41 +411,16 @@
     });
 
     const desc = document.getElementById('login-description');
-    const toggleDesc = document.getElementById('toggle-desc');
-    toggleDesc.addEventListener('click', () => {
+    const toggleDescBtn = document.getElementById('toggle-desc');
+    toggleDescBtn.addEventListener('click', () => {
       const hidden = desc.classList.toggle('hidden');
-      toggleDesc.textContent = hidden ? 'Show Description' : 'Hide Description';
-    });
-
-    const overlayDesc = document.getElementById('overlay-description');
-    const toggleDescription = document.getElementById('toggle-description');
-    if (toggleDescription && overlayDesc) {
-      toggleDescription.addEventListener('click', () => {
-        const hidden = overlayDesc.classList.toggle('hidden');
-        toggleDescription.textContent = hidden ? 'Show Description' : 'Hide Description';
-      });
-    }
-
-    const accessForm = document.getElementById('access-form');
-    const accessError = document.getElementById('access-error');
-    accessForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const pwd = document.getElementById('access-password').value;
-      const nda = document.getElementById('access-nda').checked;
-      const email = document.getElementById('access-email').value;
-      if (pwd === 'Limitless-93' && nda && email) {
-        localStorage.setItem('quanti-email', email);
-        window.location.href = 'index.html';
-      } else {
-        accessError.textContent = 'Incorrect password or missing agreement';
-        accessError.classList.remove('hidden');
-      }
+      toggleDescBtn.textContent = hidden ? 'Show Description' : 'Hide Description';
     });
 
     document.getElementById("mailing-form").addEventListener("submit", e => {
       e.preventDefault();
       const email = document.getElementById("mailing-email").value.trim();
-      if(email){
+      if (email) {
         const list = JSON.parse(localStorage.getItem("studioMails") || "[]");
         list.push({ email, time: new Date().toISOString() });
         localStorage.setItem("studioMails", JSON.stringify(list));
@@ -453,9 +429,7 @@
       e.target.reset();
     });
 
-    // Init
     setLayer(1);
   </script>
 </body>
 </html>
-
