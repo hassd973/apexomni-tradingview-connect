@@ -903,14 +903,22 @@
 				position: relative;
 				z-index: 5;
 			}
-			.chart-wrapper {
-				position: relative;
-			}
-			@media (max-width: 640px) {
-				.chart-wrapper .flex {
-					flex-wrap: wrap;
-				}
-			}
+                        .chart-wrapper {
+                                position: relative;
+                        }
+                        @media (max-width: 640px) {
+                                .chart-wrapper {
+                                        margin-top: 1rem;
+                                }
+                                .chart-wrapper .flex {
+                                        flex-wrap: wrap;
+                                }
+                                .chart-wrapper button,
+                                .chart-wrapper a {
+                                        padding: 0.25rem 0.5rem;
+                                        font-size: 0.75rem;
+                                }
+                        }
 			.chart-container {
 				position: relative;
 				width: 100%;
@@ -2663,7 +2671,6 @@
 		<div class="particles" id="particles"></div>
                 <div id="beta-banner">QuantumI Alpha Version Pro 🚀</div>
                 <header class="w-full flex justify-center items-center relative">
-                        <a href="login.html" id="logout-btn" class="absolute top-4 right-4 bg-[#00FF00] text-black px-3 py-1 rounded">Logout</a>
                         <div class="w-full max-w-[98vw] mx-auto px-4">
                                 <div class="title-box">
                                         <h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
@@ -2672,7 +2679,7 @@
 					Real-time cryptocurrency market data and analytics powered by
 					CoinGecko, Etherscan, Dune, and TradingView across multiple chains.
 				</p>
-				<div class="chart-wrapper w-full">
+                                <div class="chart-wrapper w-full mt-4 md:mt-2" id="chart-header-wrapper">
 					<div class="flex flex-wrap justify-between items-center mb-4 gap-2">
 						<div class="flex flex-wrap space-x-2 gap-2">
 							<button
@@ -2726,40 +2733,45 @@
 								1D
 							</button>
 						</div>
-						<div class="flex flex-wrap space-x-2 gap-2">
-							<button
-								aria-label="Toggle QuantumI indicator"
-								data-tooltip="Toggle QuantumI indicator"
-								id="toggle-indicator-header"
-								role="button"
-							>
-								Toggle Indicator
-							</button>
-							<button
-								aria-label="Open chart in modal"
-								data-tooltip="Open chart in modal"
-								id="toggle-sticky-header"
-								role="button"
-							>
-								Dock Chart
-							</button>
-							<button
-								aria-label="Dock background in modal"
-								data-tooltip="Dock background in modal"
-								id="toggle-background"
-								role="button"
-							>
-								Dock Background
-							</button>
-							<button
-								aria-label="Turn on background"
-								data-tooltip="Enable 3D background (may slow site)"
-								id="toggle-background-dock"
-								role="button"
-							>
-								Turn On Background
-							</button>
-						</div>
+                                                <div class="flex flex-wrap gap-2">
+                                                        <button
+                                                                aria-label="Toggle QuantumI indicator"
+                                                                data-tooltip="Toggle QuantumI indicator"
+                                                                id="toggle-indicator-header"
+                                                                role="button"
+                                                        >
+                                                                Toggle Indicator
+                                                        </button>
+                                                        <button
+                                                                aria-label="Open chart in modal"
+                                                                data-tooltip="Open chart in modal"
+                                                                id="toggle-sticky-header"
+                                                                role="button"
+                                                        >
+                                                                Dock Chart
+                                                        </button>
+                                                        <button
+                                                                aria-label="Dock background in modal"
+                                                                data-tooltip="Dock background in modal"
+                                                                id="toggle-background"
+                                                                role="button"
+                                                        >
+                                                                Dock Background
+                                                        </button>
+                                                        <button
+                                                                aria-label="Turn on background"
+                                                                data-tooltip="Enable 3D background (may slow site)"
+                                                                id="toggle-background-dock"
+                                                                role="button"
+                                                        >
+                                                                Turn On Background
+                                                        </button>
+                                                        <a
+                                                                href="login.html"
+                                                                id="logout-btn"
+                                                                class="bg-[#00FF00] text-black px-3 py-1 rounded"
+                                                        >Logout</a>
+                                                </div>
 						<div
 							class="data-warning"
 							id="background-warning"
