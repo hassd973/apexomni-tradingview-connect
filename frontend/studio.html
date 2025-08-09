@@ -22,11 +22,12 @@
     .sub{ font-size:12px; opacity:.7; }
     .controls-wrap{ padding: 10px 14px 12px 14px; }
     .controls{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:10px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px; box-shadow:0 2px 20px #0006, 0 0 16px var(--soft) inset; }
-    .ctrl{ grid-column: span 12 / span 12; display:flex; align-items:center; gap:8px; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:8px; }
+    .ctrl{ grid-column: span 12 / span 12; display:flex; flex-wrap:wrap; align-items:center; gap:8px; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:8px; }
     .ctrl label{ font-size:12px; white-space:nowrap; opacity:.9; }
-    .ctrl input[type="text"], .ctrl input[type="number"], .ctrl input[type="range"], .ctrl select{ flex:1; background:#000; border:1px solid #333; color:#fff; border-radius:8px; padding:8px 10px; outline:none; }
+    .ctrl input[type="text"], .ctrl input[type="number"], .ctrl input[type="range"], .ctrl select{ flex:1 1 auto; min-width:0; background:#000; border:1px solid #333; color:#fff; border-radius:8px; padding:8px 10px; outline:none; }
     .ctrl input[type="range"]{ padding:0; }
-    .ctrl input[type="file"]{ flex:1; }
+    .ctrl input[type="file"]{ flex:1 1 auto; min-width:0; }
+    .ctrl .btn{ flex-shrink:0; }
     .btn{ background:#1a1d20; border:1px solid rgba(255,255,255,.08); color:#e7e7e7; border-radius:10px; padding:8px 10px; cursor:pointer; transition:.18s; }
     .btn:hover{ background:rgba(0,255,0,.25); color:#001; border-color:var(--border); }
     .hint{ font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background: rgba(0,255,0,.08); cursor:help; }
@@ -213,12 +214,18 @@
     // Data fetchers
     async function fetchHistorical(){
       try{
-        const r = await fetch('/api/btc/historical');
-        if(!r.ok) throw 0;
-        const j = await r.json();
-        if(!j.prices || !j.total_volumes) throw 0;
-        return j;
+        const r = await fetch('/api/btc/historical', { cache: 'no-store' });
+        if(r.ok){
+          const j = await r.json();
+          if(j.prices && j.total_volumes) return j;
+        }
+        throw 0;
       }catch(_){
+        try{
+          const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=minute');
+          const j = await r.json();
+          if(j.prices && j.total_volumes) return j;
+        }catch{}
         const now = Date.now();
         const pts = Array.from({length:120},(_,i)=>[now - (120-i)*60_000, 50000 + Math.sin(i/8)*1200 + (Math.random()-.5)*400]);
         return { prices: pts, total_volumes: pts.map(([t,_],i)=>[t, Math.abs(Math.sin(i/10))*1e9 + 3e9]) };
@@ -226,24 +233,60 @@
     }
     async function fetchHashrate(){
       try{
-        const r = await fetch('/api/btc/stats');
-        if(!r.ok) throw 0;
-        const j = await r.json();
-        return {
-          hashrate: j.hashrate ? j.hashrate.toFixed(2) + " EH/s" : "—",
-          diff: j.diff ? (j.diff/1e12).toFixed(2) + " T" : "—"
-        };
-      }catch{
+        const r = await fetch('/api/btc/stats', { cache: 'no-store' });
+        if(r.ok){
+          const j = await r.json();
+          return {
+            hashrate: j.hashrate ? j.hashrate.toFixed(2) + " EH/s" : "—",
+            diff: j.diff ? (j.diff/1e12).toFixed(2) + " T" : "—"
+          };
+        }
+        throw 0;
+      }catch(_){
+        try{
+          const [hashResp, diffResp] = await Promise.all([
+            fetch('https://api.blockchain.info/q/hashrate?cors=true'),
+            fetch('https://api.blockchain.info/q/getdifficulty?cors=true')
+          ]);
+          if(hashResp.ok && diffResp.ok){
+            const h = parseFloat(await hashResp.text());
+            const d = parseFloat(await diffResp.text());
+            return {
+              hashrate: (h/1e9).toFixed(2) + " EH/s",
+              diff: (d/1e12).toFixed(2) + " T"
+            };
+          }
+        }catch{}
         return { hashrate:"—", diff:"—" };
       }
     }
     async function latestBlockHash(){
       try{
-        const r = await fetch('/api/btc/latest-hash');
-        if(!r.ok) throw 0;
-        const j = await r.json();
-        if(j.hash) return j.hash;
-      }catch{}
+        const r = await fetch('/api/btc/latest-hash', { cache: 'no-store' });
+        if(r.ok){
+          const j = await r.json();
+          if(j.hash) return j.hash;
+        }
+        throw 0;
+      }catch(_){
+        const urls = [
+          'https://blockchain.info/latestblock',
+          'https://blockstream.info/api/blocks/tip/hash'
+        ];
+        for(const url of urls){
+          try{
+            const r = await fetch(url);
+            if(!r.ok) continue;
+            if(url.includes('latestblock')){
+              const j = await r.json();
+              if(j.hash) return j.hash;
+            }else{
+              const t = (await r.text()).trim();
+              if(/^[0-9a-f]{64}$/i.test(t)) return t;
+            }
+          }catch{}
+        }
+      }
       return null;
     }
     function randomHash(){ const hex="0123456789abcdef"; let s=""; for(let i=0;i<64;i++) s+=hex[Math.floor(Math.random()*16)]; return s; }
