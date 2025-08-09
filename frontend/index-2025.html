@@ -135,6 +135,22 @@
       cursor: pointer;
     }
 
+    .youtube-container {
+      position: relative;
+      width: 100%;
+      padding-bottom: 56.25%;
+      height: 0;
+    }
+
+    .youtube-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
     .mode-switch {
       position: fixed;
       top: 5rem;
@@ -179,14 +195,17 @@
       </nav>
     </header>
 
-    <main class="dashboard">
+  <main class="dashboard">
       <section id="about" class="module-card">
         <h1>Why QUANTUMI?</h1>
-        <p>At QUANTUMI we fuse on-chain telemetry with user-led research to unlock actionable metrics and foster innovation across the crypto space.</p>
+        <p>QUANTUMI fuses on-chain telemetry with user-led research to unlock actionable metrics and foster innovation across the crypto space. Our layered entry system empowers communities to explore data, contribute insights, and shape the next generation of crypto analytics.</p>
       </section>
       <section id="insights" class="module-card">
         <h2>Insights Module Playlist</h2>
-        <ol>
+        <div class="youtube-container">
+          <iframe src="https://www.youtube.com/embed/videoseries?list=PLQ-uHSnFig5NPx4adxl97CZb8vU4numwi" allowfullscreen></iframe>
+        </div>
+        <ol class="mt-4 list-disc ml-6">
           <li>Market Pulse Radar</li>
           <li>On-Chain Alpha Streams</li>
           <li>Community Trend Scanner</li>

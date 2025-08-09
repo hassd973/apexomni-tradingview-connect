@@ -2072,16 +2072,25 @@
                     }
                     #access-area {
                         display: flex;
-                        flex-direction: column;
-                        align-items: center;
+                        justify-content: center;
                         width: 100%;
-                        gap: 1rem;
                     }
-                    #layer-entry {
-                        display: flex;
-                        flex-direction: column;
-                        align-items: center;
-                        gap: 0.75rem;
+                    #access-modules {
+                        position: relative;
+                        width: 100%;
+                        max-width: 340px;
+                        min-height: 260px;
+                    }
+                    .module-panel {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        transition: transform .4s, opacity .4s;
+                    }
+                    .module-panel.slide-out {
+                        transform: translateX(-150%);
+                        opacity: 0;
                     }
                     #overlay-content {
                         display: flex;
@@ -2120,7 +2129,7 @@
                     .login-form {
                         width: 100%;
                         max-width: 340px;
-                        margin: 0 auto;
+                        margin: 0;
                         display: flex;
                         flex-direction: column;
                         gap: 1em;
@@ -2128,7 +2137,6 @@
                         padding: 1.5em 1.4em 1.7em 1.4em;
                         border-radius: 12px;
                         box-shadow: 0 2px 20px #000a;
-                        margin-bottom: 0.75rem;
                         transition: transform .4s;
                     }
                     .login-form.slide-out {
@@ -2328,7 +2336,8 @@
                                          <button id="toggle-desc" class="mt-2 text-xs underline fade-in" style="animation-delay:0.6s">Hide Description</button>
                                </div>
                                <div id="access-area">
-                                 <form id="access-form" class="login-form fade-in" style="animation-delay:0.8s">
+                                 <div id="access-modules">
+                                   <form id="access-form" class="login-form module-panel fade-in" style="animation-delay:0.8s">
                                        <input type="password" id="access-password" placeholder="Password" required />
                                        <input type="email" id="access-email" placeholder="Email" required />
                                        <label>
@@ -2340,16 +2349,20 @@
                                        <button id="toggle-description" type="button">Show Description</button>
                                        <p id="overlay-description" class="hidden">I lurk in ledgers unseen; observe me and profits convene. Guess who? QuantumI—where quantum trading cracks a grin.</p>
                                        <div id="access-error" class="hidden"></div>
-                                 </form>
-                                 <div id="layer-entry" class="login-form hidden fade-in" style="animation-delay:0.8s">
-                                       <a id="enter-link" href="studio.html" class="btn">Enter BTC Hash Studio</a>
-                                       <form id="mailing-form" class="mt-3 flex flex-col sm:flex-row gap-2 justify-center">
-                                               <input id="mailing-email" type="email" placeholder="Email for updates" class="flex-1 rounded px-3 py-2 text-black" required />
-                                               <button type="submit" class="btn">Join Mailing List</button>
+                                   </form>
+                                   <div id="layer1-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
+                                       <a href="index-2025.html" class="login-btn w-full text-center">Enter QUANTUMI 2025</a>
+                                   </div>
+                                   <div id="layer2-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
+                                       <a id="enter-studio" href="studio.html" class="login-btn w-full text-center">Enter BTC Hash Studio</a>
+                                       <form id="mailing-form" class="mt-2 flex flex-col gap-2 w-full">
+                                               <input id="mailing-email" type="email" placeholder="Email for updates" class="rounded px-3 py-2 text-black w-full" required />
+                                               <button type="submit" class="login-btn">Join Mailing List</button>
                                        </form>
                                        <div class="mt-2 text-center">
                                                <a href="https://www.instagram.com/quantumi.space/" target="_blank" class="text-xs text-green-400 underline">Instagram</a>
                                        </div>
+                                   </div>
                                  </div>
                                </div>
                                <div class="buttons fade-in" style="animation-delay:1s">
@@ -2396,37 +2409,35 @@
       el.addEventListener("animationend", () => el.classList.add("hidden"), { once: true });
     }
 
+    const panels = {
+      0: document.getElementById("layer1-entry"),
+      1: document.getElementById("layer2-entry"),
+      2: document.getElementById("access-form")
+    };
+
+    function showPanel(el) {
+      el.classList.remove("hidden", "slide-out");
+    }
+
+    function hidePanel(el) {
+      if (el.classList.contains("hidden")) return;
+      el.classList.add("slide-out");
+      el.addEventListener("transitionend", () => el.classList.add("hidden"), { once: true });
+    }
+
     function setLayer(index) {
       currentLayer = index;
       document.querySelectorAll(".layer-btn").forEach((btn, i) =>
         btn.classList.toggle("selected", i === index)
       );
-      const entry = document.getElementById("layer-entry");
-      const enterLink = document.getElementById("enter-link");
-      const mailForm = document.getElementById("mailing-form");
-      const form = document.getElementById("access-form");
-
-      if (index === 1) {
-        form.classList.add("slide-out");
-        fadeOut(form);
-        fadeIn(entry);
-        enterLink.href = "studio.html";
-        enterLink.textContent = "Enter BTC Hash Studio";
-        mailForm.classList.remove("hidden");
-      } else if (index === 0) {
-        form.classList.add("slide-out");
-        fadeOut(form);
-        fadeIn(entry);
-        enterLink.href = "index-2025.html";
-        enterLink.textContent = "Enter QUANTUMI";
-        mailForm.classList.add("hidden");
-      } else {
-        fadeOut(entry);
-        fadeIn(form);
-        form.classList.remove("slide-out");
-        mailForm.classList.add("hidden");
-      }
-
+      Object.keys(panels).forEach(key => {
+        const panel = panels[key];
+        if (Number(key) === index) {
+          showPanel(panel);
+        } else {
+          hidePanel(panel);
+        }
+      });
       generateDots();
       requestAnimationFrame(animate);
     }
