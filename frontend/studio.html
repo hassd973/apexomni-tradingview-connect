@@ -30,7 +30,7 @@
     .btn{ background:#1a1d20; border:1px solid rgba(255,255,255,.08); color:#e7e7e7; border-radius:10px; padding:8px 10px; cursor:pointer; transition:.18s; }
     .btn:hover{ background:rgba(0,255,0,.25); color:#001; border-color:var(--border); }
     .hint{ font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background: rgba(0,255,0,.08); cursor:help; }
-    .right{ margin-left:auto; }
+    .right{ margin-left:auto; display:flex; align-items:center; gap:.6rem; }
     main{ flex:1; display:grid; grid-template-columns: 2fr 1fr; gap:12px; padding:12px 14px; overflow:hidden; }
     .panel{ background:var(--card); border:1px solid #222; border-radius:12px; box-shadow:0 2px 20px #0006; position:relative; overflow:hidden; }
     .stage{ position:absolute; inset:0; }
@@ -45,6 +45,12 @@
     .kbd{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:#111; border:1px solid rgba(255,255,255,.08); padding:2px 6px; border-radius:6px; font-size:11px }
     footer{ flex-shrink:0; border-top:1px solid #1b1d21; background:#0e1114; padding:10px 14px; font-size:12px; color:#aaa; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
     @media (max-width: 1100px){ main{ grid-template-columns: 1fr; grid-template-rows: auto auto; } }
+    @media (max-width: 640px){
+      .controls{ grid-template-columns: 1fr; }
+      .ctrl{ grid-column: span 1 / span 1; }
+      .brand{ flex-direction: column; align-items: flex-start; }
+      main{ gap:8px; padding:8px; }
+    }
     /* Fullscreen styles */
     .fs-target:fullscreen, .fs-target:-webkit-full-screen {
       background:#000;
@@ -65,8 +71,10 @@
     <div class="brand">
       <div class="logo">QUANTUMI</div>
       <div class="sub">BTC Hash Studio • fullscreen</div>
-      <a href="https://quantumi.space" class="btn right">Home</a>
-      <div class="sub" style="margin-left:0.5rem;">v2.1</div>
+      <div class="right">
+        <a href="https://quantumi.space" class="btn">Home</a>
+        <div class="sub">v2.1</div>
+      </div>
     </div>
     <div class="controls-wrap">
       <div class="controls">
@@ -202,34 +210,35 @@
 
     // Data fetchers
     async function fetchHistorical(){
-      const url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=minute";
       try{
-        const r = await fetch(url); const j = await r.json();
+        const r = await fetch('/api/btc/historical');
+        const j = await r.json();
         if(!j.prices || !j.total_volumes) throw 0;
         return j;
       }catch(_){
-        const now = Date.now(); const pts = Array.from({length:120},(_,i)=>[now - (120-i)*60_000, 50000 + Math.sin(i/8)*1200 + (Math.random()-.5)*400]);
+        const now = Date.now();
+        const pts = Array.from({length:120},(_,i)=>[now - (120-i)*60_000, 50000 + Math.sin(i/8)*1200 + (Math.random()-.5)*400]);
         return { prices: pts, total_volumes: pts.map(([t,_],i)=>[t, Math.abs(Math.sin(i/10))*1e9 + 3e9]) };
       }
     }
     async function fetchHashrate(){
       try{
-        const r = await fetch("https://mempool.space/api/v1/difficulty-adjustment");
+        const r = await fetch('/api/btc/stats');
         const j = await r.json();
-        return { hashrate: j.hashrate_ondemand ? (j.hashrate_ondemand/1e6).toFixed(2)+" EH/s" : "—", diff: j.nextRetargetDifficulty ? (j.nextRetargetDifficulty/1e12).toFixed(2)+" T" : "—" };
-      }catch{ return { hashrate:"—", diff:"—" }; }
+        return {
+          hashrate: j.hashrate ? j.hashrate.toFixed(2) + " EH/s" : "—",
+          diff: j.diff ? (j.diff/1e12).toFixed(2) + " T" : "—"
+        };
+      }catch{
+        return { hashrate:"—", diff:"—" };
+      }
     }
     async function latestBlockHash(){
-      const urls = ["https://blockchain.info/latestblock","https://blockstream.info/api/blocks/tip/hash"];
-      for(const url of urls){
-        try{
-          const r = await fetch(url);
-          if(!r.ok) continue;
-          if((r.headers.get("content-type")||"").includes("application/json")){
-            const j = await r.json(); const hv = j.hash || j.bestblockhash; if(hv) return hv;
-          }else{ const t = (await r.text()).trim(); if(/^[0-9a-fA-F]{64}$/.test(t)) return t; }
-        }catch{}
-      }
+      try{
+        const r = await fetch('/api/btc/latest-hash');
+        const j = await r.json();
+        if(j.hash) return j.hash;
+      }catch{}
       return null;
     }
     function randomHash(){ const hex="0123456789abcdef"; let s=""; for(let i=0;i<64;i++) s+=hex[Math.floor(Math.random()*16)]; return s; }
