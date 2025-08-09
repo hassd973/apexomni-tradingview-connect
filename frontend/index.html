@@ -2072,7 +2072,8 @@
                     }
                     #access-area {
                         display: flex;
-                        justify-content: center;
+                        flex-direction: column;
+                        align-items: center;
                         width: 100%;
                     }
                     #access-modules {
@@ -2080,6 +2081,7 @@
                         width: 100%;
                         max-width: 340px;
                         min-height: 260px;
+                        transition: height .4s;
                     }
                     .module-panel {
                         position: absolute;
@@ -2183,8 +2185,7 @@
                         display: flex;
                         justify-content: center;
                         gap: 1.2em;
-                        margin-top: auto;
-                        margin-bottom: clamp(1.5em, 5vh, 3em);
+                        margin-top: 1.5em;
                     }
                     .btn {
                         padding: 0.65em 1.5em;
@@ -2364,11 +2365,11 @@
                                        </div>
                                    </div>
                                  </div>
-                               </div>
-                               <div class="buttons fade-in" style="animation-delay:1s">
-                               <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
-                               <button class="btn layer-btn selected" id="btn1" onclick="setLayer(1)">Layer II</button>
-                               <button class="btn layer-btn" id="btn2" onclick="setLayer(2)">Layer III</button>
+                                 <div class="buttons fade-in" style="animation-delay:1s">
+                                   <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
+                                   <button class="btn layer-btn selected" id="btn1" onclick="setLayer(1)">Layer II</button>
+                                   <button class="btn layer-btn" id="btn2" onclick="setLayer(2)">Layer III</button>
+                                 </div>
                                </div>
                        </div>
                  </div>
@@ -2414,6 +2415,7 @@
       1: document.getElementById("layer2-entry"),
       2: document.getElementById("access-form")
     };
+    const accessModules = document.getElementById("access-modules");
 
     function showPanel(el) {
       el.classList.remove("hidden", "slide-out");
@@ -2438,6 +2440,8 @@
           hidePanel(panel);
         }
       });
+      const active = panels[index];
+      accessModules.style.height = active.offsetHeight + "px";
       generateDots();
       requestAnimationFrame(animate);
     }
