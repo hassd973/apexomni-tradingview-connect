@@ -2088,6 +2088,8 @@
                         top: 0;
                         left: 0;
                         width: 100%;
+                        pointer-events: none;
+                        opacity: 0;
                         transition: transform .4s, opacity .4s;
                     }
                     .module-panel.slide-out {
@@ -2338,7 +2340,7 @@
                                </div>
                                <div id="access-area">
                                  <div id="access-modules">
-                                   <form id="access-form" class="login-form module-panel fade-in" style="animation-delay:0.8s">
+                                   <form id="access-form" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
                                        <input type="password" id="access-password" placeholder="Password" required />
                                        <input type="email" id="access-email" placeholder="Email" required />
                                        <label>
@@ -2419,10 +2421,14 @@
 
     function showPanel(el) {
       el.classList.remove("hidden", "slide-out");
+      el.style.pointerEvents = "auto";
+      el.style.opacity = "1";
     }
 
     function hidePanel(el) {
       if (el.classList.contains("hidden")) return;
+      el.style.pointerEvents = "none";
+      el.style.opacity = "0";
       el.classList.add("slide-out");
       el.addEventListener("transitionend", () => el.classList.add("hidden"), { once: true });
     }
