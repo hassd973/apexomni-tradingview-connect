@@ -2321,12 +2321,14 @@
         >
                <div id="access-overlay">
                        <div id="overlay-content">
-                               <canvas id="qCanvas" class="q-hero-canvas" width="600" height="600"></canvas>
+                               <canvas id="qCanvas" class="q-hero-canvas fade-in" width="600" height="600" style="animation-delay:0s"></canvas>
                                <div class="center-content">
-                                         <div class="branding sixtyfour-font">QUANTUMI</div>
+                                         <div class="branding sixtyfour-font fade-in" style="animation-delay:0.2s">QUANTUMI</div>
+                                         <p id="login-description" class="mt-2 text-sm text-gray-400 fade-in" style="animation-delay:0.4s">Access the QUANTUMI network.</p>
+                                         <button id="toggle-desc" class="mt-2 text-xs underline fade-in" style="animation-delay:0.6s">Hide Description</button>
                                </div>
                                <div id="access-area">
-                                 <form id="access-form" class="login-form">
+                                 <form id="access-form" class="login-form fade-in" style="animation-delay:0.8s">
                                        <input type="password" id="access-password" placeholder="Password" required />
                                        <input type="email" id="access-email" placeholder="Email" required />
                                        <label>
@@ -2339,7 +2341,7 @@
                                        <p id="overlay-description" class="hidden">I lurk in ledgers unseen; observe me and profits convene. Guess who? QuantumI—where quantum trading cracks a grin.</p>
                                        <div id="access-error" class="hidden"></div>
                                  </form>
-                                 <div id="layer-entry" class="hidden">
+                                 <div id="layer-entry" class="login-form hidden fade-in" style="animation-delay:0.8s">
                                        <a id="enter-link" href="studio.html" class="btn">Enter BTC Hash Studio</a>
                                        <form id="mailing-form" class="mt-3 flex flex-col sm:flex-row gap-2 justify-center">
                                                <input id="mailing-email" type="email" placeholder="Email for updates" class="flex-1 rounded px-3 py-2 text-black" required />
@@ -2350,7 +2352,7 @@
                                        </div>
                                  </div>
                                </div>
-                               <div class="buttons">
+                               <div class="buttons fade-in" style="animation-delay:1s">
                                <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
                                <button class="btn layer-btn selected" id="btn1" onclick="setLayer(1)">Layer II</button>
                                <button class="btn layer-btn" id="btn2" onclick="setLayer(2)">Layer III</button>
@@ -2382,6 +2384,18 @@
     let dots = [];
     let currentLayer = 1;
 
+    function fadeIn(el) {
+      el.classList.remove("hidden", "fade-out");
+      void el.offsetWidth;
+      el.classList.add("fade-in");
+    }
+
+    function fadeOut(el) {
+      el.classList.remove("fade-in");
+      el.classList.add("fade-out");
+      el.addEventListener("animationend", () => el.classList.add("hidden"), { once: true });
+    }
+
     function setLayer(index) {
       currentLayer = index;
       document.querySelectorAll(".layer-btn").forEach((btn, i) =>
@@ -2393,20 +2407,23 @@
       const form = document.getElementById("access-form");
 
       if (index === 1) {
-        form.classList.add("hidden");
-        entry.classList.remove("hidden");
+        form.classList.add("slide-out");
+        fadeOut(form);
+        fadeIn(entry);
         enterLink.href = "studio.html";
         enterLink.textContent = "Enter BTC Hash Studio";
         mailForm.classList.remove("hidden");
       } else if (index === 0) {
-        form.classList.add("hidden");
-        entry.classList.remove("hidden");
+        form.classList.add("slide-out");
+        fadeOut(form);
+        fadeIn(entry);
         enterLink.href = "index-2025.html";
         enterLink.textContent = "Enter QUANTUMI";
         mailForm.classList.add("hidden");
       } else {
-        form.classList.remove("hidden");
-        entry.classList.add("hidden");
+        fadeOut(entry);
+        fadeIn(form);
+        form.classList.remove("slide-out");
         mailForm.classList.add("hidden");
       }
 
@@ -2493,6 +2510,13 @@
 
     canvas.addEventListener('click', () => {
       setLayer((currentLayer + 1) % layers.length);
+    });
+
+    const desc = document.getElementById('login-description');
+    const toggleDescBtn = document.getElementById('toggle-desc');
+    toggleDescBtn.addEventListener('click', () => {
+      const hidden = desc.classList.toggle('hidden');
+      toggleDescBtn.textContent = hidden ? 'Show Description' : 'Hide Description';
     });
 
     document.getElementById("mailing-form").addEventListener("submit", e => {
