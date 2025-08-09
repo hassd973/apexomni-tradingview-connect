@@ -264,6 +264,7 @@
 
       const amb = new THREE.AmbientLight(0xffffff, 0.65); scene.add(amb);
       const dir = new THREE.DirectionalLight(0xffffff, 0.65); dir.position.set(4,6,10); scene.add(dir);
+      const axesHelper = new THREE.AxesHelper(10); scene.add(axesHelper);
 
       let dotClouds = []; let colorLegend = []; let instancedMesh = null; let userFBX = null;
       let lastPrice = null, firstPrice24h = null;

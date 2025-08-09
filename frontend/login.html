@@ -225,10 +225,18 @@
     </div>
     <div id="access-area">
       <div id="access-modules">
-        <form class="login-form module-panel fade-in" id="loginForm" action="index-2025.html" style="animation-delay:0.8s">
-          <input type="text" placeholder="Username or Email" required />
-          <input type="password" placeholder="Password" required />
-          <button class="login-btn" type="submit">Sign In</button>
+        <form id="access-form" class="login-form module-panel fade-in" style="animation-delay:0.8s">
+          <input type="password" id="access-password" placeholder="Password" required />
+          <input type="email" id="access-email" placeholder="Email" required />
+          <label>
+            <input type="checkbox" id="access-nda" required />
+            <span>I agree to the NDA</span>
+          </label>
+          <button class="login-btn" type="submit">Enter</button>
+          <a id="nda-link" href="QuantumI_NDA_v3.pdf" download>Download NDA</a>
+          <button id="toggle-description" type="button">Show Description</button>
+          <p id="overlay-description" class="hidden">I lurk in ledgers unseen; observe me and profits convene. Guess who? QuantumI—where quantum trading cracks a grin.</p>
+          <div id="access-error" class="hidden"></div>
         </form>
         <div id="layer1-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
           <a href="index-2025.html" class="login-btn w-full text-center">Enter QUANTUMI 2025</a>
@@ -272,6 +280,10 @@
       { spacing: 0.3, radius: 0.14 }
     ];
 
+    if (localStorage.getItem('quanti-email')) {
+      window.location.href = 'index.html';
+    }
+
     const canvas = document.getElementById("qCanvas");
     const ctx = canvas.getContext("2d");
     const ROWS = 7;
@@ -282,7 +294,7 @@
     const panels = {
       0: document.getElementById("layer1-entry"),
       1: document.getElementById("layer2-entry"),
-      2: document.getElementById("loginForm")
+      2: document.getElementById("access-form")
     };
     const accessModules = document.getElementById("access-modules");
 
@@ -402,6 +414,31 @@
     toggleDesc.addEventListener('click', () => {
       const hidden = desc.classList.toggle('hidden');
       toggleDesc.textContent = hidden ? 'Show Description' : 'Hide Description';
+    });
+
+    const overlayDesc = document.getElementById('overlay-description');
+    const toggleDescription = document.getElementById('toggle-description');
+    if (toggleDescription && overlayDesc) {
+      toggleDescription.addEventListener('click', () => {
+        const hidden = overlayDesc.classList.toggle('hidden');
+        toggleDescription.textContent = hidden ? 'Show Description' : 'Hide Description';
+      });
+    }
+
+    const accessForm = document.getElementById('access-form');
+    const accessError = document.getElementById('access-error');
+    accessForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const pwd = document.getElementById('access-password').value;
+      const nda = document.getElementById('access-nda').checked;
+      const email = document.getElementById('access-email').value;
+      if (pwd === 'Limitless-93' && nda && email) {
+        localStorage.setItem('quanti-email', email);
+        window.location.href = 'index.html';
+      } else {
+        accessError.textContent = 'Incorrect password or missing agreement';
+        accessError.classList.remove('hidden');
+      }
     });
 
     document.getElementById("mailing-form").addEventListener("submit", e => {
