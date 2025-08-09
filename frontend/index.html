@@ -2070,6 +2070,30 @@
                         flex-direction: column;
                         align-items: center;
                     }
+                    #access-area {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        width: 100%;
+                    }
+                    #access-modules {
+                        position: relative;
+                        width: 100%;
+                        max-width: 340px;
+                        min-height: 260px;
+                        transition: height .4s;
+                    }
+                    .module-panel {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        transition: transform .4s, opacity .4s;
+                    }
+                    .module-panel.slide-out {
+                        transform: translateX(-150%);
+                        opacity: 0;
+                    }
                     #overlay-content {
                         display: flex;
                         flex-direction: column;
@@ -2107,7 +2131,7 @@
                     .login-form {
                         width: 100%;
                         max-width: 340px;
-                        margin: 0 auto;
+                        margin: 0;
                         display: flex;
                         flex-direction: column;
                         gap: 1em;
@@ -2115,7 +2139,10 @@
                         padding: 1.5em 1.4em 1.7em 1.4em;
                         border-radius: 12px;
                         box-shadow: 0 2px 20px #000a;
-                        margin-bottom: 0.75rem;
+                        transition: transform .4s;
+                    }
+                    .login-form.slide-out {
+                        transform: translateX(-150%);
                     }
                     .login-form input {
                         background: #000;
@@ -2158,8 +2185,7 @@
                         display: flex;
                         justify-content: center;
                         gap: 1.2em;
-                        margin-top: auto;
-                        margin-bottom: clamp(1.5em, 5vh, 3em);
+                        margin-top: 1.5em;
                     }
                     .btn {
                         padding: 0.65em 1.5em;
@@ -2304,11 +2330,15 @@
         >
                <div id="access-overlay">
                        <div id="overlay-content">
-                               <canvas id="qCanvas" class="q-hero-canvas" width="600" height="600"></canvas>
+                               <canvas id="qCanvas" class="q-hero-canvas fade-in" width="600" height="600" style="animation-delay:0s"></canvas>
                                <div class="center-content">
-                                         <div class="branding sixtyfour-font">QUANTUMI</div>
+                                         <div class="branding sixtyfour-font fade-in" style="animation-delay:0.2s">QUANTUMI</div>
+                                         <p id="login-description" class="mt-2 text-sm text-gray-400 fade-in" style="animation-delay:0.4s">Access the QUANTUMI network.</p>
+                                         <button id="toggle-desc" class="mt-2 text-xs underline fade-in" style="animation-delay:0.6s">Hide Description</button>
                                </div>
-                               <form id="access-form" class="login-form">
+                               <div id="access-area">
+                                 <div id="access-modules">
+                                   <form id="access-form" class="login-form module-panel fade-in" style="animation-delay:0.8s">
                                        <input type="password" id="access-password" placeholder="Password" required />
                                        <input type="email" id="access-email" placeholder="Email" required />
                                        <label>
@@ -2320,11 +2350,26 @@
                                        <button id="toggle-description" type="button">Show Description</button>
                                        <p id="overlay-description" class="hidden">I lurk in ledgers unseen; observe me and profits convene. Guess who? QuantumI—where quantum trading cracks a grin.</p>
                                        <div id="access-error" class="hidden"></div>
-                               </form>
-                               <div class="buttons">
-                               <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
-                               <button class="btn layer-btn" id="btn1" onclick="setLayer(1)">Layer II</button>
-                               <button class="btn layer-btn selected" id="btn2" onclick="setLayer(2)">Layer III</button>
+                                   </form>
+                                   <div id="layer1-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
+                                       <a href="index-2025.html" class="login-btn w-full text-center">Enter QUANTUMI 2025</a>
+                                   </div>
+                                   <div id="layer2-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
+                                       <a id="enter-studio" href="studio.html" class="login-btn w-full text-center">Enter BTC Hash Studio</a>
+                                       <form id="mailing-form" class="mt-2 flex flex-col gap-2 w-full">
+                                               <input id="mailing-email" type="email" placeholder="Email for updates" class="rounded px-3 py-2 text-black w-full" required />
+                                               <button type="submit" class="login-btn">Join Mailing List</button>
+                                       </form>
+                                       <div class="mt-2 text-center">
+                                               <a href="https://www.instagram.com/quantumi.space/" target="_blank" class="text-xs text-green-400 underline">Instagram</a>
+                                       </div>
+                                   </div>
+                                 </div>
+                                 <div class="buttons fade-in" style="animation-delay:1s">
+                                   <button class="btn layer-btn" id="btn0" onclick="setLayer(0)">Layer I</button>
+                                   <button class="btn layer-btn selected" id="btn1" onclick="setLayer(1)">Layer II</button>
+                                   <button class="btn layer-btn" id="btn2" onclick="setLayer(2)">Layer III</button>
+                                 </div>
                                </div>
                        </div>
                  </div>
@@ -2351,13 +2396,52 @@
     const ROWS = 7;
     const COLS = 6;
     let dots = [];
-    let currentLayer = 2;
+    let currentLayer = 1;
+
+    function fadeIn(el) {
+      el.classList.remove("hidden", "fade-out");
+      void el.offsetWidth;
+      el.classList.add("fade-in");
+    }
+
+    function fadeOut(el) {
+      el.classList.remove("fade-in");
+      el.classList.add("fade-out");
+      el.addEventListener("animationend", () => el.classList.add("hidden"), { once: true });
+    }
+
+    const panels = {
+      0: document.getElementById("layer1-entry"),
+      1: document.getElementById("layer2-entry"),
+      2: document.getElementById("access-form")
+    };
+    const accessModules = document.getElementById("access-modules");
+
+    function showPanel(el) {
+      el.classList.remove("hidden", "slide-out");
+    }
+
+    function hidePanel(el) {
+      if (el.classList.contains("hidden")) return;
+      el.classList.add("slide-out");
+      el.addEventListener("transitionend", () => el.classList.add("hidden"), { once: true });
+    }
 
     function setLayer(index) {
       currentLayer = index;
       document.querySelectorAll(".layer-btn").forEach((btn, i) =>
         btn.classList.toggle("selected", i === index)
       );
+      Object.keys(panels).forEach(key => {
+        const panel = panels[key];
+        if (Number(key) === index) {
+          showPanel(panel);
+        } else {
+          hidePanel(panel);
+        }
+      });
+      const active = panels[index];
+      accessModules.style.height = active.offsetHeight + "px";
       generateDots();
       requestAnimationFrame(animate);
     }
@@ -2443,8 +2527,26 @@
       setLayer((currentLayer + 1) % layers.length);
     });
 
-    generateDots();
-    requestAnimationFrame(animate);
+    const desc = document.getElementById('login-description');
+    const toggleDescBtn = document.getElementById('toggle-desc');
+    toggleDescBtn.addEventListener('click', () => {
+      const hidden = desc.classList.toggle('hidden');
+      toggleDescBtn.textContent = hidden ? 'Show Description' : 'Hide Description';
+    });
+
+    document.getElementById("mailing-form").addEventListener("submit", e => {
+      e.preventDefault();
+      const email = document.getElementById("mailing-email").value.trim();
+      if (email) {
+        const list = JSON.parse(localStorage.getItem("studioMails") || "[]");
+        list.push({ email, time: new Date().toISOString() });
+        localStorage.setItem("studioMails", JSON.stringify(list));
+        alert("Thanks for joining!");
+      }
+      e.target.reset();
+    });
+
+    setLayer(1);
                 </script>
                   <button
 			aria-label="Toggle navigation menu"

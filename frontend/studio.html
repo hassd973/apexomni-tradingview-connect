@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QUANTUMI • BTC Hash Studio (Fullscreen)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&family=Sora:wght@100..800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#111215; --fg:#f8f8f8; --muted:#e3e3e3cc;
+      --accent:#00FF00; --border:rgba(0,255,0,0.3);
+      --card:#0d0f12; --soft: rgba(0,255,0,.16);
+    }
+    html, body { width:100%; height:100%; margin:0; padding:0; background:var(--bg); color:var(--fg); font-family:'Sora', sans-serif; }
+    body{ display:flex; flex-direction:column; min-height:100vh; overflow:hidden; }
+    header{ position:sticky; top:0; z-index:40; background:linear-gradient(180deg, rgba(17,18,21,.96), rgba(17,18,21,.86) 70%, rgba(17,18,21,0)); border-bottom:1px solid #1b1d21; }
+    .brand{ display:flex; align-items:center; gap:.6rem; padding:14px 16px 8px 16px; }
+    .brand .logo{ font-family:'Sixtyfour', sans-serif; font-size: clamp(20px,3vw,30px); letter-spacing:2px; text-shadow:0 1px 6px #000c; }
+    .sub{ font-size:12px; opacity:.7; }
+    .controls-wrap{ padding: 10px 14px 12px 14px; }
+    .controls{ display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap:10px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px; box-shadow:0 2px 20px #0006, 0 0 16px var(--soft) inset; }
+    .ctrl{ grid-column: span 12 / span 12; display:flex; align-items:center; gap:8px; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:8px; }
+    .ctrl label{ font-size:12px; white-space:nowrap; opacity:.9; }
+    .ctrl input[type="text"], .ctrl input[type="number"], .ctrl input[type="range"], .ctrl select{ flex:1; background:#000; border:1px solid #333; color:#fff; border-radius:8px; padding:8px 10px; outline:none; }
+    .ctrl input[type="range"]{ padding:0; }
+    .ctrl input[type="file"]{ flex:1; }
+    .btn{ background:#1a1d20; border:1px solid rgba(255,255,255,.08); color:#e7e7e7; border-radius:10px; padding:8px 10px; cursor:pointer; transition:.18s; }
+    .btn:hover{ background:rgba(0,255,0,.25); color:#001; border-color:var(--border); }
+    .hint{ font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background: rgba(0,255,0,.08); cursor:help; }
+    .right{ margin-left:auto; }
+    main{ flex:1; display:grid; grid-template-columns: 2fr 1fr; gap:12px; padding:12px 14px; overflow:hidden; }
+    .panel{ background:var(--card); border:1px solid #222; border-radius:12px; box-shadow:0 2px 20px #0006; position:relative; overflow:hidden; }
+    .stage{ position:absolute; inset:0; }
+    .overlay{ position:absolute; left:12px; top:12px; right:auto; display:flex; flex-wrap:wrap; gap:6px; pointer-events:none; }
+    .chip{ display:flex; align-items:center; gap:6px; pointer-events:auto; background:rgba(0,0,0,.55); border:1px solid var(--border); border-radius:10px; padding:6px 8px; font-size:12px; }
+    .legend{ position:absolute; left:12px; right:12px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; pointer-events:none; }
+    .legend .swatch{ width:12px; height:12px; border-radius:3px; margin-right:4px; border:1px solid rgba(255,255,255,.4); }
+    canvas#gl{ width:100%; height:100%; display:block; background:#000; }
+    .aside{ display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
+    .card{ background:#0c0f12; border:1px solid rgba(255,255,255,.06); border-radius:10px; padding:10px; }
+    .log{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+    .kbd{ font-family:ui-monospace,SFMono-Regular,Menlo,monospace; background:#111; border:1px solid rgba(255,255,255,.08); padding:2px 6px; border-radius:6px; font-size:11px }
+    footer{ flex-shrink:0; border-top:1px solid #1b1d21; background:#0e1114; padding:10px 14px; font-size:12px; color:#aaa; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+    @media (max-width: 1100px){ main{ grid-template-columns: 1fr; grid-template-rows: auto auto; } }
+    /* Fullscreen styles */
+    .fs-target:fullscreen, .fs-target:-webkit-full-screen {
+      background:#000;
+    }
+    .fs-btn-on { display:none; }
+    .fs-active .fs-btn-on { display:inline-flex; }
+    .fs-active .fs-btn-off { display:none; }
+  </style>
+
+  <!-- three.js r128 (non-module) for broad compatibility -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/FBXExporter.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">QUANTUMI</div>
+      <div class="sub">BTC Hash Studio • fullscreen</div>
+      <a href="https://quantumi.space" class="btn right">Home</a>
+      <div class="sub" style="margin-left:0.5rem;">v2.1</div>
+    </div>
+    <div class="controls-wrap">
+      <div class="controls">
+        <div class="ctrl" title="Upload a small FBX (5–10MB) to place at every data point.">
+          <label>Upload FBX <span class="hint">?</span></label>
+          <input type="file" id="fbx-file" accept=".fbx" />
+          <button class="btn" id="clear-fbx">Clear</button>
+          <button class="btn right fs-btn-off" id="btn-fullscreen" title="Enter fullscreen">Fullscreen</button>
+          <button class="btn right fs-btn-on" id="btn-exitfs" title="Exit fullscreen">Exit FS</button>
+        </div>
+        <div class="ctrl" title="Choose mapping from data to space. ‘Original’ uses time→Z, price→X, volume→Y.">
+          <label>Mapping <span class="hint">?</span></label>
+          <select id="mapping">
+            <option value="original" selected>Original (Time/Price/Volume)</option>
+            <option value="spiral">Spiral (time-curve)</option>
+            <option value="sphere">Sphere (volatility radius)</option>
+            <option value="helix">Helix (momentum tilt)</option>
+          </select>
+        </div>
+        <div class="ctrl" title="How many instances per cloud point. More = denser art, heavier GPU.">
+          <label>Density <span class="hint">?</span></label>
+          <input type="range" id="density" min="1" max="200" value="60" />
+        </div>
+        <div class="ctrl" title="Point size for dot clouds (when no FBX is loaded).">
+          <label>Point Size <span class="hint">?</span></label>
+          <input type="range" id="pointSize" min="0.02" max="0.6" step="0.02" value="0.12" />
+        </div>
+        <div class="ctrl" title="Color mode for clouds/instances. Heatmap = volatility, Lifecycle = volume-age.">
+          <label>Theme <span class="hint">?</span></label>
+          <select id="theme">
+            <option value="original" selected>Original</option>
+            <option value="heatmap">Heatmap (volatility)</option>
+            <option value="lifecycle">Lifecycle (volume)</option>
+          </select>
+        </div>
+        <div class="ctrl" title="Paste a hash, or use the latest block. This will be used when Mapping ≠ Original.">
+          <label>Hash <span class="hint">?</span></label>
+          <input id="hashInput" type="text" placeholder="Paste a block/tx hash…" />
+          <button class="btn" id="btnLatest">Latest</button>
+          <button class="btn" id="btnRandom">Random</button>
+          <button class="btn" id="btnGenerate">Generate</button>
+        </div>
+        <div class="ctrl" title="Export the current scene and data. Great for minting & sharing.">
+          <label>Export <span class="hint">?</span></label>
+          <button class="btn" id="export-fbx">FBX</button>
+          <button class="btn" id="export-png">PNG</button>
+          <button class="btn" id="export-csv">CSV</button>
+          <button class="btn right" id="reset-view" title="Reset camera">Reset</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel fs-target" id="stagePanel">
+      <div class="stage">
+        <div class="overlay" id="metrics">
+          <div class="chip" id="m-price">Price — </div>
+          <div class="chip" id="m-change">24h — </div>
+          <div class="chip" id="m-hashrate">Hashrate — </div>
+          <div class="chip" id="m-diff">Difficulty — </div>
+          <div class="chip" id="m-mode">Mode — Original</div>
+        </div>
+        <canvas id="gl"></canvas>
+        <div class="legend" id="legend"></div>
+      </div>
+    </section>
+
+    <aside class="panel aside">
+      <div class="card">
+        <div class="flex items-center gap-3">
+          <strong>Hash Log</strong><span class="text-gray-400">Latest 10</span>
+          <button class="btn ml-auto" id="toggle-log">Toggle</button>
+        </div>
+        <ul id="hash-log" class="log"></ul>
+      </div>
+      <div class="card text-sm text-gray-300">
+        <div class="mb-1 font-semibold">Tips</div>
+        <ul class="list-disc ml-5 space-y-1">
+          <li>‘Original’ mapping is live market-derived (time/price/volume).</li>
+          <li>Switch to Spiral/Sphere/Helix to use a BTC hash (Latest/Manual/Random).</li>
+          <li>Upload a compact FBX for best performance.</li>
+          <li>Use <b>Fullscreen</b> for presentations; works on mobile too.</li>
+        </ul>
+      </div>
+      <div class="card" id="newsletter-card">
+        <form id="mail-form" class="flex flex-col gap-2">
+          <label for="mail-input" class="text-sm">Join our mailing list</label>
+          <input id="mail-input" type="email" required placeholder="you@example.com" class="bg-black border border-gray-700 rounded p-2 text-sm" />
+          <button class="btn" type="submit">Join</button>
+          <a href="https://www.instagram.com/quantumi.space/" target="_blank" class="text-xs text-green-400 underline text-center">Instagram</a>
+        </form>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <span>© 2025 <span style="font-family:'Sixtyfour',sans-serif">QUANTUMI</span> — All Rights Reserved.</span>
+    <a href="https://www.instagram.com/quantumi.space/" target="_blank" class="text-green-400 underline">Instagram</a>
+  </footer>
+
+  <script>
+    // Globals
+    const $ = (id)=>document.getElementById(id);
+    const canvas = $("gl");
+    const stagePanel = $("stagePanel");
+
+    // THREE setup
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false, preserveDrawingBuffer:true });
+    renderer.setClearColor(0x000000, 1);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 3000);
+    camera.position.set(0,0,12);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; controls.dampingFactor = .06; controls.autoRotate = true; controls.autoRotateSpeed = 1.4;
+
+    const amb = new THREE.AmbientLight(0xffffff,.65); scene.add(amb);
+    const dir = new THREE.DirectionalLight(0xffffff,.65); dir.position.set(4,6,10); scene.add(dir);
+
+    let dotClouds = []; let colorLegend = []; let instancedMesh = null; let userFBX=null;
+
+    function resize(){
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const w = Math.max(1, rect.width);
+      const h = Math.max(1, rect.height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(w, h, false);
+      camera.aspect = w/h; camera.updateProjectionMatrix();
+    }
+    resize();
+    window.addEventListener("resize", ()=>requestAnimationFrame(resize));
+    window.addEventListener("orientationchange", ()=>setTimeout(resize, 200));
+
+    // Data fetchers
+    async function fetchHistorical(){
+      const url = "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=minute";
+      try{
+        const r = await fetch(url); const j = await r.json();
+        if(!j.prices || !j.total_volumes) throw 0;
+        return j;
+      }catch(_){
+        const now = Date.now(); const pts = Array.from({length:120},(_,i)=>[now - (120-i)*60_000, 50000 + Math.sin(i/8)*1200 + (Math.random()-.5)*400]);
+        return { prices: pts, total_volumes: pts.map(([t,_],i)=>[t, Math.abs(Math.sin(i/10))*1e9 + 3e9]) };
+      }
+    }
+    async function fetchHashrate(){
+      try{
+        const r = await fetch("https://mempool.space/api/v1/difficulty-adjustment");
+        const j = await r.json();
+        return { hashrate: j.hashrate_ondemand ? (j.hashrate_ondemand/1e6).toFixed(2)+" EH/s" : "—", diff: j.nextRetargetDifficulty ? (j.nextRetargetDifficulty/1e12).toFixed(2)+" T" : "—" };
+      }catch{ return { hashrate:"—", diff:"—" }; }
+    }
+    async function latestBlockHash(){
+      const urls = ["https://blockchain.info/latestblock","https://blockstream.info/api/blocks/tip/hash"];
+      for(const url of urls){
+        try{
+          const r = await fetch(url);
+          if(!r.ok) continue;
+          if((r.headers.get("content-type")||"").includes("application/json")){
+            const j = await r.json(); const hv = j.hash || j.bestblockhash; if(hv) return hv;
+          }else{ const t = (await r.text()).trim(); if(/^[0-9a-fA-F]{64}$/.test(t)) return t; }
+        }catch{}
+      }
+      return null;
+    }
+    function randomHash(){ const hex="0123456789abcdef"; let s=""; for(let i=0;i<64;i++) s+=hex[Math.floor(Math.random()*16)]; return s; }
+    function sanitizeHash(h){ return (h||"").trim().replace(/^0x/,"").toLowerCase().replace(/[^0-9a-f]/g,""); }
+
+    // Theme helpers
+    const themes = {
+      original: ["#00ffcc","#00ff88","#00ff44","#00ff00","#44ff00","#88ff00","#ccff00"],
+      heatmap: ["#00ff00","#ffff00","#ff0000"],
+      lifecycle: ["#3dd5ff","#00ff88","#ff8a00"]
+    };
+    function interpolateColor(c1,c2,ratio){
+      const hex = (c)=>parseInt(c.replace("#",""),16);
+      const r1=(hex(c1)>>16)&255,g1=(hex(c1)>>8)&255,b1=hex(c1)&255;
+      const r2=(hex(c2)>>16)&255,g2=(hex(c2)>>8)&255,b2=hex(c2)&255;
+      const r=Math.round(r1+(r2-r1)*ratio), g=Math.round(g1+(g2-g1)*ratio), b=Math.round(b1+(b2-b1)*ratio);
+      return `#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;
+    }
+    function themeColor(volatility, volume, minV, maxV, idx){
+      const t = $("theme").value;
+      if(t==="heatmap"){
+        const ratio = Math.min(volatility/5,1);
+        return ratio<.5 ? interpolateColor(themes.heatmap[0],themes.heatmap[1],ratio*2)
+                        : interpolateColor(themes.heatmap[1],themes.heatmap[2],(ratio-.5)*2);
+      } else if(t==="lifecycle"){
+        const r = (volume-minV)/(maxV-minV+1e-9);
+        if(r<.25) return themes.lifecycle[0];
+        if(r<.5) return themes.lifecycle[1];
+        return themes.lifecycle[2];
+      }
+      return themes.original[(idx % themes.original.length)];
+    }
+    function generateHashFromPrice(price){
+      const s = String(price); let h="";
+      for(let i=0;i<64;i++){ h += (s.charCodeAt(i % s.length) % 16).toString(16); }
+      return h;
+    }
+    function updateLegend(){
+      const el = $("legend"); const mode = $("theme").value;
+      let base="";
+      if(mode==="heatmap"){
+        base = `
+          <span class="chip"><span class="swatch" style="background:${themes.heatmap[0]}"></span>Low</span>
+          <span class="chip"><span class="swatch" style="background:${themes.heatmap[1]}"></span>Mid</span>
+          <span class="chip"><span class="swatch" style="background:${themes.heatmap[2]}"></span>High</span>`;
+      }else if(mode==="lifecycle"){
+        base = `
+          <span class="chip"><span class="swatch" style="background:${themes.lifecycle[0]}"></span>New</span>
+          <span class="chip"><span class="swatch" style="background:${themes.lifecycle[1]}"></span>Maturing</span>
+          <span class="chip"><span class="swatch" style="background:${themes.lifecycle[2]}"></span>Old</span>`;
+      }else{
+        base = `
+          <span class="chip"><span class="swatch" style="background:${themes.original[0]}"></span>Start</span>
+          <span class="chip"><span class="swatch" style="background:${themes.original[themes.original.length-1]}"></span>Fade</span>`;
+      }
+      const dataLegend = colorLegend.map(c => `<span class="chip" title="Price $${c.price.toLocaleString()} | Vol $${(c.volume/1e9).toFixed(2)}B | ${c.time}"><span class="swatch" style="background:${c.color}"></span></span>`).join("");
+      el.innerHTML = base + dataLegend;
+    }
+
+    function clearScene(){
+      dotClouds.forEach(c=>{ scene.remove(c); c.geometry.dispose(); c.material.dispose(); });
+      dotClouds.length=0;
+      if(instancedMesh){ scene.remove(instancedMesh); instancedMesh.geometry.dispose(); instancedMesh.material.dispose?.(); instancedMesh=null; }
+      colorLegend = [];
+    }
+
+    function addHashLog(id, time){
+      const ul = $("hash-log");
+      const li = document.createElement("li");
+      li.className="card";
+      li.innerHTML = `<div class="flex justify-between items-center gap-3"><span><span class="kbd">hash</span> ${id}</span><span class="text-gray-400">${time}</span></div>`;
+      ul.prepend(li);
+      while(ul.children.length>10) ul.removeChild(ul.lastChild);
+    }
+
+    // ORIGINAL market mapping
+    function layoutOriginal(prices, volumes){
+      const timestamps = prices.map(p=>p[0]);
+      const minT = Math.min(...timestamps), maxT = Math.max(...timestamps);
+      const minP = Math.min(...prices.map(p=>p[1])), maxP = Math.max(...prices.map(p=>p[1]));
+      const minV = Math.min(...volumes.map(v=>v[1])), maxV = Math.max(...volumes.map(v=>v[1]));
+      const latestPrice = prices[prices.length-1][1];
+      const latestVolume = volumes[volumes.length-1][1];
+      const recent = prices.slice(-10).map(p=>p[1]);
+      const volatility = ((Math.max(...recent)-Math.min(...recent))/Math.max(latestPrice,1))*100;
+      const momentum = latestPrice - prices[prices.length-2][1];
+
+      $("m-price").textContent = "Price — $" + latestPrice.toLocaleString();
+      $("m-change").textContent = "24h — " + momentum.toFixed(2);
+      $("m-mode").textContent = "Mode — " + $("theme").selectedOptions[0].textContent;
+
+      const cloudColorHex = themeColor(volatility, latestVolume, minV, maxV, dotClouds.length);
+      const cloudColor = new THREE.Color(cloudColorHex);
+      const pointsPer = parseInt($("density").value,10);
+
+      const positions=[]; const colors=[];
+      for(let i=0;i<prices.length;i++){
+        const t = timestamps[i], price = prices[i][1], vol = volumes[i][1];
+        const z = ((t - minT)/(maxT-minT))*20 - 10;
+        const x = ((price - minP)/(maxP-minP))*20 - 10;
+        const y = ((vol - minV)/(maxV-minV))*20 - 10;
+        for(let j=0;j<pointsPer;j++){
+          positions.push(x + (Math.random()-.5)*0.9, y + (Math.random()-.5)*0.9, z + (Math.random()-.5)*0.9);
+          colors.push(cloudColor.r, cloudColor.g, cloudColor.b);
+        }
+      }
+
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(positions,3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(colors,3));
+      const mat = new THREE.PointsMaterial({ size: parseFloat($("pointSize").value), vertexColors:true, transparent:true, opacity:1 });
+      const cloud = new THREE.Points(geo, mat);
+      scene.add(cloud); dotClouds.push(cloud);
+      dotClouds.slice(0,-1).forEach(c => c.material.opacity = Math.max(.12, c.material.opacity - .06));
+
+      const latestTime = new Date(timestamps[timestamps.length-1]).toLocaleTimeString();
+      colorLegend.push({ color: cloudColorHex, price: latestPrice, volume: latestVolume, time: latestTime });
+      updateLegend();
+      addHashLog(generateHashFromPrice(latestPrice), latestTime);
+    }
+
+    // HASH layouts (Spiral/Sphere/Helix)
+    function layoutFromHash(hash, mapping){
+      const vals = Array.from(hash).map(ch => parseInt(ch,16));
+      const N = 256;
+      const positions=[]; const colors=[];
+      const cloudColor = new THREE.Color(themes.original[ (dotClouds.length) % themes.original.length ]);
+      for(let i=0;i<N;i++){
+        const v = vals[i % vals.length]/15;
+        let x,y,z;
+        if(mapping==="spiral"){
+          const a = i * 0.28; const r = 2 + v*4;
+          x = Math.cos(a)*r; y = Math.sin(a)*r; z = (i/N)*16-8;
+        }else if(mapping==="sphere"){
+          const phi = Math.acos(1 - 2*(i+0.5)/N);
+          const theta = Math.PI*(1+Math.sqrt(5))*(i+v);
+          const R = 6*(0.6+0.4*v);
+          x = R*Math.sin(phi)*Math.cos(theta); y = R*Math.sin(phi)*Math.sin(theta); z = R*Math.cos(phi);
+        }else if(mapping==="helix"){
+          const a = (i/N)*Math.PI*8;
+          x = Math.cos(a)*5; y = Math.sin(a)*5; z = (i/N)*20-10 + (v-.5);
+        }else{
+          const a = i * 0.28; const r = 2 + v*4;
+          x = Math.cos(a)*r; y = Math.sin(a)*r; z = (i/N)*16-8;
+        }
+        positions.push(x,y,z);
+        colors.push(cloudColor.r, cloudColor.g, cloudColor.b);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.Float32BufferAttribute(positions,3));
+      geo.setAttribute("color", new THREE.Float32BufferAttribute(colors,3));
+      const mat = new THREE.PointsMaterial({ size: parseFloat($("pointSize").value), vertexColors:true, transparent:true, opacity:1 });
+      const cloud = new THREE.Points(geo, mat);
+      scene.add(cloud); dotClouds.push(cloud);
+      dotClouds.slice(0,-1).forEach(c => c.material.opacity = Math.max(.12, c.material.opacity - .06));
+      updateLegend();
+    }
+
+    // FBX instancing
+    const loader = new THREE.FBXLoader();
+    function maybeInstanceFBX(){
+      if(!userFBX) return;
+      const latest = dotClouds[dotClouds.length-1]; if(!latest) return;
+      let baseMesh = null; userFBX.traverse(o=>{ if(!baseMesh && o.isMesh) baseMesh=o; });
+      if(!baseMesh) return;
+      const count = latest.geometry.attributes.position.count;
+      if(instancedMesh){ scene.remove(instancedMesh); instancedMesh.geometry.dispose(); instancedMesh.material.dispose?.(); instancedMesh=null; }
+      const geo = baseMesh.geometry.clone();
+      const mat = baseMesh.material.clone(); mat.transparent=true; mat.opacity=.95;
+      instancedMesh = new THREE.InstancedMesh(geo, mat, count);
+      const dummy = new THREE.Object3D(); const pos = latest.geometry.attributes.position;
+      for(let i=0;i<count;i++){ dummy.position.set(pos.getX(i),pos.getY(i),pos.getZ(i)); const s=.06; dummy.scale.set(s,s,s); dummy.rotation.set(Math.random()*Math.PI,Math.random()*Math.PI,Math.random()*Math.PI); dummy.updateMatrix(); instancedMesh.setMatrixAt(i,dummy.matrix); }
+      scene.add(instancedMesh); latest.visible=false;
+    }
+
+    // UI interactions
+    $("pointSize").addEventListener("input", ()=>{ dotClouds.forEach(c=>c.material.size=parseFloat($("pointSize").value)); });
+    $("density").addEventListener("input", ()=>{ clearScene(); bootOriginal(); });
+    $("theme").addEventListener("change", ()=>{ $("m-mode").textContent="Mode — " + $("theme").selectedOptions[0].textContent; clearScene(); bootOriginal(); });
+    $("mapping").addEventListener("change", ()=>{
+      const m = $("mapping").value;
+      if(m==="original"){ clearScene(); bootOriginal(); }
+      else{ clearScene(); if($("hashInput").value) layoutFromHash($("hashInput").value, m); else generateLatestHash(m); }
+      maybeInstanceFBX();
+    });
+    $("btnLatest").addEventListener("click", ()=>generateLatestHash());
+    $("btnRandom").addEventListener("click", ()=>{ const h = randomHash(); $("hashInput").value=h; const m=$("mapping").value; if(m!=="original"){ clearScene(); layoutFromHash(h,m); maybeInstanceFBX(); } });
+    $("btnGenerate").addEventListener("click", ()=>{ const h = sanitizeHash($("hashInput").value); if(!/^[0-9a-f]{64}$/i.test(h)){ alert("Paste a 64-hex hash"); return; } const m=$("mapping").value; if(m==="original"){ alert("Switch mapping to Spiral/Sphere/Helix to use hash."); return; } clearScene(); layoutFromHash(h,m); maybeInstanceFBX(); });
+
+    $("reset-view").addEventListener("click", ()=>{ camera.position.set(0,0,12); controls.target.set(0,0,0); controls.update(); });
+    $("toggle-log").addEventListener("click", ()=> $("hash-log").classList.toggle("hidden"));
+
+    $("fbx-file").addEventListener("change", async (e)=>{
+      const file = e.target.files && e.target.files[0]; if(!file){ userFBX=null; return; }
+      const url = URL.createObjectURL(file);
+      try{ loader.load(url, obj=>{ userFBX=obj; maybeInstanceFBX(); }); }catch{ alert("Failed to load FBX"); }
+    });
+    $("clear-fbx").addEventListener("click", ()=>{ userFBX=null; if(instancedMesh){ scene.remove(instancedMesh); instancedMesh.geometry.dispose(); instancedMesh.material.dispose?.(); instancedMesh=null; } dotClouds.forEach(c=>c.visible=true); });
+
+    // Fullscreen controls (desktop + mobile)
+    const btnFS = $("btn-fullscreen");
+    const btnExit = $("btn-exitfs");
+    function isFullscreen(){
+      return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+    }
+    function requestFS(el){
+      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+      if(req) req.call(el);
+      document.body.classList.add("fs-active");
+      setTimeout(resize, 100);
+    }
+    function exitFS(){
+      const ex = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+      if(ex) ex.call(document);
+      document.body.classList.remove("fs-active");
+      setTimeout(resize, 100);
+    }
+    btnFS.addEventListener("click", ()=>requestFS(stagePanel));
+    btnExit.addEventListener("click", exitFS);
+    document.addEventListener("fullscreenchange", ()=>{
+      const active = !!isFullscreen();
+      document.body.classList.toggle("fs-active", active);
+      setTimeout(resize, 80);
+    });
+
+    // Export
+    $("export-png").addEventListener("click", ()=>{
+      const oldPR = renderer.getPixelRatio(); renderer.setPixelRatio(2); renderer.render(scene,camera);
+      const url = renderer.domElement.toDataURL("image/png"); renderer.setPixelRatio(oldPR);
+      const a=document.createElement("a"); a.href=url; a.download="quantumi-btc.png"; a.click();
+    });
+    $("export-csv").addEventListener("click", ()=>{
+      const rows = ["color,price,volume,time"]; colorLegend.forEach(c=>rows.push([c.color,c.price,c.volume,c.time].join(",")));
+      const blob = new Blob([rows.join("\n")],{type:"text/csv"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="quantumi-btc.csv"; a.click();
+    });
+    $("export-fbx").addEventListener("click", ()=>{
+      const exporter = new THREE.FBXExporter(); const s2=new THREE.Scene();
+      dotClouds.forEach(p=>{ if(p.visible) s2.add(p.clone()); }); if(instancedMesh) s2.add(instancedMesh.clone());
+      const res = exporter.parse(s2); const blob = new Blob([res],{type:"application/octet-stream"});
+      const url = URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="quantumi-btc.fbx"; a.click();
+    });
+
+    // Newsletter sign-up logging
+    $("mail-form").addEventListener("submit", (e)=>{
+      e.preventDefault();
+      const email = $("mail-input").value.trim();
+      if(email){
+        const list = JSON.parse(localStorage.getItem("quantumiMail") || "[]");
+        list.push({email, time:new Date().toISOString()});
+        localStorage.setItem("quantumiMail", JSON.stringify(list));
+        console.log("Mailing list signup:", email);
+        e.target.reset();
+        alert("Thanks for joining our mailing list!");
+      }
+    });
+
+    // Load cycle
+    async function bootOriginal(){
+      const hist = await fetchHistorical(); layoutOriginal(hist.prices, hist.total_volumes);
+      const hd = await fetchHashrate(); $("m-hashrate").textContent = "Hashrate — " + hd.hashrate; $("m-diff").textContent = "Difficulty — " + hd.diff;
+    }
+    async function generateLatestHash(mappingOverride){
+      const h = await latestBlockHash(); const clean = h ? sanitizeHash(h) : randomHash();
+      $("hashInput").value = clean;
+      const m = mappingOverride || $("mapping").value;
+      if(m!=="original"){ clearScene(); layoutFromHash(clean,m); maybeInstanceFBX(); }
+      addHashLog(clean.slice(0,16)+"…", new Date().toLocaleTimeString());
+    }
+
+    // Render loop
+    function animate(){ controls.update(); renderer.render(scene,camera); requestAnimationFrame(animate); }
+    animate();
+
+    // First paint: ORIGINAL plot + overlay + hash auto-populate
+    (async ()=>{
+      await bootOriginal();
+      await generateLatestHash(); // populate hash input + render if user changes mapping
+      setInterval(async ()=>{ // refresh original every minute
+        if($("mapping").value==="original"){ clearScene(); await bootOriginal(); maybeInstanceFBX(); }
+      }, 60_000);
+    })();
+  </script>
+</body>
+</html>
