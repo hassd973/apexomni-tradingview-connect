@@ -443,11 +443,20 @@
                                 width: 100%;
                                 gap: 0.5rem;
                         }
-			#btc-metrics-overlay .metrics-row .metric {
-				flex: 1 1 auto;
-				text-align: center;
-				font-size: inherit;
-			}
+                        #btc-metrics-overlay .metrics-row .metric {
+                                flex: 1 1 auto;
+                                text-align: center;
+                                font-size: inherit;
+                        }
+                        @media (max-width: 640px) {
+                                #btc-metrics-overlay {
+                                        flex-direction: column;
+                                        gap: 0.25rem;
+                                }
+                                #btc-metrics-overlay .metrics-row {
+                                        flex-wrap: wrap;
+                                }
+                        }
 			.metrics-container {
 				display: flex;
 				flex-wrap: wrap;
@@ -1837,12 +1846,21 @@
 				box-shadow: none;
 				padding: 0;
 			}
-			#btc-hash-canvas {
-				width: 100% !important;
-				height: 50vh !important;
-				opacity: 0.8;
-				overflow: hidden;
-			}
+                        #btc-hash-canvas {
+                                width: 100% !important;
+                                height: 50vh !important;
+                                opacity: 0.8;
+                                overflow: hidden;
+                        }
+                        #btc-hash-canvas:fullscreen,
+                        #btc-hash-canvas:-webkit-full-screen {
+                                width: 100vw;
+                                height: 100vh;
+                        }
+                        #btc-hash-canvas.fs-active {
+                                width: 100vw;
+                                height: 100vh;
+                        }
 			.btc-hash-svg {
 				background: #000000;
 				border: 1px solid var(--shadow-color);
@@ -3332,7 +3350,7 @@
                                                                 <canvas
                                                                         class="logo quantumi-logo"
                                                                 ></canvas>
-                                                                <span id="btc-overlay-loss" class="metric metric-main"></span>
+                                                                <span id="btc-overlay-change" class="metric metric-main"></span>
                                                         </div>
                                                         <div class="metrics-row">
                                                                 <span
@@ -3842,8 +3860,8 @@
 				djLogoBtn: document.querySelector('#dj-activation-overlay .logo'),
 				djDashboard: document.getElementById('dj-dashboard'),
 				djDeactivateBtn: document.getElementById('dj-deactivate-btn'),
-				btcOverlayPrice: document.getElementById('btc-overlay-price'),
-                                btcOverlayLoss: document.getElementById('btc-overlay-loss'),
+                                btcOverlayPrice: document.getElementById('btc-overlay-price'),
+                                btcOverlayChange: document.getElementById('btc-overlay-change'),
                                 btcOverlayHashrate: document.getElementById('btc-overlay-hashrate'),
                                 btcOverlayDifficulty: document.getElementById('btc-overlay-difficulty'),
                                 btcOverlayMode: document.getElementById('btc-overlay-mode'),
@@ -5338,9 +5356,10 @@ function setupModuleToggles() {
 						DOM.trackBPrice.textContent = `$${latestPrice.toLocaleString()}`;
 					if (DOM.trackBTime) DOM.trackBTime.textContent = dateTime;
 
-					const inverse = await fetchTopInverseToken();
-					const topCoin = await fetchTopCoin();
-					const lossText = `${inverse.symbol} ${inverse.change.toFixed(2)}%`;
+                                        const inverse = await fetchTopInverseToken();
+                                        const topCoin = await fetchTopCoin();
+                                        const lossText = `${inverse.symbol} ${inverse.change.toFixed(2)}%`;
+                                        const changeText = momentum.toFixed(2);
 					if (DOM.loadingInverse)
 						DOM.loadingInverse.textContent = `Down: ${lossText}`;
 					if (DOM.loadingTopcoin)
@@ -5353,9 +5372,10 @@ function setupModuleToggles() {
 						DOM.trackAInverse.textContent = `Loss: ${lossText}`;
 					if (DOM.trackBInverse)
 						DOM.trackBInverse.textContent = `Loss: ${lossText}`;
-					if (DOM.btcOverlayPrice)
-						DOM.btcOverlayPrice.textContent = `$${latestPrice.toLocaleString()}`;
-					if (DOM.btcOverlayLoss) DOM.btcOverlayLoss.textContent = lossText;
+                                        if (DOM.btcOverlayPrice)
+                                                DOM.btcOverlayPrice.textContent = `$${latestPrice.toLocaleString()}`;
+                                        if (DOM.btcOverlayChange)
+                                                DOM.btcOverlayChange.textContent = `24h — ${changeText}`;
 					if (DOM.btcOverlayHashrate)
 						DOM.btcOverlayHashrate.textContent = `Hash: ${hashRate.toFixed(2)} EH/s`;
                                         if (DOM.btcOverlayDifficulty)
@@ -6907,19 +6927,31 @@ function setupModuleToggles() {
                                });
 
                                if (DOM.btcFullscreenBtn) {
+                                       const btcCanvas = document.getElementById('btc-hash-canvas');
+                                       const isFS = () =>
+                                               document.fullscreenElement ||
+                                               document.webkitFullscreenElement ||
+                                               document.msFullscreenElement;
+                                       const requestFS = (el) => {
+                                               const req =
+                                                       el.requestFullscreen ||
+                                                       el.webkitRequestFullscreen ||
+                                                       el.msRequestFullscreen;
+                                               if (req) req.call(el);
+                                       };
+                                       const exitFS = () => {
+                                               const ex =
+                                                       document.exitFullscreen ||
+                                                       document.webkitExitFullscreen ||
+                                                       document.msExitFullscreen;
+                                               if (ex) ex.call(document);
+                                       };
                                        DOM.btcFullscreenBtn.addEventListener('click', () => {
-                                               const btcCanvas = document.getElementById('btc-hash-canvas');
-                                               if (!document.fullscreenElement) {
-                                                       if (btcCanvas.requestFullscreen) btcCanvas.requestFullscreen();
-                                                       else if (btcCanvas.mozRequestFullScreen) btcCanvas.mozRequestFullScreen();
-                                                       else if (btcCanvas.webkitRequestFullscreen) btcCanvas.webkitRequestFullscreen();
-                                                       else if (btcCanvas.msRequestFullscreen) btcCanvas.msRequestFullscreen();
-                                               } else {
-                                                       if (document.exitFullscreen) document.exitFullscreen();
-                                                       else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
-                                                       else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-                                                       else if (document.msExitFullscreen) document.msExitFullscreen();
-                                               }
+                                               if (!isFS()) requestFS(btcCanvas);
+                                               else exitFS();
+                                       });
+                                       document.addEventListener('fullscreenchange', () => {
+                                               btcCanvas.classList.toggle('fs-active', !!isFS());
                                        });
                                }
 

@@ -9,6 +9,7 @@
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&display=swap" rel="stylesheet">
   <style>
+    *, *::before, *::after { box-sizing: border-box; }
     :root {
       --quantumi-green: #00FF00;
       --quantumi-black: #010101;
@@ -114,6 +115,7 @@
       padding: 1.5rem;
       width: 100%;
       max-width: 800px;
+      overflow-wrap: anywhere;
     }
 
     #mailing-form {
@@ -177,6 +179,8 @@
       background: black;
       border-radius: var(--quantumi-radius);
       overflow: hidden;
+      position: relative;
+      min-height: 300px;
     }
 
     footer {
