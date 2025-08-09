@@ -31,7 +31,7 @@
     .btn:hover{ background:rgba(0,255,0,.25); color:#001; border-color:var(--border); }
     .hint{ font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--border); background: rgba(0,255,0,.08); cursor:help; }
     .right{ margin-left:auto; display:flex; align-items:center; gap:.6rem; }
-    main{ flex:1; display:grid; grid-template-columns: 2fr 1fr; gap:12px; padding:12px 14px; overflow:hidden; }
+    main{ flex:1; display:grid; grid-template-columns: 2fr 1fr; gap:12px; padding:12px 14px; overflow:auto; min-height:0; }
     .panel{ background:var(--card); border:1px solid #222; border-radius:12px; box-shadow:0 2px 20px #0006; position:relative; overflow:hidden; }
     #stagePanel{ min-height:60vh; }
     .stage{ position:absolute; inset:0; }
@@ -50,6 +50,7 @@
       .controls{ grid-template-columns: 1fr; }
       .ctrl{ grid-column: span 1 / span 1; }
       .brand{ flex-direction: column; align-items: flex-start; }
+      .controls-wrap{ overflow-x:auto; }
       main{ gap:8px; padding:8px; }
     }
     /* Fullscreen styles */
@@ -213,6 +214,7 @@
     async function fetchHistorical(){
       try{
         const r = await fetch('/api/btc/historical');
+        if(!r.ok) throw 0;
         const j = await r.json();
         if(!j.prices || !j.total_volumes) throw 0;
         return j;
@@ -225,6 +227,7 @@
     async function fetchHashrate(){
       try{
         const r = await fetch('/api/btc/stats');
+        if(!r.ok) throw 0;
         const j = await r.json();
         return {
           hashrate: j.hashrate ? j.hashrate.toFixed(2) + " EH/s" : "—",
@@ -237,6 +240,7 @@
     async function latestBlockHash(){
       try{
         const r = await fetch('/api/btc/latest-hash');
+        if(!r.ok) throw 0;
         const j = await r.json();
         if(j.hash) return j.hash;
       }catch{}
