@@ -2,17 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>QUANTUMI • BTC Hash Studio</title>
+    <title>QUANTUMI • BTC Hash Studio (Responsive)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="description" content="Interactive BTC hash + market visualization. Mobile-first, accessible, and performant." />
-    <meta name="theme-color" content="#0d0f12" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0d0f12" />
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&family=Sora:wght@100..800&display=swap" rel="stylesheet" />
-    <!-- Tailwind 2.x kept for compatibility; can be upgraded later -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
     <style>
+
       /* --- CSS RESET / TOKENS ------------------------------------------------ */
       *, *::before, *::after { box-sizing: border-box; }
       :root{
@@ -111,110 +109,101 @@
       /* Fullscreen */
       .fs-target:fullscreen, .fs-target:-webkit-full-screen{ background:#000; width:100%; height:100%; }
       .fs-btn-on{ display:none; } .fs-active .fs-btn-on{ display:inline-flex; } .fs-active .fs-btn-off{ display:none; }
+    
     </style>
 
     <!-- three.js r128 for compatibility -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/FBXExporter.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/FBXExporter.js"></script>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-    <header role="banner">
+    <header>
       <div class="brand">
-        <div class="logo" aria-label="QUANTUMI brand">QUANTUMI</div>
-        <div class="sub" aria-hidden="true">BTC Hash Studio • responsive</div>
-        <div class="right" role="navigation" aria-label="Primary">
-          <a href="https://quantumi.space" class="btn" rel="noopener" title="Return to QUANTUMI home">Home</a>
-          <div class="sub" aria-label="version">v2.3</div>
+        <div class="logo">QUANTUMI</div>
+        <div class="sub">BTC Hash Studio • responsive</div>
+        <div class="right">
+          <a href="https://quantumi.space" class="btn" rel="noopener">Home</a>
+          <div class="sub">v2.2</div>
         </div>
       </div>
-
       <button id="controls-toggle" class="btn" type="button" aria-expanded="false" aria-controls="controls-rail">Controls</button>
-
       <div id="controls-rail" class="controls-rail" aria-hidden="false">
-        <div class="controls" role="form" aria-label="Visualization controls">
+        <div class="controls">
+        <div class="controls">
           <div class="ctrl" title="Upload a compact FBX (5–10MB).">
-            <label for="fbx-file">Upload FBX</label>
-            <input class="ellipsis" type="file" id="fbx-file" accept=".fbx" aria-describedby="fbx-help" />
-            <div id="fbx-help" class="sr-only">FBX model used to instance across the point cloud.</div>
-            <div class="btn-row">
-              <button class="btn" id="clear-fbx" type="button" title="Remove FBX from scene">Clear</button>
-              <button class="btn" id="apply-fbx" type="button" title="Map uploaded FBX to the current point cloud">Apply to Points</button>
-              <button class="btn fs-btn-off" id="btn-fullscreen" type="button" title="Enter fullscreen">Fullscreen</button>
-              <button class="btn fs-btn-on" id="btn-exitfs" type="button" title="Exit fullscreen">Exit FS</button>
-            </div>
+            <label>Upload FBX</label>
+            <input type="file" id="fbx-file" accept=".fbx" />
+            <div class="btn-row"><button class="btn" id="btn-load-fbx" title="Pick an FBX file">Load FBX</button><button class="btn" id="clear-fbx">Clear</button><button class="btn fs-btn-off" id="btn-fullscreen" title="Enter fullscreen">Fullscreen</button><button class="btn fs-btn-on" id="btn-exitfs" title="Exit fullscreen">Exit FS</button></div>
+            <button class="btn right fs-btn-off" id="btn-fullscreen" title="Enter fullscreen">Fullscreen</button>
+            <button class="btn right fs-btn-on" id="btn-exitfs" title="Exit fullscreen">Exit FS</button>
           </div>
-
-          <div class="ctrl" title="Mapping from data to space. ‘Original’ uses time→Z, price→X, volume→Y."> ‘Original’ uses time→Z, price→X, volume→Y.">
-            <label for="mapping">Mapping</label>
-            <select id="mapping" aria-label="Mapping mode">
+          <div class="ctrl" title="Mapping from data to space. ‘Original’ uses time→Z, price→X, volume→Y.">
+            <label>Mapping</label>
+            <select id="mapping">
               <option value="original" selected>Original (Time/Price/Volume)</option>
               <option value="spiral">Spiral (time-curve)</option>
               <option value="sphere">Sphere (volatility radius)</option>
               <option value="helix">Helix (momentum tilt)</option>
             </select>
           </div>
-
           <div class="ctrl" title="Instances per data point.">
-            <label for="density">Density</label>
-            <input type="range" id="density" min="1" max="200" value="60" aria-valuemin="1" aria-valuemax="200" aria-valuenow="60" />
+            <label>Density</label>
+            <input type="range" id="density" min="1" max="200" value="60" />
           </div>
-
           <div class="ctrl" title="Point size for dot clouds.">
-            <label for="pointSize">Point Size</label>
-            <input type="range" id="pointSize" min="0.02" max="0.6" step="0.02" value="0.12" aria-valuemin="0.02" aria-valuemax="0.6" aria-valuenow="0.12" />
+            <label>Point Size</label>
+            <input type="range" id="pointSize" min="0.02" max="0.6" step="0.02" value="0.12" />
           </div>
-
           <div class="ctrl" title="Color mode for clouds/instances.">
-            <label for="theme">Theme</label>
-            <select id="theme" aria-label="Color theme">
+            <label>Theme</label>
+            <select id="theme">
               <option value="original" selected>Original</option>
               <option value="heatmap">Heatmap (volatility)</option>
               <option value="lifecycle">Lifecycle (volume)</option>
             </select>
           </div>
-
           <div class="ctrl" title="Paste a hash, or use the latest block. Used when Mapping ≠ Original.">
-            <label for="hashInput">Hash</label>
-            <input id="hashInput" type="text" placeholder="Paste a block/tx hash…" inputmode="latin" autocomplete="off" aria-label="Hash input" />
-            <button class="btn" id="btnLatest" type="button" title="Use the latest block hash">Latest</button>
-            <button class="btn" id="btnRandom" type="button" title="Generate a random hash">Random</button>
-            <button class="btn" id="btnGenerate" type="button" title="Generate cloud from the entered hash">Generate</button>
+            <label>Hash</label>
+            <input id="hashInput" type="text" placeholder="Paste a block/tx hash…" inputmode="latin" autocomplete="off" />
+            <button class="btn" id="btnLatest">Latest</button>
+            <button class="btn" id="btnRandom">Random</button>
+            <button class="btn" id="btnGenerate">Generate</button>
           </div>
-
           <div class="ctrl" title="Export the current scene and data.">
             <label>Export</label>
-            <button class="btn" id="export-fbx" type="button" title="Download scene as FBX">FBX</button>
-            <button class="btn" id="export-png" type="button" title="Save screenshot as PNG">PNG</button>
-            <button class="btn" id="export-csv" type="button" title="Export color legend as CSV">CSV</button>
-            <button class="btn right" id="reset-view" type="button" title="Reset camera">Reset</button>
+            <button class="btn" id="export-fbx">FBX</button>
+            <button class="btn" id="export-png">PNG</button>
+            <button class="btn" id="export-csv">CSV</button>
+            <button class="btn right" id="reset-view" title="Reset camera">Reset</button>
           </div>
         </div>
-      </div>
+      </div><!-- /#controls-rail -->
     </header>
 
     <main id="main">
       <section class="panel fs-target" id="stagePanel" aria-label="3D stage">
         <div class="stage">
-          <div class="overlay" id="metrics" aria-live="polite">
+          <div class="overlay" id="metrics">
             <div class="chip" id="m-price">Price —</div>
             <div class="chip" id="m-change">24h —</div>
             <div class="chip" id="m-hashrate">Hashrate —</div>
             <div class="chip" id="m-diff">Difficulty —</div>
             <div class="chip" id="m-mode">Mode — Original</div>
+            <div class="chip" id="m-status">Status — Init…</div>
           </div>
-          <canvas id="gl" role="img" aria-label="Animated 3D visualization"></canvas>
-          <div class="legend" id="legend" aria-label="Color legend"></div>
+          <canvas id="gl"></canvas>
+          <div class="legend" id="legend"></div>
         </div>
       </section>
 
-      <aside class="panel aside" aria-label="Sidebar">
+      <aside class="panel aside">
         <div class="card">
           <div class="flex items-center gap-3">
             <strong>Hash Log</strong><span class="text-gray-400">Latest 10</span>
-            <button class="btn ml-auto" id="toggle-log" type="button" title="Show or hide the hash log">Toggle</button>
+            <button class="btn ml-auto" id="toggle-log">Toggle</button>
           </div>
           <ul id="hash-log" class="log" aria-live="polite"></ul>
         </div>
@@ -228,11 +217,10 @@
           </ul>
         </div>
         <div class="card" id="newsletter-card">
-          <form id="mail-form" class="flex flex-col gap-2" novalidate>
+          <form id="mail-form" class="flex flex-col gap-2">
             <label for="mail-input" class="text-sm">Join our mailing list</label>
-            <input id="mail-input" name="email" type="email" inputmode="email" autocomplete="email" required placeholder="you@example.com" class="bg-black border border-gray-700 rounded p-2 text-sm" />
-            <small id="mail-err" class="text-red-400 hidden">Enter a valid email.</small>
-            <button class="btn block" type="submit" title="Subscribe to updates">Join</button>
+            <input id="mail-input" type="email" required placeholder="you@example.com" class="bg-black border border-gray-700 rounded p-2 text-sm" />
+            <button class="btn" type="submit">Join</button>
             <a href="https://www.instagram.com/quantumi.space/" target="_blank" rel="noopener" class="text-xs text-green-400 underline text-center">Instagram</a>
           </form>
         </div>
@@ -251,19 +239,20 @@
       const nfPct = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 });
       const canvas = $('gl'); const stagePanel = $('stagePanel');
 
-      // Mobile controls drawer toggle
+      // Mobile controls drawer toggle (match reference layout)
       const drawerBtn = $('controls-toggle');
       const rail = $('controls-rail');
-      if (drawerBtn) {
+      if (drawerBtn && rail) {
         drawerBtn.addEventListener('click', () => {
           const expanded = drawerBtn.getAttribute('aria-expanded') === 'true';
           drawerBtn.setAttribute('aria-expanded', String(!expanded));
           rail.setAttribute('aria-hidden', String(expanded));
         });
       }
+    
 
       // THREE basics
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false, preserveDrawingBuffer:true, powerPreference:'high-performance' });
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false, preserveDrawingBuffer:true });
       renderer.setClearColor(0x000000, 1);
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 3000);
@@ -271,38 +260,46 @@
       const controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true; controls.dampingFactor = 0.06;
       controls.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-      controls.autoRotateSpeed = 1.2;
+      controls.autoRotateSpeed = 1.4;
 
       const amb = new THREE.AmbientLight(0xffffff, 0.65); scene.add(amb);
       const dir = new THREE.DirectionalLight(0xffffff, 0.65); dir.position.set(4,6,10); scene.add(dir);
 
-      let dotClouds = []; let colorLegend = []; let instancedMesh = null; let userFBX = null; let fbxApplied = false;
+      let dotClouds = []; let colorLegend = []; let instancedMesh = null; let userFBX = null;
+      let lastPrice = null, firstPrice24h = null;
 
       function resize(){
         const rect = canvas.parentElement.getBoundingClientRect();
         const w = Math.max(1, rect.width), h = Math.max(1, rect.height);
-        const devicePR = Math.min(window.devicePixelRatio || 1, 2);
-        renderer.setPixelRatio(devicePR);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         renderer.setSize(w, h, false);
         camera.aspect = w / h; camera.updateProjectionMatrix();
       }
       const ro = new ResizeObserver(() => resize()); ro.observe(stagePanel);
-      window.addEventListener('orientationchange', () => setTimeout(resize, 160), { passive: true });
+      window.addEventListener('orientationchange', () => setTimeout(resize, 180));
 
       // Data: price/volume (CoinGecko), hashrate + difficulty (Blockchain.info fallbacks), latest hash (Blockstream)
-      const CG_KEY = 'CG-zH5yUbmxFumgf3Yu1BeNqyx3';
 
+      const CG_KEY = 'CG-zH5yUbmxFumgf3Yu1BeNqyx3';
+      
       // ---- Promise.any polyfill ----
       if (!Promise.any) {
         Promise.any = function(iterable) {
           return new Promise((resolve, reject) => {
-            let rejections = 0; const errors = []; const arr = Array.from(iterable);
+            let rejections = 0;
+            const errors = [];
+            const arr = Array.from(iterable);
             if (!arr.length) reject(new AggregateError([], 'All promises were rejected'));
-            arr.forEach((p, i) => { Promise.resolve(p).then(resolve).catch(err => { errors[i] = err; rejections++; if (rejections === arr.length) reject(new AggregateError(errors, 'All promises were rejected')); }); });
+            arr.forEach((p, i) => {
+              Promise.resolve(p).then(resolve).catch(err => {
+                errors[i] = err;
+                rejections++;
+                if (rejections === arr.length) reject(new AggregateError(errors, 'All promises were rejected'));
+              });
+            });
           });
         };
       }
-
       // ---- fetch with timeout + minimal retry ----
       async function fetchJSON(url, { headers = {}, timeout = 8000, retries = 2 } = {}){
         for (let i=0;i<=retries;i++){
@@ -338,69 +335,87 @@
       }
 
       // ===== Live data watchers (price + block tip) =====
-      const Live = { priceUSD: null, pct24h: null, lastBlockHash: null, priceTimer: null, blockTimer: null };
+      const Live = {
+        priceUSD: null,
+        pct24h: null,
+        lastBlockHash: null,
+        lastBlockSeenAt: 0,
+        priceTimer: null,
+        blockTimer: null,
+        networkLag: 15000, // 15s
+      };
 
+      
       async function raceSpotPrice(){
         const headers = CG_KEY ? { 'x-cg-demo-api-key': CG_KEY } : {};
         const tasks = [
-          (async ()=>{ const j = await fetchJSON('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true', { headers }); if (j?.bitcoin?.usd){ return { price: j.bitcoin.usd, pct: (typeof j.bitcoin.usd_24h_change === 'number') ? j.bitcoin.usd_24h_change/100 : null, src:'coingecko' }; } throw 0; })(),
-          (async ()=>{ const j = await fetchJSON('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT'); const val = parseFloat(j?.lastPrice ?? j?.weightedAvgPrice ?? j?.prevClosePrice); const pct = (typeof j?.priceChangePercent === 'string') ? (parseFloat(j.priceChangePercent)/100) : null; if (!Number.isNaN(val)) return { price: val, pct, src:'binance' }; throw 0; })(),
-          (async ()=>{ const j = await fetchJSON('https://api.coinbase.com/v2/prices/spot?currency=USD'); const val = parseFloat(j?.data?.amount); if (!Number.isNaN(val)) return { price: val, pct:null, src:'coinbase' }; throw 0; })(),
-          (async ()=>{ const j = await fetchJSON('https://api.kraken.com/0/public/Ticker?pair=XBTUSD'); const k = j?.result && Object.values(j.result)[0]; const last = k?.c && parseFloat(k.c[0]); const open = k?.o ? parseFloat(k.o) : null; const pct = (last && open) ? ((last - open)/open) : null; if (!Number.isNaN(last)) return { price: last, pct, src:'kraken' }; throw 0; })(),
-          (async ()=>{ const j = await fetchJSON('https://www.bitstamp.net/api/v2/ticker/btcusd/'); const last = parseFloat(j?.last); const open = parseFloat(j?.open); const pct = (last && open) ? ((last - open)/open) : null; if (!Number.isNaN(last)) return { price: last, pct, src:'bitstamp' }; throw 0; })()
+          (async ()=>{
+            const j = await fetchJSON('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true', { headers });
+            if (j?.bitcoin?.usd){
+              return { price: j.bitcoin.usd, pct: (typeof j.bitcoin.usd_24h_change === 'number') ? j.bitcoin.usd_24h_change/100 : null, src:'coingecko' };
+            }
+            throw 0;
+          })(),
+          (async ()=>{
+            const j = await fetchJSON('https://api.binance.com/api/v3/ticker/24hr?symbol=BTCUSDT');
+            const val = parseFloat(j?.lastPrice ?? j?.weightedAvgPrice ?? j?.prevClosePrice);
+            const pct = (typeof j?.priceChangePercent === 'string') ? (parseFloat(j.priceChangePercent)/100) : null;
+            if (!Number.isNaN(val)) return { price: val, pct, src:'binance' };
+            throw 0;
+          })(),
+          (async ()=>{
+            const j = await fetchJSON('https://api.coinbase.com/v2/prices/spot?currency=USD');
+            const val = parseFloat(j?.data?.amount);
+            if (!Number.isNaN(val)) return { price: val, pct:null, src:'coinbase' };
+            throw 0;
+          })(),
+          (async ()=>{
+            const j = await fetchJSON('https://api.kraken.com/0/public/Ticker?pair=XBTUSD');
+            const k = j?.result && Object.values(j.result)[0];
+            const last = k?.c && parseFloat(k.c[0]);
+            const open = k?.o ? parseFloat(k.o) : null;
+            const pct = (last && open) ? ((last - open)/open) : null;
+            if (!Number.isNaN(last)) return { price: last, pct, src:'kraken' };
+            throw 0;
+          })(),
+          (async ()=>{
+            const j = await fetchJSON('https://www.bitstamp.net/api/v2/ticker/btcusd/');
+            const last = parseFloat(j?.last);
+            const open = parseFloat(j?.open);
+            const pct = (last && open) ? ((last - open)/open) : null;
+            if (!Number.isNaN(last)) return { price: last, pct, src:'bitstamp' };
+            throw 0;
+          })()
         ];
         return Promise.any(tasks);
       }
+
       async function fetchSpotPrice() {
         try {
+          // Try your backend first if present (keeps existing behavior)
           const r = await fetch('/api/btc/spot', { cache:'no-store' });
           if (r.ok) {
             const j = await r.json();
-            if (typeof j.price === 'number') { Live.priceUSD = j.price; Live.pct24h = (typeof j.pct24h === 'number') ? j.pct24h : null; return { price: Live.priceUSD, pct24h: Live.pct24h }; }
+            if (typeof j.price === 'number') {
+              Live.priceUSD = j.price;
+              Live.pct24h = typeof j.pct24h === 'number' ? j.pct24h : null;
+              return { price: Live.priceUSD, pct24h: Live.pct24h };
+            }
           }
           throw 0;
         } catch (_) {
-          try { const v = await raceSpotPrice(); Live.priceUSD = v.price; Live.pct24h = (typeof v.pct === 'number') ? v.pct : null; return { price: Live.priceUSD, pct24h: Live.pct24h }; } catch(e) {}
+          try {
+            const v = await raceSpotPrice();
+            Live.priceUSD = v.price;
+            Live.pct24h = (typeof v.pct === 'number') ? v.pct : null;
+            return { price: Live.priceUSD, pct24h: Live.pct24h };
+          } catch(e) {}
         }
         return null;
       }
 
-      function updatePriceChips() {
-        if (Live.priceUSD != null) { $('m-price').textContent = 'Price — ' + nfUSD.format(Live.priceUSD); }
-        if (typeof Live.pct24h === 'number') { const pc = Live.pct24h; const sign = pc >= 0 ? '+' : ''; $('m-change').textContent = '24h — ' + sign + nfPct.format(pc); } else { $('m-change').textContent = '24h — —'; }
-      }
-
-      async function startLiveLoops() {
-        let priceDelay = 20000;
-        async function priceLoop() { const ok = await fetchSpotPrice(); updatePriceChips(); priceDelay = ok ? 20000 : Math.min(priceDelay * 1.6, 60000); Live.priceTimer = setTimeout(priceLoop, priceDelay); }
-        priceLoop();
-
-        let blockDelay = 10000;
-        async function blockLoop() { const h = await fetchTipHashOnce(); if (h && h !== Live.lastBlockHash) { Live.lastBlockHash = h; $('hashInput').value = h; addHashLog(h.slice(0,16)+'…', new Date().toLocaleTimeString()); const m = $('mapping').value; if (m !== 'original') { clearScene(); layoutFromHash(h, m); maybeInstanceFBX(); } } Live.blockTimer = setTimeout(blockLoop, blockDelay); }
-        blockLoop();
-
-        document.addEventListener('visibilitychange', () => { if (!document.hidden) { fetchSpotPrice().then(updatePriceChips); fetchTipHashOnce().then((h)=>{ if (h && h !== Live.lastBlockHash) { Live.lastBlockHash = h; $('hashInput').value = h; const m = $('mapping').value; if (m !== 'original') { clearScene(); layoutFromHash(h, m); maybeInstanceFBX(); } } }); } });
-      }
-
-      async function fetchHistorical(){
-        try{ const r = await fetch('/api/btc/historical', { cache: 'no-store' }); if(r.ok){ const j = await r.json(); if (Array.isArray(j?.prices) && j.prices.length && Array.isArray(j?.total_volumes) && j.total_volumes.length) return j; } throw 0; }
-        catch(_){
-          try{ const headers = CG_KEY ? { 'x-cg-demo-api-key': CG_KEY } : {}; const j = await fetchJSON('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=minute', { headers }); if (Array.isArray(j?.prices) && j.prices.length && Array.isArray(j?.total_volumes) && j.total_volumes.length) return j; }catch{}
-          try{ const k = await fetchJSON('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=1440'); if (Array.isArray(k) && k.length){ const prices = k.map(row => [ row[0], parseFloat(row[4]) ]); const volumes = k.map(row => { const t = row[0]; const price = parseFloat(row[4]); const volBTC = parseFloat(row[5]); const volUSD = (price * volBTC) || 0; return [ t, volUSD ]; }); return { prices, total_volumes: volumes }; } }catch{}
-          const now = Date.now(); const pts = Array.from({length:120}, (_,i)=>[now-(120-i)*60_000, 50000 + Math.sin(i/8)*1200 + (Math.random()-.5)*400]); return { prices: pts, total_volumes: pts.map(([t,_],i)=>[t, Math.abs(Math.sin(i/10))*1e9 + 3e9]) };
-        }
-      }
-
-      async function fetchHashrate(){
-        try{ const r = await fetch('/api/btc/stats', { cache: 'no-store' }); if(r.ok){ const j = await r.json(); return { hashrate: j.hashrate ? (j.hashrate/1e18).toFixed(2) + ' EH/s' : '—', diff: j.diff ? (j.diff/1e12).toFixed(2) + ' T' : '—' }; } throw 0; }
-        catch(_){
-          try{ const [hashResp, diffResp] = await Promise.all([ fetch('https://api.blockchain.info/q/hashrate?cors=true'), fetch('https://api.blockchain.info/q/getdifficulty?cors=true') ]); if (hashResp.ok && diffResp.ok){ const h = parseFloat(await hashResp.text()); const d = parseFloat(await diffResp.text()); return { hashrate: (h/1e9).toFixed(2) + ' EH/s', diff: (d/1e12).toFixed(2) + ' T' }; } }catch{}
-          return { hashrate:'—', diff:'—' };
-        }
-      }
-
       async function fetchTipHashOnce() {
-        try { // Prefer your backend
+        try {
           const r = await fetch('/api/btc/latest-hash', { cache:'no-store' });
           if (r.ok) {
             const j = await r.json();
@@ -408,37 +423,222 @@
             if (h) return h;
           }
           throw 0;
-        } catch (_) {
-          // Public fallbacks: Blockstream → mempool.space → Blockchain.info JSON
+        } catch (_){
           try {
-            const r1 = await fetch('https://blockstream.info/api/blocks/tip/hash', { cache:'no-store' });
-            if (r1.ok) {
-              const t = (await r1.text()).trim().toLowerCase();
+            const r = await fetch('https://blockstream.info/api/blocks/tip/hash', { cache:'no-store' });
+            if (r.ok) {
+              const t = (await r.text()).trim().toLowerCase();
               if (/^[0-9a-f]{64}$/i.test(t)) return t;
             }
-          } catch {}
-          try {
-            const r2 = await fetch('https://mempool.space/api/blocks/tip/hash', { cache:'no-store' });
-            if (r2.ok) {
-              const t2 = (await r2.text()).trim().toLowerCase();
-              if (/^[0-9a-f]{64}$/i.test(t2)) return t2;
-            }
-          } catch {}
-          try {
-            const j = await fetchJSON('https://blockchain.info/latestblock');
-            if (j?.hash && /^[0-9a-f]{64}$/i.test(j.hash)) return String(j.hash).toLowerCase();
           } catch {}
         }
         return null;
       }
+
+      function updatePriceChips() {
+        if (Live.priceUSD != null) {
+          $('m-price').textContent = 'Price — ' + nfUSD.format(Live.priceUSD);
+        }
+        if (typeof Live.pct24h === 'number') {
+          const pc = Live.pct24h;
+          const sign = pc >= 0 ? '+' : '';
+          $('m-change').textContent = '24h — ' + sign + nfPct.format(pc);
+        } else {
+          $('m-change').textContent = '24h — —';
+        }
+      }
+
+      async function startLiveLoops() {
+        // Price: refresh every 20s; backoff on errors up to 60s
+        let priceDelay = 20000;
+        async function priceLoop() {
+          const ok = await fetchSpotPrice();
+          updatePriceChips();
+          if (!ok) priceDelay = Math.min(priceDelay * 1.6, 60000);
+          else priceDelay = 20000;
+          Live.priceTimer = setTimeout(priceLoop, priceDelay);
+        }
+        priceLoop();
+
+        // Block tip: poll every 10s; when new hash appears, update input and (if mapping != original) re-draw
+        let blockDelay = 10000;
+        async function blockLoop() {
+          const h = await fetchTipHashOnce();
+          if (h && h !== Live.lastBlockHash) {
+            Live.lastBlockHash = h;
+            Live.lastBlockSeenAt = Date.now();
+            $('hashInput').value = h;
+            addHashLog(h.slice(0,16)+'…', new Date().toLocaleTimeString());
+            // If user is on a hash-driven mapping, re-render with the new live hash
+            const m = $('mapping').value;
+            if (m !== 'original') {
+              clearScene();
+              layoutFromHash(h, m);
+              maybeInstanceFBX();
+            }
+          }
+          Live.blockTimer = setTimeout(blockLoop, blockDelay);
+        }
+        blockLoop();
+
+        // Visibility awareness: when returning to the tab, refresh immediately
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) {
+            fetchSpotPrice().then(updatePriceChips);
+            fetchTipHashOnce().then((h)=>{
+              if (h && h !== Live.lastBlockHash) {
+                Live.lastBlockHash = h;
+                $('hashInput').value = h;
+                const m = $('mapping').value;
+                if (m !== 'original') {
+                  clearScene();
+                  layoutFromHash(h, m);
+                  maybeInstanceFBX();
+                }
+              }
+            });
+          }
+        });
+      }
+
+      
+      async function fetchHistorical(){
+        try{
+          const r = await fetch('/api/btc/historical', { cache: 'no-store' });
+          if(r.ok){ const j = await r.json(); if (Array.isArray(j?.prices) && j.prices.length && Array.isArray(j?.total_volumes) && j.total_volumes.length) return j; }
+          throw 0;
+        }catch(_){
+          try{
+            const headers = CG_KEY ? { 'x-cg-demo-api-key': CG_KEY } : {};
+            const j = await fetchJSON('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=minute', { headers });
+            if (Array.isArray(j?.prices) && j.prices.length && Array.isArray(j?.total_volumes) && j.total_volumes.length) return j;
+          }catch{}
+          try{
+            const k = await fetchJSON('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=1440');
+            if (Array.isArray(k) && k.length){
+              const prices = k.map(row => [ row[0], parseFloat(row[4]) ]);
+              const volumes = k.map(row => {
+                const t = row[0];
+                const price = parseFloat(row[4]);
+                const volBTC = parseFloat(row[5]);
+                const volUSD = (price * volBTC) || 0;
+                return [ t, volUSD ];
+              });
+              return { prices, total_volumes: volumes };
+            }
+          }catch{}
+          const now = Date.now();
+          const pts = Array.from({length:120}, (_,i)=>[now-(120-i)*60_000, 50000 + Math.sin(i/8)*1200 + (Math.random()-.5)*400]);
+          return { prices: pts, total_volumes: pts.map(([t,_],i)=>[t, Math.abs(Math.sin(i/10))*1e9 + 3e9]) };
+        }
+      }
+
+      async function fetchHashrate(){
+        try{
+          const r = await fetch('/api/btc/stats', { cache: 'no-store' });
+          if(r.ok){
+            const j = await r.json();
+            return {
+              hashrate: j.hashrate ? (j.hashrate/1e18).toFixed(2) + ' EH/s' : '—',
+              diff: j.diff ? (j.diff/1e12).toFixed(2) + ' T' : '—'
+            };
+          }
+          throw 0;
+        }catch(_){
+          try{
+            const [hashResp, diffResp] = await Promise.all([
+              fetch('https://api.blockchain.info/q/hashrate?cors=true'),
+              fetch('https://api.blockchain.info/q/getdifficulty?cors=true')
+            ]);
+            if (hashResp.ok && diffResp.ok){
+              const h = parseFloat(await hashResp.text()); // GH/s
+              const d = parseFloat(await diffResp.text());
+              return { hashrate: (h/1e9).toFixed(2) + ' EH/s', diff: (d/1e12).toFixed(2) + ' T' };
+            }
+          }catch{}
+          return { hashrate:'—', diff:'—' };
+        }
+      }
+      async function latestBlockHash(){
+        // Prefer Blockstream (CORS text), then mempool.space, then Blockchain.info
+        try{
+          const t = (await fetchTEXT('https://blockstream.info/api/blocks/tip/hash')).trim().toLowerCase();
+          if(/^[0-9a-f]{64}$/i.test(t)) return t;
+          throw 0;
+        }catch(_){
+          try{
+            const m = (await fetchTEXT('https://mempool.space/api/blocks/tip/hash')).trim().toLowerCase();
+            if(/^[0-9a-f]{64}$/i.test(m)) return m;
+            throw 0;
+          }catch(__){
+            try{
+              const j = await fetchJSON('https://blockchain.info/latestblock');
+              if(j?.hash && /^[0-9a-f]{64}$/i.test(j.hash)) return String(j.hash).toLowerCase();
+            }catch{}
+          }
+        }
+        return null;
+      }
+      function randomHash(){
+        const hex='0123456789abcdef'; let s=''; for(let i=0;i<64;i++) s+=hex[Math.floor(Math.random()*16)]; return s;
+      }
+      function sanitizeHash(h){
+        return (h||'').trim().replace(/^0x/,'').toLowerCase().replace(/[^0-9a-f]/g,'');
+      }
+
+      // Themes
+      const themes={ original:['#00ffcc','#00ff88','#00ff44','#00ff00','#44ff00','#88ff00','#ccff00'], heatmap:['#00ff00','#ffff00','#ff0000'], lifecycle:['#3dd5ff','#00ff88','#ff8a00'] };
+      function interpolateColor(c1,c2,ratio){
+        const hex = (c)=>parseInt(c.replace('#',''),16);
+        const r1=(hex(c1)>>16)&255, g1=(hex(c1)>>8)&255, b1=hex(c1)&255;
+        const r2=(hex(c2)>>16)&255, g2=(hex(c2)>>8)&255, b2=hex(c2)&255;
+        const r=Math.round(r1+(r2-r1)*ratio), g=Math.round(g1+(g2-g1)*ratio), b=Math.round(b1+(b2-b1)*ratio);
+        return `#${((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}`;
+      }
+      function themeColor(volatility, volume, minV, maxV, idx){
+        const t=$('theme').value;
+        if(t==='heatmap'){
+          const ratio=Math.min(volatility/5,1);
+          return ratio<.5?interpolateColor(themes.heatmap[0],themes.heatmap[1],ratio*2):interpolateColor(themes.heatmap[1],themes.heatmap[2],(ratio-.5)*2);
+        }else if(t==='lifecycle'){
+          const r=(volume-minV)/(maxV-minV+1e-9);
+          if(r<.25) return themes.lifecycle[0];
+          if(r<.5) return themes.lifecycle[1];
+          return themes.lifecycle[2];
+        }
+        return themes.original[idx % themes.original.length];
+      }
+      function generateHashFromPrice(price){
+        const s=String(price); let h=''; for(let i=0;i<64;i++){ h += (s.charCodeAt(i % s.length) % 16).toString(16); } return h;
+      }
       function updateLegend(){
-        const el=$('legend'); const base='<span class="chip"><span class="swatch" style="background:#00ffcc"></span>Start</span><span class="chip"><span class="swatch" style="background:#44ff00"></span>Fade</span>';
+        const el=$('legend'); const mode=$('theme').value; let base='';
+        if(mode==='heatmap'){
+          base = `<span class="chip"><span class="swatch" style="background:${themes.heatmap[0]}"></span>Low</span>
+                  <span class="chip"><span class="swatch" style="background:${themes.heatmap[1]}"></span>Mid</span>
+                  <span class="chip"><span class="swatch" style="background:${themes.heatmap[2]}"></span>High</span>`;
+        }else if(mode==='lifecycle'){
+          base = `<span class="chip"><span class="swatch" style="background:${themes.lifecycle[0]}"></span>New</span>
+                  <span class="chip"><span class="swatch" style="background:${themes.lifecycle[1]}"></span>Maturing</span>
+                  <span class="chip"><span class="swatch" style="background:${themes.lifecycle[2]}"></span>Old</span>`;
+        }else{
+          base = `<span class="chip"><span class="swatch" style="background:${themes.original[0]}"></span>Start</span>
+                  <span class="chip"><span class="swatch" style="background:${themes.original[themes.original.length-1]}"></span>Fade</span>`;
+        }
         const dataLegend = colorLegend.map(c=>`<span class="chip" title="Price ${nfUSD.format(c.price)} | Vol $${(c.volume/1e9).toFixed(2)}B | ${c.time}"><span class="swatch" style="background:${c.color}"></span></span>`).join('');
         el.innerHTML = base + dataLegend;
       }
-
-      function clearScene(){ dotClouds.forEach(c=>{ scene.remove(c); c.geometry.dispose(); c.material.dispose(); }); dotClouds.length=0; if(instancedMesh){ scene.remove(instancedMesh); instancedMesh.geometry.dispose(); instancedMesh.material.dispose?.(); instancedMesh=null; } colorLegend=[]; }
-      function addHashLog(id,time){ const ul=$('hash-log'); const li=document.createElement('li'); li.className='card'; li.innerHTML=`<div class="flex justify-between items-center gap-3"><span><span class="kbd">hash</span> ${id}</span><span class="text-gray-400">${time}</span></div>`; ul.prepend(li); while(ul.children.length>10) ul.removeChild(ul.lastChild); }
+      function clearScene(){
+        dotClouds.forEach(c=>{ scene.remove(c); c.geometry.dispose(); c.material.dispose(); });
+        dotClouds.length=0;
+        if(instancedMesh){ scene.remove(instancedMesh); instancedMesh.geometry.dispose(); instancedMesh.material.dispose?.(); instancedMesh=null; }
+        colorLegend=[];
+      }
+      function addHashLog(id,time){
+        const ul=$('hash-log'); const li=document.createElement('li');
+        li.className='card'; li.innerHTML=`<div class="flex justify-between items-center gap-3"><span><span class="kbd">hash</span> ${id}</span><span class="text-gray-400">${time}</span></div>`;
+        ul.prepend(li); while(ul.children.length>10) ul.removeChild(ul.lastChild);
+      }
 
       // ORIGINAL mapping
       function layoutOriginal(prices, volumes){
@@ -447,22 +647,25 @@
         const minP=Math.min(...prices.map(p=>p[1])), maxP=Math.max(...prices.map(p=>p[1]));
         const minV=Math.min(...volumes.map(v=>v[1])), maxV=Math.max(...volumes.map(v=>v[1]));
         const latestPrice = prices[prices.length-1][1];
-        const firstPrice24h = prices[0][1];
+        lastPrice = latestPrice; firstPrice24h = prices[0][1];
+
+        // Proper 24h change (vs first sample in window)
         const absChange = latestPrice - firstPrice24h;
         const pctChange = absChange / firstPrice24h;
+
         const latestVolume = volumes[volumes.length-1][1];
         const recent = prices.slice(-Math.min(10, prices.length)).map(p=>p[1]);
         const volatility = ((Math.max(...recent) - Math.min(...recent)) / Math.max(latestPrice,1)) * 100;
 
         $('m-price').textContent = 'Price — ' + nfUSD.format(latestPrice);
         $('m-change').textContent = `24h — ${absChange>=0?'+':''}${nfUSD.format(absChange)} (${nfPct.format(pctChange)})`;
+        $('m-mode').textContent = 'Mode — ' + $('theme').selectedOptions[0].textContent;
 
-        const colors=['#00ffcc','#00ff88','#00ff44','#00ff00','#44ff00','#88ff00','#ccff00'];
-        const cloudColorHex = colors[dotClouds.length % colors.length];
+        const cloudColorHex = themeColor(volatility, latestVolume, minV, maxV, dotClouds.length);
         const cloudColor = new THREE.Color(cloudColorHex);
         const pointsPer = parseInt($('density').value, 10);
 
-        const positions=[]; const colorsArr=[];
+        const positions=[]; const colors=[];
         for(let i=0;i<prices.length;i++){
           const t=timestamps[i], price=prices[i][1], vol=volumes[i][1];
           const z = ((t-minT)/(maxT-minT)) * 20 - 10;
@@ -470,12 +673,12 @@
           const y = ((vol-minV)/(maxV-minV+1e-9)) * 20 - 10;
           for(let j=0;j<pointsPer;j++){
             positions.push(x+(Math.random()-.5)*.9, y+(Math.random()-.5)*.9, z+(Math.random()-.5)*.9);
-            colorsArr.push(cloudColor.r, cloudColor.g, cloudColor.b);
+            colors.push(cloudColor.r, cloudColor.g, cloudColor.b);
           }
         }
         const geo=new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
-        geo.setAttribute('color', new THREE.Float32BufferAttribute(colorsArr,3));
+        geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
         const mat=new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
         const cloud=new THREE.Points(geo,mat); scene.add(cloud); dotClouds.push(cloud);
         dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
@@ -483,26 +686,25 @@
         const latestTime = new Date(timestamps[timestamps.length-1]).toLocaleTimeString();
         colorLegend.push({ color:cloudColorHex, price:latestPrice, volume:latestVolume, time:latestTime });
         updateLegend();
-        addHashLog(String(latestPrice).slice(0,8)+'…', latestTime);
+        addHashLog(generateHashFromPrice(latestPrice), latestTime);
       }
 
-      // HASH layouts (simplified + performant)
+      // HASH layouts
       function layoutFromHash(hash, mapping){
         const vals = Array.from(hash).map(ch=>parseInt(ch,16));
-        const N=256; const positions=[]; const colorsArr=[];
-        const palette=['#00ffcc','#00ff88','#00ff44','#00ff00','#44ff00','#88ff00','#ccff00'];
-        const cloudColor = new THREE.Color(palette[dotClouds.length % palette.length]);
+        const N=256; const positions=[]; const colors=[];
+        const cloudColor = new THREE.Color(themes.original[dotClouds.length % themes.original.length]);
         for(let i=0;i<N;i++){
           const v = vals[i % vals.length] / 15; let x,y,z;
           if(mapping==='spiral'){ const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
           else if(mapping==='sphere'){ const phi=Math.acos(1-(2*(i+.5))/N); const theta=Math.PI*(1+Math.sqrt(5))*(i+v); const R=6*(.6+.4*v); x=R*Math.sin(phi)*Math.cos(theta); y=R*Math.sin(phi)*Math.sin(theta); z=R*Math.cos(phi); }
           else if(mapping==='helix'){ const a=(i/N)*Math.PI*8; x=Math.cos(a)*5; y=Math.sin(a)*5; z=(i/N)*20-10+(v-.5); }
           else { const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
-          positions.push(x,y,z); colorsArr.push(cloudColor.r, cloudColor.g, cloudColor.b);
+          positions.push(x,y,z); colors.push(cloudColor.r, cloudColor.g, cloudColor.b);
         }
         const geo=new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
-        geo.setAttribute('color', new THREE.Float32BufferAttribute(colorsArr,3));
+        geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
         const mat=new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
         const cloud=new THREE.Points(geo,mat); scene.add(cloud); dotClouds.push(cloud);
         dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
@@ -512,52 +714,126 @@
       // FBX instancing
       const loader = new THREE.FBXLoader();
       function maybeInstanceFBX(){
-        if(!userFBX || !fbxApplied) return;
+        if(!userFBX) return;
         const latest = dotClouds[dotClouds.length-1]; if(!latest) return;
         let baseMesh=null; userFBX.traverse(o=>{ if(!baseMesh && o.isMesh) baseMesh=o; });
         if(!baseMesh) return;
         const count = latest.geometry.attributes.position.count;
         if(instancedMesh){ scene.remove(instancedMesh); instancedMesh.geometry.dispose(); instancedMesh.material.dispose?.(); instancedMesh=null; }
-        const geo=baseMesh.geometry.clone(); const mat=baseMesh.material.clone(); mat.transparent=true; mat.opacity=.95; mat.depthWrite=false;
+        const geo=baseMesh.geometry.clone(); const mat=baseMesh.material.clone(); mat.transparent=true; mat.opacity=.95;
         instancedMesh=new THREE.InstancedMesh(geo, mat, count);
         const dummy=new THREE.Object3D(); const pos=latest.geometry.attributes.position;
-        for(let i=0;i<count;i++){ dummy.position.set(pos.getX(i), pos.getY(i), pos.getZ(i)); const s=.06; dummy.scale.set(s,s,s); dummy.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI); dummy.updateMatrix(); instancedMesh.setMatrixAt(i, dummy.matrix); }
+        for(let i=0;i<count;i++){ dummy.position.set(pos.getX(i), pos.getY(i), pos.getZ(i)); const s=.06; dummy.scale.set(s,s,s);
+          dummy.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI); dummy.updateMatrix(); instancedMesh.setMatrixAt(i, dummy.matrix); }
         scene.add(instancedMesh); latest.visible=false;
       }
 
-      // UI wiring
-      $('pointSize').addEventListener('input', ()=>{ dotClouds.forEach(c=> c.material.size = parseFloat($('pointSize').value)); }, { passive:true });
-      $('density').addEventListener('input', ()=>{ clearScene(); bootOriginal(); }, { passive:true });
+      // UI
+      $('pointSize').addEventListener('input', ()=>{ dotClouds.forEach(c=> c.material.size = parseFloat($('pointSize').value)); });
+      $('density').addEventListener('input', ()=>{ clearScene(); bootOriginal(); });
       $('theme').addEventListener('change', ()=>{ $('m-mode').textContent='Mode — ' + $('theme').selectedOptions[0].textContent; clearScene(); bootOriginal(); });
-      $('mapping').addEventListener('change', ()=>{ const m=$('mapping').value; if(m==='original'){ clearScene(); bootOriginal(); } else { clearScene(); const h=sanitizeHash($('hashInput').value); if(h) layoutFromHash(h,m); else generateLatestHash(m); } maybeInstanceFBX(); });
+      $('mapping').addEventListener('change', ()=>{
+        const m=$('mapping').value;
+        if(m==='original'){ clearScene(); bootOriginal(); } else {
+          clearScene();
+          const h=sanitizeHash($('hashInput').value);
+          if(h) layoutFromHash(h,m); else generateLatestHash(m);
+        }
+        maybeInstanceFBX();
+      });
       $('btnLatest').addEventListener('click', ()=> generateLatestHash());
-      $('btnRandom').addEventListener('click', ()=>{ const h=randomHash(); $('hashInput').value=h; const m=$('mapping').value; if(m!=='original'){ clearScene(); layoutFromHash(h,m); maybeInstanceFBX(); } });
-      $('btnGenerate').addEventListener('click', ()=>{ const h=sanitizeHash($('hashInput').value); if(!/^[0-9a-f]{64}$/i.test(h)){ alert('Paste a 64-hex hash'); return; } const m=$('mapping').value; if(m==='original'){ alert('Switch mapping to Spiral/Sphere/Helix to use hash.'); return; } clearScene(); layoutFromHash(h,m); maybeInstanceFBX(); });
+      $('btnRandom').addEventListener('click', ()=>{
+        const h=randomHash(); $('hashInput').value=h;
+        const m=$('mapping').value; if(m!=='original'){ clearScene(); layoutFromHash(h,m); maybeInstanceFBX(); }
+      });
+      $('btnGenerate').addEventListener('click', ()=>{
+        const h=sanitizeHash($('hashInput').value);
+        if(!/^[0-9a-f]{64}$/i.test(h)){ alert('Paste a 64-hex hash'); return; }
+        const m=$('mapping').value; if(m==='original'){ alert('Switch mapping to Spiral/Sphere/Helix to use hash.'); return; }
+        clearScene(); layoutFromHash(h,m); maybeInstanceFBX();
+      });
       $('reset-view').addEventListener('click', ()=>{ camera.position.set(0,0,12); controls.target.set(0,0,0); controls.update(); });
       $('toggle-log').addEventListener('click', ()=> $('hash-log').classList.toggle('hidden'));
 
-      $('fbx-file').addEventListener('change', async (e)=>{ const file=e.target.files && e.target.files[0]; if(!file){ userFBX=null; fbxApplied=false; return; } const url=URL.createObjectURL(file); fbxApplied=false; try{ loader.load(url, (obj)=>{ userFBX=obj; }); } catch{ alert('Failed to load FBX'); } });
-      $('apply-fbx').addEventListener('click', ()=>{ if(!userFBX){ alert('Upload an FBX file first.'); return; } fbxApplied=true; maybeInstanceFBX(); });
-      $('clear-fbx').addEventListener('click', ()=>{ userFBX=null; fbxApplied=false; if(instancedMesh){ scene.remove(instancedMesh); instancedMesh.geometry.dispose(); instancedMesh.material.dispose?.(); instancedMesh=null; } dotClouds.forEach(c=> c.visible=true); });
+      $('fbx-file').addEventListener('change', async (e)=>{
+        const file=e.target.files && e.target.files[0]; if(!file){ userFBX=null; return; }
+        const url=URL.createObjectURL(file);
+        try{ loader.load(url, (obj)=>{ userFBX=obj; maybeInstanceFBX(); }); } catch{ alert('Failed to load FBX'); }
+      });
+      $('clear-fbx').addEventListener('click', ()=>{
+        userFBX=null; if(instancedMesh){ scene.remove(instancedMesh); instancedMesh.geometry.dispose(); instancedMesh.material.dispose?.(); instancedMesh=null; }
+        dotClouds.forEach(c=> c.visible=true);
+      });
 
       // Fullscreen
       const btnFS=$('btn-fullscreen'); const btnExit=$('btn-exitfs');
       function isFullscreen(){ return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement; }
-      function requestFS(el){ const req= el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen; if(req) req.call(el); document.body.classList.add('fs-active'); setTimeout(resize, 80); }
-      function exitFS(){ const ex= document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen; if(ex) ex.call(document); document.body.classList.remove('fs-active'); setTimeout(resize, 80); }
+      function requestFS(el){ const req= el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen; if(req) req.call(el); document.body.classList.add('fs-active'); setTimeout(resize, 100); }
+      function exitFS(){ const ex= document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen; if(ex) ex.call(document); document.body.classList.remove('fs-active'); setTimeout(resize, 100); }
       btnFS.addEventListener('click', ()=> requestFS(stagePanel)); btnExit.addEventListener('click', exitFS);
-      document.addEventListener('fullscreenchange', ()=>{ const active=!!isFullscreen(); document.body.classList.toggle('fs-active', active); setTimeout(resize, 60); });
+      document.addEventListener('fullscreenchange', ()=>{ const active=!!isFullscreen(); document.body.classList.toggle('fs-active', active); setTimeout(resize, 80); });
 
       // Export
-      $('export-png').addEventListener('click', ()=>{ const oldPR=renderer.getPixelRatio(); renderer.setPixelRatio(2); renderer.render(scene,camera); const url=renderer.domElement.toDataURL('image/png'); renderer.setPixelRatio(oldPR); const a=document.createElement('a'); a.href=url; a.download='quantumi-btc.png'; a.click(); });
-      $('export-csv').addEventListener('click', ()=>{ const rows=['color,price,volume,time']; colorLegend.forEach(c=> rows.push([c.color,c.price,c.volume,c.time].join(','))); const blob=new Blob([rows.join('\n')], {type:'text/csv'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='quantumi-btc.csv'; a.click(); });
-      $('export-fbx').addEventListener('click', ()=>{ const exporter=new THREE.FBXExporter(); const s2=new THREE.Scene(); dotClouds.forEach(p=>{ if(p.visible) s2.add(p.clone()); }); if(instancedMesh) s2.add(instancedMesh.clone()); const res=exporter.parse(s2); const blob=new Blob([res], {type:'application/octet-stream'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='quantumi-btc.fbx'; a.click(); });
+      $('export-png').addEventListener('click', ()=>{
+        const oldPR=renderer.getPixelRatio(); renderer.setPixelRatio(2); renderer.render(scene,camera);
+        const url=renderer.domElement.toDataURL('image/png'); renderer.setPixelRatio(oldPR);
+        const a=document.createElement('a'); a.href=url; a.download='quantumi-btc.png'; a.click();
+      });
+      $('export-csv').addEventListener('click', ()=>{
+        const rows=['color,price,volume,time']; colorLegend.forEach(c=> rows.push([c.color,c.price,c.volume,c.time].join(',')));
+        const blob=new Blob([rows.join('\n')], {type:'text/csv'}); const url=URL.createObjectURL(blob);
+        const a=document.createElement('a'); a.href=url; a.download='quantumi-btc.csv'; a.click();
+      });
+      $('export-fbx').addEventListener('click', ()=>{
+        const exporter=new THREE.FBXExporter(); const s2=new THREE.Scene();
+        dotClouds.forEach(p=>{ if(p.visible) s2.add(p.clone()); }); if(instancedMesh) s2.add(instancedMesh.clone());
+        const res=exporter.parse(s2); const blob=new Blob([res], {type:'application/octet-stream'});
+        const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='quantumi-btc.fbx'; a.click();
+      });
 
-      // Newsletter (client‑only demo)
-      $('mail-form').addEventListener('submit', (e)=>{ e.preventDefault(); const email=$('mail-input').value.trim(); const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); if(!ok){ $('mail-err').classList.remove('hidden'); return; } $('mail-err').classList.add('hidden'); if(email){ const list=JSON.parse(localStorage.getItem('quantumiMail')||'[]'); list.push({email, time:new Date().toISOString()}); localStorage.setItem('quantumiMail', JSON.stringify(list)); e.target.reset(); alert('Thanks for joining our mailing list!'); } });
+      // Newsletter (local demo only)
+      $('mail-form').addEventListener('submit', (e)=>{
+        e.preventDefault(); const email=$('mail-input').value.trim();
+        if(email){ const list=JSON.parse(localStorage.getItem('quantumiMail')||'[]'); list.push({email, time:new Date().toISOString()});
+          localStorage.setItem('quantumiMail', JSON.stringify(list)); e.target.reset(); alert('Thanks for joining our mailing list!'); }
+      });
 
       // Load cycle
-      async function bootOriginal(){ const hist = await fetchHistorical(); layoutOriginal(hist.prices, hist.total_volumes); const hd = await fetchHashrate(); $('m-hashrate').textContent='Hashrate — ' + hd.hashrate; $('m-diff').textContent='Difficulty — ' + hd.diff; }
-      function sanitizeHash(h){ return (h||'').trim().replace(/^0x/,'').toLowerCase().replace(/[^0-9a-f]/g,''); }
+      async function bootOriginal(){
+        const hist = await fetchHistorical();
+        layoutOriginal(hist.prices, hist.total_volumes);
+        const hd = await fetchHashrate(); $('m-hashrate').textContent='Hashrate — ' + hd.hashrate; $('m-diff').textContent='Difficulty — ' + hd.diff;
+      }
+      async function generateLatestHash(mappingOverride){
+        const h = await latestBlockHash();
+        const clean = h ? sanitizeHash(h) : randomHash();
+        $('hashInput').value = clean;
+        const m = mappingOverride || $('mapping').value;
+        if(m!=='original'){ clearScene(); layoutFromHash(clean, m); maybeInstanceFBX(); }
+        addHashLog(clean.slice(0,16)+'…', new Date().toLocaleTimeString());
+      }
 
-      
+      // Render loop + visibility-aware refresh
+      function animate(){ controls.update(); renderer.render(scene,camera); requestAnimationFrame(animate); }
+      animate();
+
+      (async ()=>{
+        // Mobile-friendly defaults
+        if (window.innerWidth < 640){
+          $('density').value = '28';
+          $('pointSize').value = '0.16';
+        }
+        resize();
+        await bootOriginal(); updatePriceChips();
+        startLiveLoops();
+        await generateLatestHash();
+        const refresh = async ()=>{
+          if(document.hidden) return;
+          if($('mapping').value === 'original'){ clearScene(); await bootOriginal(); updatePriceChips(); maybeInstanceFBX(); }
+        };
+        setInterval(refresh, 60_000);
+        document.addEventListener('visibilitychange', refresh);
+      })();
+    </script>
+  </body>
+</html>
