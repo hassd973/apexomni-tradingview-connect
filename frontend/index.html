@@ -7611,6 +7611,13 @@ function setupModuleToggles() {
                                                error.classList.remove('hidden');
                                        }
                                });
+
+                               const logoutBtn = document.getElementById('logout-btn');
+                               if (logoutBtn) {
+                                       logoutBtn.addEventListener('click', () => {
+                                               localStorage.removeItem('quanti-email');
+                                       });
+                               }
                        });
                </script>
                 <div class="mode-switch">Mode: Raw Hash</div>
