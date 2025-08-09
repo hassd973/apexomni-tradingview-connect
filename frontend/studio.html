@@ -214,17 +214,16 @@
     // Data fetchers
     async function fetchHistorical(){
       try{
-        const r = await fetch('/api/btc/historical', { cache: 'no-store' });
-        if(r.ok){
-          const j = await r.json();
-          if(j.prices && j.total_volumes) return j;
-        }
-        throw 0;
+        const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=minute');
+        const j = await r.json();
+        if(j.prices && j.total_volumes) return j;
       }catch(_){
         try{
-          const r = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1&interval=minute');
-          const j = await r.json();
-          if(j.prices && j.total_volumes) return j;
+          const r = await fetch('/api/btc/historical', { cache: 'no-store' });
+          if(r.ok){
+            const j = await r.json();
+            if(j.prices && j.total_volumes) return j;
+          }
         }catch{}
         const now = Date.now();
         const pts = Array.from({length:120},(_,i)=>[now - (120-i)*60_000, 50000 + Math.sin(i/8)*1200 + (Math.random()-.5)*400]);
@@ -233,27 +232,27 @@
     }
     async function fetchHashrate(){
       try{
-        const r = await fetch('/api/btc/stats', { cache: 'no-store' });
-        if(r.ok){
-          const j = await r.json();
+        const [hashResp, diffResp] = await Promise.all([
+          fetch('https://api.blockchain.info/q/hashrate?cors=true'),
+          fetch('https://api.blockchain.info/q/getdifficulty?cors=true')
+        ]);
+        if(hashResp.ok && diffResp.ok){
+          const h = parseFloat(await hashResp.text());
+          const d = parseFloat(await diffResp.text());
           return {
-            hashrate: j.hashrate ? j.hashrate.toFixed(2) + " EH/s" : "—",
-            diff: j.diff ? (j.diff/1e12).toFixed(2) + " T" : "—"
+            hashrate: (h/1e9).toFixed(2) + " EH/s",
+            diff: (d/1e12).toFixed(2) + " T"
           };
         }
         throw 0;
       }catch(_){
         try{
-          const [hashResp, diffResp] = await Promise.all([
-            fetch('https://api.blockchain.info/q/hashrate?cors=true'),
-            fetch('https://api.blockchain.info/q/getdifficulty?cors=true')
-          ]);
-          if(hashResp.ok && diffResp.ok){
-            const h = parseFloat(await hashResp.text());
-            const d = parseFloat(await diffResp.text());
+          const r = await fetch('/api/btc/stats', { cache: 'no-store' });
+          if(r.ok){
+            const j = await r.json();
             return {
-              hashrate: (h/1e9).toFixed(2) + " EH/s",
-              diff: (d/1e12).toFixed(2) + " T"
+              hashrate: j.hashrate ? j.hashrate.toFixed(2) + " EH/s" : "—",
+              diff: j.diff ? (j.diff/1e12).toFixed(2) + " T" : "—"
             };
           }
         }catch{}
@@ -261,32 +260,30 @@
       }
     }
     async function latestBlockHash(){
+      const urls = [
+        'https://blockchain.info/latestblock',
+        'https://blockstream.info/api/blocks/tip/hash'
+      ];
+      for(const url of urls){
+        try{
+          const r = await fetch(url);
+          if(!r.ok) continue;
+          if(url.includes('latestblock')){
+            const j = await r.json();
+            if(j.hash) return j.hash;
+          }else{
+            const t = (await r.text()).trim();
+            if(/^[0-9a-f]{64}$/i.test(t)) return t;
+          }
+        }catch{}
+      }
       try{
         const r = await fetch('/api/btc/latest-hash', { cache: 'no-store' });
         if(r.ok){
           const j = await r.json();
           if(j.hash) return j.hash;
         }
-        throw 0;
-      }catch(_){
-        const urls = [
-          'https://blockchain.info/latestblock',
-          'https://blockstream.info/api/blocks/tip/hash'
-        ];
-        for(const url of urls){
-          try{
-            const r = await fetch(url);
-            if(!r.ok) continue;
-            if(url.includes('latestblock')){
-              const j = await r.json();
-              if(j.hash) return j.hash;
-            }else{
-              const t = (await r.text()).trim();
-              if(/^[0-9a-f]{64}$/i.test(t)) return t;
-            }
-          }catch{}
-        }
-      }
+      }catch{}
       return null;
     }
     function randomHash(){ const hex="0123456789abcdef"; let s=""; for(let i=0;i<64;i++) s+=hex[Math.floor(Math.random()*16)]; return s; }
