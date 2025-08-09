@@ -256,15 +256,16 @@
       renderer.setClearColor(0x000000, 1);
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 3000);
-      camera.position.set(0, 0, 12);
+      camera.position.set(10, 10, 30);
       const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.target.set(10, 10, 10);
       controls.enableDamping = true; controls.dampingFactor = 0.06;
       controls.autoRotate = !matchMedia('(prefers-reduced-motion: reduce)').matches;
       controls.autoRotateSpeed = 1.4;
 
       const amb = new THREE.AmbientLight(0xffffff, 0.65); scene.add(amb);
       const dir = new THREE.DirectionalLight(0xffffff, 0.65); dir.position.set(4,6,10); scene.add(dir);
-      const axesHelper = new THREE.AxesHelper(10); scene.add(axesHelper);
+      const axesHelper = new THREE.AxesHelper(20); scene.add(axesHelper);
 
       let dotClouds = []; let colorLegend = []; let instancedMesh = null; let userFBX = null;
       let lastPrice = null, firstPrice24h = null;
@@ -669,9 +670,9 @@
         const positions=[]; const colors=[];
         for(let i=0;i<prices.length;i++){
           const t=timestamps[i], price=prices[i][1], vol=volumes[i][1];
-          const z = ((t-minT)/(maxT-minT)) * 20 - 10;
-          const x = ((price-minP)/(maxP-minP+1e-9)) * 20 - 10;
-          const y = ((vol-minV)/(maxV-minV+1e-9)) * 20 - 10;
+          const z = ((t-minT)/(maxT-minT)) * 20;
+          const x = ((price-minP)/(maxP-minP+1e-9)) * 20;
+          const y = ((vol-minV)/(maxV-minV+1e-9)) * 20;
           for(let j=0;j<pointsPer;j++){
             positions.push(x+(Math.random()-.5)*.9, y+(Math.random()-.5)*.9, z+(Math.random()-.5)*.9);
             colors.push(cloudColor.r, cloudColor.g, cloudColor.b);
@@ -753,7 +754,7 @@
         const m=$('mapping').value; if(m==='original'){ alert('Switch mapping to Spiral/Sphere/Helix to use hash.'); return; }
         clearScene(); layoutFromHash(h,m); maybeInstanceFBX();
       });
-      $('reset-view').addEventListener('click', ()=>{ camera.position.set(0,0,12); controls.target.set(0,0,0); controls.update(); });
+      $('reset-view').addEventListener('click', ()=>{ camera.position.set(10,10,30); controls.target.set(10,10,10); controls.update(); });
       $('toggle-log').addEventListener('click', ()=> $('hash-log').classList.toggle('hidden'));
 
       $('fbx-file').addEventListener('change', async (e)=>{
