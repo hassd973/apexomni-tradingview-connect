@@ -283,6 +283,60 @@ app.get('/api/live-logs', async (req, res) => {
   }
 });
 
+// BTC metrics endpoints used by the studio front-end
+app.get('/api/btc/historical', async (_req, res) => {
+  try {
+    const url = 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart';
+    const { data } = await axios.get(url, {
+      params: { vs_currency: 'usd', days: 1, interval: 'minute' },
+      timeout: 10000
+    });
+    res.json(data);
+  } catch (err) {
+    console.error('Error fetching BTC historical data:', err.message);
+    res.status(500).json({ error: 'Failed to fetch BTC historical data' });
+  }
+});
+
+app.get('/api/btc/stats', async (_req, res) => {
+  try {
+    const [hashResp, diffResp] = await Promise.all([
+      axios.get('https://api.blockchain.info/q/hashrate?cors=true', { timeout: 10000 }),
+      axios.get('https://api.blockchain.info/q/getdifficulty?cors=true', { timeout: 10000 })
+    ]);
+    res.json({
+      hashrate: parseFloat(hashResp.data) / 1e9,
+      diff: parseFloat(diffResp.data)
+    });
+  } catch (err) {
+    console.error('Error fetching BTC stats:', err.message);
+    res.status(500).json({ error: 'Failed to fetch BTC stats' });
+  }
+});
+
+app.get('/api/btc/latest-hash', async (_req, res) => {
+  const urls = [
+    'https://blockchain.info/latestblock',
+    'https://blockstream.info/api/blocks/tip/hash'
+  ];
+  for (const url of urls) {
+    try {
+      const r = await axios.get(url, { timeout: 10000 });
+      if (url.includes('latestblock')) {
+        if (r.data && r.data.hash) return res.json({ hash: r.data.hash });
+      } else {
+        const t = typeof r.data === 'string' ? r.data.trim() : r.data;
+        if (typeof t === 'string' && /^[0-9a-f]{64}$/i.test(t)) {
+          return res.json({ hash: t });
+        }
+      }
+    } catch (_) {
+      continue;
+    }
+  }
+  res.status(500).json({ error: 'Failed to fetch latest block hash' });
+});
+
 // API endpoint to get crypto data
 app.get('/api/crypto', async (req, res) => {
   try {

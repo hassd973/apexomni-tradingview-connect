@@ -72,7 +72,7 @@
     .login-form {
       width: 100%;
       max-width: 340px;
-      margin: 0 auto;
+      margin: 0;
       display: flex;
       flex-direction: column;
       gap: 1.2em;
@@ -80,6 +80,10 @@
       padding: 2em 1.6em 2.2em 1.6em;
       border-radius: 12px;
       box-shadow: 0 2px 20px #000a;
+      transition: transform .4s;
+    }
+    .login-form.slide-out {
+      transform: translateX(-150%);
     }
     .login-form input {
       background: #000;
@@ -114,8 +118,7 @@
       display: flex;
       justify-content: center;
       gap: 1.2em;
-      margin-top: auto;
-      margin-bottom: clamp(1.5em, 5vh, 3em);
+      margin-top: 1.5em;
     }
     .btn {
       padding: 0.65em 1.5em;
@@ -141,6 +144,34 @@
       background: rgba(0,255,0,0.2);
       color: #fff;
       transform: scale(1.04);
+    }
+
+    #access-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+    }
+
+    #access-modules {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      min-height: 260px;
+      transition: height .4s;
+    }
+
+    .module-panel {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      transition: transform .4s, opacity .4s;
+    }
+
+    .module-panel.slide-out {
+      transform: translateX(-150%);
+      opacity: 0;
     }
 
     footer {
@@ -192,15 +223,32 @@
       <p id="login-description" class="mt-2 text-sm text-gray-400 fade-in" style="animation-delay:0.4s">Access the QUANTUMI network.</p>
       <button id="toggle-desc" class="mt-2 text-xs underline fade-in" style="animation-delay:0.6s">Hide Description</button>
     </div>
-    <form class="login-form fade-in" style="animation-delay:0.8s">
-      <input type="text" placeholder="Username or Email" required />
-      <input type="password" placeholder="Password" required />
-      <button class="login-btn" type="submit">Sign In</button>
-    </form>
-    <div class="buttons fade-in" style="animation-delay:1s">
-      <button class="btn layer-btn" onclick="setLayer(0)" id="btn0">Layer I</button>
-      <button class="btn layer-btn" onclick="setLayer(1)" id="btn1">Layer II</button>
-      <button class="btn layer-btn selected" onclick="setLayer(2)" id="btn2">Layer III</button>
+    <div id="access-area">
+      <div id="access-modules">
+        <form class="login-form module-panel fade-in" id="loginForm" action="index-2025.html" style="animation-delay:0.8s">
+          <input type="text" placeholder="Username or Email" required />
+          <input type="password" placeholder="Password" required />
+          <button class="login-btn" type="submit">Sign In</button>
+        </form>
+        <div id="layer1-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
+          <a href="index-2025.html" class="login-btn w-full text-center">Enter QUANTUMI 2025</a>
+        </div>
+        <div id="layer2-entry" class="login-form module-panel hidden fade-in" style="animation-delay:0.8s">
+          <a href="studio.html" class="login-btn w-full text-center">Enter BTC Hash Studio</a>
+          <form id="mailing-form" class="mt-2 flex flex-col gap-2 w-full">
+            <input id="mailing-email" type="email" placeholder="Email for updates" class="rounded px-3 py-2 text-black w-full" required />
+            <button type="submit" class="login-btn">Join Mailing List</button>
+          </form>
+          <div class="mt-2 text-center">
+            <a href="https://www.instagram.com/quantumi.space/" target="_blank" class="text-xs text-green-400 underline">Instagram</a>
+          </div>
+        </div>
+      </div>
+      <div class="buttons fade-in" style="animation-delay:1s">
+        <button class="btn layer-btn" onclick="setLayer(0)" id="btn0">Layer I</button>
+        <button class="btn layer-btn selected" onclick="setLayer(1)" id="btn1">Layer II</button>
+        <button class="btn layer-btn" onclick="setLayer(2)" id="btn2">Layer III</button>
+      </div>
     </div>
   </main>
   <footer class="fade-in" style="animation-delay:1.2s">
@@ -229,13 +277,41 @@
     const ROWS = 7;
     const COLS = 6;
     let dots = [];
-    let currentLayer = 2;
+    let currentLayer = 1;
+
+    const panels = {
+      0: document.getElementById("layer1-entry"),
+      1: document.getElementById("layer2-entry"),
+      2: document.getElementById("loginForm")
+    };
+    const accessModules = document.getElementById("access-modules");
+
+    function showPanel(el) {
+      el.classList.remove("hidden", "slide-out");
+    }
+
+    function hidePanel(el) {
+      if (el.classList.contains("hidden")) return;
+      el.classList.add("slide-out");
+      el.addEventListener("transitionend", () => el.classList.add("hidden"), { once: true });
+    }
 
     function setLayer(index) {
       currentLayer = index;
       document.querySelectorAll(".layer-btn").forEach((btn, i) =>
         btn.classList.toggle("selected", i === index)
       );
+      Object.keys(panels).forEach(key => {
+        const panel = panels[key];
+        if (Number(key) === index) {
+          showPanel(panel);
+        } else {
+          hidePanel(panel);
+        }
+      });
+      const active = panels[index];
+      accessModules.style.height = active.offsetHeight + "px";
+
       generateDots();
       requestAnimationFrame(animate);
     }
@@ -328,9 +404,20 @@
       toggleDesc.textContent = hidden ? 'Show Description' : 'Hide Description';
     });
 
+    document.getElementById("mailing-form").addEventListener("submit", e => {
+      e.preventDefault();
+      const email = document.getElementById("mailing-email").value.trim();
+      if(email){
+        const list = JSON.parse(localStorage.getItem("studioMails") || "[]");
+        list.push({ email, time: new Date().toISOString() });
+        localStorage.setItem("studioMails", JSON.stringify(list));
+        alert("Thanks for joining!");
+      }
+      e.target.reset();
+    });
+
     // Init
-    generateDots();
-    requestAnimationFrame(animate);
+    setLayer(1);
   </script>
 </body>
 </html>
