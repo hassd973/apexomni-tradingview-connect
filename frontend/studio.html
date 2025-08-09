@@ -559,3 +559,5 @@
       // Load cycle
       async function bootOriginal(){ const hist = await fetchHistorical(); layoutOriginal(hist.prices, hist.total_volumes); const hd = await fetchHashrate(); $('m-hashrate').textContent='Hashrate — ' + hd.hashrate; $('m-diff').textContent='Difficulty — ' + hd.diff; }
       function sanitizeHash(h){ return (h||'').trim().replace(/^0x/,'').toLowerCase().replace(/[^0-9a-f]/g,''); }
+
+      
