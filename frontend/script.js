@@ -445,3 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!tokenList || !loaderTokens || !livePriceHeader || !tickerMarqueeHeader || !topPairs || !profitPairs || !chartModal || !toggleStickyHeader || !toggleStickyModal || !toggleDataMode || !toggleDebug) {
     console.error('[ERROR] One or more DOM elements not found:', { tokenList, loaderTokens, livePriceHeader, tickerMarqueeHeader, topPairs, profitPairs, chartModal, toggleStickyHeader, toggleStickyModal, toggleDataMode, toggleDebug });
+    return;
+  }
+
+});
