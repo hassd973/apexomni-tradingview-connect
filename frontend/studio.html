@@ -807,8 +807,13 @@
         const hd = await fetchHashrate(); $('m-hashrate').textContent='Hashrate — ' + hd.hashrate; $('m-diff').textContent='Difficulty — ' + hd.diff;
       }
       async function generateLatestHash(mappingOverride){
-        const h = await latestBlockHash();
-        const clean = h ? sanitizeHash(h) : randomHash();
+        let clean;
+        if (lastPrice !== null) {
+          clean = generateHashFromPrice(lastPrice);
+        } else {
+          const h = await latestBlockHash();
+          clean = h ? sanitizeHash(h) : randomHash();
+        }
         $('hashInput').value = clean;
         const m = mappingOverride || $('mapping').value;
         if(m!=='original'){ clearScene(); layoutFromHash(clean, m); maybeInstanceFBX(); }

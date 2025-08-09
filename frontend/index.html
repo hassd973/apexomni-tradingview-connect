@@ -2758,19 +2758,22 @@
                                                         >
                                                                 Dock Background
                                                         </button>
-                                                        <button
+                                                       <button
                                                                 aria-label="Turn on background"
                                                                 data-tooltip="Enable 3D background (may slow site)"
                                                                 id="toggle-background-dock"
                                                                 role="button"
-                                                        >
+                                                       >
                                                                 Turn On Background
-                                                        </button>
-                                                        <a
-                                                                href="login.html"
-                                                                id="logout-btn"
-                                                                class="bg-[#00FF00] text-black px-3 py-1 rounded"
-                                                        >Logout</a>
+                                                       </button>
+                                                       <button
+                                                               id="logout-btn"
+                                                               aria-label="Log out"
+                                                               data-tooltip="Log out and return to login"
+                                                               role="button"
+                                                       >
+                                                               Logout
+                                                       </button>
                                                 </div>
 						<div
 							class="data-warning"
@@ -7616,6 +7619,7 @@ function setupModuleToggles() {
                                if (logoutBtn) {
                                        logoutBtn.addEventListener('click', () => {
                                                localStorage.removeItem('quanti-email');
+                                               window.location.href = 'login.html';
                                        });
                                }
                        });
