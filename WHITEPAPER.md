@@ -73,3 +73,74 @@ Quantumi treats each BTC hash as a living data point—part of a wider "alphabet
 - **Design Aesthetic:** Ancient meets futuristic—stone tablet meets hologram.
 - **Core Message:** Quantumi turns blockchain into a living memory.
 
+---
+
+## Layer I — Gateway Page Concept
+
+### Core Mood
+
+- Minimal but powerful
+- Dark theme with subtle moving elements (slow drifting particles, faint grid lines)
+- One central BTC hash point cloud (auto-generated live)
+- Cryptic, lore-driven text inviting users to “descend” into Layer II
+- Subtle AI “breath” effect — the interface feels alive
+
+### HTML Structure (Concept)
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantumi — Layer I</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div id="background"><canvas id="pointCloudCanvas"></canvas></div>
+    <header>
+      <h1 class="glow-text">QUANTUMI</h1>
+      <p class="subtitle">Layer I — The Gateway</p>
+    </header>
+    <main>
+      <section class="intro"><p class="lore-text">“Beyond the noise of markets, there is a language.<br>The blockchain speaks. Few can hear it.<br>You are about to listen.”</p></section>
+      <section class="cta"><button id="enterButton" class="holo-button">ENTER LAYER II</button></section>
+    </main>
+    <footer><p class="small-text">© 2025 Quantumi Network — Layer I Access Node</p></footer>
+    <script src="pointCloud.js"></script>
+  </body>
+</html>
+```
+
+### Style & Effects (CSS Concept)
+
+```css
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  text-align: center;
+  overflow: hidden;
+}
+
+.holo-button {
+  background: none;
+  border: 1px solid #00fff2;
+  padding: 1rem 2rem;
+  color: #00fff2;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.holo-button:hover {
+  background: rgba(0, 255, 242, 0.1);
+  box-shadow: 0 0 15px #00fff2;
+}
+```
+
+### Interactive Point Cloud
+
+A lightweight Three.js script renders a live BTC hash point cloud in the background. The visualization rotates slowly and triggers subtle haptic feedback on pointer or controller interaction, providing an immersive gateway before users descend to Layer II’s BTC Hash Studio.
+

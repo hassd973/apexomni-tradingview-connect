@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     :root {
@@ -160,6 +161,27 @@
       cursor: pointer;
     }
 
+    #visualization canvas {
+      width: 100%;
+      height: 300px;
+      display: block;
+    }
+
+    #visualization .holo-button {
+      margin-top: 1rem;
+      background: none;
+      border: 1px solid var(--quantumi-green);
+      color: var(--quantumi-green);
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: box-shadow 0.3s ease;
+    }
+
+    #visualization .holo-button:hover {
+      box-shadow: 0 0 15px var(--quantumi-green);
+    }
+
     .youtube-container {
       position: relative;
       width: 100%;
@@ -257,7 +279,8 @@
       </section>
       <section id="visualization" class="module-card">
         <h2>Visualization</h2>
-        <p>Future 3D BTC Hash Visualizer</p>
+        <canvas id="pointCloudCanvas"></canvas>
+        <button id="studioButton" class="holo-button">Enter Layer II Studio</button>
       </section>
     </main>
 
@@ -287,6 +310,12 @@
         alert('Thanks for joining!');
       }
       e.target.reset();
+    });
+  </script>
+  <script src="point-cloud.js"></script>
+  <script>
+    document.getElementById('studioButton').addEventListener('click', () => {
+      window.location.href = 'studio.html';
     });
   </script>
 </body>
