@@ -115,6 +115,11 @@
       /* Fullscreen */
       .fs-target:fullscreen, .fs-target:-webkit-full-screen{ background:#000; width:100%; height:100%; }
       .fs-btn-on{ display:none; } .fs-active .fs-btn-on{ display:inline-flex; } .fs-active .fs-btn-off{ display:none; }
+
+      @media (max-width:640px){
+        body.mobile-open #stagePanel{ position:fixed; inset:0; width:100vw; height:100vh; z-index:1000; }
+        body.mobile-open .mobile-fs-btn{ position:fixed; right:12px; top:12px; z-index:1001; }
+      }
     
     </style>
 
@@ -781,8 +786,28 @@
       function exitFS(){ const ex= document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen; if(ex) ex.call(document); document.body.classList.remove('fs-active'); setTimeout(resize, 100); }
       btnFS.addEventListener('click', ()=> requestFS(stagePanel));
       btnExit.addEventListener('click', exitFS);
-      if(mobileFSBtn){ mobileFSBtn.addEventListener('click', ()=>{ if(!isFullscreen()) requestFS(stagePanel); else exitFS(); }); }
-      document.addEventListener('fullscreenchange', ()=>{ const active=!!isFullscreen(); document.body.classList.toggle('fs-active', active); if(mobileFSBtn){ mobileFSBtn.textContent = active ? '✕' : '⤢'; mobileFSBtn.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen'); } setTimeout(resize, 80); });
+      if(mobileFSBtn){
+        mobileFSBtn.addEventListener('click', ()=>{
+          if(window.innerWidth <= 640){
+            const open=document.body.classList.toggle('mobile-open');
+            mobileFSBtn.textContent = open ? '✕' : '⤢';
+            mobileFSBtn.setAttribute('aria-label', open ? 'Exit view' : 'Enter view');
+            if(open) resize();
+          } else {
+            if(!isFullscreen()) requestFS(stagePanel); else exitFS();
+          }
+        });
+      }
+      document.addEventListener('fullscreenchange', ()=>{
+        const active=!!isFullscreen();
+        document.body.classList.toggle('fs-active', active);
+        if(mobileFSBtn && window.innerWidth > 640){
+          mobileFSBtn.textContent = active ? '✕' : '⤢';
+          mobileFSBtn.setAttribute('aria-label', active ? 'Exit fullscreen' : 'Enter fullscreen');
+        }
+        if(!active) document.body.classList.remove('mobile-open');
+        setTimeout(resize, 80);
+      });
 
       // Export
       $('export-png').addEventListener('click', ()=>{
