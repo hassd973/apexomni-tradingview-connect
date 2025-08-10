@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantumi — Layer I</title>
+    <link rel="stylesheet" href="layer1.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+</head>
+<body>
+    <div id="background">
+        <canvas id="pointCloudCanvas"></canvas>
+    </div>
+
+    <header>
+        <canvas id="logoCanvas" class="quantumi-logo"></canvas>
+        <h1 class="glow-text">QUANTUMI</h1>
+        <p class="subtitle">Layer I — The Gateway</p>
+    </header>
+
+    <main>
+        <section class="intro">
+            <p class="lore-text">
+                “Beyond the noise of markets, there is a language.<br>
+                The blockchain speaks. Few can hear it.<br>
+                You are about to listen.”
+            </p>
+        </section>
+
+        <section class="cta">
+            <button id="enterButton" class="holo-button">ENTER LAYER II</button>
+            <p class="small-text">
+                * Access requires a wallet connection.<br>
+                Your presence will be recorded as the first hash moment.
+            </p>
+        </section>
+    </main>
+
+    <footer>
+        <p class="small-text">© 2025 Quantumi Network — Layer I Access Node</p>
+    </footer>
+
+    <script src="quantumi-logo.js"></script>
+    <script src="point-cloud.js"></script>
+    <script>
+        document.getElementById('enterButton').addEventListener('click', () => {
+            window.location.href = 'layer2.html';
+        });
+    </script>
+</body>
+</html>

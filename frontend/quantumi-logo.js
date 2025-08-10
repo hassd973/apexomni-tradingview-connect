@@ -66,8 +66,43 @@
     drawLogo(ctx, canvas.width, canvas.height);
   }
 
+  function triggerVibration(){
+    if (navigator.vibrate) navigator.vibrate(100);
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const pad of pads){
+      if (pad && pad.vibrationActuator){
+        pad.vibrationActuator.playEffect('dual-rumble', {
+          duration: 100,
+          strongMagnitude: 0.5,
+          weakMagnitude: 0.5
+        });
+      }
+    }
+  }
+
+  let gpIndex = null;
+  let aPressed = false;
+  window.addEventListener('gamepadconnected', e => { gpIndex = e.gamepad.index; });
+
+  function pollGamepad(){
+    if (gpIndex !== null){
+      const gp = navigator.getGamepads()[gpIndex];
+      if (gp){
+        const pressed = gp.buttons[0] && gp.buttons[0].pressed;
+        if (pressed && !aPressed) triggerVibration();
+        aPressed = pressed;
+      }
+    }
+    requestAnimationFrame(pollGamepad);
+  }
+  pollGamepad();
+
   function init(){
-    document.querySelectorAll('canvas.quantumi-logo').forEach(render);
+    document.querySelectorAll('canvas.quantumi-logo').forEach(canvas => {
+      render(canvas);
+      canvas.addEventListener('pointerdown', triggerVibration);
+      canvas.addEventListener('touchstart', triggerVibration);
+    });
   }
 
   window.addEventListener('resize', init);
