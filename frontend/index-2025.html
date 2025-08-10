@@ -12,8 +12,8 @@
     *, *::before, *::after { box-sizing: border-box; }
     :root {
       --quantumi-green: #00FF00;
-      --quantumi-black: #010101;
-      --quantumi-white: #F8F8F8;
+      --quantumi-black: #111215;
+      --quantumi-white: #e3e3e3;
       --quantumi-gray: #1A1A1A;
       --quantumi-accent: #FFD966;
       --quantumi-radius: 18px;
@@ -30,6 +30,10 @@
       color: var(--quantumi-white);
       scroll-behavior: smooth;
   }
+  ::selection {
+      background: var(--quantumi-green);
+      color: #000;
+  }
   body {
       overflow-y: auto;
       overflow-x: hidden;
@@ -42,6 +46,17 @@
       display: grid;
       grid-template-rows: auto 1fr auto;
       padding: 1rem;
+    }
+
+    .bg-video {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      filter: brightness(0.4);
     }
 
     header {
@@ -96,6 +111,9 @@
     }
 
     nav a:hover {
+      color: var(--quantumi-green);
+    }
+    nav a:focus, nav a:active {
       color: var(--quantumi-green);
     }
 
@@ -200,6 +218,9 @@
   </style>
 </head>
 <body>
+  <video id="intro-video" class="bg-video" autoplay muted loop playsinline>
+    <source src="INTRO TRAILER.mp4" type="video/mp4" />
+  </video>
   <div class="container">
     <header>
       <div class="logo">QUANTUMI</div>
@@ -207,14 +228,14 @@
         <a href="https://quantumi.space">Home</a>
         <a href="/investor.html">Investor Hub</a>
         <a href="#">Mint</a>
-        <a href="#">Whitepaper</a>
+        <a href="whitepaper.html">Whitepaper</a>
       </nav>
     </header>
 
   <main class="dashboard">
       <section id="about" class="module-card">
         <h1>Why QUANTUMI?</h1>
-        <p>QUANTUMI fuses on-chain telemetry with user-led research to unlock actionable metrics and foster innovation across the crypto space. Our layered entry system empowers communities to explore data, contribute insights, and shape the next generation of crypto analytics.</p>
+        <p>QUANTUMI fuses on-chain telemetry with user-led research to unlock actionable metrics and foster innovation across the crypto space. This private initiative—currently spearheaded by a single developer—invites explorers to participate as the vision evolves. A comprehensive whitepaper is in preparation to outline the roadmap, protocols, and long-term mission.</p>
       </section>
       <section id="insights" class="module-card">
         <h2>Insights Module Playlist</h2>
