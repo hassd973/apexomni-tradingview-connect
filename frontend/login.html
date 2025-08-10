@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>QUANTUMI Login</title>
+  <title>Sixtyfour</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com" rel="preconnect" />
@@ -26,7 +26,6 @@
       inset: 0;
       width: 100%;
       min-height: 100vh;
-      height: 100vh;
       background: #111215;
       z-index: 2000;
       display: flex;
@@ -71,8 +70,8 @@
       opacity: 0;
     }
     .q-hero-canvas {
-      width: min(420px, 35vh);
-      height: min(420px, 35vh);
+      width: min(420px, 60vw, 60vh);
+      height: min(420px, 60vw, 60vh);
       aspect-ratio: 1 / 1;
       display: block;
       background: #111215;
@@ -279,13 +278,13 @@
     let dots = [];
     let currentLayer = 1;
 
-    function triggerVibration(){
-      if (navigator.vibrate) navigator.vibrate(100);
+    function triggerPebbleVibration(){
+      if (navigator.vibrate) navigator.vibrate([60, 20, 40, 20, 20]);
       const pads = navigator.getGamepads ? navigator.getGamepads() : [];
       for (const pad of pads){
         if (pad && pad.vibrationActuator){
           pad.vibrationActuator.playEffect('dual-rumble', {
-            duration: 100,
+            duration: 300,
             strongMagnitude: 0.5,
             weakMagnitude: 0.5
           });
@@ -293,8 +292,8 @@
       }
     }
 
-    canvas.addEventListener('pointerdown', triggerVibration);
-    canvas.addEventListener('touchstart', triggerVibration);
+    canvas.addEventListener('pointerdown', triggerPebbleVibration);
+    canvas.addEventListener('touchstart', triggerPebbleVibration);
 
     let gpIndex = null;
     let aPressed = false;
@@ -304,7 +303,7 @@
         const gp = navigator.getGamepads()[gpIndex];
         if (gp){
           const pressed = gp.buttons[0] && gp.buttons[0].pressed;
-          if (pressed && !aPressed) triggerVibration();
+          if (pressed && !aPressed) triggerPebbleVibration();
           aPressed = pressed;
         }
       }
