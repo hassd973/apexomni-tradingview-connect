@@ -67,7 +67,12 @@
   }
 
   function triggerVibration(){
-    if (navigator.vibrate) navigator.vibrate(100);
+    const vibrate =
+      navigator.vibrate ||
+      navigator.webkitVibrate ||
+      navigator.mozVibrate ||
+      navigator.msVibrate;
+    if (vibrate) vibrate.call(navigator, 100);
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     for (const pad of pads){
       if (pad && pad.vibrationActuator){
@@ -102,6 +107,7 @@
       render(canvas);
       canvas.addEventListener('pointerdown', triggerVibration);
       canvas.addEventListener('touchstart', triggerVibration);
+      canvas.addEventListener('click', triggerVibration);
     });
   }
 
