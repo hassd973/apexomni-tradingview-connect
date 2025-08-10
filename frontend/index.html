@@ -1886,10 +1886,25 @@
                                 height: 80px;
                                 pointer-events: none;
                         }
+                        .mobile-fs-btn {
+                                display: none;
+                                position: absolute;
+                                right: 10px;
+                                top: 10px;
+                                background: rgba(0, 0, 0, 0.6);
+                                color: #00FF00;
+                                border: 1px solid #00FF00;
+                                border-radius: 6px;
+                                padding: 4px 8px;
+                                z-index: 1001;
+                        }
                         #btc-mobile-exit {
                                 display: none;
                         }
                         @media (max-width: 640px) {
+                                .mobile-fs-btn {
+                                        display: inline-flex;
+                                }
                                 .btc-hash-container.mobile-open {
                                         position: fixed;
                                         top: 0;
@@ -3397,7 +3412,8 @@
 					<div class="data-warning" id="btc-hash-warning" style="display: none">
 						&gt; Live data from Dune API
 					</div>
-                                        <div class="btc-hash-svg relative" id="btc-hash-canvas">
+                                       <div class="btc-hash-svg relative" id="btc-hash-canvas">
+                                                <button id="btc-mobile-fs-toggle" class="mobile-fs-btn" aria-label="Toggle fullscreen">⤢</button>
                                                 <canvas
                                                         id="btc-audio-canvas"
                                                         width="600"
@@ -3829,6 +3845,7 @@
                                 exportObjBtn: document.getElementById('export-obj'),
                                 exportFbxBtn: document.getElementById('export-fbx'),
                                 btcFullscreenBtn: document.getElementById('btc-fullscreen-btn'),
+                                btcMobileFsToggle: document.getElementById('btc-mobile-fs-toggle'),
                                 btcMobileExit: document.getElementById('btc-mobile-exit'),
                                 zoomInBtn: document.getElementById('btc-zoom-in'),
 				zoomOutBtn: document.getElementById('btc-zoom-out'),
@@ -7008,20 +7025,40 @@ function setupModuleToggles() {
                                                        document.msExitFullscreen;
                                                if (ex) ex.call(document);
                                        };
+                                       const updateSize = () => {
+                                               const { clientWidth, clientHeight } = btcCanvas;
+                                               renderer.setSize(clientWidth, clientHeight);
+                                               camera.aspect = clientWidth / clientHeight;
+                                               camera.updateProjectionMatrix();
+                                       };
+                                       const toggleMobile = () => {
+                                               btcContainer.classList.toggle('mobile-open');
+                                               if (DOM.btcMobileFsToggle)
+                                                       DOM.btcMobileFsToggle.textContent =
+                                                               btcContainer.classList.contains('mobile-open')
+                                                                       ? '⤡'
+                                                                       : '⤢';
+                                               updateSize();
+                                       };
                                        DOM.btcFullscreenBtn.addEventListener('click', () => {
                                                if (window.innerWidth <= 640) {
-                                                       btcContainer.classList.add('mobile-open');
+                                                       toggleMobile();
                                                } else {
                                                        if (!isFS()) requestFS(btcCanvas);
                                                        else exitFS();
                                                }
                                        });
+                                       if (DOM.btcMobileFsToggle)
+                                               DOM.btcMobileFsToggle.addEventListener('click', toggleMobile);
                                        if (DOM.btcMobileExit)
                                                DOM.btcMobileExit.addEventListener('click', () => {
                                                        btcContainer.classList.remove('mobile-open');
+                                                       if (DOM.btcMobileFsToggle)
+                                                               DOM.btcMobileFsToggle.textContent = '⤢';
                                                });
                                        document.addEventListener('fullscreenchange', () => {
                                                btcCanvas.classList.toggle('fs-active', !!isFS());
+                                               updateSize();
                                        });
                                }
 
@@ -7681,6 +7718,19 @@ function setupModuleToggles() {
                 <div class="mode-switch">Mode: Raw Hash</div>
                 <div id="visualization"><!-- Future 3D BTC Hash Visualizer --></div>
                 <script src="quantumi-logo.js"></script>
+                <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                                const pebble = () => {
+                                        if (navigator.vibrate)
+                                                navigator.vibrate([60, 20, 40, 20, 20]);
+                                };
+                                document.querySelectorAll('.quantumi-logo').forEach((logo) => {
+                                        logo.addEventListener('click', pebble);
+                                        logo.addEventListener('touchstart', pebble);
+                                        logo.addEventListener('pointerdown', pebble);
+                                });
+                        });
+                </script>
                 <script>
                         const modeSwitch = document.querySelector('.mode-switch');
                         let brainMode = false;
