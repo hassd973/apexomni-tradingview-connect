@@ -14,13 +14,13 @@
       /* --- CSS RESET / TOKENS ------------------------------------------------ */
       *, *::before, *::after { box-sizing: border-box; }
       :root{
-        --bg:#111215; --fg:#f7f7f7; --muted:#cfd3d8; --accent:#00ff66;
+        --bg:#111215; --fg:#f7f7f7; --muted:#cfd3d8; --accent:#00FF00;
         --border:rgba(0,255,0,.28); --card:#0d0f12; --soft:rgba(0,255,0,.16);
-        --focus: #8ef9c1; --danger:#ff6161;
+        --focus:#00FF00; --danger:#ff6161;
         --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
       }
-      html,body{ height:100%; background:var(--bg); color:var(--fg); font-family:'Sora',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
-      body{ display:flex; flex-direction:column; min-height:100vh; overflow-x:hidden; }
+      html,body{ height:100%; color:var(--fg); font-family:'Sora',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+      body{ display:flex; flex-direction:column; min-height:100vh; overflow-x:hidden; background:linear-gradient(145deg,#111215,#0b0c0e); }
 
       /* --- ACCESSIBILITY ------------------------------------------------------ */
       .skip-link{ position:absolute; left:-999px; top:auto; width:1px; height:1px; overflow:hidden; }
@@ -29,38 +29,39 @@
       @media (prefers-reduced-motion: reduce){ *{ scroll-behavior:auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
 
       /* --- HEADER / NAV ------------------------------------------------------- */
-      header{ position:sticky; top:0; z-index:40; padding-top:var(--safe-top); background:linear-gradient(180deg, rgba(17,18,21,.96), rgba(17,18,21,.86) 70%, rgba(17,18,21,0)); border-bottom:1px solid #1b1d21; backdrop-filter:saturate(140%) blur(4px); }
+      header{ position:sticky; top:0; z-index:40; padding-top:var(--safe-top); background:linear-gradient(180deg, rgba(17,18,21,.72), rgba(17,18,21,.4)); border-bottom:1px solid rgba(255,255,255,.08); backdrop-filter:saturate(180%) blur(18px); -webkit-backdrop-filter:saturate(180%) blur(18px); }
       .brand{ display:flex; align-items:center; gap:.6rem; padding:12px 16px 10px; flex-wrap:wrap; }
       .logo{ font-family:'Sixtyfour',sans-serif; font-size:clamp(20px,4vw,32px); letter-spacing:2px; text-shadow:0 1px 6px #000c; }
       .sub{ font-size:12px; opacity:.75; }
       .right{ margin-left:auto; display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
 
       /* --- CONTROLS ----------------------------------------------------------- */
-      .controls-rail{ padding:10px 14px 12px; }
-      .controls{ width:100%; display:grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap:10px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px; box-shadow:0 2px 20px #0006, 0 0 16px var(--soft) inset; }
+      #controls-toggle{ display:inline-flex; margin:0 14px 12px; }
+      .controls-rail{ padding:10px 14px 12px; flex-shrink:0; }
+      .controls{ width:100%; display:grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap:10px; background:rgba(20,20,20,.45); backdrop-filter:saturate(180%) blur(16px); -webkit-backdrop-filter:saturate(180%) blur(16px); border:1px solid rgba(255,255,255,.1); border-radius:16px; padding:14px; box-shadow:0 2px 20px #0006; }
       .btn-row{ display:flex; flex-wrap:wrap; gap:8px; }
       .nowrap{ white-space:nowrap; }
       .ellipsis{ overflow:hidden; text-overflow:ellipsis; }
-      .btn-row{ display:flex; flex-wrap:wrap; gap:8px; }
-      .nowrap{ white-space:nowrap; }
-      .ellipsis{ overflow:hidden; text-overflow:ellipsis; }
-      .ctrl{ width:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:10px; min-height:52px; }
+      .ctrl{ width:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px; background:rgba(12,15,18,.6); backdrop-filter:saturate(160%) blur(12px); -webkit-backdrop-filter:saturate(160%) blur(12px); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px; min-height:52px; }
       .ctrl label{ font-size:12px; white-space:nowrap; opacity:.9; }
-      .ctrl input[type="text"], .ctrl input[type="number"], .ctrl input[type="range"], .ctrl select, .ctrl input[type="email"], .ctrl input[type="file"]{ flex:1 1 auto; min-width:0; background:#000; border:1px solid #333; color:#fff; border-radius:8px; padding:10px; outline:none; }
+      .ctrl input[type="text"], .ctrl input[type="number"], .ctrl input[type="range"], .ctrl select, .ctrl input[type="email"], .ctrl input[type="file"]{ flex:1 1 auto; min-width:0; background:#000; border:1.5px solid #444; color:#fff; border-radius:6px; padding:10px; outline:none; }
+      .ctrl input[type="text"]:focus, .ctrl input[type="number"]:focus, .ctrl input[type="range"]:focus, .ctrl select:focus, .ctrl input[type="email"]:focus, .ctrl input[type="file"]:focus{ border-color:var(--accent); }
       .ctrl input[type="range"]{ padding:0; -webkit-appearance:none; appearance:none; background:transparent; }
       .ctrl input[type="range"]::-webkit-slider-runnable-track{ height:4px; background:rgba(0,255,0,.3); border-radius:2px; }
-      .ctrl input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#00ff00; cursor:pointer; margin-top:-5px; }
+      .ctrl input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:var(--accent); cursor:pointer; margin-top:-5px; }
       .ctrl input[type="range"]::-moz-range-track{ height:4px; background:rgba(0,255,0,.3); border-radius:2px; }
-      .ctrl input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border-radius:50%; background:#00ff00; cursor:pointer; }
-      .btn{ background:rgba(0,255,0,.15); border:1px solid rgba(0,255,0,.3); color:#e7e7e7; border-radius:10px; padding:10px 12px; cursor:pointer; transition:background .18s, transform .06s; min-width:44px; min-height:44px; }
-      .btn:hover{ background:rgba(0,255,0,.3); color:#001; border-color:var(--border); }
+      .ctrl input[type="range"]::-moz-range-thumb{ width:14px; height:14px; border-radius:50%; background:var(--accent); cursor:pointer; }
+      .btn{ background:#111; border:1px solid var(--accent); color:#fff; border-radius:6px; padding:8px 12px; cursor:pointer; transition:background .18s, color .18s, transform .06s; min-width:44px; min-height:44px; }
+      .btn:hover, .btn:focus{ background:var(--accent); color:#111; }
       .btn:active{ transform: translateY(1px); }
 
-      /* Mobile controls drawer */
-      #controls-toggle{ display:none; }
+      .controls-rail{ transition:max-height .25s ease; overflow:hidden; }
+      .controls-rail[aria-hidden="true"]{ max-height:0; padding:0 14px; }
+      .controls-rail[aria-hidden="false"]{ max-height:80vh; overflow-y:auto; padding:10px 14px 12px; }
+
       @media (max-width: 640px){
         .controls-rail{ padding:0 8px 8px; }
-        #controls-toggle{ display:inline-flex; margin:0 8px 8px; }
+        #controls-toggle{ margin:0 8px 8px; }
         .controls{ grid-template-columns:1fr; }
         .ctrl{ flex-direction:column; align-items:stretch; gap:6px; }
         .ctrl > *{ width:100%; min-width:0; }
@@ -68,28 +69,12 @@
         .btn.block{ width:100%; }
         .brand{ flex-direction:column; align-items:flex-start; }
         .btn-row{ display:grid; grid-template-columns: 1fr 1fr; gap:8px; }
-        .controls-rail[aria-hidden="true"]{ max-height:0; overflow:hidden; border:0; padding:0 8px; }
-        .controls-rail[aria-hidden="false"]{ max-height:1400px; transition:max-height .25s ease; }
-        input[type="file"]{ width:100%; }
-        input[type="text"], input[type="email"], select{ width:100%; }
-      }
-        #controls-toggle{ display:inline-flex; margin:0 8px 8px; }
-        .controls{ grid-template-columns:1fr; }
-        .ctrl{ flex-directio
-        #controls-toggle{ display:inline-flex; margin:0 8px 8px; }
-        .controls{ grid-template-columns:1fr; }
-        .ctrl{ flex-direction:column; align-items:stretch; }
-        .btn.block{ width:100%; }
-        .brand{ flex-direction:column; align-items:flex-start; }
-        /* Drawer behaviour */
-        .controls-rail[aria-hidden="true"]{ max-height:0; overflow:hidden; border:0; padding:0 8px; }
-        .controls-rail[aria-hidden="false"]{ max-height:1200px; transition:max-height .25s ease; }
       }
 
       /* --- LAYOUT ------------------------------------------------------------- */
-      main{ flex:1; display:grid; grid-template-columns: minmax(0,2fr) minmax(280px,1fr); gap:12px; padding:12px 14px; min-height:0; }
-      .panel{ background:var(--card); border:1px solid #222; border-radius:12px; box-shadow:0 2px 20px #0006; position:relative; overflow:hidden; }
-      #stagePanel{ min-height:60vh; }
+      main{ flex:1; display:flex; flex-direction:column; gap:12px; padding:12px 14px; }
+      .panel{ background:rgba(13,15,18,.5); backdrop-filter:saturate(180%) blur(12px); -webkit-backdrop-filter:saturate(180%) blur(12px); border:1px solid rgba(255,255,255,.08); border-radius:12px; box-shadow:0 2px 20px #0006; position:relative; overflow:hidden; }
+      #stagePanel{ flex:1; min-height:60vh; }
       .stage{ position:absolute; inset:0; }
       .overlay{ position:absolute; left:12px; top:12px; display:flex; flex-wrap:wrap; gap:6px; pointer-events:none; }
       .chip{ display:flex; align-items:center; gap:6px; pointer-events:auto; background:rgba(0,0,0,.55); border:1px solid var(--border); border-radius:10px; padding:6px 8px; font-size:12px; }
@@ -98,17 +83,16 @@
       canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background:#000; touch-action:none; }
       .mobile-fs-btn{ display:none; position:absolute; right:12px; top:12px; background:rgba(0,255,0,.15); border:1px solid rgba(0,255,0,.3); color:var(--accent); border-radius:8px; padding:6px; z-index:20; }
       @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } }
-      .aside{ display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
-      .card{ background:#0c0f12; border:1px solid rgba(255,255,255,.06); border-radius:10px; padding:10px; }
+      .aside{ display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; flex:0 0 auto; }
+      .card{ background:rgba(12,15,18,.5); backdrop-filter:saturate(160%) blur(10px); -webkit-backdrop-filter:saturate(160%) blur(10px); border:1px solid rgba(255,255,255,.06); border-radius:10px; padding:10px; }
       .log{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
       .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background:#111; border:1px solid rgba(255,255,255,.08); padding:2px 6px; border-radius:6px; font-size:11px; }
-      footer{ flex-shrink:0; border-top:1px solid #1b1d21; background:#0e1114; padding:10px 14px calc(10px + var(--safe-bottom)); font-size:12px; color:#aaa; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+      footer{ flex-shrink:0; border-top:1px solid rgba(255,255,255,.08); background:rgba(14,17,20,.6); backdrop-filter:saturate(180%) blur(12px); -webkit-backdrop-filter:saturate(180%) blur(12px); padding:10px 14px calc(10px + var(--safe-bottom)); font-size:12px; color:#aaa; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
 
-      @media (max-width: 1100px){ main{ grid-template-columns: 1fr; grid-template-rows: minmax(60vh,1fr) auto; } #stagePanel{ height:60vh; } }
       @media (max-width: 640px){
-        main{ display:flex; flex-direction:column; gap:8px; padding:8px; }
+        main{ padding:8px; gap:8px; }
+        #stagePanel{ min-height:54vh; }
         .panel,.aside{ width:100%; }
-        #stagePanel{ height:54vh; }
         .chip{ font-size:11px; }
       }
 
@@ -141,57 +125,6 @@
         </div>
       </div>
       <button id="controls-toggle" class="btn" type="button" aria-expanded="false" aria-controls="controls-rail">Controls</button>
-      <div id="controls-rail" class="controls-rail" aria-hidden="false">
-        <div class="controls">
-        <div class="controls">
-          <div class="ctrl" title="Upload a compact FBX (5–10MB).">
-            <label>Upload FBX</label>
-            <input type="file" id="fbx-file" accept=".fbx" />
-            <div class="btn-row"><button class="btn" id="btn-load-fbx" title="Pick an FBX file">Load FBX</button><button class="btn" id="clear-fbx">Clear</button><button class="btn fs-btn-off" id="btn-fullscreen" title="Enter fullscreen">Fullscreen</button><button class="btn fs-btn-on" id="btn-exitfs" title="Exit fullscreen">Exit FS</button></div>
-            <button class="btn right fs-btn-off" id="btn-fullscreen" title="Enter fullscreen">Fullscreen</button>
-            <button class="btn right fs-btn-on" id="btn-exitfs" title="Exit fullscreen">Exit FS</button>
-          </div>
-          <div class="ctrl" title="Mapping from data to space. ‘Original’ uses time→Z, price→X, volume→Y.">
-            <label>Mapping</label>
-            <select id="mapping">
-              <option value="original" selected>Original (Time/Price/Volume)</option>
-              <option value="spiral">Spiral (time-curve)</option>
-              <option value="sphere">Sphere (volatility radius)</option>
-              <option value="helix">Helix (momentum tilt)</option>
-            </select>
-          </div>
-          <div class="ctrl" title="Instances per data point.">
-            <label>Density</label>
-            <input type="range" id="density" min="1" max="200" value="60" />
-          </div>
-          <div class="ctrl" title="Point size for dot clouds.">
-            <label>Point Size</label>
-            <input type="range" id="pointSize" min="0.02" max="0.6" step="0.02" value="0.12" />
-          </div>
-          <div class="ctrl" title="Color mode for clouds/instances.">
-            <label>Theme</label>
-            <select id="theme">
-              <option value="original" selected>Original</option>
-              <option value="heatmap">Heatmap (volatility)</option>
-              <option value="lifecycle">Lifecycle (volume)</option>
-            </select>
-          </div>
-          <div class="ctrl" title="Paste a hash, or use the latest block. Used when Mapping ≠ Original.">
-            <label>Hash</label>
-            <input id="hashInput" type="text" placeholder="Paste a block/tx hash…" inputmode="latin" autocomplete="off" />
-            <button class="btn" id="btnLatest">Latest</button>
-            <button class="btn" id="btnRandom">Random</button>
-            <button class="btn" id="btnGenerate">Generate</button>
-          </div>
-          <div class="ctrl" title="Export the current scene and data.">
-            <label>Export</label>
-            <button class="btn" id="export-fbx">FBX</button>
-            <button class="btn" id="export-png">PNG</button>
-            <button class="btn" id="export-csv">CSV</button>
-            <button class="btn right" id="reset-view" title="Reset camera">Reset</button>
-          </div>
-        </div>
-      </div><!-- /#controls-rail -->
     </header>
 
     <main id="main">
@@ -239,6 +172,55 @@
       </aside>
     </main>
 
+    <div id="controls-rail" class="controls-rail" aria-hidden="false">
+      <div class="controls">
+        <div class="ctrl" title="Upload a compact FBX (5–10MB).">
+          <label>Upload FBX</label>
+          <input type="file" id="fbx-file" accept=".fbx" />
+          <div class="btn-row"><button class="btn" id="btn-load-fbx" title="Pick an FBX file">Load FBX</button><button class="btn" id="clear-fbx">Clear</button><button class="btn fs-btn-off" id="btn-fullscreen" title="Enter fullscreen">Fullscreen</button><button class="btn fs-btn-on" id="btn-exitfs" title="Exit fullscreen">Exit FS</button></div>
+        </div>
+        <div class="ctrl" title="Mapping from data to space. ‘Original’ uses time→Z, price→X, volume→Y.">
+          <label>Mapping</label>
+          <select id="mapping">
+            <option value="original" selected>Original (Time/Price/Volume)</option>
+            <option value="spiral">Spiral (time-curve)</option>
+            <option value="sphere">Sphere (volatility radius)</option>
+            <option value="helix">Helix (momentum tilt)</option>
+          </select>
+        </div>
+        <div class="ctrl" title="Instances per data point.">
+          <label>Density</label>
+          <input type="range" id="density" min="1" max="200" value="60" />
+        </div>
+        <div class="ctrl" title="Point size for dot clouds.">
+          <label>Point Size</label>
+          <input type="range" id="pointSize" min="0.02" max="0.6" step="0.02" value="0.12" />
+        </div>
+        <div class="ctrl" title="Color mode for clouds/instances.">
+          <label>Theme</label>
+          <select id="theme">
+            <option value="original" selected>Original</option>
+            <option value="heatmap">Heatmap (volatility)</option>
+            <option value="lifecycle">Lifecycle (volume)</option>
+          </select>
+        </div>
+        <div class="ctrl" title="Paste a hash, or use the latest block. Used when Mapping ≠ Original.">
+          <label>Hash</label>
+          <input id="hashInput" type="text" placeholder="Paste a block/tx hash…" inputmode="latin" autocomplete="off" />
+          <button class="btn" id="btnLatest">Latest</button>
+          <button class="btn" id="btnRandom">Random</button>
+          <button class="btn" id="btnGenerate">Generate</button>
+        </div>
+        <div class="ctrl" title="Export the current scene and data.">
+          <label>Export</label>
+          <button class="btn" id="export-fbx">FBX</button>
+          <button class="btn" id="export-png">PNG</button>
+          <button class="btn" id="export-csv">CSV</button>
+          <button class="btn right" id="reset-view" title="Reset camera">Reset</button>
+        </div>
+      </div>
+    </div><!-- /#controls-rail -->
+
     <footer>
       <span>© 2025 <span style="font-family:'Sixtyfour',sans-serif">QUANTUMI</span> — All Rights Reserved.</span>
       <a href="https://www.instagram.com/quantumi.space/" target="_blank" rel="noopener" class="text-green-400 underline">Instagram</a>
@@ -251,7 +233,7 @@
       const nfPct = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 });
       const canvas = $('btc-hash-canvas'); const stagePanel = $('stagePanel');
 
-      // Mobile controls drawer toggle (match reference layout)
+      // Controls drawer toggle
       const drawerBtn = $('controls-toggle');
       const rail = $('controls-rail');
       if (drawerBtn && rail) {
