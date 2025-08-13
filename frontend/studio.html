@@ -157,7 +157,7 @@
           <ul class="list-disc ml-5 space-y-1">
             <li>‘Original’ mapping is live market-derived (time/price/volume).</li>
             <li>Switch to Spiral/Sphere/Helix to use a BTC hash (Latest/Manual/Random).</li>
-            <li>Large FBX files (100MB+) are supported, though performance may vary.</li>
+            <li>Large FBX files (up to 500MB) are supported, though performance may vary.</li>
             <li>Use <b>Fullscreen</b> for presentations; works on mobile too.</li>
           </ul>
         </div>
@@ -174,7 +174,7 @@
 
     <div id="controls-rail" class="controls-rail" aria-hidden="false">
       <div class="controls">
-        <div class="ctrl" title="Upload FBX models (supports files over 100MB).">
+        <div class="ctrl" title="Upload FBX models (supports files up to 500MB).">
           <label>Upload FBX</label>
           <input type="file" id="fbx-file" accept=".fbx" />
           <div class="btn-row"><button class="btn" id="btn-load-fbx" title="Pick an FBX file">Load FBX</button><button class="btn" id="clear-fbx">Clear</button><button class="btn fs-btn-off" id="btn-fullscreen" title="Enter fullscreen">Fullscreen</button><button class="btn fs-btn-on" id="btn-exitfs" title="Exit fullscreen">Exit FS</button></div>
@@ -232,6 +232,7 @@
       const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
       const nfPct = new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 });
       const canvas = $('btc-hash-canvas'); const stagePanel = $('stagePanel');
+      const MAX_FBX_SIZE = 500 * 1024 * 1024; // 500MB limit
 
       // Controls drawer toggle
       const drawerBtn = $('controls-toggle');
@@ -756,6 +757,12 @@
       $('fbx-file').addEventListener('change', async (e)=>{
         const file=e.target.files && e.target.files[0];
         if(!file){ userFBX=null; return; }
+        if(file.size > MAX_FBX_SIZE){
+          alert('FBX file exceeds 500MB limit.');
+          e.target.value='';
+          userFBX=null;
+          return;
+        }
         try{
           const buffer=await file.arrayBuffer();
           userFBX=loader.parse(buffer, '');
