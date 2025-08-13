@@ -69,7 +69,7 @@
       .mobile-fs-btn{ display:none; position:absolute; right:12px; top:12px; background:var(--soft); border:1px solid var(--border); color:var(--accent-2); border-radius:14px; padding:12px; z-index:20; font-size: 16px; }
 
       @media (max-width:1180px){ main{ grid-template-columns:1fr; grid-template-areas:'stage' 'aside'; } }
-      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } main{ padding:8px; gap:8px; } #stagePanel{ min-height:68dvh; } }
+      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } main{ padding:8px; gap:8px; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:space-between; } }
 
       .aside{ grid-area:aside; display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
       .card{ background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:14px; padding:12px; }
@@ -113,8 +113,8 @@
     <!-- three.js r128 (kept for FBXLoader compatibility) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/FBXExporter.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
   </head>
   <body>
@@ -166,7 +166,7 @@
           <ul class="list-disc ml-5 space-y-1">
             <li>‘Original’ mapping is live market-derived (time/price/volume).</li>
             <li>Spiral/Sphere/Helix use a BTC hash (Latest/Manual/Random/Generate).</li>
-            <li>Upload .fbx models up to <b>500 MB</b> to blend with your clouds.</li>
+            <li>Upload .fbx or .obj models up to <b>500 MB</b> to blend with your clouds.</li>
             <li>Use <b>Fullscreen</b> for presentations; works on mobile too.</li>
             <li>Xbox: <b>A</b> select, <b>B</b> back, <b>X</b> toggle axes, <b>Y</b> fullscreen, <b>D-pad</b> navigate, <b>RB/LB</b> cycle options, <b>RT/LT</b> adjust sliders.</li>
           </ul>
@@ -208,36 +208,30 @@
           <button class="btn" id="btnRandom" title="Use random hash">Random</button>
           <button class="btn" id="btnGenerate" title="Generate from price">Generate</button>
         </div>
-        <div class="ctrl" title="Import an FBX up to 500 MB to plot as a point cloud with BTC clouds.">
-          <label>Upload FBX (≤ 500 MB)</label>
+        <div class="ctrl" title="Import an FBX/OBJ up to 500 MB to plot as a point cloud with BTC clouds.">
+          <label>Upload Model (FBX/OBJ ≤ 500 MB)</label>
           <div class="dropzone" id="dropzone">
-            <input id="fbxFile" type="file" accept=".fbx" aria-label="Upload FBX" class="sr-only" />
-            <span id="dropLabel">Drag & drop .fbx here or <button id="browseFBX" class="btn" type="button">Browse</button></span>
+            <input id="modelFile" type="file" accept=".fbx,.obj" aria-label="Upload model" class="sr-only" />
+            <span id="dropLabel">Drag & drop .fbx/.obj here or <button id="browseModel" class="btn" type="button">Browse</button></span>
           </div>
           <div class="w-full mt-2 progress" aria-hidden="true"><span id="progressBar"></span></div>
           <div class="grid grid-cols-2 gap-2 w-full mt-2">
             <div class="ctrl">
-              <label>FBX Color</label>
-              <input id="fbxColor" type="color" value="#22d3ee" />
+              <label>Model Color</label>
+              <input id="modelColor" type="color" value="#22d3ee" />
             </div>
             <div class="ctrl" title="Skip vertices for huge meshes to keep FPS high.">
-              <label>FBX Sampling (every n-th)</label>
-              <input id="fbxStride" type="number" min="1" step="1" value="1" />
+              <label>Model Sampling (every n-th)</label>
+              <input id="modelStride" type="number" min="1" step="1" value="1" />
             </div>
           </div>
-          <div id="fbxStatus" class="text-xs opacity-80 mt-1"></div>
+          <div id="modelStatus" class="text-xs opacity-80 mt-1"></div>
         </div>
         <div class="ctrl" title="Playback & camera">
           <label>Camera</label>
           <button class="btn" id="reset-view" title="Reset camera">Reset</button>
           <button class="btn" id="toggle-rotate" aria-pressed="true" title="Toggle auto-rotate">Auto‑Rotate</button>
           <button class="btn" id="toggle-axes" aria-pressed="true" title="Toggle axes">Axes</button>
-        </div>
-        <div class="ctrl" title="Export the current scene and data.">
-          <label>Export</label>
-          <button class="btn" id="export-fbx">FBX</button>
-          <button class="btn" id="export-png">PNG</button>
-          <button class="btn" id="export-csv">CSV</button>
         </div>
       </div>
     </div>
@@ -387,12 +381,13 @@
         updateLegend();
       }
 
-      // --- FBX import → point cloud ----------------------------------------
-      const loader = new THREE.FBXLoader();
-      function addFBXAsPointCloud(obj, name='FBX'){
+      // --- Model import → point cloud -------------------------------------
+      const fbxLoader = new THREE.FBXLoader();
+      const objLoader = new THREE.OBJLoader();
+      function addModelAsPointCloud(obj, name='Model'){
         clearClouds();
-        const positions=[]; const colors=[]; const color = new THREE.Color($('fbxColor').value || '#22d3ee');
-        const stride = Math.max(1, parseInt(($('fbxStride').value||'1'),10));
+        const positions=[]; const colors=[]; const color = new THREE.Color($('modelColor').value || '#22d3ee');
+        const stride = Math.max(1, parseInt(($('modelStride').value||'1'),10));
         obj.traverse(n=>{
           if(n.isMesh && n.geometry){
             const g = new THREE.BufferGeometry().fromGeometry ? new THREE.BufferGeometry().fromGeometry(n.geometry) : n.geometry;
@@ -400,33 +395,34 @@
             for(let i=0;i<pos.count;i+=stride){ positions.push(pos.getX(i), pos.getY(i), pos.getZ(i)); colors.push(color.r, color.g, color.b); }
           }
         });
-        if(!positions.length){ console.warn('No vertices found in FBX'); $('m-status').textContent = `Status — No vertices found in ${name}`; vibrate(30); return; }
+        if(!positions.length){ console.warn('No vertices found in model'); $('m-status').textContent = `Status — No vertices found in ${name}`; vibrate(30); return; }
         const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
         const mat = new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:0.9 });
-        const cloud = new THREE.Points(geo, mat); cloud.name = `FBX:${name}`; scene.add(cloud); dotClouds.push(cloud);
+        const cloud = new THREE.Points(geo, mat); cloud.name = `Model:${name}`; scene.add(cloud); dotClouds.push(cloud);
         colorLegend.push({ color: color.getStyle(), label: name }); updateLegend();
-        $('m-status').textContent = `Status — FBX '${name}' added (${positions.length.toLocaleString()} pts, stride ${stride})`;
+        $('m-status').textContent = `Status — Model '${name}' added (${positions.length.toLocaleString()} pts, stride ${stride})`;
       }
 
-      function handleFBXFile(file){
+      function handleModelFile(file){
         const max = 500 * 1024 * 1024; // 500 MB
-        if (file.size > max){ $('fbxStatus').textContent = `File too large (${(file.size/1024/1024).toFixed(1)}MB). Max is 500MB.`; $('fbxStatus').classList.add('text-red-400'); vibrate(30); return; }
-        $('fbxStatus').classList.remove('text-red-400'); $('fbxStatus').textContent = `Loading ${file.name}…`;
+        if (file.size > max){ $('modelStatus').textContent = `File too large (${(file.size/1024/1024).toFixed(1)}MB). Max is 500MB.`; $('modelStatus').classList.add('text-red-400'); vibrate(30); return; }
+        $('modelStatus').classList.remove('text-red-400'); $('modelStatus').textContent = `Loading ${file.name}…`;
         const bar = $('progressBar'); bar.style.width = '0%';
         const reader = new FileReader();
-        reader.onerror = ()=>{ $('fbxStatus').textContent = 'Failed to read file.'; vibrate(30); };
+        reader.onerror = ()=>{ $('modelStatus').textContent = 'Failed to read file.'; vibrate(30); };
         reader.onprogress = (e)=>{ if (e.lengthComputable){ const p = (e.loaded/e.total)*100; bar.style.width = p.toFixed(1)+'%'; } };
         reader.onload = ()=>{
           try{
-            const buf = reader.result; const start = performance.now();
-            const object = loader.parse(buf, '');
-            addFBXAsPointCloud(object, file.name.replace(/\.fbx$/i,''));
+            const start = performance.now();
+            const result = reader.result;
+            const object = /\.fbx$/i.test(file.name) ? fbxLoader.parse(result, '') : objLoader.parse(result);
+            addModelAsPointCloud(object, file.name.replace(/\.(fbx|obj)$/i,''));
             const ms = Math.max(1, performance.now()-start).toFixed(0);
-            $('fbxStatus').textContent = `Parsed ${file.name} in ${ms} ms`;
+            $('modelStatus').textContent = `Parsed ${file.name} in ${ms} ms`;
             bar.style.width = '100%'; setTimeout(()=>{ bar.style.width='0%'; }, 1200); vibrate(8);
-          }catch(err){ console.error(err); $('fbxStatus').textContent = 'Parse error: '+ err.message; vibrate(30); }
+          }catch(err){ console.error(err); $('modelStatus').textContent = 'Parse error: '+ err.message; vibrate(30); }
         };
-        reader.readAsArrayBuffer(file);
+        if (/\.fbx$/i.test(file.name)) reader.readAsArrayBuffer(file); else reader.readAsText(file);
       }
 
       // --- Gamepad Controls (Xbox) ---------------------------------------
@@ -701,40 +697,6 @@
         });
 
         // Exporters
-        $('export-fbx').addEventListener('click', () => {
-          const grp = new THREE.Group();
-          dotClouds.forEach(c => grp.add(c.clone()));
-          const exporter = new THREE.FBXExporter();
-          const result = exporter.parse(grp);
-          const blob = new Blob([result], { type: 'text/plain' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'btc_hash_visualization.fbx';
-          a.click();
-          vibrate(15, gamepadAPI.controller);
-        });
-        $('export-png').addEventListener('click', () => {
-          const a = document.createElement('a');
-          a.href = canvas.toDataURL('image/png');
-          a.download = 'btc_hash.png';
-          a.click();
-          vibrate(15, gamepadAPI.controller);
-        });
-        $('export-csv').addEventListener('click', () => {
-          const rows = ['x,y,z'];
-          dotClouds.forEach(c => {
-            const pos = c.geometry.getAttribute('position');
-            for (let i = 0; i < pos.count; i++) {
-              rows.push(`${pos.getX(i)},${pos.getY(i)},${pos.getZ(i)}`);
-            }
-          });
-          const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'btc_hash_points.csv';
-          a.click();
-          vibrate(15, gamepadAPI.controller);
-        });
         $('reset-view').addEventListener('click', resetView);
         $('toggle-rotate').addEventListener('click', () => {
           const on = !controls.autoRotate;
@@ -776,14 +738,20 @@
           setTimeout(()=>window.dispatchEvent(new Event('resize')),200);
           vibrate(15, gamepadAPI.controller);
         });
+        document.addEventListener('fullscreenchange', () => {
+          if (!(document.fullscreenElement || document.webkitFullscreenElement)) {
+            stage.classList.remove('fs-active');
+            setTimeout(()=>window.dispatchEvent(new Event('resize')),200);
+          }
+        });
 
-        // FBX input events + dropzone
+        // Model input events + dropzone
         const dz = $('dropzone');
-        const input = $('fbxFile');
-        $('browseFBX').addEventListener('click', () => input.click());
+        const input = $('modelFile');
+        $('browseModel').addEventListener('click', () => input.click());
         input.addEventListener('change', () => {
           const f = input.files?.[0];
-          if (f) handleFBXFile(f);
+          if (f) handleModelFile(f);
           input.value = '';
           vibrate(10, gamepadAPI.controller);
         });
@@ -799,11 +767,11 @@
         }));
         dz.addEventListener('drop', e => {
           const f = e.dataTransfer.files?.[0];
-          if (f && /\.fbx$/i.test(f.name)) {
-            handleFBXFile(f);
+          if (f && /\.(fbx|obj)$/i.test(f.name)) {
+            handleModelFile(f);
             vibrate(10, gamepadAPI.controller);
           } else {
-            $('fbxStatus').textContent = 'Please drop a .fbx file.';
+            $('modelStatus').textContent = 'Please drop a .fbx or .obj file.';
             vibrate(30, gamepadAPI.controller);
           }
         });
