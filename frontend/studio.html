@@ -57,7 +57,7 @@
       .chip{ background:var(--chip-bg); border:1px solid var(--panel-brd); padding:.4rem .6rem; border-radius:999px; font-size:12px; display:inline-flex; align-items:center; gap:.5rem; }
 
       /* Layout */
-      main{ flex:1; display:grid; grid-template-columns:1fr 360px; grid-template-areas: 'stage aside'; gap:12px; padding:12px 14px; }
+      main{ flex:1; display:grid; grid-template-columns:1fr 360px; grid-template-areas: 'stage aside' 'controls aside'; gap:12px; padding:12px 14px; }
       .panel{ background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:16px; box-shadow:0 2px 20px #0006; position:relative; overflow:hidden; }
       #stagePanel{ grid-area:stage; min-height:62dvh; }
       .stage{ position:absolute; inset:0; }
@@ -68,8 +68,8 @@
 
       .mobile-fs-btn{ display:none; position:absolute; right:12px; top:12px; background:var(--soft); border:1px solid var(--border); color:var(--accent-2); border-radius:14px; padding:12px; z-index:20; font-size: 16px; }
 
-      @media (max-width:1180px){ main{ grid-template-columns:1fr; grid-template-areas:'stage' 'aside'; } }
-      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } main{ padding:8px; gap:8px; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:space-between; } }
+      @media (max-width:1180px){ main{ grid-template-columns:1fr; grid-template-areas:'stage' 'controls' 'aside'; } }
+      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } main{ padding:8px; gap:8px; grid-template-areas:'stage' 'controls' 'aside'; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:space-between; } }
 
       .aside{ grid-area:aside; display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
       .card{ background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:14px; padding:12px; }
@@ -80,19 +80,17 @@
 
       /* Controls rail */
       #controls-toggle{ display:inline-flex; margin:0 14px 12px; }
+      #controls-rail{ grid-area:controls; }
       .controls-rail{ padding:10px 14px 12px; flex-shrink:0; transition:max-height .25s ease; overflow:hidden; }
       .controls-rail[aria-hidden="true"]{ max-height:0; padding:0 14px; }
       .controls-rail[aria-hidden="false"]{ max-height:80vh; overflow-y:auto; padding:10px 14px 12px; }
       @media (max-width:640px){
         .controls-rail{
-          position:fixed;
-          left:0; right:0; bottom:0;
-          width:100%;
-          max-height:60vh;
+          position:static;
+          max-height:none;
           background:var(--panel-bg);
           border-top:1px solid var(--panel-brd);
-          box-shadow:0 -2px 20px #0006;
-          z-index:40;
+          box-shadow:none;
         }
       }
       .controls{ width:100%; display:grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap:10px; background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:16px; padding:14px; box-shadow:0 2px 20px #0006; }
@@ -167,6 +165,68 @@
         </div>
       </section>
 
+      <div id="controls-rail" class="controls-rail" aria-hidden="true">
+        <div class="controls">
+          <div class="ctrl" title="Mapping from data to space. ‘Original’ uses time→Z, price→X, volume→Y.">
+            <label>Mapping</label>
+            <select id="mapping">
+              <option value="original" selected>Original (Time/Price/Volume)</option>
+              <option value="spiral">Spiral (time-curve)</option>
+              <option value="sphere">Sphere (volatility radius)</option>
+              <option value="helix">Helix (momentum tilt)</option>
+            </select>
+          </div>
+          <div class="ctrl" title="Instances per data point.">
+            <label>Density</label>
+            <input type="range" id="density" min="1" max="320" value="96" />
+          </div>
+          <div class="ctrl" title="Point size for dot clouds.">
+            <label>Point Size</label>
+            <input type="range" id="pointSize" min="0.005" max="0.5" step="0.005" value="0.02" />
+          </div>
+          <div class="ctrl" title="Color mode for clouds/instances.">
+            <label>Theme</label>
+            <select id="theme">
+              <option value="original" selected>Original</option>
+              <option value="heatmap">Heatmap (volatility)</option>
+              <option value="lifecycle">Lifecycle (volume)</option>
+            </select>
+          </div>
+          <div class="ctrl" title="Paste a hash, or use the latest block. Used when Mapping ≠ Original.">
+            <label>Hash</label>
+            <input id="hashInput" type="text" placeholder="Paste a block/tx hash…" inputmode="latin" autocomplete="off" />
+            <button class="btn" id="btnLatest" title="Use latest block-derived hash">Latest</button>
+            <button class="btn" id="btnRandom" title="Use random hash">Random</button>
+            <button class="btn" id="btnGenerate" title="Generate from price">Generate</button>
+          </div>
+          <div class="ctrl" title="Import an FBX/OBJ up to 500 MB to plot as a point cloud with BTC clouds.">
+            <label>Upload Model (FBX/OBJ ≤ 500 MB)</label>
+            <div class="dropzone" id="dropzone">
+              <input id="modelFile" type="file" accept=".fbx,.obj" aria-label="Upload model" class="sr-only" />
+              <span id="dropLabel">Drag & drop .fbx/.obj here or <button id="browseModel" class="btn" type="button">Browse</button></span>
+            </div>
+            <div class="w-full mt-2 progress" aria-hidden="true"><span id="progressBar"></span></div>
+            <div class="grid grid-cols-2 gap-2 w-full mt-2">
+              <div class="ctrl">
+                <label>Model Color</label>
+                <input id="modelColor" type="color" value="#22d3ee" />
+              </div>
+              <div class="ctrl" title="Skip vertices for huge meshes to keep FPS high.">
+                <label>Model Sampling (every n-th)</label>
+                <input id="modelStride" type="number" min="1" step="1" value="1" />
+              </div>
+            </div>
+            <div id="modelStatus" class="text-xs opacity-80 mt-1"></div>
+          </div>
+          <div class="ctrl" title="Playback & camera">
+            <label>Camera</label>
+            <button class="btn" id="reset-view" title="Reset camera">Reset</button>
+            <button class="btn" id="toggle-rotate" aria-pressed="true" title="Toggle auto-rotate">Auto‑Rotate</button>
+            <button class="btn" id="toggle-axes" aria-pressed="true" title="Toggle axes">Axes</button>
+          </div>
+        </div>
+      </div>
+
       <aside class="panel aside">
         <div class="card" id="log-card" style="display:none;">
           <div class="flex items-center gap-3">
@@ -186,68 +246,6 @@
         </div>
       </aside>
     </main>
-
-    <div id="controls-rail" class="controls-rail" aria-hidden="true">
-      <div class="controls">
-        <div class="ctrl" title="Mapping from data to space. ‘Original’ uses time→Z, price→X, volume→Y.">
-          <label>Mapping</label>
-          <select id="mapping">
-            <option value="original" selected>Original (Time/Price/Volume)</option>
-            <option value="spiral">Spiral (time-curve)</option>
-            <option value="sphere">Sphere (volatility radius)</option>
-            <option value="helix">Helix (momentum tilt)</option>
-          </select>
-        </div>
-        <div class="ctrl" title="Instances per data point.">
-          <label>Density</label>
-          <input type="range" id="density" min="1" max="320" value="96" />
-        </div>
-        <div class="ctrl" title="Point size for dot clouds.">
-          <label>Point Size</label>
-          <input type="range" id="pointSize" min="0.005" max="0.5" step="0.005" value="0.02" />
-        </div>
-        <div class="ctrl" title="Color mode for clouds/instances.">
-          <label>Theme</label>
-          <select id="theme">
-            <option value="original" selected>Original</option>
-            <option value="heatmap">Heatmap (volatility)</option>
-            <option value="lifecycle">Lifecycle (volume)</option>
-          </select>
-        </div>
-        <div class="ctrl" title="Paste a hash, or use the latest block. Used when Mapping ≠ Original.">
-          <label>Hash</label>
-          <input id="hashInput" type="text" placeholder="Paste a block/tx hash…" inputmode="latin" autocomplete="off" />
-          <button class="btn" id="btnLatest" title="Use latest block-derived hash">Latest</button>
-          <button class="btn" id="btnRandom" title="Use random hash">Random</button>
-          <button class="btn" id="btnGenerate" title="Generate from price">Generate</button>
-        </div>
-        <div class="ctrl" title="Import an FBX/OBJ up to 500 MB to plot as a point cloud with BTC clouds.">
-          <label>Upload Model (FBX/OBJ ≤ 500 MB)</label>
-          <div class="dropzone" id="dropzone">
-            <input id="modelFile" type="file" accept=".fbx,.obj" aria-label="Upload model" class="sr-only" />
-            <span id="dropLabel">Drag & drop .fbx/.obj here or <button id="browseModel" class="btn" type="button">Browse</button></span>
-          </div>
-          <div class="w-full mt-2 progress" aria-hidden="true"><span id="progressBar"></span></div>
-          <div class="grid grid-cols-2 gap-2 w-full mt-2">
-            <div class="ctrl">
-              <label>Model Color</label>
-              <input id="modelColor" type="color" value="#22d3ee" />
-            </div>
-            <div class="ctrl" title="Skip vertices for huge meshes to keep FPS high.">
-              <label>Model Sampling (every n-th)</label>
-              <input id="modelStride" type="number" min="1" step="1" value="1" />
-            </div>
-          </div>
-          <div id="modelStatus" class="text-xs opacity-80 mt-1"></div>
-        </div>
-        <div class="ctrl" title="Playback & camera">
-          <label>Camera</label>
-          <button class="btn" id="reset-view" title="Reset camera">Reset</button>
-          <button class="btn" id="toggle-rotate" aria-pressed="true" title="Toggle auto-rotate">Auto‑Rotate</button>
-          <button class="btn" id="toggle-axes" aria-pressed="true" title="Toggle axes">Axes</button>
-        </div>
-      </div>
-    </div>
 
     <footer>
       <span>© 2025 <span style="font-family:'Sixtyfour',sans-serif">QUANTUMI</span> — All Rights Reserved.</span>
@@ -632,6 +630,10 @@
         const headerEl = document.querySelector('header');
         const stagePanelEl = $('stagePanel');
         function adjustStageHeight() {
+          if (document.fullscreenElement || document.webkitFullscreenElement) {
+            stagePanelEl.style.height = '';
+            return;
+          }
           if (window.innerWidth <= 640) {
             const headerH = headerEl.offsetHeight;
             const railOpen = rail.getAttribute('aria-hidden') === 'false';
@@ -783,6 +785,7 @@
           const el = stage;
           const active = document.fullscreenElement || document.webkitFullscreenElement;
           if (!active) {
+            stage.style.height = '';
             if (el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' });
             else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
             stage.classList.add('fs-active');
@@ -790,13 +793,13 @@
             document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen?.();
             stage.classList.remove('fs-active');
           }
-          setTimeout(()=>window.dispatchEvent(new Event('resize')),200);
+          setTimeout(adjustStageHeight,200);
           vibrate(15, gamepadAPI.controller);
         });
         document.addEventListener('fullscreenchange', () => {
           if (!(document.fullscreenElement || document.webkitFullscreenElement)) {
             stage.classList.remove('fs-active');
-            setTimeout(()=>window.dispatchEvent(new Event('resize')),200);
+            setTimeout(adjustStageHeight,200);
           }
         });
 
