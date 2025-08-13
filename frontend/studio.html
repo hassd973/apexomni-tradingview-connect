@@ -811,9 +811,15 @@
         }
         async function enterFS(){
           try{
-            if (stage.requestFullscreen) await stage.requestFullscreen({ navigationUI: 'hide' });
-            else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
-            stage.classList.add('fs-active');
+            if (stage.requestFullscreen){
+              await stage.requestFullscreen({ navigationUI: 'hide' });
+              stage.classList.add('fs-active');
+            }else if (stage.webkitRequestFullscreen){
+              stage.webkitRequestFullscreen();
+              stage.classList.add('fs-active');
+            }else{
+              throw new Error('Fullscreen API not supported');
+            }
           }catch(e){
             console.warn('Fullscreen failed', e);
             stage.classList.add('fs-active','fs-fallback');
