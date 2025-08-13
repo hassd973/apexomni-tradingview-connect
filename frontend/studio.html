@@ -151,9 +151,10 @@
     <main id="main">
       <section class="panel fs-target" id="stagePanel" aria-label="3D stage">
         <div class="stage">
-          <button id="mobile-fs-toggle" class="mobile-fs-btn" aria-label="Toggle fullscreen">↔</button>
+          <button id="mobile-fs-toggle" class="mobile-fs-btn" aria-label="Toggle fullscreen">⤢</button>
           <div class="overlay" id="metrics">
             <div class="chip" id="m-price">Price —</div>
+            <div class="chip" id="m-volume">Volume —</div>
             <div class="chip" id="m-change">24h —</div>
             <div class="chip" id="m-hashrate">Hashrate —</div>
             <div class="chip" id="m-diff">Difficulty —</div>
@@ -302,10 +303,38 @@
       async function fetchTextWithRetry(url, retries = 2, delay = 600) {
         for (let i = 0; i <= retries; i++) { try { const r = await fetch(url); if (!r.ok) throw new Error(`${r.status}`); return await r.text(); } catch (e){ if (i === retries) throw e; await new Promise(res=>setTimeout(res, delay*Math.pow(2,i))); } }
       }
-      async function fetchBTCPrice(){ try { const d = await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin'); return { price:d.market_data.current_price.usd, volume:d.market_data.total_volume.usd }; } catch { return { price:60000, volume:4_500_000 }; } }
+      async function fetchBTCPrice(){
+        try {
+          const d = await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin');
+          return {
+            price: d.market_data.current_price.usd,
+            volume: d.market_data.total_volume.usd,
+            change: d.market_data.price_change_percentage_24h
+          };
+        } catch {
+          return { price:60000, volume:4_500_000, change:0 };
+        }
+      }
       async function fetchBTCHistorical(){ try { return await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1'); } catch { return null; } }
       async function fetchBTCHashRate(){ try { return parseFloat(await fetchTextWithRetry('https://api.blockchain.info/q/hashrate?cors=true'))/1e9; } catch { return 0; } }
       async function fetchBTCDifficulty(){ try { return parseFloat(await fetchTextWithRetry('https://api.blockchain.info/q/getdifficulty?cors=true')); } catch { return 0; } }
+
+      async function updateMetrics(){
+        try {
+          const [{ price, volume, change }, hashrate, diff] = await Promise.all([
+            fetchBTCPrice(),
+            fetchBTCHashRate(),
+            fetchBTCDifficulty()
+          ]);
+          $('m-price').textContent = `Price — ${nfUSD.format(price)}`;
+          $('m-volume').textContent = `Volume — ${nfUSD.format(volume)}`;
+          $('m-change').textContent = `24h — ${change.toFixed(2)}%`;
+          $('m-hashrate').textContent = `Hashrate — ${hashrate.toFixed(2)} EH/s`;
+          $('m-diff').textContent = `Difficulty — ${diff.toLocaleString()}`;
+        } catch (err) {
+          console.warn('Failed to update metrics', err);
+        }
+      }
 
       function generateHashFromPrice(price){ const s = String(price); let h=''; for(let i=0;i<64;i++){ h += (s.charCodeAt(i%s.length)%16).toString(16); } return h; }
       function addHashLog(hash, time){ const el = document.createElement('li'); el.innerHTML = `<span class="kbd">${hash.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${time}</span>`; $('hash-log').prepend(el); while ($('hash-log').children.length > 10) $('hash-log').lastChild.remove(); }
@@ -600,10 +629,23 @@
         // Responsive controls drawer
         const drawerBtn = $('controls-toggle');
         const rail = $('controls-rail');
+        const headerEl = document.querySelector('header');
+        const stagePanelEl = $('stagePanel');
+        function adjustStageHeight() {
+          if (window.innerWidth <= 640) {
+            const headerH = headerEl.offsetHeight;
+            const railOpen = rail.getAttribute('aria-hidden') === 'false';
+            const railH = railOpen ? rail.offsetHeight : 0;
+            stagePanelEl.style.height = `calc(100dvh - ${headerH + railH}px)`;
+          } else {
+            stagePanelEl.style.height = '';
+          }
+        }
         function setDrawerForViewport() {
           const wide = window.innerWidth >= 1024;
           drawerBtn.setAttribute('aria-expanded', String(wide));
           rail.setAttribute('aria-hidden', String(!wide));
+          adjustStageHeight();
         }
         setDrawerForViewport();
         window.addEventListener('resize', () => {
@@ -614,6 +656,7 @@
           const open = drawerBtn.getAttribute('aria-expanded') === 'true';
           drawerBtn.setAttribute('aria-expanded', String(!open));
           rail.setAttribute('aria-hidden', String(open));
+          adjustStageHeight();
           vibrate(6, gamepadAPI.controller);
         });
 
@@ -789,11 +832,8 @@
         });
 
         // Metrics bootstrap
-        try {
-          const { price } = await fetchBTCPrice();
-          $('m-price').textContent = `Price — ${nfUSD.format(price)}`;
-          $('m-change').textContent = '24h — updating…';
-        } catch {}
+        updateMetrics();
+        setInterval(updateMetrics, 60_000);
       });
     </script>
   </body>
