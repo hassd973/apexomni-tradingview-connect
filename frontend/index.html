@@ -2462,9 +2462,6 @@
                                                <input id="mailing-email" type="email" placeholder="Email for updates" class="rounded px-3 py-2 text-black w-full" required />
                                                <button type="submit" class="login-btn">Join Mailing List</button>
                                        </form>
-                                       <div class="mt-2 text-center">
-                                               <a href="https://www.instagram.com/quantumi.space/" target="_blank" class="text-xs text-green-400 underline">Instagram</a>
-                                       </div>
                                    </div>
                                  </div>
                                  <div class="buttons fade-in" style="animation-delay:1s">
@@ -2682,7 +2679,7 @@
 				</p>
 				<nav>
                                         <a class="nav-link" href="#world-module">QuantumI Insights</a>
-                                        <a class="nav-link" href="#tokens-module">Tokens ✨</a>
+                                        <a class="nav-link" href="#tokens-module">Tokens</a>
                                         <a class="nav-link" href="#gas-module">Gas &amp; Fees</a>
                                        <a class="nav-link" href="#balances-module">Finance Tweets</a>
                                        <a class="nav-link" href="#wallet-module">Wallet</a>
@@ -2718,7 +2715,7 @@
 						<span id="loading-time"></span>
 						<span id="loading-date"></span>
 					</div>
-					<button id="mute-btn" aria-label="Toggle mute">🔇</button>
+                                        <button id="mute-btn" aria-label="Toggle mute">M</button>
 				</div>
 				<div class="title-box">
                                         <h1 class="text-2xl md:text-3xl main-title">QUANTUMI</h1>
@@ -3301,7 +3298,7 @@
 								id="chart-export-btn"
 								onclick="exportChart()"
 							>
-								📤 Export
+                                                               Export
 							</button>
 						</div>
 					</div>
@@ -3317,19 +3314,19 @@
                                 id="wallet-module"
 			>
 				<div class="module-header flex justify-between items-center">
-                                        <h2 class="text-lg md:text-xl text-white">🔐 Wallet & Tokens</h2>
+                                        <h2 class="text-lg md:text-xl text-white">Wallet & Tokens</h2>
 					<div class="flex gap-2">
 						<button
 							class="text-white py-1 px-4 rounded text-sm"
 							id="connectWallet"
 						>
-							🔌 Connect Wallet
+                                                       Connect Wallet
 						</button>
 						<button
 							class="text-white py-1 px-4 rounded text-sm"
 							id="refreshWalletData"
 						>
-							🔄 Refresh Wallet
+                                                       Refresh Wallet
 						</button>
 						<button
 							class="text-white py-1 px-2 rounded text-xs"
@@ -6240,7 +6237,7 @@ function setupModuleToggles() {
 					DOM.muteBtn.addEventListener('click', () => {
 						if (!DOM.introVideo) return;
 						DOM.introVideo.muted = !DOM.introVideo.muted;
-						DOM.muteBtn.textContent = DOM.introVideo.muted ? '🔇' : '🔊';
+                                           DOM.muteBtn.textContent = DOM.introVideo.muted ? 'M' : 'S';
 					});
 				}
                                 if (DOM.playIntroBtn) {
@@ -6257,11 +6254,11 @@ function setupModuleToggles() {
 						if (!bgMusicPlayer) return;
 						if (bgMusicPlayer.isMuted()) {
 							bgMusicPlayer.unMute();
-							DOM.musicMuteBtn.textContent = '🔊';
+                                                  DOM.musicMuteBtn.textContent = 'S';
 							DOM.musicMuteBtn.classList.add('active');
 						} else {
 							bgMusicPlayer.mute();
-							DOM.musicMuteBtn.textContent = '🔇';
+                                                  DOM.musicMuteBtn.textContent = 'M';
 							DOM.musicMuteBtn.classList.remove('active');
 						}
 					});

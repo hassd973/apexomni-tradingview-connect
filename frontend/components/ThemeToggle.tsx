@@ -13,7 +13,7 @@ const ThemeToggle = () => {
       onClick={() => setTheme(current === 'dark' ? 'light' : 'dark')}
       className="fixed top-4 right-4 z-50 p-2 rounded-md bg-carbon/60 backdrop-blur-md text-accent"
     >
-      {current === 'dark' ? '🌙' : '☀️'}
+      {current === 'dark' ? '◐' : '◑'}
     </button>
   );
 };
