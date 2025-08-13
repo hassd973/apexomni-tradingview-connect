@@ -123,10 +123,12 @@
         <div class="logo">QUANTUMI</div>
         <div class="sub">BTC Hash Studio — Pro</div>
         <div class="right">
+          <a class="btn" id="home-btn" href="index.html" title="Home">🏠</a>
+          <button class="btn" id="toggle-log" title="Show/Hide log">📜</button>
+          <button class="btn" id="toggle-metrics" title="Show/Hide metrics">📊</button>
           <div class="seg" role="group" aria-label="Theme">
             <button class="btn" id="theme-dark" aria-pressed="true" title="Dark">🌙</button>
             <button class="btn" id="theme-light" aria-pressed="false" title="Light">☀️</button>
-            <button class="btn" id="theme-auto" aria-pressed="false" title="Auto">⚙️</button>
           </div>
           <div class="sub">v3.4</div>
         </div>
@@ -153,10 +155,9 @@
       </section>
 
       <aside class="panel aside">
-        <div class="card">
+        <div class="card" id="log-card" style="display:none;">
           <div class="flex items-center gap-3">
             <strong>Hash Log</strong><span class="text-gray-400">Latest 10</span>
-            <button class="btn ml-auto" id="toggle-log">Toggle</button>
           </div>
           <ul id="hash-log" class="log" aria-live="polite"></ul>
         </div>
@@ -190,7 +191,7 @@
         </div>
         <div class="ctrl" title="Point size for dot clouds.">
           <label>Point Size</label>
-          <input type="range" id="pointSize" min="0.02" max="1.6" step="0.02" value="0.18" />
+          <input type="range" id="pointSize" min="0.005" max="0.5" step="0.005" value="0.02" />
         </div>
         <div class="ctrl" title="Color mode for clouds/instances.">
           <label>Theme</label>
@@ -247,7 +248,7 @@
     </footer>
 
     <script>
-      // --- Theme toggle (Auto / Light / Dark). Remembers choice. iOS-ready light.
+      // --- Theme toggle (Light / Dark). Remembers choice. iOS-ready light.
       (function initTheme(){
         const meta = document.getElementById('meta-theme-color');
         const root = document.documentElement;
@@ -259,14 +260,12 @@
           meta.setAttribute('content', mode==='dark' ? '#0d0f12' : '#f2f2f7');
           document.getElementById('theme-dark').setAttribute('aria-pressed', String(mode==='dark'));
           document.getElementById('theme-light').setAttribute('aria-pressed', String(mode==='light'));
-          document.getElementById('theme-auto').setAttribute('aria-pressed', String(localStorage.getItem(key)==='auto'));
         }
         const saved = localStorage.getItem(key) || 'auto';
         set(saved);
         match.addEventListener?.('change', ()=>{ if (localStorage.getItem(key)==='auto') set('auto'); });
         document.getElementById('theme-dark').onclick = ()=>{ localStorage.setItem(key,'dark'); set('dark'); vibrate(8); };
         document.getElementById('theme-light').onclick = ()=>{ localStorage.setItem(key,'light'); set('light'); vibrate(8); };
-        document.getElementById('theme-auto').onclick = ()=>{ localStorage.setItem(key,'auto'); set('auto'); vibrate(8); };
       })();
 
       // --- Utils & globals ---------------------------------------------------
@@ -305,7 +304,16 @@
 
       function generateHashFromPrice(price){ const s = String(price); let h=''; for(let i=0;i<64;i++){ h += (s.charCodeAt(i%s.length)%16).toString(16); } return h; }
       function addHashLog(hash, time){ const el = document.createElement('li'); el.innerHTML = `<span class="kbd">${hash.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${time}</span>`; $('hash-log').prepend(el); while ($('hash-log').children.length > 10) $('hash-log').lastChild.remove(); }
-      function updateLegend(){ const el = $('legend'); el.innerHTML = ''; colorLegend.slice(-6).forEach((c)=>{ const item = document.createElement('div'); item.className='chip'; item.innerHTML = `<span class="swatch" style="background:${c.color}"></span><span>$${c.price.toLocaleString()}</span><span class="text-gray-400">${c.time}</span>`; el.appendChild(item); }); }
+      function updateLegend(){
+        const el = $('legend');
+        el.innerHTML = '';
+        colorLegend.slice(-6).forEach((c)=>{
+          const item = document.createElement('div');
+          item.className = 'chip';
+          item.innerHTML = `<span class="swatch" style="background:${c.color}"></span><span>${c.label}</span>`;
+          el.appendChild(item);
+        });
+      }
 
       function init3D(){
         scene = new THREE.Scene();
@@ -327,7 +335,7 @@
         function resize(){ const w=canvas.clientWidth, h=canvas.clientHeight; renderer.setSize(w,h,false); camera.aspect = w/(h||1); camera.updateProjectionMatrix(); }
       }
 
-      function clearClouds(){ dotClouds.forEach(c=>scene.remove(c)); dotClouds=[]; }
+      function clearClouds(){ dotClouds.forEach(c=>scene.remove(c)); dotClouds=[]; colorLegend=[]; updateLegend(); }
 
       async function drawOriginalFromMarket(){
         const data = await fetchBTCHistorical(); if (!data) return;
@@ -357,7 +365,8 @@
         const cloud = new THREE.Points(geo,mat); scene.add(cloud); dotClouds.push(cloud);
         dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
         const latestTime = new Date(timestamps[timestamps.length-1]).toLocaleTimeString();
-        colorLegend.push({ color:cloudColorHex, price:latestPrice, volume:latestVolume, time:latestTime }); updateLegend();
+        colorLegend.push({ color:cloudColorHex, label:`$${latestPrice.toLocaleString()} ${latestTime}` });
+        updateLegend();
       }
 
       function layoutFromHash(hash, mapping){
@@ -374,12 +383,15 @@
         const geo=new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
         const mat=new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
         const cloud=new THREE.Points(geo,mat); scene.add(cloud); dotClouds.push(cloud);
-        dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06)); updateLegend();
+        dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
+        colorLegend.push({ color: base.getStyle(), label:`Hash ${hash.slice(0,6)}` });
+        updateLegend();
       }
 
       // --- FBX import → point cloud ----------------------------------------
       const loader = new THREE.FBXLoader();
       function addFBXAsPointCloud(obj, name='FBX'){
+        clearClouds();
         const positions=[]; const colors=[]; const color = new THREE.Color($('fbxColor').value || '#22d3ee');
         const stride = Math.max(1, parseInt(($('fbxStride').value||'1'),10));
         obj.traverse(n=>{
@@ -393,6 +405,7 @@
         const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
         const mat = new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:0.9 });
         const cloud = new THREE.Points(geo, mat); cloud.name = `FBX:${name}`; scene.add(cloud); dotClouds.push(cloud);
+        colorLegend.push({ color: color.getStyle(), label: name }); updateLegend();
         $('m-status').textContent = `Status — FBX '${name}' added (${positions.length.toLocaleString()} pts, stride ${stride})`;
       }
 
@@ -731,6 +744,22 @@
           vibrate(8, gamepadAPI.controller);
         });
 
+        $('home-btn').addEventListener('click', () => vibrate(8, gamepadAPI.controller));
+        $('toggle-log').addEventListener('click', () => {
+          const card = $('log-card');
+          const hidden = card.style.display === 'none';
+          card.style.display = hidden ? '' : 'none';
+          vibrate(8, gamepadAPI.controller);
+        });
+        $('toggle-metrics').addEventListener('click', () => {
+          const m = $('metrics');
+          const l = $('legend');
+          const hidden = m.style.display === 'none';
+          m.style.display = hidden ? 'flex' : 'none';
+          l.style.display = hidden ? 'flex' : 'none';
+          vibrate(8, gamepadAPI.controller);
+        });
+
         // Fullscreen (mobile + Xbox friendly)
         const fsBtn = $('mobile-fs-toggle');
         const stage = $('stagePanel');
@@ -738,13 +767,14 @@
           const el = stage;
           const active = document.fullscreenElement || document.webkitFullscreenElement;
           if (!active) {
-            if (el.requestFullscreen) el.requestFullscreen();
+            if (el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' });
             else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
             stage.classList.add('fs-active');
           } else {
             document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen?.();
             stage.classList.remove('fs-active');
           }
+          setTimeout(()=>window.dispatchEvent(new Event('resize')),200);
           vibrate(15, gamepadAPI.controller);
         });
 
