@@ -117,6 +117,8 @@
       /* Fullscreen */
       .fs-target:fullscreen, .fs-target:-webkit-full-screen{ background:#000; width:100%; height:100%; }
       .fs-btn-on{ display:none; } .fs-active .fs-btn-on{ display:inline-flex; } .fs-active .fs-btn-off{ display:none; }
+      .fs-fallback{ position:fixed; inset:0; width:100vw; height:100vh; z-index:9999; background:#000; }
+      body.fs-noscroll{ overflow:hidden; }
 
       /* Reduced motion */
       @media (prefers-reduced-motion: reduce){ *{ animation: none !important; transition: none !important; } }
@@ -423,6 +425,21 @@
         updateLegend();
       }
 
+      async function updateHashCloud(){
+        try{
+          if ($('mapping').value === 'original'){
+            await drawOriginalFromMarket();
+            const { price } = await fetchBTCPrice();
+            addHashLog(generateHashFromPrice(price), new Date().toLocaleTimeString());
+          } else {
+            const { price } = await fetchBTCPrice();
+            const h = generateHashFromPrice(price);
+            layoutFromHash(h, $('mapping').value);
+            addHashLog(h, new Date().toLocaleTimeString());
+          }
+        }catch(err){ console.warn('Auto update failed', err); }
+      }
+
       // --- Model import → point cloud -------------------------------------
       const fbxLoader = new THREE.FBXLoader();
       const objLoader = new THREE.OBJLoader();
@@ -633,7 +650,7 @@
         const headerEl = document.querySelector('header');
         const stagePanelEl = $('stagePanel');
         function adjustStageHeight() {
-          if (document.fullscreenElement || document.webkitFullscreenElement) {
+          if (document.fullscreenElement || document.webkitFullscreenElement || stagePanelEl.classList.contains('fs-fallback')) {
             stagePanelEl.style.height = '';
             return;
           }
@@ -670,6 +687,9 @@
         animate();
         await drawOriginalFromMarket();
         $('m-status').textContent = 'Status — Ready';
+        const { price: initialPrice } = await fetchBTCPrice();
+        addHashLog(generateHashFromPrice(initialPrice), new Date().toLocaleTimeString());
+        setInterval(updateHashCloud, 60_000);
 
         // Mapping
         $('mapping').addEventListener('change', async (e) => {
@@ -787,21 +807,26 @@
         const stage = $('stagePanel');
 
         function isFullscreen(){
-          return document.fullscreenElement || document.webkitFullscreenElement;
+          return document.fullscreenElement || document.webkitFullscreenElement || stage.classList.contains('fs-fallback');
         }
         async function enterFS(){
           try{
             if (stage.requestFullscreen) await stage.requestFullscreen({ navigationUI: 'hide' });
             else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
             stage.classList.add('fs-active');
-          }catch(e){ console.warn('Fullscreen failed', e); }
+          }catch(e){
+            console.warn('Fullscreen failed', e);
+            stage.classList.add('fs-active','fs-fallback');
+            document.body.classList.add('fs-noscroll');
+          }
         }
         async function exitFS(){
           try{
             if (document.exitFullscreen) await document.exitFullscreen();
             else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
           }catch(e){ console.warn('Exit fullscreen failed', e); }
-          stage.classList.remove('fs-active');
+          stage.classList.remove('fs-active','fs-fallback');
+          document.body.classList.remove('fs-noscroll');
         }
         function toggleFS(){ isFullscreen() ? exitFS() : enterFS(); setTimeout(adjustStageHeight,200); vibrate(15, gamepadAPI.controller); }
 
@@ -819,10 +844,18 @@
         canvas.addEventListener('dblclick', toggleFS);
 
         document.addEventListener('fullscreenchange', () => {
-          if (!isFullscreen()) { stage.classList.remove('fs-active'); setTimeout(adjustStageHeight,200); }
+          if (!isFullscreen()) {
+            stage.classList.remove('fs-active','fs-fallback');
+            document.body.classList.remove('fs-noscroll');
+            setTimeout(adjustStageHeight,200);
+          }
         });
         document.addEventListener('webkitfullscreenchange', () => {
-          if (!isFullscreen()) { stage.classList.remove('fs-active'); setTimeout(adjustStageHeight,200); }
+          if (!isFullscreen()) {
+            stage.classList.remove('fs-active','fs-fallback');
+            document.body.classList.remove('fs-noscroll');
+            setTimeout(adjustStageHeight,200);
+          }
         });
 
         // Model input events + dropzone
