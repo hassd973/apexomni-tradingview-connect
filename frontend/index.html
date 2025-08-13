@@ -7029,7 +7029,7 @@ function setupModuleToggles() {
                                                        el.requestFullscreen ||
                                                        el.webkitRequestFullscreen ||
                                                        el.msRequestFullscreen;
-                                               if (req) req.call(el);
+                                               return req ? Promise.resolve(req.call(el)) : Promise.reject();
                                        };
                                        const exitFS = () => {
                                                const ex =
@@ -7044,33 +7044,41 @@ function setupModuleToggles() {
                                                camera.aspect = clientWidth / clientHeight;
                                                camera.updateProjectionMatrix();
                                        };
-                                       const toggleMobile = () => {
-                                               btcContainer.classList.toggle('mobile-open');
-                                               if (DOM.btcMobileFsToggle)
-                                                       DOM.btcMobileFsToggle.textContent =
-                                                               btcContainer.classList.contains('mobile-open')
-                                                                       ? '⤡'
-                                                                       : '⤢';
-                                               updateSize();
-                                       };
-                                       DOM.btcFullscreenBtn.addEventListener('click', () => {
-                                               if (window.innerWidth <= 640) {
-                                                       toggleMobile();
-                                               } else {
-                                                       if (!isFS()) requestFS(btcCanvas);
-                                                       else exitFS();
+                                       const toggleFullscreen = () => {
+                                               const mobile = window.innerWidth <= 640;
+                                               if (isFS()) {
+                                                       exitFS();
+                                                       btcContainer.classList.remove('mobile-open');
+                                                       if (DOM.btcMobileFsToggle) DOM.btcMobileFsToggle.textContent = '⤢';
+                                                       updateSize();
+                                                       return;
                                                }
-                                       });
+                                               const target = mobile ? btcContainer : btcCanvas;
+                                               requestFS(target).catch(() => {
+                                                       if (mobile) btcContainer.classList.add('mobile-open');
+                                               }).finally(() => {
+                                                       if (DOM.btcMobileFsToggle)
+                                                               DOM.btcMobileFsToggle.textContent = mobile ? '⤡' : '⤢';
+                                                       updateSize();
+                                               });
+                                       };
+                                       DOM.btcFullscreenBtn.addEventListener('click', toggleFullscreen);
                                        if (DOM.btcMobileFsToggle)
-                                               DOM.btcMobileFsToggle.addEventListener('click', toggleMobile);
+                                               DOM.btcMobileFsToggle.addEventListener('click', toggleFullscreen);
                                        if (DOM.btcMobileExit)
                                                DOM.btcMobileExit.addEventListener('click', () => {
+                                                       exitFS();
                                                        btcContainer.classList.remove('mobile-open');
-                                                       if (DOM.btcMobileFsToggle)
-                                                               DOM.btcMobileFsToggle.textContent = '⤢';
+                                                       if (DOM.btcMobileFsToggle) DOM.btcMobileFsToggle.textContent = '⤢';
+                                                       updateSize();
                                                });
                                        document.addEventListener('fullscreenchange', () => {
-                                               btcCanvas.classList.toggle('fs-active', !!isFS());
+                                               const active = !!isFS();
+                                               btcCanvas.classList.toggle('fs-active', active);
+                                               if (!active) {
+                                                       btcContainer.classList.remove('mobile-open');
+                                                       if (DOM.btcMobileFsToggle) DOM.btcMobileFsToggle.textContent = '⤢';
+                                               }
                                                updateSize();
                                        });
                                }
