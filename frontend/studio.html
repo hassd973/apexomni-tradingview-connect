@@ -411,26 +411,6 @@
         return null;
       }
 
-      async function fetchTipHashOnce() {
-        try {
-          const r = await fetch('/api/btc/latest-hash', { cache:'no-store' });
-          if (r.ok) {
-            const j = await r.json();
-            const h = j?.hash && /^[0-9a-f]{64}$/i.test(j.hash) ? j.hash.toLowerCase() : null;
-            if (h) return h;
-          }
-          throw 0;
-        } catch (_){
-          try {
-            const r = await fetch('https://blockstream.info/api/blocks/tip/hash', { cache:'no-store' });
-            if (r.ok) {
-              const t = (await r.text()).trim().toLowerCase();
-              if (/^[0-9a-f]{64}$/i.test(t)) return t;
-            }
-          } catch {}
-        }
-        return null;
-      }
 
       function updatePriceChips() {
         if (Live.priceUSD != null) {
@@ -451,22 +431,11 @@
         async function priceLoop() {
           const ok = await fetchSpotPrice();
           updatePriceChips();
-          if (!ok) priceDelay = Math.min(priceDelay * 1.6, 60000);
-          else priceDelay = 20000;
-          Live.priceTimer = setTimeout(priceLoop, priceDelay);
-        }
-        priceLoop();
-
-        // Block tip: poll every 10s; when new hash appears, update input and (if mapping != original) re-draw
-        let blockDelay = 10000;
-        async function blockLoop() {
-          const h = await fetchTipHashOnce();
+          const h = generateHashFromPrice(Live.priceUSD);
           if (h && h !== Live.lastBlockHash) {
             Live.lastBlockHash = h;
-            Live.lastBlockSeenAt = Date.now();
             $('hashInput').value = h;
             addHashLog(h.slice(0,16)+'…', new Date().toLocaleTimeString());
-            // If user is on a hash-driven mapping, re-render with the new live hash
             const m = $('mapping').value;
             if (m !== 'original') {
               clearScene();
@@ -474,18 +443,21 @@
               maybeInstanceFBX();
             }
           }
-          Live.blockTimer = setTimeout(blockLoop, blockDelay);
+          if (!ok) priceDelay = Math.min(priceDelay * 1.6, 60000);
+          else priceDelay = 20000;
+          Live.priceTimer = setTimeout(priceLoop, priceDelay);
         }
-        blockLoop();
+        priceLoop();
 
-        // Visibility awareness: when returning to the tab, refresh immediately
         document.addEventListener('visibilitychange', () => {
           if (!document.hidden) {
-            fetchSpotPrice().then(updatePriceChips);
-            fetchTipHashOnce().then((h)=>{
+            fetchSpotPrice().then(() => {
+              updatePriceChips();
+              const h = generateHashFromPrice(Live.priceUSD);
               if (h && h !== Live.lastBlockHash) {
                 Live.lastBlockHash = h;
                 $('hashInput').value = h;
+                addHashLog(h.slice(0,16)+'…', new Date().toLocaleTimeString());
                 const m = $('mapping').value;
                 if (m !== 'original') {
                   clearScene();
