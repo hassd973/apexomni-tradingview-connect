@@ -157,7 +157,7 @@
           <ul class="list-disc ml-5 space-y-1">
             <li>‘Original’ mapping is live market-derived (time/price/volume).</li>
             <li>Switch to Spiral/Sphere/Helix to use a BTC hash (Latest/Manual/Random).</li>
-            <li>Upload a compact FBX for best performance.</li>
+            <li>Large FBX files (100MB+) are supported, though performance may vary.</li>
             <li>Use <b>Fullscreen</b> for presentations; works on mobile too.</li>
           </ul>
         </div>
@@ -174,7 +174,7 @@
 
     <div id="controls-rail" class="controls-rail" aria-hidden="false">
       <div class="controls">
-        <div class="ctrl" title="Upload a compact FBX (5–10MB).">
+        <div class="ctrl" title="Upload FBX models (supports files over 100MB).">
           <label>Upload FBX</label>
           <input type="file" id="fbx-file" accept=".fbx" />
           <div class="btn-row"><button class="btn" id="btn-load-fbx" title="Pick an FBX file">Load FBX</button><button class="btn" id="clear-fbx">Clear</button><button class="btn fs-btn-off" id="btn-fullscreen" title="Enter fullscreen">Fullscreen</button><button class="btn fs-btn-on" id="btn-exitfs" title="Exit fullscreen">Exit FS</button></div>
@@ -751,10 +751,21 @@
       $('reset-view').addEventListener('click', ()=>{ camera.position.set(10,10,30); controls.target.set(10,10,10); controls.update(); });
       $('toggle-log').addEventListener('click', ()=> $('hash-log').classList.toggle('hidden'));
 
+      $('btn-load-fbx').addEventListener('click', ()=> $('fbx-file').click());
+
       $('fbx-file').addEventListener('change', async (e)=>{
-        const file=e.target.files && e.target.files[0]; if(!file){ userFBX=null; return; }
-        const url=URL.createObjectURL(file);
-        try{ loader.load(url, (obj)=>{ userFBX=obj; maybeInstanceFBX(); }); } catch{ alert('Failed to load FBX'); }
+        const file=e.target.files && e.target.files[0];
+        if(!file){ userFBX=null; return; }
+        try{
+          const buffer=await file.arrayBuffer();
+          userFBX=loader.parse(buffer, '');
+          if(file.size>100*1024*1024){
+            console.info(`Loaded large FBX ${(file.size/1048576).toFixed(1)}MB`);
+          }
+          maybeInstanceFBX();
+        }catch{
+          alert('Failed to load FBX');
+        }
       });
       $('clear-fbx').addEventListener('click', ()=>{
         userFBX=null; if(instancedMesh){ scene.remove(instancedMesh); instancedMesh.geometry.dispose(); instancedMesh.material.dispose?.(); instancedMesh=null; }
