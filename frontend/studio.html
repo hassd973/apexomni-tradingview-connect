@@ -64,12 +64,14 @@
       .overlay{ position:absolute; left:12px; top:12px; display:flex; flex-wrap:wrap; gap:6px; pointer-events:none; }
       .legend{ position:absolute; left:12px; right:12px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; pointer-events:none; }
       .legend .swatch{ width:12px; height:12px; border-radius:3px; margin-right:4px; border:1px solid rgba(255,255,255,.4); }
-      canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background: [data-theme="light"] ? #ffffff : #000000; touch-action:none; }
+      canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background:#000; touch-action:none; }
 
+      /* Dedicated fullscreen buttons */
       .mobile-fs-btn{ display:none; position:absolute; right:12px; top:12px; background:var(--soft); border:1px solid var(--border); color:var(--accent-2); border-radius:14px; padding:12px; z-index:20; font-size: 16px; }
+      .desktop-fs-btn{ display:inline-flex; }
 
       @media (max-width:1180px){ main{ grid-template-columns:1fr; grid-template-areas:'stage' 'controls' 'aside'; } }
-      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } main{ padding:8px; gap:8px; grid-template-areas:'stage' 'controls' 'aside'; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:space-between; } }
+      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } .desktop-fs-btn{ display:none; } main{ padding:8px; gap:8px; grid-template-areas:'stage' 'controls' 'aside'; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:space-between; } }
 
       .aside{ grid-area:aside; display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
       .card{ background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:14px; padding:12px; }
@@ -134,6 +136,7 @@
         <div class="sub">BTC Hash Studio — Pro</div>
         <div class="right">
           <a class="btn" id="home-btn" href="index.html" title="Home">⌂</a>
+          <button class="btn desktop-fs-btn" id="toggle-fs" title="Toggle fullscreen (F / dbl‑click)">⤢</button>
           <button class="btn" id="toggle-log" title="Show/Hide log">≡</button>
           <button class="btn" id="toggle-metrics" title="Show/Hide metrics">Σ</button>
           <div class="seg" role="group" aria-label="Theme">
@@ -240,7 +243,7 @@
             <li>‘Original’ mapping is live market-derived (time/price/volume).</li>
             <li>Spiral/Sphere/Helix use a BTC hash (Latest/Manual/Random/Generate).</li>
             <li>Upload .fbx or .obj models up to <b>500 MB</b> to blend with your clouds.</li>
-            <li>Use <b>Fullscreen</b> for presentations; works on mobile too.</li>
+            <li>Use <b>Fullscreen</b> for presentations; works on mobile too. Press <span class="kbd">F</span> or double‑click the chart.</li>
             <li>Xbox: <b>A</b> select, <b>B</b> back, <b>X</b> toggle axes, <b>Y</b> fullscreen, <b>D-pad</b> navigate, <b>RB/LB</b> cycle options, <b>RT/LT</b> adjust sliders.</li>
           </ul>
         </div>
@@ -778,29 +781,48 @@
           vibrate(8, gamepadAPI.controller);
         });
 
-        // Fullscreen (mobile + Xbox friendly)
-        const fsBtn = $('mobile-fs-toggle');
+        // --- Fullscreen (unified for desktop + mobile + iOS) ---------------
+        const fsBtnDesktop = $('toggle-fs');
+        const fsBtnMobile = $('mobile-fs-toggle');
         const stage = $('stagePanel');
-        fsBtn?.addEventListener('click', () => {
-          const el = stage;
-          const active = document.fullscreenElement || document.webkitFullscreenElement;
-          if (!active) {
-            stage.style.height = '';
-            if (el.requestFullscreen) el.requestFullscreen({ navigationUI: 'hide' });
-            else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+
+        function isFullscreen(){
+          return document.fullscreenElement || document.webkitFullscreenElement;
+        }
+        async function enterFS(){
+          try{
+            if (stage.requestFullscreen) await stage.requestFullscreen({ navigationUI: 'hide' });
+            else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
             stage.classList.add('fs-active');
-          } else {
-            document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen?.();
-            stage.classList.remove('fs-active');
+          }catch(e){ console.warn('Fullscreen failed', e); }
+        }
+        async function exitFS(){
+          try{
+            if (document.exitFullscreen) await document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          }catch(e){ console.warn('Exit fullscreen failed', e); }
+          stage.classList.remove('fs-active');
+        }
+        function toggleFS(){ isFullscreen() ? exitFS() : enterFS(); setTimeout(adjustStageHeight,200); vibrate(15, gamepadAPI.controller); }
+
+        fsBtnDesktop?.addEventListener('click', toggleFS);
+        fsBtnMobile?.addEventListener('click', toggleFS);
+
+        // Keyboard shortcut: F (ignores when typing in inputs)
+        document.addEventListener('keydown', (e)=>{
+          if (e.key && e.key.toLowerCase() === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey){
+            const tag = (document.activeElement?.tagName||'').toLowerCase();
+            if (!['input','textarea','select'].includes(tag)) { e.preventDefault(); toggleFS(); }
           }
-          setTimeout(adjustStageHeight,200);
-          vibrate(15, gamepadAPI.controller);
         });
+        // Double-click canvas to toggle
+        canvas.addEventListener('dblclick', toggleFS);
+
         document.addEventListener('fullscreenchange', () => {
-          if (!(document.fullscreenElement || document.webkitFullscreenElement)) {
-            stage.classList.remove('fs-active');
-            setTimeout(adjustStageHeight,200);
-          }
+          if (!isFullscreen()) { stage.classList.remove('fs-active'); setTimeout(adjustStageHeight,200); }
+        });
+        document.addEventListener('webkitfullscreenchange', () => {
+          if (!isFullscreen()) { stage.classList.remove('fs-active'); setTimeout(adjustStageHeight,200); }
         });
 
         // Model input events + dropzone
