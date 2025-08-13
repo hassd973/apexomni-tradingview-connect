@@ -76,6 +76,9 @@
       .aside{ grid-area:aside; display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
       .card{ background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:14px; padding:12px; }
       .log{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+      .log-preview{ list-style:none; margin:0; padding:0; position:absolute; left:12px; bottom:72px; display:flex; flex-direction:column; gap:4px; pointer-events:none; }
+      .log-preview li{ background:var(--panel-bg); border:1px solid var(--panel-brd); padding:4px 6px; border-radius:6px; font-size:11px; }
+      @media (min-width:641px){ #log-preview{ display:none; } }
       .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background:#111; border:1px solid rgba(255,255,255,.08); padding:2px 6px; border-radius:6px; font-size:11px; }
 
       footer{ flex-shrink:0; border-top:1px solid var(--panel-brd); background:var(--panel-bg); backdrop-filter:saturate(180%) blur(12px); -webkit-backdrop-filter:saturate(180%) blur(12px); padding:10px 14px calc(10px + var(--safe-bottom)); font-size:12px; color:#aab; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
@@ -167,6 +170,7 @@
           </div>
           <canvas id="btc-hash-canvas" aria-label="BTC hash visualization"></canvas>
           <div class="legend" id="legend" aria-live="polite"></div>
+          <ul id="log-preview" class="log-preview" aria-live="polite"></ul>
         </div>
       </section>
 
@@ -192,8 +196,8 @@
           <div class="ctrl" title="Color mode for clouds/instances.">
             <label>Theme</label>
             <select id="theme">
-              <option value="original" selected>Original</option>
-              <option value="heatmap">Heatmap (volatility)</option>
+              <option value="original">Original</option>
+              <option value="heatmap" selected>Heatmap (volatility)</option>
               <option value="lifecycle">Lifecycle (volume)</option>
             </select>
           </div>
@@ -281,7 +285,7 @@
       const $ = (id) => document.getElementById(id);
       const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
       const canvas = $('btc-hash-canvas');
-      let renderer, scene, camera, controls, axes; let dotClouds = []; let colorLegend = [];
+      let renderer, scene, camera, controls, axes; let dotClouds = []; let colorLegend = []; let hashLogEntries = [];
       const DPR_CAP = 2;
 
       function vibrate(ms, gamepad = null){
@@ -340,7 +344,28 @@
       }
 
       function generateHashFromPrice(price){ const s = String(price); let h=''; for(let i=0;i<64;i++){ h += (s.charCodeAt(i%s.length)%16).toString(16); } return h; }
-      function addHashLog(hash, time){ const el = document.createElement('li'); el.innerHTML = `<span class="kbd">${hash.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${time}</span>`; $('hash-log').prepend(el); while ($('hash-log').children.length > 10) $('hash-log').lastChild.remove(); }
+      function addHashLog(hash, time){
+        hashLogEntries.unshift({ hash, time });
+        if (hashLogEntries.length > 10) hashLogEntries.pop();
+        const full = $('hash-log');
+        if (full){
+          full.innerHTML = '';
+          hashLogEntries.forEach(({hash: h, time: t})=>{
+            const el = document.createElement('li');
+            el.innerHTML = `<span class="kbd">${h.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${t}</span>`;
+            full.appendChild(el);
+          });
+        }
+        const preview = $('log-preview');
+        if (preview){
+          preview.innerHTML = '';
+          hashLogEntries.slice(0,2).forEach(({hash: h, time: t})=>{
+            const el = document.createElement('li');
+            el.innerHTML = `<span class="kbd">${h.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${t}</span>`;
+            preview.appendChild(el);
+          });
+        }
+      }
       function updateLegend(){
         const el = $('legend');
         el.innerHTML = '';
@@ -690,6 +715,7 @@
         const { price: initialPrice } = await fetchBTCPrice();
         addHashLog(generateHashFromPrice(initialPrice), new Date().toLocaleTimeString());
         setInterval(updateHashCloud, 60_000);
+        updateHashCloud();
 
         // Mapping
         $('mapping').addEventListener('change', async (e) => {
@@ -790,6 +816,8 @@
           const card = $('log-card');
           const hidden = card.style.display === 'none';
           card.style.display = hidden ? '' : 'none';
+          const preview = $('log-preview');
+          if (preview) preview.style.display = hidden ? 'none' : '';
           vibrate(8, gamepadAPI.controller);
         });
         $('toggle-metrics').addEventListener('click', () => {
