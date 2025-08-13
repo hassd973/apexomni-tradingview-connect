@@ -95,6 +95,15 @@
                                 flex-direction: column;
                                 line-height: 1.6;
                         }
+                        body.light {
+                                filter: invert(1) hue-rotate(180deg);
+                        }
+                        body.light img,
+                        body.light video,
+                        body.light canvas,
+                        body.light iframe {
+                                filter: invert(1) hue-rotate(180deg);
+                        }
                         body.locked > :not(#access-overlay) {
                                 display: none !important;
                         }
@@ -2420,6 +2429,7 @@
         <body
                 class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF00]"
         >
+               <button id="theme-toggle" class="fixed top-2 right-2 z-50 bg-green-500 text-black px-2 py-1 rounded">Light</button>
                <div id="access-overlay">
                        <div id="overlay-content">
                                <canvas id="qCanvas" class="q-hero-canvas fade-in" width="600" height="600" style="animation-delay:0s"></canvas>
@@ -7754,6 +7764,23 @@ function setupModuleToggles() {
                                 }
                         });
                         updateModeLabel();
+                </script>
+                <script>
+                        (function(){
+                                const toggle=document.getElementById('theme-toggle');
+                                if(!toggle) return;
+                                const setTheme=(mode)=>{
+                                        document.body.classList.toggle('light', mode==='light');
+                                        toggle.textContent = mode==='light' ? 'Dark' : 'Light';
+                                };
+                                const saved=localStorage.getItem('site-theme')||'dark';
+                                setTheme(saved);
+                                toggle.addEventListener('click',()=>{
+                                        const next=document.body.classList.contains('light')?'dark':'light';
+                                        setTheme(next);
+                                        localStorage.setItem('site-theme',next);
+                                });
+                        })();
                 </script>
         </body>
 </html>
