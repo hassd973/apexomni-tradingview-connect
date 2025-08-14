@@ -12,6 +12,7 @@ const path = require('path');
 const ytdl = require('ytdl-core');
 const youtubeAudioStream = require('youtube-audio-stream');
 const fs = require('fs');
+const multer = require('multer');
 
 let apexomniBuildOrderParams;
 let apexomniCreateOrder;
@@ -62,6 +63,20 @@ app.use(cors());
 // Parse JSON bodies
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// File upload setup for 3D models
+const uploadsDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+const upload = multer({ dest: uploadsDir });
+
+app.post('/api/upload-model', upload.single('model'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  res.json({ filename: req.file.filename, originalName: req.file.originalname });
+});
 
 // Better Stack configuration
 // Credentials are expected via environment variables to avoid hard coding
