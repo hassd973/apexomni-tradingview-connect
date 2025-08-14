@@ -62,8 +62,7 @@
       #stagePanel{ grid-area:stage; min-height:62dvh; }
       .stage{ position:absolute; inset:0; }
       .overlay{ position:absolute; left:12px; top:12px; display:flex; flex-wrap:wrap; gap:6px; pointer-events:none; }
-      .legend{ position:absolute; left:12px; right:12px; bottom:12px; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; pointer-events:none; }
-      .legend .swatch{ width:12px; height:12px; border-radius:3px; margin-right:4px; border:1px solid rgba(255,255,255,.4); }
+      .legend{ position:absolute; left:0; right:0; bottom:0; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; pointer-events:none; padding:0.5rem; background:var(--panel-bg); border-top:1px solid var(--panel-brd); font-size:12px; }
       canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background:#000; touch-action:none; }
 
       /* Dedicated fullscreen buttons */
@@ -170,7 +169,15 @@
             <div class="chip" id="m-status">Status — Init…</div>
           </div>
           <canvas id="btc-hash-canvas" aria-label="BTC hash visualization"></canvas>
-          <div class="legend" id="legend" aria-live="polite"></div>
+          <div class="legend" id="btc-legend" aria-live="polite">
+            <span id="btc-price">Price: Loading...</span>
+            <span id="btc-time">Time: Loading...</span>
+            <span id="btc-date">Date: Loading...</span>
+            <span id="btc-volume">Volume: Loading...</span>
+            <span id="btc-volatility">Volatility: Loading...</span>
+            <span id="btc-momentum">Momentum: Loading...</span>
+            <span id="camera-pos">Pos: 0,0,0</span>
+          </div>
           <ul id="log-preview" class="log-preview" aria-live="polite"></ul>
         </div>
       </section>
@@ -287,7 +294,7 @@
       const $ = (id) => document.getElementById(id);
       const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
       const canvas = $('btc-hash-canvas');
-      let renderer, scene, camera, controls, axes; let dotClouds = []; let colorLegend = []; let hashLogEntries = [];
+      let renderer, scene, camera, controls, axes; let dotClouds = []; let hashLogEntries = []; let customGeometry = null;
       const DPR_CAP = 2;
 
       function vibrate(ms, gamepad = null){
@@ -330,16 +337,40 @@
 
       async function updateMetrics(){
         try {
-          const [{ price, volume, change }, hashrate, diff] = await Promise.all([
+          const [{ price, volume, change }, hashrate, diff, historical] = await Promise.all([
             fetchBTCPrice(),
             fetchBTCHashRate(),
-            fetchBTCDifficulty()
+            fetchBTCDifficulty(),
+            fetchBTCHistorical()
           ]);
+          // top overlay
           $('m-price').textContent = `Price — ${nfUSD.format(price)}`;
           $('m-volume').textContent = `Volume — ${nfUSD.format(volume)}`;
           $('m-change').textContent = `24h — ${change.toFixed(2)}%`;
           $('m-hashrate').textContent = `Hashrate — ${hashrate.toFixed(2)} EH/s`;
           $('m-diff').textContent = `Difficulty — ${diff.toLocaleString()}`;
+
+          // bottom legend metrics
+          let latestTime = new Date().toLocaleTimeString();
+          let latestVolume = volume;
+          let volatility = 0;
+          let momentum = 0;
+          if (historical && historical.prices && historical.prices.length >= 2) {
+            const prices = historical.prices;
+            const volumes = historical.total_volumes;
+            latestTime = new Date(prices[prices.length - 1][0]).toLocaleTimeString();
+            latestVolume = volumes[volumes.length - 1][1];
+            const recent = prices.slice(-10).map(p=>p[1]);
+            volatility = ((Math.max(...recent) - Math.min(...recent)) / price) * 100;
+            momentum = price - prices[prices.length - 2][1];
+          }
+          $('btc-price').textContent = `Price: $${price.toLocaleString()}`;
+          $('btc-time').textContent = `Time: ${latestTime}`;
+          $('btc-date').textContent = `Date: ${new Date().toLocaleDateString()}`;
+          $('btc-volume').textContent = `Volume: ${latestVolume.toLocaleString()}`;
+          $('btc-volatility').textContent = `Volatility: ${volatility.toFixed(2)}%`;
+          $('btc-momentum').textContent = `Momentum: ${momentum >= 0 ? '+' : ''}${momentum.toFixed(2)}`;
+          if (camera) $('camera-pos').textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
         } catch (err) {
           console.warn('Failed to update metrics', err);
         }
@@ -368,17 +399,6 @@
           });
         }
       }
-      function updateLegend(){
-        const el = $('legend');
-        el.innerHTML = '';
-        colorLegend.slice(-6).forEach((c)=>{
-          const item = document.createElement('div');
-          item.className = 'chip';
-          item.innerHTML = `<span class="swatch" style="background:${c.color}"></span><span>${c.label}</span>`;
-          el.appendChild(item);
-        });
-      }
-
       function init3D(){
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(75, 1, 0.1, 5000);
@@ -399,7 +419,7 @@
         function resize(){ const w=canvas.clientWidth, h=canvas.clientHeight; renderer.setSize(w,h,false); camera.aspect = w/(h||1); camera.updateProjectionMatrix(); }
       }
 
-      function clearClouds(){ dotClouds.forEach(c=>scene.remove(c)); dotClouds=[]; colorLegend=[]; updateLegend(); }
+      function clearClouds(){ dotClouds.forEach(c=>scene.remove(c)); dotClouds=[]; }
 
       async function drawOriginalFromMarket(){
         const data = await fetchBTCHistorical(); if (!data) return;
@@ -422,15 +442,27 @@
             colors.push(cloudColor.r, cloudColor.g, cloudColor.b);
           }
         }
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
-        geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
-        const mat = new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
-        const cloud = new THREE.Points(geo,mat); scene.add(cloud); dotClouds.push(cloud);
+        const count = positions.length/3;
+        let cloud;
+        if (customGeometry) {
+          const mat = new THREE.MeshBasicMaterial({ color: cloudColor });
+          const mesh = new THREE.InstancedMesh(customGeometry, mat, count);
+          const dummy = new THREE.Object3D();
+          for(let i=0;i<count;i++){
+            dummy.position.set(positions[i*3], positions[i*3+1], positions[i*3+2]);
+            dummy.updateMatrix();
+            mesh.setMatrixAt(i, dummy.matrix);
+          }
+          cloud = mesh;
+        } else {
+          const geo = new THREE.BufferGeometry();
+          geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+          geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+          const mat = new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
+          cloud = new THREE.Points(geo,mat);
+        }
+        scene.add(cloud); dotClouds.push(cloud);
         dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
-        const latestTime = new Date(timestamps[timestamps.length-1]).toLocaleTimeString();
-        colorLegend.push({ color:cloudColorHex, label:`$${latestPrice.toLocaleString()} ${latestTime}` });
-        updateLegend();
       }
 
       function layoutFromHash(hash, mapping){
@@ -444,12 +476,25 @@
           else{ const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
           positions.push(x,y,z); colors.push(base.r, base.g, base.b);
         }
-        const geo=new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
-        const mat=new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
-        const cloud=new THREE.Points(geo,mat); scene.add(cloud); dotClouds.push(cloud);
+        const count = positions.length/3;
+        let cloud;
+        if (customGeometry) {
+          const mat = new THREE.MeshBasicMaterial({ color: base });
+          const mesh = new THREE.InstancedMesh(customGeometry, mat, count);
+          const dummy = new THREE.Object3D();
+          for(let i=0;i<count;i++){
+            dummy.position.set(positions[i*3], positions[i*3+1], positions[i*3+2]);
+            dummy.updateMatrix();
+            mesh.setMatrixAt(i, dummy.matrix);
+          }
+          cloud = mesh;
+        } else {
+          const geo=new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+          const mat=new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
+          cloud=new THREE.Points(geo,mat);
+        }
+        scene.add(cloud); dotClouds.push(cloud);
         dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
-        colorLegend.push({ color: base.getStyle(), label:`Hash ${hash.slice(0,6)}` });
-        updateLegend();
       }
 
       async function updateHashCloud(){
@@ -467,26 +512,16 @@
         }catch(err){ console.warn('Auto update failed', err); }
       }
 
-      // --- Model import → point cloud -------------------------------------
+      // --- Model import → instanced geometry -------------------------------------
       const fbxLoader = new THREE.FBXLoader();
       const objLoader = new THREE.OBJLoader();
-      function addModelAsPointCloud(obj, name='Model'){
-        clearClouds();
-        const positions=[]; const colors=[]; const color = new THREE.Color($('modelColor').value || '#22d3ee');
-        const stride = Math.max(1, parseInt(($('modelStride').value||'1'),10));
-        obj.traverse(n=>{
-          if(n.isMesh && n.geometry){
-            const g = new THREE.BufferGeometry().fromGeometry ? new THREE.BufferGeometry().fromGeometry(n.geometry) : n.geometry;
-            const pos = g.attributes.position; if (!pos) return;
-            for(let i=0;i<pos.count;i+=stride){ positions.push(pos.getX(i), pos.getY(i), pos.getZ(i)); colors.push(color.r, color.g, color.b); }
-          }
-        });
-        if(!positions.length){ console.warn('No vertices found in model'); $('m-status').textContent = `Status — No vertices found in ${name}`; vibrate(30); return; }
-        const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
-        const mat = new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:0.9 });
-        const cloud = new THREE.Points(geo, mat); cloud.name = `Model:${name}`; scene.add(cloud); dotClouds.push(cloud);
-        colorLegend.push({ color: color.getStyle(), label: name }); updateLegend();
-        $('m-status').textContent = `Status — Model '${name}' added (${positions.length.toLocaleString()} pts, stride ${stride})`;
+      async function setModelGeometry(obj, name='Model'){
+        let geom=null;
+        obj.traverse(n=>{ if(!geom && n.isMesh && n.geometry){ geom = n.geometry.clone(); } });
+        if(!geom){ $('m-status').textContent = `Status — No mesh found in ${name}`; vibrate(30); return; }
+        customGeometry = new THREE.BufferGeometry().fromGeometry ? new THREE.BufferGeometry().fromGeometry(geom) : geom;
+        $('m-status').textContent = `Status — Model '${name}' loaded`;
+        await updateHashCloud();
       }
 
       function handleModelFile(file){
@@ -497,12 +532,12 @@
         const reader = new FileReader();
         reader.onerror = ()=>{ $('modelStatus').textContent = 'Failed to read file.'; vibrate(30); };
         reader.onprogress = (e)=>{ if (e.lengthComputable){ const p = (e.loaded/e.total)*100; bar.style.width = p.toFixed(1)+'%'; } };
-        reader.onload = ()=>{
+        reader.onload = async ()=>{
           try{
             const start = performance.now();
             const result = reader.result;
             const object = /\.fbx$/i.test(file.name) ? fbxLoader.parse(result, '') : objLoader.parse(result);
-            addModelAsPointCloud(object, file.name.replace(/\.(fbx|obj)$/i,''));
+            await setModelGeometry(object, file.name.replace(/\.(fbx|obj)$/i,''));
             const ms = Math.max(1, performance.now()-start).toFixed(0);
             $('modelStatus').textContent = `Parsed ${file.name} in ${ms} ms`;
             bar.style.width = '100%'; setTimeout(()=>{ bar.style.width='0%'; }, 1200); vibrate(8);
@@ -657,6 +692,10 @@
         requestAnimationFrame(animate);
         controls && controls.update();
         handleGamepadInput();
+        if (camera) {
+          const cp = $('camera-pos');
+          if (cp) cp.textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
+        }
         renderer.render(scene, camera);
       }
 
@@ -824,10 +863,10 @@
         });
         $('toggle-metrics').addEventListener('click', () => {
           const m = $('metrics');
-          const l = $('legend');
+          const b = $('btc-legend');
           const hidden = m.style.display === 'none';
           m.style.display = hidden ? 'flex' : 'none';
-          l.style.display = hidden ? 'flex' : 'none';
+          b.style.display = hidden ? 'flex' : 'none';
           vibrate(8, gamepadAPI.controller);
         });
 

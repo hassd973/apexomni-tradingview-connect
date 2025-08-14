@@ -84,6 +84,11 @@
                                 --primary-color: var(--quantumi-green);
                                 --secondary-color: var(--quantumi-green);
                                 --shadow-color: rgba(0, 255, 0, 0.3);
+                                --panel-bg: rgba(12,15,18,.6);
+                                --panel-brd: rgba(255,255,255,.08);
+                                --card: rgba(12,15,18,.6);
+                                --focus: var(--primary-color);
+                                --ring: rgba(0,255,0,.35);
                         }
                         body {
                                 font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -107,6 +112,12 @@
                         body.locked > :not(#access-overlay) {
                                 display: none !important;
                         }
+                       .btn{ background:var(--card); border:1px solid var(--focus); color:var(--text-color); border-radius:12px; padding:10px 14px; cursor:pointer; transition:background .18s,color .18s,transform .06s,border-color .18s; min-width:44px; min-height:44px; }
+                       .btn:hover,.btn:focus{ background:var(--focus); color:#0b0d0f; outline:none; box-shadow:0 0 0 4px var(--ring); }
+                       .btn:active{ transform:translateY(1px); }
+                       .seg{ display:inline-flex; border:1px solid var(--panel-brd); background:var(--panel-bg); border-radius:12px; overflow:hidden; }
+                       .seg button{ border:0; padding:10px 12px; min-width:44px; }
+                       .seg button[aria-pressed="true"]{ background:var(--focus); color:#08110d; }
                         h1,
                         h2 {
                                 font-family: 'Satoshi', sans-serif;
@@ -2429,7 +2440,10 @@
         <body
                 class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF00]"
         >
-               <button id="theme-toggle" class="fixed top-2 right-2 z-50 bg-green-500 text-black px-2 py-1 rounded">Light</button>
+               <div class="seg fixed top-2 right-2 z-50" role="group" aria-label="Theme">
+                       <button class="btn" id="theme-dark" aria-pressed="true" title="Dark">◐</button>
+                       <button class="btn" id="theme-light" aria-pressed="false" title="Light">◑</button>
+               </div>
                <div id="access-overlay">
                        <div id="overlay-content">
                                <canvas id="qCanvas" class="q-hero-canvas fade-in" width="600" height="600" style="animation-delay:0s"></canvas>
@@ -7772,19 +7786,19 @@ function setupModuleToggles() {
                 </script>
                 <script>
                         (function(){
-                                const toggle=document.getElementById('theme-toggle');
-                                if(!toggle) return;
+                                const darkBtn=document.getElementById('theme-dark');
+                                const lightBtn=document.getElementById('theme-light');
+                                if(!darkBtn||!lightBtn) return;
+                                const key='site-theme';
                                 const setTheme=(mode)=>{
                                         document.body.classList.toggle('light', mode==='light');
-                                        toggle.textContent = mode==='light' ? 'Dark' : 'Light';
+                                        darkBtn.setAttribute('aria-pressed', String(mode==='dark'));
+                                        lightBtn.setAttribute('aria-pressed', String(mode==='light'));
                                 };
-                                const saved=localStorage.getItem('site-theme')||'dark';
+                                const saved=localStorage.getItem(key)||'dark';
                                 setTheme(saved);
-                                toggle.addEventListener('click',()=>{
-                                        const next=document.body.classList.contains('light')?'dark':'light';
-                                        setTheme(next);
-                                        localStorage.setItem('site-theme',next);
-                                });
+                                darkBtn.addEventListener('click',()=>{ setTheme('dark'); localStorage.setItem(key,'dark'); });
+                                lightBtn.addEventListener('click',()=>{ setTheme('light'); localStorage.setItem(key,'light'); });
                         })();
                 </script>
         </body>
