@@ -11,7 +11,10 @@ https://tradingview-connector.gitbook.io/tradingview-alert-connector-tutorial/
 git clone https://github.com/cj2094/apexomni-tradingview-connect
 cd apexomni-tradingview-connect
 npm install --force
+npm install --prefix backend
 ```
+
+The second install command ensures backend-specific dependencies like `multer` are available.
 
 # Quick Start
 
