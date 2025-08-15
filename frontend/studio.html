@@ -326,14 +326,18 @@
       }
       async function fetchBTCPrice(){
         try {
-          const d = await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin');
-          return {
-            price: d.market_data.current_price.usd,
-            volume: d.market_data.total_volume.usd,
-            change: d.market_data.price_change_percentage_24h
-          };
+          return await fetchWithRetry('/api/btc/price');
         } catch {
-          return { price:60000, volume:4_500_000, change:0 };
+          try {
+            const d = await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin');
+            return {
+              price: d.market_data.current_price.usd,
+              volume: d.market_data.total_volume.usd,
+              change: d.market_data.price_change_percentage_24h
+            };
+          } catch {
+            return { price:60000, volume:4_500_000, change:0 };
+          }
         }
       }
       async function fetchBTCHistorical(){
