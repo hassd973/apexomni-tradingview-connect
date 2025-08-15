@@ -299,6 +299,22 @@ app.get('/api/live-logs', async (req, res) => {
 });
 
 // BTC metrics endpoints used by the studio front-end
+app.get('/api/btc/price', async (_req, res) => {
+  try {
+    const { data } = await axios.get('https://api.coingecko.com/api/v3/coins/bitcoin', {
+      timeout: 10000,
+    });
+    res.json({
+      price: data.market_data.current_price.usd,
+      volume: data.market_data.total_volume.usd,
+      change: data.market_data.price_change_percentage_24h,
+    });
+  } catch (err) {
+    console.error('Error fetching BTC price:', err.message);
+    res.json({ price: 60000, volume: 4_500_000, change: 0 });
+  }
+});
+
 app.get('/api/btc/historical', async (_req, res) => {
   try {
     const url = 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart';
