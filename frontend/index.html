@@ -4945,37 +4945,6 @@ function setupModuleToggles() {
 				}
 			}
 
-			async function fetchTextWithRetry(
-				url,
-				options = {},
-				retries = 3,
-				delay = 1000
-			) {
-				for (let i = 0; i <= retries; i++) {
-					try {
-						const response = await fetch(url, {
-							method: 'GET',
-							mode: 'cors',
-							credentials: 'omit',
-							headers: { Accept: 'text/plain', ...options.headers },
-							...options
-						});
-						if (!response.ok)
-							throw new Error(
-								`HTTP error! Status: ${response.status}, Text: ${response.statusText}`
-							);
-						return await response.text();
-					} catch (error) {
-						if (i === retries) throw error;
-						const backoff = delay * Math.pow(2, i);
-						console.warn(
-							`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${backoff}ms: ${error.message}`
-						);
-						await new Promise((resolve) => setTimeout(resolve, backoff));
-					}
-				}
-			}
-
 			async function fetchBTCPrice() {
 				const url = 'https://api.coingecko.com/api/v3/coins/bitcoin';
 				try {
@@ -4999,37 +4968,21 @@ function setupModuleToggles() {
 				}
 			}
 
-			async function fetchBTCHistoricalData() {
-				const url =
-					'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1';
-				try {
-					const data = await fetchWithRetry(url);
-					return data;
-				} catch (error) {
-					console.error('Failed to fetch BTC historical data:', error);
-					return null;
-				}
-			}
-
-                        async function fetchBTCHashRate() {
-                                const url = 'https://api.blockchain.info/q/hashrate?cors=true';
+                        async function fetchBTCHistoricalData() {
                                 try {
-                                        const text = await fetchTextWithRetry(url);
-                                        return parseFloat(text) / 1e9;
+                                        return await fetchWithRetry('/api/btc/historical');
                                 } catch (error) {
-                                        console.warn('Failed to fetch BTC hash rate:', error);
-                                        return 0;
+                                        console.error('Failed to fetch BTC historical data:', error);
+                                        return null;
                                 }
                         }
 
-                        async function fetchBTCDifficulty() {
-                                const url = 'https://api.blockchain.info/q/getdifficulty?cors=true';
+                        async function fetchBTCStats() {
                                 try {
-                                        const text = await fetchTextWithRetry(url);
-                                        return parseFloat(text);
+                                        return await fetchWithRetry('/api/btc/stats');
                                 } catch (error) {
-                                        console.warn('Failed to fetch BTC difficulty:', error);
-                                        return 0;
+                                        console.warn('Failed to fetch BTC stats:', error);
+                                        return { hashrate: 0, diff: 0 };
                                 }
                         }
 
@@ -5323,20 +5276,19 @@ function setupModuleToggles() {
 				animate();
 			}
 
-			async function updateBTCHash() {
-				isBTCPriceMock = false;
+                        async function updateBTCHash() {
+                                isBTCPriceMock = false;
 
-				let historicalData;
-				const [hashRate, difficulty] = await Promise.all([
-					fetchBTCHashRate(),
-					fetchBTCDifficulty()
-				]);
-				try {
-					historicalData = await fetchBTCHistoricalData();
-				} catch (error) {
-					isBTCPriceMock = true;
-					historicalData = null;
-				}
+                                const stats = await fetchBTCStats();
+                                let historicalData;
+                                try {
+                                        historicalData = await fetchBTCHistoricalData();
+                                } catch (error) {
+                                        isBTCPriceMock = true;
+                                        historicalData = null;
+                                }
+                                const hashRate = stats.hashrate;
+                                const difficulty = stats.diff;
 
 				if (historicalData) {
 					const prices = historicalData.prices;
