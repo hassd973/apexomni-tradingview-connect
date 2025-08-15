@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>BTC Hash Visualizer — Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">BTC Visual Studio</div>
+    <div class="controls">
+      <input id="prompt" class="prompt" placeholder="Type a style… e.g. 'lush grass', 'rocky canyon', 'neon city'">
+      <button id="applyPrompt">Apply</button>
+      <label class="slider">
+        Point Size
+        <input id="size" type="range" min="0.25" max="4" step="0.05" value="1.2">
+      </label>
+      <label class="slider">
+        Density
+        <input id="density" type="range" min="0.1" max="1" step="0.05" value="1">
+      </label>
+      <button id="playBtn" class="primary">Play (Fullscreen)</button>
+      <button id="resetCam">Reset Camera</button>
+    </div>
+  </header>
+
+  <main id="app">
+    <canvas id="webgl"></canvas>
+    <div id="hud" class="hud hidden">
+      <div class="crosshair"></div>
+      <div class="hint">WASD to move • Space to jump • Shift to run • Esc to exit</div>
+      <div id="fps" class="fps">— fps</div>
+    </div>
+  </main>
+
+  <footer class="status">
+    <span id="statusText">Loading…</span>
+  </footer>
+
+  <!-- Vendor: Three.js + helpers -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/examples/js/controls/PointerLockControls.js"></script>
+
+  <!-- App -->
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
