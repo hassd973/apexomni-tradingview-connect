@@ -324,9 +324,6 @@
       async function fetchWithRetry(url, opts = {}, retries = 2, delay = 600) {
         for (let i = 0; i <= retries; i++) { try { const r = await fetch(url, opts); if (!r.ok) throw new Error(`${r.status}`); return await r.json(); } catch (e){ if (i === retries) throw e; await new Promise(res=>setTimeout(res, delay*Math.pow(2,i))); } }
       }
-      async function fetchTextWithRetry(url, retries = 2, delay = 600) {
-        for (let i = 0; i <= retries; i++) { try { const r = await fetch(url); if (!r.ok) throw new Error(`${r.status}`); return await r.text(); } catch (e){ if (i === retries) throw e; await new Promise(res=>setTimeout(res, delay*Math.pow(2,i))); } }
-      }
       async function fetchBTCPrice(){
         try {
           const d = await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin');
@@ -339,16 +336,26 @@
           return { price:60000, volume:4_500_000, change:0 };
         }
       }
-      async function fetchBTCHistorical(){ try { return await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1'); } catch { return null; } }
-      async function fetchBTCHashRate(){ try { return parseFloat(await fetchTextWithRetry('https://api.blockchain.info/q/hashrate?cors=true'))/1e9; } catch { return 0; } }
-      async function fetchBTCDifficulty(){ try { return parseFloat(await fetchTextWithRetry('https://api.blockchain.info/q/getdifficulty?cors=true')); } catch { return 0; } }
+      async function fetchBTCHistorical(){
+        try {
+          return await fetchWithRetry('/api/btc/historical');
+        } catch {
+          return null;
+        }
+      }
+      async function fetchBTCStats(){
+        try {
+          return await fetchWithRetry('/api/btc/stats');
+        } catch {
+          return { hashrate: 0, diff: 0 };
+        }
+      }
 
       async function updateMetrics(){
         try {
-          const [{ price, volume, change }, hashrate, diff, historical] = await Promise.all([
+          const [{ price, volume, change }, { hashrate, diff }, historical] = await Promise.all([
             fetchBTCPrice(),
-            fetchBTCHashRate(),
-            fetchBTCDifficulty(),
+            fetchBTCStats(),
             fetchBTCHistorical()
           ]);
           // top overlay
@@ -817,7 +824,7 @@
         });
         $('aiStyle').addEventListener('change', (e)=>{ applyAiStyle(e.target.value); });
         $('walk-mode').addEventListener('click', ()=>{
-          window.walkMode.startWalkMode(camera, renderer);
+          window.walkMode?.startWalkMode?.(camera, renderer);
         });
 
         // Hash controls
