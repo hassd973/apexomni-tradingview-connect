@@ -1,50 +1,973 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>BTC Hash Visualizer — Studio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
-  <link rel="stylesheet" href="../styles.css" />
-</head>
-<body>
-  <header class="topbar">
-    <div class="brand">BTC Visual Studio</div>
-    <div class="controls">
-      <input id="prompt" class="prompt" placeholder="Type a style… e.g. 'lush grass', 'rocky canyon', 'neon city'">
-      <button id="applyPrompt">Apply</button>
-      <label class="slider">
-        Point Size
-        <input id="size" type="range" min="0.25" max="4" step="0.05" value="1.2">
-      </label>
-      <label class="slider">
-        Density
-        <input id="density" type="range" min="0.1" max="1" step="0.05" value="1">
-      </label>
-      <button id="playBtn" class="primary">Play (Fullscreen)</button>
-      <button id="resetCam">Reset Camera</button>
-    </div>
-  </header>
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <title>QUANTUMI • BTC Hash Studio — Pro (v3.4)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0d0f12" id="meta-theme-color" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-  <main id="app">
-    <canvas id="webgl"></canvas>
-    <div id="hud" class="hud hidden">
-      <div class="crosshair"></div>
-      <div class="hint">WASD to move • Space to jump • Shift to run • Esc to exit</div>
-      <div id="fps" class="fps">— fps</div>
-    </div>
-  </main>
+    <!-- Fonts + Tailwind (CDN) -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sixtyfour:BLED,SCAN@0..100,-53..100&family=Sora:wght@100..800&display=swap" rel="stylesheet" />
 
-  <footer class="status">
-    <span id="statusText">Loading…</span>
-  </footer>
+    <style>
+      /* ---------- Design System ---------- */
+      *, *::before, *::after { box-sizing: border-box; }
+      :root{
+        --bg:#0e1013; --fg:#f7f8fb; --muted:#cfd3d8; --accent:#00FF7F; --accent-2:#00FF00;
+        --border:rgba(0,255,127,.28); --card:#0b0d10; --soft:rgba(0,255,127,.10);
+        --focus:#00FF7F; --danger:#ff6161; --ring: rgba(0,255,127,.35);
+        --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
+        --panel-bg: rgba(13,15,18,.55); --panel-brd: rgba(255,255,255,.08);
+        --chip-bg: rgba(255,255,255,.06);
+      }
+      [data-theme="light"]{
+        --bg:#f2f2f7; --fg:#0b0e11; --muted:#6b7280;
+        --accent:#0A84FF; --accent-2:#34C759;
+        --border:rgba(10,132,255,.18); --card:#ffffff; --soft:rgba(10,132,255,.06);
+        --focus:#0A84FF; --danger:#ff3b30; --ring: rgba(10,132,255,.24);
+        --panel-bg: rgba(255,255,255,.92); --panel-brd: rgba(0,0,0,.06);
+        --chip-bg: rgba(0,0,0,.04);
+      }
+      html,body{ height:100%; color:var(--fg); font-family:'Sora',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
+      body{ display:flex; flex-direction:column; min-height:100dvh; overflow-x:hidden; background: var(--bg); -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
 
-  <!-- Vendor: Three.js + helpers -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.160.1/examples/js/controls/PointerLockControls.js"></script>
+      /* Header */
+      header{ position:sticky; top:0; z-index:50; padding-top:var(--safe-top);
+        background:linear-gradient(180deg, var(--panel-bg), transparent);
+        border-bottom:1px solid var(--panel-brd); backdrop-filter:saturate(180%) blur(16px); -webkit-backdrop-filter:saturate(180%) blur(16px); }
+      .brand{ display:flex; align-items:center; gap:.6rem; padding:12px 16px 10px; flex-wrap:wrap; }
+      .logo{ font-family:'Sixtyfour',sans-serif; font-size:clamp(20px,4vw,32px); letter-spacing:2px; text-shadow:0 1px 6px #000c; }
+      .sub{ font-size:12px; opacity:.75; }
+      .right{ margin-left:auto; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
 
-  <!-- App -->
-  <script type="module" src="../app.js"></script>
-</body>
+      /* Buttons */
+      .btn{ background:var(--card); border:1px solid var(--focus); color:var(--fg); border-radius:12px; padding:10px 14px; cursor:pointer; transition:background .18s, color .18s, transform .06s, border-color .18s; min-width:44px; min-height:44px; }
+      .btn:hover,.btn:focus{ background:var(--focus); color:#0b0d0f; outline:none; box-shadow:0 0 0 4px var(--ring); }
+      .btn:active{ transform: translateY(1px); }
+      .seg{ display:inline-flex; border:1px solid var(--panel-brd); background:var(--panel-bg); border-radius:12px; overflow:hidden; }
+      .seg button{ border:0; padding:10px 12px; min-width:44px; }
+      .seg button[aria-pressed="true"]{ background:var(--focus); color:#08110d; }
+
+      /* Chips */
+      .chip{ background:var(--chip-bg); border:1px solid var(--panel-brd); padding:.4rem .6rem; border-radius:999px; font-size:12px; display:inline-flex; align-items:center; gap:.5rem; }
+
+      /* Layout */
+      main{ flex:1; display:grid; grid-template-columns:1fr 360px; grid-template-areas: 'stage aside' 'controls aside'; gap:12px; padding:12px 14px; }
+      .panel{ background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:16px; box-shadow:0 2px 20px #0006; position:relative; overflow:hidden; }
+      #stagePanel{ grid-area:stage; min-height:62dvh; }
+      .stage{ position:absolute; inset:0; }
+      .overlay{ position:absolute; left:12px; top:12px; display:flex; flex-wrap:wrap; gap:6px; pointer-events:none; }
+      .legend{ position:absolute; left:0; right:0; bottom:0; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; pointer-events:none; padding:0.5rem; background:var(--panel-bg); border-top:1px solid var(--panel-brd); font-size:12px; }
+      canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background:#000; touch-action:none; }
+
+      /* Dedicated fullscreen buttons */
+      .mobile-fs-btn{ display:none; position:absolute; right:12px; top:12px; background:var(--soft); border:1px solid var(--border); color:var(--accent-2); border-radius:14px; padding:12px; z-index:20; font-size: 16px; }
+      .desktop-fs-btn{ display:inline-flex; }
+
+      @media (max-width:1180px){ main{ grid-template-columns:1fr; grid-template-areas:'stage' 'controls' 'aside'; } }
+      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } .desktop-fs-btn{ display:none; } main{ padding:8px; gap:8px; grid-template-areas:'stage' 'controls' 'aside'; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:space-between; } }
+
+      .aside{ grid-area:aside; display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
+      .card{ background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:14px; padding:12px; }
+      .log{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+      .log-preview{ list-style:none; margin:0; padding:0; position:absolute; left:12px; bottom:72px; display:flex; flex-direction:column; gap:4px; pointer-events:none; }
+      .log-preview li{ background:var(--panel-bg); border:1px solid var(--panel-brd); padding:4px 6px; border-radius:6px; font-size:11px; }
+      @media (min-width:641px){ #log-preview{ display:none; } }
+      .kbd{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background:#111; border:1px solid rgba(255,255,255,.08); padding:2px 6px; border-radius:6px; font-size:11px; }
+
+      footer{ flex-shrink:0; border-top:1px solid var(--panel-brd); background:var(--panel-bg); backdrop-filter:saturate(180%) blur(12px); -webkit-backdrop-filter:saturate(180%) blur(12px); padding:10px 14px calc(10px + var(--safe-bottom)); font-size:12px; color:#aab; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+
+      /* Controls rail */
+      #controls-toggle{ display:inline-flex; margin:0 14px 12px; }
+      #controls-rail{ grid-area:controls; }
+      .controls-rail{ padding:10px 14px 12px; flex-shrink:0; transition:max-height .25s ease; overflow:hidden; }
+      .controls-rail[aria-hidden="true"]{ max-height:0; padding:0 14px; }
+      .controls-rail[aria-hidden="false"]{ max-height:80vh; overflow-y:auto; padding:10px 14px 12px; }
+      @media (max-width:640px){
+        .controls-rail{
+          position:static;
+          max-height:none;
+          background:var(--panel-bg);
+          border-top:1px solid var(--panel-brd);
+          box-shadow:none;
+        }
+      }
+      .controls{ width:100%; display:grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap:10px; background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:16px; padding:14px; box-shadow:0 2px 20px #0006; }
+      .ctrl{ width:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px; background:rgba(12,15,18,.6); backdrop-filter:saturate(160%) blur(12px); -webkit-backdrop-filter:saturate(160%) blur(12px); border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:10px; min-height:52px; }
+      [data-theme="light"] .ctrl{ background:rgba(255,255,255,.92); border:1px solid rgba(0,0,0,.06); }
+      .ctrl label{ font-size:12px; white-space:nowrap; opacity:.9; }
+      .ctrl input[type="text"], .ctrl input[type="number"], .ctrl input[type="range"], .ctrl select, .ctrl input[type="email"], .ctrl input[type="file"], .ctrl input[type="color"]{ flex:1 1 auto; min-width:0; background:#000; border:1.5px solid #444; color:#fff; border-radius:12px; padding:12px; outline:none; }
+      [data-theme="light"] .ctrl input, [data-theme="light"] .ctrl select{ background:#fff; color:#111; border-color:#cbd5e1; }
+      .ctrl input:focus, .ctrl select:focus{ border-color:var(--focus); box-shadow:0 0 0 3px var(--ring); }
+      .ctrl input[type="range"]{ padding:0; -webkit-appearance:none; appearance:none; background:transparent; }
+      .ctrl input[type="range"]::-webkit-slider-runnable-track{ height:4px; background:rgba(10,132,255,.3); border-radius:2px; }
+      .ctrl input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none; width:18px; height:18px; border-radius:50%; background:var(--accent); cursor:pointer; margin-top:-7px; }
+      .ctrl input[type="range"]::-moz-range-track{ height:4px; background:rgba(10,132,255,.3); border-radius:2px; }
+      .ctrl input[type="range"]::-moz-range-thumb{ width:18px; height:18px; border-radius:50%; background:var(--accent); cursor:pointer; }
+
+      /* Dropzone */
+      .dropzone{ position:relative; border:2px dashed var(--border); border-radius:14px; padding:14px; width:100%; min-height:84px; display:flex; align-items:center; justify-content:center; gap:10px; background:var(--soft); }
+      .dropzone.drag{ border-color:var(--focus); box-shadow:0 0 0 4px var(--ring); }
+      .progress{ height:10px; background:rgba(255,255,255,.1); border-radius:9999px; overflow:hidden; }
+      .progress > span{ display:block; height:100%; width:0%; background:var(--focus); transition:width .25s ease; }
+
+      /* Fullscreen */
+      .fs-target:fullscreen, .fs-target:-webkit-full-screen{ background:#000; width:100%; height:100%; }
+      .fs-btn-on{ display:none; } .fs-active .fs-btn-on{ display:inline-flex; } .fs-active .fs-btn-off{ display:none; }
+      .fs-fallback{ position:fixed; inset:0; width:100vw; height:100vh; height:100dvh; z-index:9999; background:#000; }
+      body.fs-noscroll{ overflow:hidden; }
+
+      /* Reduced motion */
+      @media (prefers-reduced-motion: reduce){ *{ animation: none !important; transition: none !important; } }
+    </style>
+
+    <!-- three.js r128 (kept for FBXLoader compatibility) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="brand">
+        <div class="logo">QUANTUMI</div>
+        <div class="sub">BTC Hash Studio — Pro</div>
+        <div class="right">
+          <a class="btn" id="home-btn" href="index.html" title="Home">⌂</a>
+          <button class="btn desktop-fs-btn" id="toggle-fs" title="Toggle fullscreen (F / dbl‑click)">⤢</button>
+          <button class="btn" id="toggle-log" title="Show/Hide log">≡</button>
+          <button class="btn" id="toggle-metrics" title="Show/Hide metrics">Σ</button>
+          <div class="seg" role="group" aria-label="Theme">
+            <button class="btn" id="theme-dark" aria-pressed="true" title="Dark">◐</button>
+            <button class="btn" id="theme-light" aria-pressed="false" title="Light">◑</button>
+          </div>
+          <div class="sub">v3.4</div>
+        </div>
+      </div>
+      <button id="controls-toggle" class="btn" type="button" aria-expanded="false" aria-controls="controls-rail">Controls</button>
+    </header>
+
+    <main id="main">
+      <section class="panel fs-target" id="stagePanel" aria-label="3D stage">
+        <div class="stage">
+          <button id="mobile-fs-toggle" class="mobile-fs-btn" aria-label="Toggle fullscreen">⤢</button>
+          <div class="overlay" id="metrics">
+            <canvas class="quantumi-logo w-12 h-12" aria-label="Quantumi logo"></canvas>
+            <div class="chip" id="m-price">Price —</div>
+            <div class="chip" id="m-volume">Volume —</div>
+            <div class="chip" id="m-change">24h —</div>
+            <div class="chip" id="m-hashrate">Hashrate —</div>
+            <div class="chip" id="m-diff">Difficulty —</div>
+            <div class="chip" id="m-mode">Mode — Original</div>
+            <div class="chip" id="m-axes">Axes — On</div>
+            <div class="chip" id="m-status">Status — Init…</div>
+          </div>
+          <canvas id="btc-hash-canvas" aria-label="BTC hash visualization"></canvas>
+          <div class="legend" id="btc-legend" aria-live="polite">
+            <span id="btc-price">Price: Loading...</span>
+            <span id="btc-time">Time: Loading...</span>
+            <span id="btc-date">Date: Loading...</span>
+            <span id="btc-volume">Volume: Loading...</span>
+            <span id="btc-volatility">Volatility: Loading...</span>
+            <span id="btc-momentum">Momentum: Loading...</span>
+            <span id="camera-pos">Pos: 0,0,0</span>
+          </div>
+          <ul id="log-preview" class="log-preview" aria-live="polite"></ul>
+        </div>
+      </section>
+
+      <div id="controls-rail" class="controls-rail" aria-hidden="true">
+        <div class="controls">
+          <div class="ctrl" title="Mapping from data to space. ‘Original’ uses time→Z, price→X, volume→Y.">
+            <label>Mapping</label>
+            <select id="mapping">
+              <option value="original" selected>Original (Time/Price/Volume)</option>
+              <option value="spiral">Spiral (time-curve)</option>
+              <option value="sphere">Sphere (volatility radius)</option>
+              <option value="helix">Helix (momentum tilt)</option>
+            </select>
+          </div>
+          <div class="ctrl" title="Instances per data point.">
+            <label>Density</label>
+            <input type="range" id="density" min="1" max="320" value="96" />
+          </div>
+          <div class="ctrl" title="Point size for dot clouds.">
+            <label>Point Size</label>
+            <input type="range" id="pointSize" min="0.005" max="0.5" step="0.005" value="0.02" />
+          </div>
+          <div class="ctrl" title="Color mode for clouds/instances.">
+            <label>Theme</label>
+            <select id="theme">
+              <option value="original">Original</option>
+              <option value="heatmap" selected>Heatmap (volatility)</option>
+              <option value="lifecycle">Lifecycle (volume)</option>
+            </select>
+          </div>
+          <div class="ctrl" title="Paste a hash, or use the latest block. Used when Mapping ≠ Original.">
+            <label>Hash</label>
+            <input id="hashInput" type="text" placeholder="Paste a block/tx hash…" inputmode="latin" autocomplete="off" />
+            <button class="btn" id="btnLatest" title="Use latest block-derived hash">Latest</button>
+            <button class="btn" id="btnRandom" title="Use random hash">Random</button>
+            <button class="btn" id="btnGenerate" title="Generate from price">Generate</button>
+          </div>
+          <div class="ctrl" title="Import an FBX/OBJ up to 500 MB to plot as a point cloud with BTC clouds.">
+            <label>Upload Model (FBX/OBJ ≤ 500 MB)</label>
+            <div class="dropzone" id="dropzone">
+              <input id="modelFile" type="file" accept=".fbx,.obj" aria-label="Upload model" class="sr-only" />
+              <span id="dropLabel">Drag & drop .fbx/.obj here or <button id="browseModel" class="btn" type="button">Browse</button></span>
+            </div>
+            <div class="w-full mt-2 progress" aria-hidden="true"><span id="progressBar"></span></div>
+            <div class="grid grid-cols-2 gap-2 w-full mt-2">
+              <div class="ctrl">
+                <label>Model Color</label>
+                <input id="modelColor" type="color" value="#22d3ee" />
+              </div>
+              <div class="ctrl" title="Skip vertices for huge meshes to keep FPS high.">
+                <label>Model Sampling (every n-th)</label>
+                <input id="modelStride" type="number" min="1" step="1" value="1" />
+              </div>
+            </div>
+            <div id="modelStatus" class="text-xs opacity-80 mt-1"></div>
+          </div>
+          <div class="ctrl" title="Playback & camera">
+            <label>Camera</label>
+            <button class="btn" id="reset-view" title="Reset camera">Reset</button>
+            <button class="btn" id="toggle-rotate" aria-pressed="true" title="Toggle auto-rotate">Auto‑Rotate</button>
+            <button class="btn" id="toggle-axes" aria-pressed="true" title="Toggle axes">Axes</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="panel aside">
+        <div class="card" id="log-card" style="display:none;">
+          <div class="flex items-center gap-3">
+            <strong>Hash Log</strong><span class="text-gray-400">Latest 10</span>
+          </div>
+          <ul id="hash-log" class="log" aria-live="polite"></ul>
+        </div>
+        <div class="card text-sm text-gray-300">
+          <div class="mb-1 font-semibold">Tips</div>
+          <ul class="list-disc ml-5 space-y-1">
+            <li>‘Original’ mapping is live market-derived (time/price/volume).</li>
+            <li>Spiral/Sphere/Helix use a BTC hash (Latest/Manual/Random/Generate).</li>
+            <li>Upload .fbx or .obj models up to <b>500 MB</b> to blend with your clouds.</li>
+            <li>Use <b>Fullscreen</b> for presentations; works on mobile too. Press <span class="kbd">F</span> or double‑click the chart.</li>
+            <li>Xbox: <b>A</b> select, <b>B</b> back, <b>X</b> toggle axes, <b>Y</b> fullscreen, <b>D-pad</b> navigate, <b>RB/LB</b> cycle options, <b>RT/LT</b> adjust sliders.</li>
+          </ul>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <span>© 2025 <span style="font-family:'Sixtyfour',sans-serif">QUANTUMI</span> — All Rights Reserved.</span>
+    </footer>
+
+    <script src="quantumi-logo.js"></script>
+    <script>
+      // --- Theme toggle (Light / Dark). Remembers choice. iOS-ready light.
+      (function initTheme(){
+        const meta = document.getElementById('meta-theme-color');
+        const root = document.documentElement;
+        const match = window.matchMedia('(prefers-color-scheme: light)');
+        const key = 'theme-mode';
+        function set(mode){
+          if (mode === 'auto'){ mode = match.matches ? 'light' : 'dark'; }
+          root.setAttribute('data-theme', mode);
+          meta.setAttribute('content', mode==='dark' ? '#0d0f12' : '#f2f2f7');
+          document.getElementById('theme-dark').setAttribute('aria-pressed', String(mode==='dark'));
+          document.getElementById('theme-light').setAttribute('aria-pressed', String(mode==='light'));
+        }
+        const saved = localStorage.getItem(key) || 'auto';
+        set(saved);
+        match.addEventListener?.('change', ()=>{ if (localStorage.getItem(key)==='auto') set('auto'); });
+        document.getElementById('theme-dark').onclick = ()=>{ localStorage.setItem(key,'dark'); set('dark'); vibrate(8); };
+        document.getElementById('theme-light').onclick = ()=>{ localStorage.setItem(key,'light'); set('light'); vibrate(8); };
+      })();
+
+      // --- Utils & globals ---------------------------------------------------
+      const $ = (id) => document.getElementById(id);
+      const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+      const canvas = $('btc-hash-canvas');
+      let renderer, scene, camera, controls, axes; let dotClouds = []; let hashLogEntries = []; let customGeometry = null;
+      const DPR_CAP = 2;
+
+      function vibrate(ms, gamepad = null){
+        if (gamepad?.vibrationActuator) {
+          try { gamepad.vibrationActuator.playEffect('dual-rumble', { duration: ms, strongMagnitude: 0.5, weakMagnitude: 0.5 }); } catch {}
+        } else if (navigator.vibrate) {
+          try { navigator.vibrate(ms); } catch {}
+        }
+      }
+
+      const themes = {
+        original: ['#00ff7f','#44ffaa','#bbffdd'],
+        heatmap(v){ const t = Math.min(1, Math.max(0, (v-0)/(10-0))); const r=Math.round(255*t), g=Math.round(255*(1-t)); return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}00`; },
+        lifecycle(vol, minV, maxV){ const t=(vol-minV)/(maxV-minV+1e-6); const c=Math.round(255*(0.3+0.7*t)); return `#00${c.toString(16).padStart(2,'0')}ff`; }
+      };
+      const getThemeColor = (volatility, volume, minV, maxV) => {
+        const mode = $('theme').value; if (mode==='heatmap') return themes.heatmap(volatility); if (mode==='lifecycle') return themes.lifecycle(volume, minV, maxV); return themes.original[0]; };
+
+      async function fetchWithRetry(url, opts = {}, retries = 2, delay = 600) {
+        for (let i = 0; i <= retries; i++) { try { const r = await fetch(url, opts); if (!r.ok) throw new Error(`${r.status}`); return await r.json(); } catch (e){ if (i === retries) throw e; await new Promise(res=>setTimeout(res, delay*Math.pow(2,i))); } }
+      }
+      async function fetchTextWithRetry(url, retries = 2, delay = 600) {
+        for (let i = 0; i <= retries; i++) { try { const r = await fetch(url); if (!r.ok) throw new Error(`${r.status}`); return await r.text(); } catch (e){ if (i === retries) throw e; await new Promise(res=>setTimeout(res, delay*Math.pow(2,i))); } }
+      }
+      async function fetchBTCPrice(){
+        try {
+          const d = await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin');
+          return {
+            price: d.market_data.current_price.usd,
+            volume: d.market_data.total_volume.usd,
+            change: d.market_data.price_change_percentage_24h
+          };
+        } catch {
+          return { price:60000, volume:4_500_000, change:0 };
+        }
+      }
+      async function fetchBTCHistorical(){ try { return await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1'); } catch { return null; } }
+      async function fetchBTCHashRate(){ try { return parseFloat(await fetchTextWithRetry('https://api.blockchain.info/q/hashrate?cors=true'))/1e9; } catch { return 0; } }
+      async function fetchBTCDifficulty(){ try { return parseFloat(await fetchTextWithRetry('https://api.blockchain.info/q/getdifficulty?cors=true')); } catch { return 0; } }
+
+      async function updateMetrics(){
+        try {
+          const [{ price, volume, change }, hashrate, diff, historical] = await Promise.all([
+            fetchBTCPrice(),
+            fetchBTCHashRate(),
+            fetchBTCDifficulty(),
+            fetchBTCHistorical()
+          ]);
+          // top overlay
+          $('m-price').textContent = `Price — ${nfUSD.format(price)}`;
+          $('m-volume').textContent = `Volume — ${nfUSD.format(volume)}`;
+          $('m-change').textContent = `24h — ${change.toFixed(2)}%`;
+          $('m-hashrate').textContent = `Hashrate — ${hashrate.toFixed(2)} EH/s`;
+          $('m-diff').textContent = `Difficulty — ${diff.toLocaleString()}`;
+
+          // bottom legend metrics
+          let latestTime = new Date().toLocaleTimeString();
+          let latestVolume = volume;
+          let volatility = 0;
+          let momentum = 0;
+          if (historical && historical.prices && historical.prices.length >= 2) {
+            const prices = historical.prices;
+            const volumes = historical.total_volumes;
+            latestTime = new Date(prices[prices.length - 1][0]).toLocaleTimeString();
+            latestVolume = volumes[volumes.length - 1][1];
+            const recent = prices.slice(-10).map(p=>p[1]);
+            volatility = ((Math.max(...recent) - Math.min(...recent)) / price) * 100;
+            momentum = price - prices[prices.length - 2][1];
+          }
+          $('btc-price').textContent = `Price: $${price.toLocaleString()}`;
+          $('btc-time').textContent = `Time: ${latestTime}`;
+          $('btc-date').textContent = `Date: ${new Date().toLocaleDateString()}`;
+          $('btc-volume').textContent = `Volume: ${latestVolume.toLocaleString()}`;
+          $('btc-volatility').textContent = `Volatility: ${volatility.toFixed(2)}%`;
+          $('btc-momentum').textContent = `Momentum: ${momentum >= 0 ? '+' : ''}${momentum.toFixed(2)}`;
+          if (camera) $('camera-pos').textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
+        } catch (err) {
+          console.warn('Failed to update metrics', err);
+        }
+      }
+
+      function generateHashFromPrice(price){ const s = String(price); let h=''; for(let i=0;i<64;i++){ h += (s.charCodeAt(i%s.length)%16).toString(16); } return h; }
+      function addHashLog(hash, time){
+        hashLogEntries.unshift({ hash, time });
+        if (hashLogEntries.length > 10) hashLogEntries.pop();
+        const full = $('hash-log');
+        if (full){
+          full.innerHTML = '';
+          hashLogEntries.forEach(({hash: h, time: t})=>{
+            const el = document.createElement('li');
+            el.innerHTML = `<span class="kbd">${h.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${t}</span>`;
+            full.appendChild(el);
+          });
+        }
+        const preview = $('log-preview');
+        if (preview){
+          preview.innerHTML = '';
+          hashLogEntries.slice(0,2).forEach(({hash: h, time: t})=>{
+            const el = document.createElement('li');
+            el.innerHTML = `<span class="kbd">${h.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${t}</span>`;
+            preview.appendChild(el);
+          });
+        }
+      }
+      function init3D(){
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, 1, 0.1, 5000);
+        renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false, preserveDrawingBuffer:true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, DPR_CAP));
+        resize();
+        camera.position.set(0,0,12);
+        const amb = new THREE.AmbientLight(0xffffff,0.7); scene.add(amb);
+        const dir = new THREE.DirectionalLight(0xffffff,0.8); dir.position.set(5,10,7.5); scene.add(dir);
+        axes = new THREE.AxesHelper(10); 
+        axes.material.linewidth = 2; // Thicker lines for professional visibility
+        axes.material.vertexColors = true;
+        axes.visible = true; // Show axes by default
+        scene.add(axes);
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true; controls.dampingFactor = 0.12; controls.enablePan = true; controls.panSpeed = 0.5; controls.autoRotate = true; controls.autoRotateSpeed = 1.6;
+        window.addEventListener('resize', ()=>{ clearTimeout(init3D._rt); init3D._rt=setTimeout(resize,120); });
+        function resize(){ const w=canvas.clientWidth, h=canvas.clientHeight; renderer.setSize(w,h,false); camera.aspect = w/(h||1); camera.updateProjectionMatrix(); }
+      }
+
+      function clearClouds(){ dotClouds.forEach(c=>scene.remove(c)); dotClouds=[]; }
+
+      async function drawOriginalFromMarket(){
+        const data = await fetchBTCHistorical(); if (!data) return;
+        const prices = data.prices || []; const volumes = data.total_volumes || []; const timestamps = prices.map(p=>p[0]); if (prices.length<2) return;
+        const minTime = timestamps[0], maxTime = timestamps[timestamps.length-1];
+        const minPrice = Math.min(...prices.map(p=>p[1])), maxPrice = Math.max(...prices.map(p=>p[1]));
+        const minVolume = Math.min(...volumes.map(v=>v[1])), maxVolume = Math.max(...volumes.map(v=>v[1]));
+        const latestPrice = prices[prices.length-1][1]; const latestVolume = volumes[volumes.length-1][1];
+        const recent = prices.slice(-10).map(p=>p[1]); const volatility = ((Math.max(...recent)-Math.min(...recent))/latestPrice)*100;
+        const cloudColorHex = getThemeColor(volatility, latestVolume, minVolume, maxVolume); const cloudColor = new THREE.Color(cloudColorHex);
+        const pointsPerCloud = parseInt($('density').value,10);
+        const positions=[]; const colors=[]; const jitter=0.6;
+        for(let i=0;i<prices.length;i++){
+          const t = timestamps[i]; const price = prices[i][1]; const vol = volumes[i][1];
+          const z = ((t-minTime)/(maxTime-minTime))*20-10;
+          const x = ((price-minPrice)/(maxPrice-minPrice))*20-10;
+          const y = ((vol-minVolume)/(maxVolume-minVolume))*20-10;
+          for(let j=0;j<pointsPerCloud;j++){
+            positions.push(x+(Math.random()-.5)*jitter, y+(Math.random()-.5)*jitter, z+(Math.random()-.5)*jitter);
+            colors.push(cloudColor.r, cloudColor.g, cloudColor.b);
+          }
+        }
+        const count = positions.length/3;
+        let cloud;
+        if (customGeometry) {
+          const mat = new THREE.MeshBasicMaterial({ color: cloudColor });
+          const mesh = new THREE.InstancedMesh(customGeometry, mat, count);
+          const dummy = new THREE.Object3D();
+          for(let i=0;i<count;i++){
+            dummy.position.set(positions[i*3], positions[i*3+1], positions[i*3+2]);
+            dummy.updateMatrix();
+            mesh.setMatrixAt(i, dummy.matrix);
+          }
+          cloud = mesh;
+        } else {
+          const geo = new THREE.BufferGeometry();
+          geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+          geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+          const mat = new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
+          cloud = new THREE.Points(geo,mat);
+        }
+        scene.add(cloud); dotClouds.push(cloud);
+        dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
+      }
+
+      function layoutFromHash(hash, mapping){
+        const vals = Array.from(hash).map(ch=>parseInt(ch,16)); const N = 256; const positions=[]; const colors=[];
+        const base = new THREE.Color(themes.original[dotClouds.length % themes.original.length]);
+        for(let i=0;i<N;i++){
+          const v = vals[i % vals.length] / 15; let x,y,z;
+          if(mapping==='spiral'){ const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
+          else if(mapping==='sphere'){ const phi=Math.acos(1-(2*(i+.5))/N); const theta=Math.PI*(1+Math.sqrt(5))*(i+v); const R=6*(.6+.4*v); x=R*Math.sin(phi)*Math.cos(theta); y=R*Math.sin(phi)*Math.sin(theta); z=R*Math.cos(phi); }
+          else if(mapping==='helix'){ const a=(i/N)*Math.PI*8; x=Math.cos(a)*5; y=Math.sin(a)*5; z=(i/N)*20-10+(v-.5); }
+          else{ const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
+          positions.push(x,y,z); colors.push(base.r, base.g, base.b);
+        }
+        const count = positions.length/3;
+        let cloud;
+        if (customGeometry) {
+          const mat = new THREE.MeshBasicMaterial({ color: base });
+          const mesh = new THREE.InstancedMesh(customGeometry, mat, count);
+          const dummy = new THREE.Object3D();
+          for(let i=0;i<count;i++){
+            dummy.position.set(positions[i*3], positions[i*3+1], positions[i*3+2]);
+            dummy.updateMatrix();
+            mesh.setMatrixAt(i, dummy.matrix);
+          }
+          cloud = mesh;
+        } else {
+          const geo=new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(colors,3));
+          const mat=new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
+          cloud=new THREE.Points(geo,mat);
+        }
+        scene.add(cloud); dotClouds.push(cloud);
+        dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
+      }
+
+      async function updateHashCloud(){
+        try{
+          if ($('mapping').value === 'original'){
+            await drawOriginalFromMarket();
+            const { price } = await fetchBTCPrice();
+            addHashLog(generateHashFromPrice(price), new Date().toLocaleTimeString());
+          } else {
+            const { price } = await fetchBTCPrice();
+            const h = generateHashFromPrice(price);
+            layoutFromHash(h, $('mapping').value);
+            addHashLog(h, new Date().toLocaleTimeString());
+          }
+        }catch(err){ console.warn('Auto update failed', err); }
+      }
+
+      // --- Model import → instanced geometry -------------------------------------
+      const fbxLoader = new THREE.FBXLoader();
+      const objLoader = new THREE.OBJLoader();
+      async function setModelGeometry(obj, name='Model'){
+        let geom=null;
+        obj.traverse(n=>{ if(!geom && n.isMesh && n.geometry){ geom = n.geometry.clone(); } });
+        if(!geom){ $('m-status').textContent = `Status — No mesh found in ${name}`; vibrate(30); return; }
+        customGeometry = new THREE.BufferGeometry().fromGeometry ? new THREE.BufferGeometry().fromGeometry(geom) : geom;
+        $('m-status').textContent = `Status — Model '${name}' loaded`;
+        await updateHashCloud();
+      }
+
+      function handleModelFile(file){
+        const max = 500 * 1024 * 1024; // 500 MB
+        if (file.size > max){ $('modelStatus').textContent = `File too large (${(file.size/1024/1024).toFixed(1)}MB). Max is 500MB.`; $('modelStatus').classList.add('text-red-400'); vibrate(30); return; }
+        $('modelStatus').classList.remove('text-red-400'); $('modelStatus').textContent = `Loading ${file.name}…`;
+        const bar = $('progressBar'); bar.style.width = '0%';
+        const reader = new FileReader();
+        reader.onerror = ()=>{ $('modelStatus').textContent = 'Failed to read file.'; vibrate(30); };
+        reader.onprogress = (e)=>{ if (e.lengthComputable){ const p = (e.loaded/e.total)*100; bar.style.width = p.toFixed(1)+'%'; } };
+        reader.onload = async ()=>{
+          try{
+            const start = performance.now();
+            const result = reader.result;
+            const object = /\.fbx$/i.test(file.name) ? fbxLoader.parse(result, '') : objLoader.parse(result);
+            await setModelGeometry(object, file.name.replace(/\.(fbx|obj)$/i,''));
+            const ms = Math.max(1, performance.now()-start).toFixed(0);
+            $('modelStatus').textContent = `Parsed ${file.name} in ${ms} ms`;
+            bar.style.width = '100%'; setTimeout(()=>{ bar.style.width='0%'; }, 1200); vibrate(8);
+          }catch(err){ console.error(err); $('modelStatus').textContent = 'Parse error: '+ err.message; vibrate(30); }
+        };
+        if (/\.fbx$/i.test(file.name)) reader.readAsArrayBuffer(file); else reader.readAsText(file);
+      }
+
+      // --- Gamepad Controls (Xbox) ---------------------------------------
+      const gamepadAPI = {
+        controller: null,
+        buttonsCache: [],
+        buttonsStatus: [],
+        axesStatus: [],
+        connect(evt) {
+          gamepadAPI.controller = evt.gamepad;
+          $('m-status').textContent = `Status — Gamepad connected: ${evt.gamepad.id}`;
+          vibrate(50, evt.gamepad);
+        },
+        disconnect() {
+          $('m-status').textContent = 'Status — Gamepad disconnected';
+          delete gamepadAPI.controller;
+          vibrate(50);
+        },
+        update() {
+          if (!gamepadAPI.controller) return;
+          gamepadAPI.buttonsCache = [...gamepadAPI.buttonsStatus];
+          gamepadAPI.buttonsStatus = [];
+          gamepadAPI.axesStatus = [];
+          const c = gamepadAPI.controller;
+          if (c.buttons) {
+            for (let b = 0; b < c.buttons.length; b++) {
+              if (c.buttons[b].pressed) gamepadAPI.buttonsStatus.push(b);
+            }
+          }
+          if (c.axes) {
+            for (const ax of c.axes) {
+              gamepadAPI.axesStatus.push(ax.toFixed(2));
+            }
+          }
+        },
+        buttonPressed(button, hold = false) {
+          if (!gamepadAPI.buttonsStatus.includes(button)) return false;
+          if (!hold && gamepadAPI.buttonsCache.includes(button)) return false;
+          return true;
+        }
+      };
+
+      function initGamepad() {
+        window.addEventListener('gamepadconnected', gamepadAPI.connect);
+        window.addEventListener('gamepaddisconnected', gamepadAPI.disconnect);
+      }
+
+      function handleGamepadInput() {
+        gamepadAPI.update();
+        const c = gamepadAPI.controller;
+        if (!c) return;
+
+        // Deadzone for thumbsticks
+        const deadzone = 0.2;
+        const leftStickX = Math.abs(c.axes[0]) > deadzone ? c.axes[0] : 0;
+        const leftStickY = Math.abs(c.axes[1]) > deadzone ? c.axes[1] : 0;
+
+        // Camera control with left thumbstick
+        if (controls && (leftStickX || leftStickY)) {
+          controls.rotateSpeed = 0.5;
+          controls.rotate(leftStickX * 0.02, leftStickY * 0.02);
+        }
+
+        // Navigate controls with D-pad
+        if (gamepadAPI.buttonPressed(12)) { // D-pad Up
+          const el = document.activeElement.previousElementSibling || document.activeElement;
+          if (el.tagName === 'SELECT' || el.type === 'range' || el.tagName === 'BUTTON') el.focus();
+          vibrate(8, c);
+        }
+        if (gamepadAPI.buttonPressed(13)) { // D-pad Down
+          const el = document.activeElement.nextElementSibling || document.activeElement;
+          if (el.tagName === 'SELECT' || el.type === 'range' || el.tagName === 'BUTTON') el.focus();
+          vibrate(8, c);
+        }
+
+        // Select/Activate with A (button 0)
+        if (gamepadAPI.buttonPressed(0)) {
+          const el = document.activeElement;
+          if (el.tagName === 'BUTTON') {
+            el.click();
+            vibrate(10, c);
+          } else if (el.tagName === 'SELECT') {
+            const opts = Array.from(el.options);
+            const idx = (opts.findIndex(o => o.selected) + 1) % opts.length;
+            el.value = opts[idx].value;
+            el.dispatchEvent(new Event('change'));
+            vibrate(10, c);
+          }
+        }
+
+        // Back/Cancel with B (button 1)
+        if (gamepadAPI.buttonPressed(1)) {
+          if (document.activeElement.tagName !== 'BODY') {
+            document.activeElement.blur();
+            vibrate(10, c);
+          }
+        }
+
+        // Toggle axes with X (button 2)
+        if (gamepadAPI.buttonPressed(2)) {
+          const toggle = $('toggle-axes');
+          const on = toggle.getAttribute('aria-pressed') === 'true';
+          toggle.setAttribute('aria-pressed', String(!on));
+          axes.visible = !on;
+          $('m-axes').textContent = `Axes — ${!on ? 'On' : 'Off'}`;
+          vibrate(10, c);
+        }
+
+        // Toggle fullscreen with Y (button 3)
+        if (gamepadAPI.buttonPressed(3)) {
+          $('mobile-fs-toggle').click();
+          vibrate(15, c);
+        }
+
+        // Cycle options with RB/LB (buttons 5/4)
+        if (gamepadAPI.buttonPressed(5) && document.activeElement.type === 'range') { // RB
+          const el = document.activeElement;
+          el.value = Math.min(+el.value + (+el.step || 1), +el.max);
+          el.dispatchEvent(new Event('input'));
+          vibrate(8, c);
+        }
+        if (gamepadAPI.buttonPressed(4) && document.activeElement.type === 'range') { // LB
+          const el = document.activeElement;
+          el.value = Math.max(+el.value - (+el.step || 1), +el.min);
+          el.dispatchEvent(new Event('input'));
+          vibrate(8, c);
+        }
+
+        // Adjust sliders with triggers (axes 6/7 or buttons 6/7)
+        if (c.axes[6] > 0.3 && document.activeElement.type === 'range') { // Right Trigger
+          const el = document.activeElement;
+          el.value = Math.min(+el.value + (+el.step || 1), +el.max);
+          el.dispatchEvent(new Event('input'));
+          vibrate(8, c);
+        }
+        if (c.axes[7] > 0.3 && document.activeElement.type === 'range') { // Left Trigger
+          const el = document.activeElement;
+          el.value = Math.max(+el.value - (+el.step || 1), +el.min);
+          el.dispatchEvent(new Event('input'));
+          vibrate(8, c);
+        }
+      }
+
+      // --- Controls & lifecycle --------------------------------------------
+      function animate() {
+        requestAnimationFrame(animate);
+        controls && controls.update();
+        handleGamepadInput();
+        if (camera) {
+          const cp = $('camera-pos');
+          if (cp) cp.textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
+        }
+        renderer.render(scene, camera);
+      }
+
+      function resetView() {
+        camera.position.set(0, 0, 12);
+        controls.target.set(0, 0, 0);
+        controls.update();
+        vibrate(6, gamepadAPI.controller);
+      }
+
+      document.addEventListener('DOMContentLoaded', async () => {
+        // Initialize gamepad support
+        initGamepad();
+
+        // Responsive controls drawer
+        const drawerBtn = $('controls-toggle');
+        const rail = $('controls-rail');
+        const headerEl = document.querySelector('header');
+        const stagePanelEl = $('stagePanel');
+        function adjustStageHeight() {
+          if (document.fullscreenElement || document.webkitFullscreenElement || stagePanelEl.classList.contains('fs-fallback')) {
+            stagePanelEl.style.height = '';
+            return;
+          }
+          if (window.innerWidth <= 640) {
+            const headerH = headerEl.offsetHeight;
+            const railOpen = rail.getAttribute('aria-hidden') === 'false';
+            const railH = railOpen ? rail.offsetHeight : 0;
+            stagePanelEl.style.height = `calc(100dvh - ${headerH + railH}px)`;
+          } else {
+            stagePanelEl.style.height = '';
+          }
+        }
+        function setDrawerForViewport() {
+          const wide = window.innerWidth >= 1024;
+          drawerBtn.setAttribute('aria-expanded', String(wide));
+          rail.setAttribute('aria-hidden', String(!wide));
+          adjustStageHeight();
+        }
+        setDrawerForViewport();
+        window.addEventListener('resize', () => {
+          clearTimeout(window.__rz);
+          window.__rz = setTimeout(setDrawerForViewport, 150);
+        });
+        drawerBtn.addEventListener('click', () => {
+          const open = drawerBtn.getAttribute('aria-expanded') === 'true';
+          drawerBtn.setAttribute('aria-expanded', String(!open));
+          rail.setAttribute('aria-hidden', String(open));
+          adjustStageHeight();
+          vibrate(6, gamepadAPI.controller);
+        });
+
+        // Stage init
+        init3D();
+        animate();
+        await drawOriginalFromMarket();
+        $('m-status').textContent = 'Status — Ready';
+        const { price: initialPrice } = await fetchBTCPrice();
+        addHashLog(generateHashFromPrice(initialPrice), new Date().toLocaleTimeString());
+        setInterval(updateHashCloud, 60_000);
+        updateHashCloud();
+
+        // Mapping
+        $('mapping').addEventListener('change', async (e) => {
+          clearClouds();
+          $('m-mode').textContent = `Mode — ${e.target.value}`;
+          if (e.target.value === 'original') {
+            await drawOriginalFromMarket();
+          } else {
+            const hv = $('hashInput').value.trim() || generateHashFromPrice((await fetchBTCPrice()).price);
+            const h = hv.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64);
+            layoutFromHash(h, e.target.value);
+            addHashLog(h, new Date().toLocaleTimeString());
+          }
+          vibrate(10, gamepadAPI.controller);
+        });
+        $('density').addEventListener('input', async () => {
+          if ($('mapping').value === 'original') {
+            clearClouds();
+            await drawOriginalFromMarket();
+          }
+        });
+        $('pointSize').addEventListener('input', () => {
+          dotClouds.forEach(c => c.material.size = parseFloat($('pointSize').value));
+        });
+        $('theme').addEventListener('change', async () => {
+          if ($('mapping').value === 'original') {
+            clearClouds();
+            await drawOriginalFromMarket();
+          }
+          vibrate(10, gamepadAPI.controller);
+        });
+
+        // Hash controls
+        $('btnGenerate').addEventListener('click', async () => {
+          const { price } = await fetchBTCPrice();
+          const h = generateHashFromPrice(price);
+          $('hashInput').value = h;
+          if ($('mapping').value !== 'original') {
+            clearClouds();
+            layoutFromHash(h, $('mapping').value);
+            addHashLog(h, new Date().toLocaleTimeString());
+          }
+          vibrate(8, gamepadAPI.controller);
+        });
+        $('btnRandom').addEventListener('click', () => {
+          const h = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+          $('hashInput').value = h;
+          if ($('mapping').value !== 'original') {
+            clearClouds();
+            layoutFromHash(h, $('mapping').value);
+            addHashLog(h, new Date().toLocaleTimeString());
+          }
+          vibrate(8, gamepadAPI.controller);
+        });
+        $('btnLatest').addEventListener('click', async () => {
+          const { price } = await fetchBTCPrice();
+          const h = generateHashFromPrice(price);
+          $('hashInput').value = h;
+          if ($('mapping').value !== 'original') {
+            clearClouds();
+            layoutFromHash(h, $('mapping').value);
+            addHashLog(h, new Date().toLocaleTimeString());
+          }
+          vibrate(8, gamepadAPI.controller);
+        });
+        $('hashInput').addEventListener('change', () => {
+          const hv = $('hashInput').value.trim();
+          if (!hv) return;
+          const h = hv.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64);
+          if ($('mapping').value !== 'original') {
+            clearClouds();
+            layoutFromHash(h, $('mapping').value);
+            addHashLog(h, new Date().toLocaleTimeString());
+          }
+          vibrate(10, gamepadAPI.controller);
+        });
+
+        // Axes toggle
+        $('toggle-axes').addEventListener('click', () => {
+          const on = $('toggle-axes').getAttribute('aria-pressed') === 'true';
+          $('toggle-axes').setAttribute('aria-pressed', String(!on));
+          axes.visible = !on;
+          $('m-axes').textContent = `Axes — ${!on ? 'On' : 'Off'}`;
+          vibrate(8, gamepadAPI.controller);
+        });
+
+        // Exporters
+        $('reset-view').addEventListener('click', resetView);
+        $('toggle-rotate').addEventListener('click', () => {
+          const on = !controls.autoRotate;
+          controls.autoRotate = on;
+          $('toggle-rotate').setAttribute('aria-pressed', String(on));
+          vibrate(8, gamepadAPI.controller);
+        });
+
+        $('home-btn').addEventListener('click', () => vibrate(8, gamepadAPI.controller));
+        $('toggle-log').addEventListener('click', () => {
+          const card = $('log-card');
+          const hidden = card.style.display === 'none';
+          card.style.display = hidden ? '' : 'none';
+          const preview = $('log-preview');
+          if (preview) preview.style.display = hidden ? 'none' : '';
+          vibrate(8, gamepadAPI.controller);
+        });
+        $('toggle-metrics').addEventListener('click', () => {
+          const m = $('metrics');
+          const b = $('btc-legend');
+          const hidden = m.style.display === 'none';
+          m.style.display = hidden ? 'flex' : 'none';
+          b.style.display = hidden ? 'flex' : 'none';
+          vibrate(8, gamepadAPI.controller);
+        });
+
+        // --- Fullscreen (unified for desktop + mobile + iOS) ---------------
+        const fsBtnDesktop = $('toggle-fs');
+        const fsBtnMobile = $('mobile-fs-toggle');
+        const stage = $('stagePanel');
+
+        function isFullscreen(){
+          return document.fullscreenElement || document.webkitFullscreenElement || stage.classList.contains('fs-fallback');
+        }
+        async function enterFS(){
+          try{
+            if (stage.requestFullscreen){
+              await stage.requestFullscreen({ navigationUI: 'hide' });
+              stage.classList.add('fs-active');
+            }else if (stage.webkitRequestFullscreen){
+              stage.webkitRequestFullscreen();
+              stage.classList.add('fs-active');
+            }else{
+              throw new Error('Fullscreen API not supported');
+            }
+          }catch(e){
+            console.warn('Fullscreen failed', e);
+            stage.classList.add('fs-active','fs-fallback');
+            document.body.classList.add('fs-noscroll');
+          }
+        }
+        async function exitFS(){
+          try{
+            if (document.exitFullscreen) await document.exitFullscreen();
+            else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+          }catch(e){ console.warn('Exit fullscreen failed', e); }
+          stage.classList.remove('fs-active','fs-fallback');
+          document.body.classList.remove('fs-noscroll');
+        }
+        function toggleFS(){ isFullscreen() ? exitFS() : enterFS(); setTimeout(adjustStageHeight,200); vibrate(15, gamepadAPI.controller); }
+
+        fsBtnDesktop?.addEventListener('click', toggleFS);
+        fsBtnMobile?.addEventListener('click', toggleFS);
+
+        // Keyboard shortcut: F (ignores when typing in inputs)
+        document.addEventListener('keydown', (e)=>{
+          if (e.key && e.key.toLowerCase() === 'f' && !e.metaKey && !e.ctrlKey && !e.altKey){
+            const tag = (document.activeElement?.tagName||'').toLowerCase();
+            if (!['input','textarea','select'].includes(tag)) { e.preventDefault(); toggleFS(); }
+          }
+        });
+        // Double-click canvas to toggle
+        canvas.addEventListener('dblclick', toggleFS);
+
+        document.addEventListener('fullscreenchange', () => {
+          if (!isFullscreen()) {
+            stage.classList.remove('fs-active','fs-fallback');
+            document.body.classList.remove('fs-noscroll');
+            setTimeout(adjustStageHeight,200);
+          }
+        });
+        document.addEventListener('webkitfullscreenchange', () => {
+          if (!isFullscreen()) {
+            stage.classList.remove('fs-active','fs-fallback');
+            document.body.classList.remove('fs-noscroll');
+            setTimeout(adjustStageHeight,200);
+          }
+        });
+
+        // Model input events + dropzone
+        const dz = $('dropzone');
+        const input = $('modelFile');
+        $('browseModel').addEventListener('click', () => input.click());
+        input.addEventListener('change', () => {
+          const f = input.files?.[0];
+          if (f) handleModelFile(f);
+          input.value = '';
+          vibrate(10, gamepadAPI.controller);
+        });
+        ['dragenter', 'dragover'].forEach(evt => dz.addEventListener(evt, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          dz.classList.add('drag');
+        }));
+        ['dragleave', 'drop'].forEach(evt => dz.addEventListener(evt, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          dz.classList.remove('drag');
+        }));
+        dz.addEventListener('drop', e => {
+          const f = e.dataTransfer.files?.[0];
+          if (f && /\.(fbx|obj)$/i.test(f.name)) {
+            handleModelFile(f);
+            vibrate(10, gamepadAPI.controller);
+          } else {
+            $('modelStatus').textContent = 'Please drop a .fbx or .obj file.';
+            vibrate(30, gamepadAPI.controller);
+          }
+        });
+
+        // Metrics bootstrap
+        updateMetrics();
+        setInterval(updateMetrics, 60_000);
+      });
+    </script>
+  </body>
 </html>
