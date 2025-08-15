@@ -85,12 +85,13 @@
       /* Controls rail */
       #controls-toggle{ display:inline-flex; margin:0 14px 12px; }
       #controls-rail{ grid-area:controls; }
-      .controls-rail{ padding:10px 14px 12px; flex-shrink:0; transition:max-height .25s ease; overflow:hidden; }
+      .controls-rail{ padding:10px 14px 12px; flex-shrink:0; transition:max-height .25s ease; overflow:hidden; position:sticky; top:0; z-index:40; }
       .controls-rail[aria-hidden="true"]{ max-height:0; padding:0 14px; }
       .controls-rail[aria-hidden="false"]{ max-height:80vh; overflow-y:auto; padding:10px 14px 12px; }
       @media (max-width:640px){
         .controls-rail{
-          position:static;
+          position:sticky;
+          top:0;
           max-height:none;
           background:var(--panel-bg);
           border-top:1px solid var(--panel-brd);
@@ -129,6 +130,7 @@
     <!-- three.js r128 (kept for FBXLoader compatibility) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
@@ -143,6 +145,7 @@
           <button class="btn desktop-fs-btn" id="toggle-fs" title="Toggle fullscreen (F / dbl‑click)">⤢</button>
           <button class="btn" id="toggle-log" title="Show/Hide log">≡</button>
           <button class="btn" id="toggle-metrics" title="Show/Hide metrics">Σ</button>
+          <button class="btn" id="walk-mode" title="Walk mode">🚶</button>
           <div class="seg" role="group" aria-label="Theme">
             <button class="btn" id="theme-dark" aria-pressed="true" title="Dark">◐</button>
             <button class="btn" id="theme-light" aria-pressed="false" title="Light">◑</button>
@@ -209,6 +212,10 @@
               <option value="lifecycle">Lifecycle (volume)</option>
             </select>
           </div>
+          <div class="ctrl" title="Describe how points should appear (e.g., grass)">
+            <label>AI Style</label>
+            <input id="aiStyle" type="text" placeholder="e.g., grass" />
+          </div>
           <div class="ctrl" title="Paste a hash, or use the latest block. Used when Mapping ≠ Original.">
             <label>Hash</label>
             <input id="hashInput" type="text" placeholder="Paste a block/tx hash…" inputmode="latin" autocomplete="off" />
@@ -269,6 +276,7 @@
     </footer>
 
     <script src="quantumi-logo.js"></script>
+    <script src="walkmode.js"></script>
     <script>
       // --- Theme toggle (Light / Dark). Remembers choice. iOS-ready light.
       (function initTheme(){
@@ -398,6 +406,15 @@
             preview.appendChild(el);
           });
         }
+      }
+      function applyAiStyle(prompt){
+        if (!prompt) return;
+        const p = prompt.toLowerCase();
+        let color = themes.original[0];
+        if (p.includes('grass')) color = '#228b22';
+        else if (p.includes('water')) color = '#1e90ff';
+        else if (p.includes('fire')) color = '#ff4500';
+        dotClouds.forEach(c=>{ if (c.material?.color) c.material.color.set(color); });
       }
       function init3D(){
         scene = new THREE.Scene();
@@ -688,9 +705,14 @@
       }
 
       // --- Controls & lifecycle --------------------------------------------
+      let prevTime = performance.now();
       function animate() {
         requestAnimationFrame(animate);
+        const now = performance.now();
+        const delta = (now - prevTime) / 1000;
+        prevTime = now;
         controls && controls.update();
+        window.walkMode?.update?.(delta);
         handleGamepadInput();
         if (camera) {
           const cp = $('camera-pos');
@@ -715,6 +737,9 @@
         const rail = $('controls-rail');
         const headerEl = document.querySelector('header');
         const stagePanelEl = $('stagePanel');
+        function updateControlsRailTop(){
+          rail.style.top = `${headerEl.offsetHeight}px`;
+        }
         function adjustStageHeight() {
           if (document.fullscreenElement || document.webkitFullscreenElement || stagePanelEl.classList.contains('fs-fallback')) {
             stagePanelEl.style.height = '';
@@ -734,17 +759,19 @@
           drawerBtn.setAttribute('aria-expanded', String(wide));
           rail.setAttribute('aria-hidden', String(!wide));
           adjustStageHeight();
+          updateControlsRailTop();
         }
         setDrawerForViewport();
         window.addEventListener('resize', () => {
           clearTimeout(window.__rz);
-          window.__rz = setTimeout(setDrawerForViewport, 150);
+          window.__rz = setTimeout(()=>{ setDrawerForViewport(); updateControlsRailTop(); }, 150);
         });
         drawerBtn.addEventListener('click', () => {
           const open = drawerBtn.getAttribute('aria-expanded') === 'true';
           drawerBtn.setAttribute('aria-expanded', String(!open));
           rail.setAttribute('aria-hidden', String(open));
           adjustStageHeight();
+          updateControlsRailTop();
           vibrate(6, gamepadAPI.controller);
         });
 
@@ -787,6 +814,10 @@
             await drawOriginalFromMarket();
           }
           vibrate(10, gamepadAPI.controller);
+        });
+        $('aiStyle').addEventListener('change', (e)=>{ applyAiStyle(e.target.value); });
+        $('walk-mode').addEventListener('click', ()=>{
+          window.walkMode.startWalkMode(camera, renderer);
         });
 
         // Hash controls
