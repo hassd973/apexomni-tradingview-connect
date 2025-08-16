@@ -7803,5 +7803,300 @@ function setupModuleToggles() {
                                 lightBtn.addEventListener('click',()=>{ setTheme('light'); localStorage.setItem(key,'light'); });
                         })();
                 </script>
+
+<!-- === Exchange-Driven Tokens · Volume Spikes + Flow Chart (APPEND ONLY) === -->
+<!-- Time adapter for Chart.js v3 time scale -->
+<script defer src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<!-- Annotation plugin for Chart.js v3 -->
+<script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.1/dist/chartjs-plugin-annotation.min.js"></script>
+
+<section id="exch-spikes-module" style="margin:24px 0;">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+    <h2 style="margin:0;font:600 18px/1 system-ui, -apple-system, Segoe UI, Roboto;">Exchange Tokens · Volume Spikes</h2>
+    <button id="exch-refresh" style="padding:6px 12px;border-radius:8px;border:1px solid #2d3a4f;background:#1f2a3b;color:#e6edf3;">Refresh</button>
+    <span id="exch-updated" style="font-size:12px;opacity:.7;"></span>
+  </div>
+
+  <div class="exch-grid" style="display:grid;grid-template-columns: 1.1fr 1fr;gap:14px;">
+    <!-- Left: Spikes board -->
+    <div>
+      <div style="border:1px solid #1e2633;border-radius:12px;background:#0b0f14;padding:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <strong>Spikes (24h volume vs EMA)</strong>
+          <small style="opacity:.75">Click a row → detail chart</small>
+        </div>
+        <div id="exch-spikes" style="display:grid;gap:6px;"></div>
+      </div>
+    </div>
+
+    <!-- Right: Detail chart -->
+    <div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+        <select id="exch-token" style="padding:6px 10px;border-radius:8px;border:1px solid #2d3a4f;background:#121822;color:#e6edf3;"></select>
+        <select id="exch-metric" style="padding:6px 10px;border-radius:8px;border:1px solid #2d3a4f;background:#121822;color:#e6edf3;">
+          <option value="net">Net Flow (Out − In)</option>
+          <option value="inflow">Inflow</option>
+          <option value="outflow">Outflow</option>
+          <option value="volume">Volume (24h)</option>
+          <option value="price">Price (USD)</option>
+        </select>
+      </div>
+      <div class="chart-wrap" style="position:relative;height:360px;border:1px solid #1e2633;border-radius:12px;background:#0b0f14;padding:8px;">
+        <canvas id="exch-chart"></canvas>
+      </div>
+      <div style="font-size:12px;opacity:.8;margin-top:6px;">
+        Inflow ≈ potential selling · Outflow ≈ holding/withdrawal · Net = Out − In · Spike = current 24h volume vs EMA
+      </div>
+    </div>
+  </div>
+</section>
+<style>
+@media (max-width:768px){
+  #exch-spikes-module{margin:16px 0;}
+  #exch-spikes-module .exch-grid{display:flex;flex-direction:column;gap:14px;}
+  #exch-spikes-module .chart-wrap{height:260px;}
+}
+</style>
+
+<script>
+(function(){
+  // move module after token list on small screens
+  const tokenList = document.getElementById('token-list');
+  const moduleEl = document.getElementById('exch-spikes-module');
+  if (tokenList && moduleEl && window.innerWidth <= 768) {
+    tokenList.insertAdjacentElement('afterend', moduleEl);
+  }
+  // ----------------- Config -----------------
+  // Full, editable list of major exchange-driven tokens (symbol, CoinGecko id, label)
+  // NOTE: Adjust any id if CoinGecko has changed naming.
+  const EXCHANGE_TOKENS = [
+    { sym:'BNB', id:'binancecoin',    label:'Binance' },
+    { sym:'OKB', id:'okb',            label:'OKX' },
+    { sym:'BGB', id:'bitget-token',   label:'Bitget' },
+    { sym:'KCS', id:'kucoin-shares',  label:'KuCoin' },
+    { sym:'GT',  id:'gate-token',     label:'Gate' },
+    { sym:'CRO', id:'cronos',         label:'Crypto.com' },
+    { sym:'LEO', id:'unus-sed-leo',   label:'Bitfinex' },
+    { sym:'MX',  id:'mx-token',       label:'MEXC' },
+    // Optional/riskier: uncomment if you track them
+    // { sym:'HT',  id:'htx-token',      label:'HTX' },
+    // { sym:'FTT', id:'ftx-token',      label:'FTX (legacy)' },
+  ];
+
+  // Chart colors by order
+  const COLORS = ['#7aa2ff','#ff7ab3','#ffd36e','#7bffa6','#c896ff','#6ee0ff','#ffa86e','#a6ff6e'];
+
+  // Technical levels (optional overlays)
+  const LEVELS = {
+    OKB: [102, 82],
+    MNT: [0.94, 0.84, 0.67],
+  };
+
+  // State
+  const st = {
+    pollMs: 15000,
+    rows: [],        // latest snapshot rows per token
+    hist: {},        // per-token time series (ts, price, volume, inflow, outflow)
+    ema: {},         // per-token EMA of 24h volume
+    token: 'OKB',
+    metric: 'net',
+    chart: null
+  };
+
+  // ---------- Utilities ----------
+  const $ = s => document.querySelector(s);
+  const fmt = v => (v==null || isNaN(v)) ? '—' :
+    (Math.abs(v)>=1 ? v.toLocaleString(undefined,{maximumFractionDigits:2}) : Number(v).toPrecision(3));
+  const colorOf = (sym) => {
+    const i = Math.max(0, EXCHANGE_TOKENS.findIndex(t=>t.sym===sym));
+    return COLORS[i % COLORS.length];
+  };
+
+  // ---------- Data Sources ----------
+  // 1) CoinGecko markets (you already use this in your repo) 
+  async function fetchCG(ids){
+    const url = 'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=' + encodeURIComponent(ids.join(','));
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('CG ' + r.status);
+    return r.json();
+  }
+
+  // 2) Optional flows from your backend (if present): /api/flows
+  // Expected shape:
+  // { points:[ { ts, OKB:{inflow,outflow,price}, BNB:{...}, ... }, ... ] }
+  async function fetchFlows(){
+    try {
+      const r = await fetch('/api/flows');
+      if (!r.ok) return null;
+      return r.json();
+    } catch { return null; }
+  }
+
+  // ---------- EMA for spikes ----------
+  function ema(prev, value, alpha = 0.2){
+    if (prev == null) return value;
+    return alpha * value + (1 - alpha) * prev;
+  }
+
+  // ---------- Ingest snapshot & update histories ----------
+  function pushSnapshot(ts, cgRows, flows){
+    // cgRows: array from CoinGecko
+    // flows: { points:[{ts, SYMBOL:{inflow,outflow,price}, ...}, ...] } or null
+    st.rows = [];
+    const flowPoint = flows?.points?.[flows.points.length-1] || null;
+
+    for (const t of EXCHANGE_TOKENS){
+      const cg = cgRows.find(r => r.id === t.id);
+      if (!cg) continue;
+
+      const sym = t.sym;
+      const price = cg.current_price ?? null;
+      const volume24h = cg.total_volume ?? cg.total_volume_24h ?? cg.total_volume_usd ?? null;
+
+      // update EMA for spike
+      st.ema[sym] = ema(st.ema[sym], volume24h);
+
+      // flows (optional)
+      const inflow  = flowPoint?.[sym]?.inflow ?? null;
+      const outflow = flowPoint?.[sym]?.outflow ?? null;
+
+      // store latest row
+      st.rows.push({
+        sym, label: t.label, price, volume24h,
+        spike: (st.ema[sym] ? (volume24h / st.ema[sym]) : 1), // >1 means spike
+        inflow, outflow,
+      });
+
+      // history
+      if (!st.hist[sym]) st.hist[sym] = [];
+      st.hist[sym].push({ ts, price, volume24h, inflow, outflow });
+      // keep 24h window (assuming 15s polls; keep ~6k points just in case)
+      if (st.hist[sym].length > 6000) st.hist[sym].shift();
+    }
+  }
+
+  // ---------- UI: Spikes board ----------
+  function renderSpikes(){
+    const host = $('#exch-spikes');
+    host.innerHTML = '';
+    const rows = [...st.rows].sort((a,b)=> (b.spike||0) - (a.spike||0));
+    rows.forEach(r=>{
+      const net = (r.outflow ?? 0) - (r.inflow ?? 0);
+      const dir = isFinite(net) ? (net>0 ? '🔴 Outflow' : net<0 ? '🔵 Inflow' : '🟣 Flat') : '—';
+      const el = document.createElement('div');
+      el.style.cssText = 'border:1px solid #1e2633;border-radius:10px;background:#0b0f14;padding:8px;cursor:pointer;';
+      el.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-weight:700;color:${colorOf(r.sym)}">${r.sym}</span>
+            <small style="opacity:.8">${r.label}</small>
+          </div>
+          <div style="font-size:12px;opacity:.8">Spike ×${(r.spike||1).toFixed(2)}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;font-size:12px;">
+          <div>Vol24h $${fmt(r.volume24h)}</div>
+          <div>Price $${fmt(r.price)}</div>
+          <div>${dir} ${isFinite(net)? ('$'+fmt(net)) : ''}</div>
+        </div>
+      `;
+      el.onclick = ()=> {
+        st.token = r.sym;
+        $('#exch-token').value = st.token;
+        renderChart();
+      };
+      host.appendChild(el);
+    });
+  }
+
+  // ---------- Chart ----------
+  function buildDatasets(sym, metric){
+    const data = st.hist[sym] || [];
+    const main = data.map(p => {
+      let y = null;
+      if (metric === 'net') y = (p.outflow ?? null) - (p.inflow ?? null);
+      else if (metric === 'inflow') y = p.inflow ?? null;
+      else if (metric === 'outflow') y = p.outflow ?? null;
+      else if (metric === 'volume') y = p.volume24h ?? null;
+      else if (metric === 'price') y = p.price ?? null;
+      return { x: p.ts, y };
+    });
+    const price = data.map(p => ({ x:p.ts, y:p.price ?? null }));
+    const color = colorOf(sym);
+    const ds = [
+      { label:`${sym} ${metric}`, data:main, borderColor:color, backgroundColor:color+'55', tension:.25, pointRadius:0, fill:'origin' },
+      { type:'line', label:`${sym} price`, data:price, yAxisID:'y2', borderColor:'#9aa4b2', backgroundColor:'#9aa4b266', tension:.2, pointRadius:0 }
+    ];
+    return ds;
+  }
+
+  function annos(sym){
+    const A = { annotations: {} };
+    const lv = LEVELS[sym]; if (!lv) return A;
+    lv.forEach((y,i)=>{
+      A.annotations[`${sym}_${i}`] = {
+        type:'line', yMin:y, yMax:y, yScaleID:'y2',
+        borderColor: i===lv.length-1 ? '#ef4444' : '#4ade80',
+        borderWidth:1,
+        label:{ enabled:true, content:`${sym} $${y}`, position:'end', backgroundColor:'#0b2316', color:'#a7f3d0' }
+      };
+    });
+    return A;
+  }
+
+  function renderChart(){
+    const ctx = $('#exch-chart').getContext('2d');
+    if (st.chart) st.chart.destroy();
+    const metric = st.metric;
+    st.chart = new Chart(ctx, {
+      type: 'line',
+      data: { datasets: buildDatasets(st.token, metric) },
+      options: {
+        responsive:true, maintainAspectRatio:false, parsing:false,
+        plugins:{
+          legend:{ labels:{ color:'#cbd5e1' } },
+          tooltip:{ mode:'index', intersect:false },
+          annotation: annos(st.token)
+        },
+        scales:{
+          x: { type:'time', time:{ unit:'minute' }, grid:{ color:'#1f2937' }, ticks:{ color:'#9aa4b2' } },
+          y: { position:'left', grid:{ color:'#1f2937' }, ticks:{ color:'#9aa4b2', callback:v=>fmt(v) } },
+          y2:{ position:'right', grid:{ color:'#15202b' }, ticks:{ color:'#9aa4b2', callback:v=>fmt(v) } }
+        }
+      }
+    });
+  }
+
+  // ---------- Init / Poll ----------
+  async function refresh(){
+    try{
+      const ids = EXCHANGE_TOKENS.map(t=>t.id);
+      const [cg, flows] = await Promise.all([ fetchCG(ids), fetchFlows() ]);
+      const ts = Date.now();
+      pushSnapshot(ts, cg, flows);
+      renderSpikes();
+      // init token dropdown once
+      const sel = $('#exch-token');
+      if (!sel.dataset.bound){
+        sel.innerHTML = EXCHANGE_TOKENS.map(t=>`<option value="${t.sym}">${t.sym} — ${t.label}</option>`).join('');
+        st.token = EXCHANGE_TOKENS.find(t=>t.sym==='OKB') ? 'OKB' : EXCHANGE_TOKENS[0].sym;
+        sel.value = st.token;
+        sel.onchange = (e)=>{ st.token = e.target.value; renderChart(); };
+        const m = $('#exch-metric');
+        m.onchange = (e)=>{ st.metric = e.target.value; renderChart(); };
+        $('#exch-refresh').onclick = ()=>refresh();
+        sel.dataset.bound = '1';
+      }
+      renderChart();
+      $('#exch-updated').textContent = 'Updated ' + new Date(ts).toLocaleString();
+    } catch (e){
+      console.error('[exch-spikes] refresh failed', e);
+    }
+  }
+
+  refresh();
+  setInterval(refresh, st.pollMs);
+})();
+</script>
+<!-- === END Exchange-Driven Tokens module === -->
         </body>
 </html>
