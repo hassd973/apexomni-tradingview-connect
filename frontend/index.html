@@ -2461,6 +2461,10 @@
                                 padding: 8px;
                                 cursor: pointer;
                         }
+                        #exch-spikes-module .spike-row .grid > div {
+                                min-width: 0;
+                                overflow-wrap: anywhere;
+                        }
                         #exch-spikes-module .exch-select {
                                 padding: 6px 10px;
                                 border-radius: 8px;
@@ -2478,6 +2482,11 @@
                         }
                         @media (max-width: 768px) {
                                 #exch-spikes-module .exch-grid {
+                                        grid-template-columns: 1fr;
+                                }
+                        }
+                        @media (max-width: 480px) {
+                                #exch-spikes-module .spike-row .grid {
                                         grid-template-columns: 1fr;
                                 }
                         }
