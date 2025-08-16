@@ -2443,16 +2443,20 @@
                                 display: grid;
                                 grid-template-columns: 1.1fr 1fr;
                                 gap: 14px;
+                                width: 100%;
+                                box-sizing: border-box;
                         }
                         #exch-spikes-module .exch-panel {
                                 border: 1px solid var(--panel-brd);
                                 border-radius: 12px;
                                 background: var(--panel-bg);
                                 padding: 10px;
+                                box-sizing: border-box;
                         }
                         #exch-spikes-module .spikes-list {
                                 display: grid;
                                 gap: 6px;
+                                overflow-x: auto;
                         }
                         #exch-spikes-module .spike-row {
                                 border: 1px solid var(--panel-brd);
@@ -2460,7 +2464,14 @@
                                 background: var(--panel-bg);
                                 padding: 8px;
                                 cursor: pointer;
+                                width: 100%;
+                                box-sizing: border-box;
+                                overflow-wrap: anywhere;
                         }
+                        #exch-spikes-module .spike-row .flex {
+                                flex-wrap: wrap;
+                        }
+                        #exch-spikes-module .spike-row .flex > div,
                         #exch-spikes-module .spike-row .grid > div {
                                 min-width: 0;
                                 overflow-wrap: anywhere;
@@ -2480,6 +2491,7 @@
                                 border-radius: 12px;
                                 background: var(--panel-bg);
                                 padding: 8px;
+                                box-sizing: border-box;
                         }
                         @media (max-width: 768px) {
                                 #exch-spikes-module .exch-grid {
@@ -3256,8 +3268,12 @@
                             // { sym:'FTT', id:'ftx-token',      label:'FTX (legacy)' },
                           ];
 
-                          // Chart colors by order
-                          const COLORS = ['#7aa2ff','#ff7ab3','#ffd36e','#7bffa6','#c896ff','#6ee0ff','#ffa86e','#a6ff6e'];
+                          // Brand colors
+                          const STYLE = getComputedStyle(document.documentElement);
+                          const BRAND_COLOR = STYLE.getPropertyValue('--primary-color').trim() || '#00FF00';
+                          const TEXT_COLOR = STYLE.getPropertyValue('--text-color').trim() || '#F8F8F8';
+                          const PANEL_BG = STYLE.getPropertyValue('--panel-bg').trim() || '#0c0f12';
+                          const PANEL_BRD = STYLE.getPropertyValue('--panel-brd').trim() || '#1A1A1A';
 
                           // Technical levels (optional overlays)
                           const LEVELS = {
@@ -3280,10 +3296,7 @@
                           const $ = s => document.querySelector(s);
                           const fmt = v => (v==null || isNaN(v)) ? '—' :
                             (Math.abs(v)>=1 ? v.toLocaleString(undefined,{maximumFractionDigits:2}) : Number(v).toPrecision(3));
-                          const colorOf = (sym) => {
-                            const i = Math.max(0, EXCHANGE_TOKENS.findIndex(t=>t.sym===sym));
-                            return COLORS[i % COLORS.length];
-                          };
+                          const colorOf = () => BRAND_COLOR;
 
                           // ---------- Data Sources ----------
                           // 1) CoinGecko markets (you already use this in your repo) 
@@ -3355,7 +3368,7 @@
                             const rows = [...st.rows].sort((a,b)=> (b.spike||0) - (a.spike||0));
                             rows.forEach(r=>{
                               const net = (r.outflow ?? 0) - (r.inflow ?? 0);
-                              const dir = isFinite(net) ? (net>0 ? '🔴 Outflow' : net<0 ? '🔵 Inflow' : '🟣 Flat') : '—';
+                              const dir = isFinite(net) ? (net>0 ? 'Outflow' : net<0 ? 'Inflow' : 'Flat') : '—';
                               const el = document.createElement('div');
                               el.className = 'spike-row';
                               el.innerHTML = `
@@ -3397,7 +3410,7 @@
                             const color = colorOf(sym);
                             const ds = [
                               { label:`${sym} ${metric}`, data:main, borderColor:color, backgroundColor:color+'55', tension:.25, pointRadius:0, fill:'origin' },
-                              { type:'line', label:`${sym} price`, data:price, yAxisID:'y2', borderColor:'#9aa4b2', backgroundColor:'#9aa4b266', tension:.2, pointRadius:0 }
+                              { type:'line', label:`${sym} price`, data:price, yAxisID:'y2', borderColor:TEXT_COLOR, backgroundColor:TEXT_COLOR+'66', tension:.2, pointRadius:0 }
                             ];
                             return ds;
                           }
@@ -3408,9 +3421,9 @@
                             lv.forEach((y,i)=>{
                               A.annotations[`${sym}_${i}`] = {
                                 type:'line', yMin:y, yMax:y, yScaleID:'y2',
-                                borderColor: i===lv.length-1 ? '#ef4444' : '#4ade80',
+                                borderColor: BRAND_COLOR,
                                 borderWidth:1,
-                                label:{ enabled:true, content:`${sym} $${y}`, position:'end', backgroundColor:'#0b2316', color:'#a7f3d0' }
+                                label:{ enabled:true, content:`${sym} $${y}`, position:'end', backgroundColor:PANEL_BG, color:BRAND_COLOR }
                               };
                             });
                             return A;
@@ -3426,14 +3439,14 @@
                               options: {
                                 responsive:true, maintainAspectRatio:false, parsing:false,
                                 plugins:{
-                                  legend:{ labels:{ color:'#cbd5e1' } },
+                                  legend:{ labels:{ color:TEXT_COLOR } },
                                   tooltip:{ mode:'index', intersect:false },
                                   annotation: annos(st.token)
                                 },
                                 scales:{
-                                  x: { type:'time', time:{ unit:'minute' }, grid:{ color:'#1f2937' }, ticks:{ color:'#9aa4b2' } },
-                                  y: { position:'left', grid:{ color:'#1f2937' }, ticks:{ color:'#9aa4b2', callback:v=>fmt(v) } },
-                                  y2:{ position:'right', grid:{ color:'#15202b' }, ticks:{ color:'#9aa4b2', callback:v=>fmt(v) } }
+                                  x: { type:'time', time:{ unit:'minute' }, grid:{ color:PANEL_BRD }, ticks:{ color:TEXT_COLOR } },
+                                  y: { position:'left', grid:{ color:PANEL_BRD }, ticks:{ color:TEXT_COLOR, callback:v=>fmt(v) } },
+                                  y2:{ position:'right', grid:{ color:PANEL_BRD }, ticks:{ color:TEXT_COLOR, callback:v=>fmt(v) } }
                                 }
                               }
                             });
