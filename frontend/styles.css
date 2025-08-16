@@ -18,6 +18,8 @@ section {
   padding: 1rem;
   border: 1px solid rgba(0, 255, 0, 0.1);
   border-radius: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 ul {
@@ -131,4 +133,14 @@ button:active {
 
 .loader {
   padding: 1rem;
+}
+
+/* Keep dynamic data contained within modules */
+.module-content {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
