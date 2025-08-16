@@ -7752,6 +7752,7 @@ function setupModuleToggles() {
                                                document.body.classList.remove('locked');
                                                if (typeof initIntroVideo === 'function') initIntroVideo();
                                                loadInverseChart(10);
+                                               loadData();
                                        } else {
                                                error.textContent = 'Incorrect password or missing agreement';
                                                error.classList.remove('hidden');
