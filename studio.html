@@ -70,7 +70,7 @@
       .desktop-fs-btn{ display:inline-flex; }
 
       @media (max-width:1180px){ main{ grid-template-columns:1fr; grid-template-areas:'stage' 'controls' 'aside'; } }
-      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } .desktop-fs-btn{ display:none; } main{ padding:8px; gap:8px; grid-template-areas:'stage' 'controls' 'aside'; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:flex-start; overflow-x:auto; } }
+      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } .desktop-fs-btn{ display:none; } main{ padding:8px; gap:8px; grid-template-areas:'stage' 'controls' 'aside'; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:flex-start; overflow-x:auto; flex-wrap:nowrap; } .btn{ padding:8px 12px; } }
 
       .aside{ grid-area:aside; display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
       .card{ background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:14px; padding:12px; }

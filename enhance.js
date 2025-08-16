@@ -1,13 +1,14 @@
 // QUANTUMI add-on: first-person Explore mode + generative style recoloring (non-destructive)
 // Works with three r128. Depends on window.QUANTUMI (exposed by the patch) and PointerLockControls.
 
+
 (function(){
   const wait = (cond, t=50) => new Promise(res=>{
     const tick=()=>cond()?res():setTimeout(tick,t);
     tick();
   });
 
-  document.addEventListener('DOMContentLoaded', async ()=>{
+  async function init(){
     await wait(()=>window.QUANTUMI && window.THREE);
 
     const Q = window.QUANTUMI;
@@ -279,5 +280,11 @@
     document.addEventListener('keydown', (e)=>{
       if (e.key === 'Escape' && controlsFP.isLocked) { exitFP(); }
     });
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();
