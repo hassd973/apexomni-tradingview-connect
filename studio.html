@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <title>QUANTUMI • BTC Hash Studio — Pro (v3.4)</title>
+    <title>QUANTUMI • BTC Hash Studio — Pro (v3.5)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0d0f12" id="meta-theme-color" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -147,7 +147,7 @@
             <button class="btn" id="theme-dark" aria-pressed="true" title="Dark">◐</button>
             <button class="btn" id="theme-light" aria-pressed="false" title="Light">◑</button>
           </div>
-          <div class="sub">v3.4</div>
+          <div class="sub">v3.5</div>
         </div>
       </div>
       <button id="controls-toggle" class="btn" type="button" aria-expanded="false" aria-controls="controls-rail">Controls</button>
@@ -499,18 +499,19 @@
 
       async function updateHashCloud(){
         try{
-          if ($('mapping').value === 'original'){
+        if ($('mapping').value === 'original'){
             await drawOriginalFromMarket();
             const { price } = await fetchBTCPrice();
             addHashLog(generateHashFromPrice(price), new Date().toLocaleTimeString());
-          } else {
+        } else {
             const { price } = await fetchBTCPrice();
             const h = generateHashFromPrice(price);
             layoutFromHash(h, $('mapping').value);
             addHashLog(h, new Date().toLocaleTimeString());
-          }
-        }catch(err){ console.warn('Auto update failed', err); }
-      }
+        }
+        document.dispatchEvent(new CustomEvent('quantumi:cloud'));
+      }catch(err){ console.warn('Auto update failed', err); }
+    }
 
       // --- Model import → instanced geometry -------------------------------------
       const fbxLoader = new THREE.FBXLoader();
