@@ -130,8 +130,14 @@
       }
     }
 
-    function enterFP(){
-      if (!document.fullscreenElement){ document.getElementById('toggle-fs')?.click(); }
+    async function ensureFullscreen(){
+      if (document.fullscreenElement) return;
+      try{
+        await (stage.requestFullscreen?.({ navigationUI:'hide' }) || stage.webkitRequestFullscreen?.());
+      }catch(e){ console.warn('FS request failed', e); }
+    }
+    async function enterFP(){
+      ensureFullscreen();
       Q.controls.enabled = false;
       bounds = computeBounds();
       lastPathLen = pathPoints.length;
@@ -146,6 +152,7 @@
     }
     function exitFP(){
       controlsFP.unlock();
+      if (document.fullscreenElement) document.exitFullscreen?.();
     }
 
     controlsFP.addEventListener('lock', ()=>{
