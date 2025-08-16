@@ -7817,7 +7817,7 @@ function setupModuleToggles() {
     <span id="exch-updated" style="font-size:12px;opacity:.7;"></span>
   </div>
 
-  <div style="display:grid;grid-template-columns: 1.1fr 1fr;gap:14px;">
+  <div class="exch-grid" style="display:grid;grid-template-columns: 1.1fr 1fr;gap:14px;">
     <!-- Left: Spikes board -->
     <div>
       <div style="border:1px solid #1e2633;border-radius:12px;background:#0b0f14;padding:10px;">
@@ -7841,7 +7841,7 @@ function setupModuleToggles() {
           <option value="price">Price (USD)</option>
         </select>
       </div>
-      <div style="position:relative;height:360px;border:1px solid #1e2633;border-radius:12px;background:#0b0f14;padding:8px;">
+      <div class="chart-wrap" style="position:relative;height:360px;border:1px solid #1e2633;border-radius:12px;background:#0b0f14;padding:8px;">
         <canvas id="exch-chart"></canvas>
       </div>
       <div style="font-size:12px;opacity:.8;margin-top:6px;">
@@ -7850,6 +7850,22 @@ function setupModuleToggles() {
     </div>
   </div>
 </section>
+<style>
+@media (max-width:768px){
+  #exch-spikes-module{margin:16px 0;}
+  #exch-spikes-module .exch-grid{display:flex;flex-direction:column;gap:14px;}
+  #exch-spikes-module .chart-wrap{height:260px;}
+}
+</style>
+
+<script>
+(function(){
+  // move module after token list on small screens
+  const tokenList = document.getElementById('token-list');
+  const moduleEl = document.getElementById('exch-spikes-module');
+  if (tokenList && moduleEl && window.innerWidth <= 768) {
+    tokenList.insertAdjacentElement('afterend', moduleEl);
+  }
 
 <script>
 (function(){
