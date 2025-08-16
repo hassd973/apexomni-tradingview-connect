@@ -5020,7 +5020,13 @@ function setupModuleToggles() {
                                         return await fetchWithRetry('/api/btc/historical');
                                 } catch (error) {
                                         console.error('Failed to fetch BTC historical data:', error);
-                                        return null;
+                                        try {
+                                                const resp = await fetch('./mock-btc-historical.json');
+                                                return await resp.json();
+                                        } catch (fallbackErr) {
+                                                console.error('Failed to load mock BTC data:', fallbackErr);
+                                                return { prices: [], total_volumes: [] };
+                                        }
                                 }
                         }
 
@@ -7368,9 +7374,9 @@ function setupModuleToggles() {
 		<script>
 			// === Live Logs ===
 			async function loadLiveLogs() {
-				try {
+                                try {
                                 const res = await fetch('/api/live-logs');
-					const data = await res.json();
+                                        const data = await res.json();
 					const logList = document.getElementById('live-logs-list');
 					if (!logList) return;
 					logList.innerHTML = '';
@@ -7383,11 +7389,17 @@ function setupModuleToggles() {
 							li.textContent = text;
 							logList.appendChild(li);
 						}
-					});
-				} catch (e) {
-					console.error('Live logs error', e);
-				}
-			}
+                                        });
+                                } catch (e) {
+                                        console.error('Live logs error', e);
+                                        const logList = document.getElementById('live-logs-list');
+                                        if (logList && !logList.children.length) {
+                                                const li = document.createElement('li');
+                                                li.textContent = 'Live logs unavailable';
+                                                logList.appendChild(li);
+                                        }
+                                }
+                        }
 			window.addEventListener('load', () => {
 				loadLiveLogs();
 				setInterval(loadLiveLogs, 15000);
