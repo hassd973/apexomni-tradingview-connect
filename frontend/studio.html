@@ -70,7 +70,7 @@
       .desktop-fs-btn{ display:inline-flex; }
 
       @media (max-width:1180px){ main{ grid-template-columns:1fr; grid-template-areas:'stage' 'controls' 'aside'; } }
-      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } .desktop-fs-btn{ display:none; } main{ padding:8px; gap:8px; grid-template-areas:'stage' 'controls' 'aside'; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:space-between; } }
+      @media (max-width:640px){ .mobile-fs-btn{ display:inline-flex; } .desktop-fs-btn{ display:none; } main{ padding:8px; gap:8px; grid-template-areas:'stage' 'controls' 'aside'; } #stagePanel{ min-height:68dvh; } .brand{ flex-direction:column; align-items:flex-start; } .right{ width:100%; justify-content:flex-start; overflow-x:auto; } }
 
       .aside{ grid-area:aside; display:flex; flex-direction:column; gap:10px; overflow:auto; padding:10px; scrollbar-color:#333 #111; }
       .card{ background:var(--panel-bg); border:1px solid var(--panel-brd); border-radius:14px; padding:12px; }
@@ -147,7 +147,7 @@
         <div class="right">
             <a class="btn" id="home-btn" href="index.html" title="Home">⌂</a>
             <button class="btn desktop-fs-btn" id="toggle-fs" title="Toggle fullscreen (F / dbl‑click)">⤢</button>
-            <button class="btn" id="play-fp" title="Enter first-person explore" onclick="window.enterFP && window.enterFP()">▶ Explore</button>
+            <button class="btn" id="play-fp" title="Enter first-person explore" type="button">▶ Explore</button>
             <button class="btn" id="toggle-log" title="Show/Hide log">≡</button>
           <button class="btn" id="toggle-metrics" title="Show/Hide metrics">Σ</button>
           <div class="seg" role="group" aria-label="Theme">
