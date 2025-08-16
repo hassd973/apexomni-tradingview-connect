@@ -42,16 +42,15 @@
                         href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap"
                         rel="stylesheet"
                 />
-                 <script
-                          defer=""
-                          src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"
-                 ></script>
-                <script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.1/dist/chartjs-plugin-annotation.min.js"></script>
-                 <script
-                          defer=""
-                          src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js"
-                          type="module"
-                 ></script>
+		<script
+			defer=""
+			src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"
+		></script>
+		<script
+			defer=""
+			src="https://unpkg.com/@splinetool/viewer@1.9.98/build/spline-viewer.js"
+			type="module"
+		></script>
 		<script defer="" src="https://s3.tradingview.com/tv.js"></script>
 		<script
 			defer=""
@@ -3387,58 +3386,12 @@
 						</p>
 					</div>
                                         <ul
-                                          class="list-disc ml-4 text-sm text-gray-300"
-                                          id="balances-list"
-                                   ></ul>
-                               </div>
-                       </section>
-                       <section id="qx-exchange-flows" class="scroll-module">
-                               <div class="module-header">
-                                       <h2 class="token-insights-title">Exchange Flows · Multi-Token</h2>
-                                       <div class="seg" role="group">
-                                               <input id="qx-watchlist" class="btn" style="min-width:240px" value="BTC,ETH,BNB,OKB,MNT,SOL" />
-                                               <select id="qx-token" class="btn" aria-label="Token"></select>
-                                               <select id="qx-metric" class="btn" aria-label="Metric">
-                                                       <option value="net">Net (Out − In)</option>
-                                                       <option value="inflow">Inflow</option>
-                                                       <option value="outflow">Outflow</option>
-                                                       <option value="price">Price</option>
-                                               </select>
-                                               <button id="qx-apply" class="btn">Apply</button>
-                                       </div>
-                               </div>
-                               <div class="chart-container glow" style="height:360px">
-                                       <canvas id="qx-flow-canvas"></canvas>
-                               </div>
-                               <div class="text-xs opacity-80 mt-2">
-                                       Inflow ≈ potential selling · Outflow ≈ holding/withdrawal · Net = Out − In
-                               </div>
-                               <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-                                       <div class="token-insights-container"><h3>Sentiment &amp; Positions</h3><div id="qx-sent-strip" class="mt-2 text-sm space-y-1"></div></div>
-                                       <div class="token-insights-container">
-                                               <h3>Key Levels</h3>
-                                               <ul class="text-sm space-y-1">
-                                                       <li>OKB: <strong>$102</strong>, <strong>$82</strong></li>
-                                                       <li>MNT pullbacks: <strong>$0.94</strong>, <strong>$0.84</strong></li>
-                                                       <li>MNT invalidation: <strong>$0.67</strong></li>
-                                               </ul>
-                                       </div>
-                                       <div class="token-insights-container"><h3>AI Read</h3><p id="qx-ai-read" class="text-sm opacity-90">Awaiting data…</p></div>
-                               </div>
-                               <div class="card p-3 mt-4">
-                                       <h3 class="mb-2">Realtime Volume Spike Field</h3>
-                                       <div id="qx-pc" class="glow rounded" style="width:100%;height:320px"></div>
-                                       <div id="qx-pc-legend" class="mt-1 text-xs opacity-75">🔵 inflow-heavy · 🟣 balanced · 🔴 outflow-heavy</div>
-                               </div>
-                               <div class="chat-logs-container mt-4">
-                                       <h3 class="mb-2">Market Talk (AI Trade Mod replies)</h3>
-                                       <input id="qx-post-title" class="btn" style="width:100%" placeholder="Title…" />
-                                       <textarea id="qx-post-body" class="btn" rows="3" style="width:100%;margin-top:.5rem" placeholder="What are you seeing?"></textarea>
-                                       <div class="mt-2"><button id="qx-post" class="btn">Post</button> <span class="text-xs opacity-70">AI will contrast trader takes vs flows.</span></div>
-                                       <ul id="qx-threads" class="mt-3 space-y-2"></ul>
-                               </div>
-                       </section>
-                </main>
+                                                class="list-disc ml-4 text-sm text-gray-300"
+                                                id="balances-list"
+                                        ></ul>
+				</div>
+			</section>
+		</main>
                <div class="btc-hash-container w-full max-w-[98vw] mx-auto text-center">
                        <button id="btc-mobile-exit" aria-label="Close BTC view">Exit</button>
                        <section class="rounded-lg" draggable="true" id="btc-hash-module">
@@ -4992,6 +4945,37 @@ function setupModuleToggles() {
 				}
 			}
 
+			async function fetchTextWithRetry(
+				url,
+				options = {},
+				retries = 3,
+				delay = 1000
+			) {
+				for (let i = 0; i <= retries; i++) {
+					try {
+						const response = await fetch(url, {
+							method: 'GET',
+							mode: 'cors',
+							credentials: 'omit',
+							headers: { Accept: 'text/plain', ...options.headers },
+							...options
+						});
+						if (!response.ok)
+							throw new Error(
+								`HTTP error! Status: ${response.status}, Text: ${response.statusText}`
+							);
+						return await response.text();
+					} catch (error) {
+						if (i === retries) throw error;
+						const backoff = delay * Math.pow(2, i);
+						console.warn(
+							`Fetch attempt ${i + 1} failed for ${url}. Retrying in ${backoff}ms: ${error.message}`
+						);
+						await new Promise((resolve) => setTimeout(resolve, backoff));
+					}
+				}
+			}
+
 			async function fetchBTCPrice() {
 				const url = 'https://api.coingecko.com/api/v3/coins/bitcoin';
 				try {
@@ -5015,27 +4999,37 @@ function setupModuleToggles() {
 				}
 			}
 
-                        async function fetchBTCHistoricalData() {
+			async function fetchBTCHistoricalData() {
+				const url =
+					'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1';
+				try {
+					const data = await fetchWithRetry(url);
+					return data;
+				} catch (error) {
+					console.error('Failed to fetch BTC historical data:', error);
+					return null;
+				}
+			}
+
+                        async function fetchBTCHashRate() {
+                                const url = 'https://api.blockchain.info/q/hashrate?cors=true';
                                 try {
-                                        return await fetchWithRetry('/api/btc/historical');
+                                        const text = await fetchTextWithRetry(url);
+                                        return parseFloat(text) / 1e9;
                                 } catch (error) {
-                                        console.error('Failed to fetch BTC historical data:', error);
-                                        try {
-                                                const resp = await fetch('./mock-btc-historical.json');
-                                                return await resp.json();
-                                        } catch (fallbackErr) {
-                                                console.error('Failed to load mock BTC data:', fallbackErr);
-                                                return { prices: [], total_volumes: [] };
-                                        }
+                                        console.warn('Failed to fetch BTC hash rate:', error);
+                                        return 0;
                                 }
                         }
 
-                        async function fetchBTCStats() {
+                        async function fetchBTCDifficulty() {
+                                const url = 'https://api.blockchain.info/q/getdifficulty?cors=true';
                                 try {
-                                        return await fetchWithRetry('/api/btc/stats');
+                                        const text = await fetchTextWithRetry(url);
+                                        return parseFloat(text);
                                 } catch (error) {
-                                        console.warn('Failed to fetch BTC stats:', error);
-                                        return { hashrate: 0, diff: 0 };
+                                        console.warn('Failed to fetch BTC difficulty:', error);
+                                        return 0;
                                 }
                         }
 
@@ -5329,19 +5323,20 @@ function setupModuleToggles() {
 				animate();
 			}
 
-                        async function updateBTCHash() {
-                                isBTCPriceMock = false;
+			async function updateBTCHash() {
+				isBTCPriceMock = false;
 
-                                const stats = await fetchBTCStats();
-                                let historicalData;
-                                try {
-                                        historicalData = await fetchBTCHistoricalData();
-                                } catch (error) {
-                                        isBTCPriceMock = true;
-                                        historicalData = null;
-                                }
-                                const hashRate = stats.hashrate;
-                                const difficulty = stats.diff;
+				let historicalData;
+				const [hashRate, difficulty] = await Promise.all([
+					fetchBTCHashRate(),
+					fetchBTCDifficulty()
+				]);
+				try {
+					historicalData = await fetchBTCHistoricalData();
+				} catch (error) {
+					isBTCPriceMock = true;
+					historicalData = null;
+				}
 
 				if (historicalData) {
 					const prices = historicalData.prices;
@@ -6008,19 +6003,14 @@ function setupModuleToggles() {
 					return;
 				}
 
-                                document.getElementById('loader-tokens').style.display = 'none';
-                                const tokenList = document.getElementById('token-list');
-                                const topVolumeToken = tokens.reduce(
-                                        (max, token) => (token.total_volume > max.total_volume ? token : max),
-                                        tokens[0]
-                                );
-                                tokenList.innerHTML = tokens
-                                        .map((token) => {
-                                                const isPositive = token.price_change_percentage_24h >= 0;
-                                                const isSelected = token.id === topVolumeToken.id;
-                                                const symbol = `BINANCE:${token.symbol}USDT`;
-                                                return `
-          <li class="${isSelected ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
+				document.getElementById('loader-tokens').style.display = 'none';
+				const tokenList = document.getElementById('token-list');
+				tokenList.innerHTML = tokens
+					.map((token, index) => {
+						const isPositive = token.price_change_percentage_24h >= 0;
+						const symbol = `BINANCE:${token.symbol}USDT`;
+						return `
+          <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="flex justify-between items-center">
               <span><a href="https://coinmarketcap.com/currencies/${token.id}/" target="_blank" class="token-link">${token.name}</a> (${token.symbol})</span>
               <span class="performance ${isPositive ? 'text-green-400' : 'text-red-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
@@ -6089,18 +6079,17 @@ function setupModuleToggles() {
 					'ticker-marquee-modal'
 				).style.animationDuration = `${Math.max(80, tokens.length * 5)}s`;
 
-                                const topSymbol = `BINANCE:${topVolumeToken.symbol}USDT`;
-                                initializeChart('chart-container-header', topSymbol, 'D');
-                                initializeChart('chart-container-modal', topSymbol, 'D');
-                                const currentDate = new Date().toLocaleDateString();
-                                document
-                                        .getElementById('chart-title-header')
-                                        .setAttribute('data-symbol', topSymbol);
-                                document.getElementById('chart-title-header').textContent = `${topSymbol} - ${currentDate}`;
-                                document
-                                        .getElementById('chart-title-modal')
-                                        .setAttribute('data-symbol', topSymbol);
-                                document.getElementById('chart-title-modal').textContent = `${topSymbol} - ${currentDate}`;
+				const topSymbol = `BINANCE:${topToken.symbol}USDT`;
+				initializeChart('chart-container-header', topSymbol, 'D');
+				initializeChart('chart-container-modal', topSymbol, 'D');
+				document
+					.getElementById('chart-title-header')
+					.setAttribute('data-symbol', topSymbol);
+				document.getElementById('chart-title-header').textContent = topSymbol;
+				document
+					.getElementById('chart-title-modal')
+					.setAttribute('data-symbol', topSymbol);
+				document.getElementById('chart-title-modal').textContent = topSymbol;
 
 				const ethToken = tokens.find((token) => token.symbol === 'ETH');
 				if (ethToken) {
@@ -7380,9 +7369,9 @@ function setupModuleToggles() {
 		<script>
 			// === Live Logs ===
 			async function loadLiveLogs() {
-                                try {
+				try {
                                 const res = await fetch('/api/live-logs');
-                                        const data = await res.json();
+					const data = await res.json();
 					const logList = document.getElementById('live-logs-list');
 					if (!logList) return;
 					logList.innerHTML = '';
@@ -7395,17 +7384,11 @@ function setupModuleToggles() {
 							li.textContent = text;
 							logList.appendChild(li);
 						}
-                                        });
-                                } catch (e) {
-                                        console.error('Live logs error', e);
-                                        const logList = document.getElementById('live-logs-list');
-                                        if (logList && !logList.children.length) {
-                                                const li = document.createElement('li');
-                                                li.textContent = 'Live logs unavailable';
-                                                logList.appendChild(li);
-                                        }
-                                }
-                        }
+					});
+				} catch (e) {
+					console.error('Live logs error', e);
+				}
+			}
 			window.addEventListener('load', () => {
 				loadLiveLogs();
 				setInterval(loadLiveLogs, 15000);
@@ -7682,13 +7665,13 @@ function setupModuleToggles() {
 						}
 					}
 				});
-                                window.inverseChart = inverseChart;
-                        }
+				window.inverseChart = inverseChart;
+			}
 
-                        // Add event listeners to toggle buttons for responsiveness
-                        document.getElementById('topCount').addEventListener('change', (e) => {
-                                loadInverseChart(parseInt(e.target.value));
-                        });
+			// Add event listeners to toggle buttons for responsiveness
+			document.getElementById('topCount').addEventListener('change', (e) => {
+				loadInverseChart(parseInt(e.target.value));
+			});
 
                         window.addEventListener('load', () => {
                                 const unlocked = localStorage.getItem('quanti-email');
@@ -7752,7 +7735,6 @@ function setupModuleToggles() {
                                                document.body.classList.remove('locked');
                                                if (typeof initIntroVideo === 'function') initIntroVideo();
                                                loadInverseChart(10);
-                                               loadData();
                                        } else {
                                                error.textContent = 'Incorrect password or missing agreement';
                                                error.classList.remove('hidden');
@@ -7770,176 +7752,20 @@ function setupModuleToggles() {
                </script>
                 <div class="mode-switch">Mode: Raw Hash</div>
                 <div id="visualization"><!-- Future 3D BTC Hash Visualizer --></div>
-                  <script>
-(function(){
-  // ---------- utils
-  const $ = s => document.querySelector(s);
-  const $$ = s => Array.from(document.querySelectorAll(s));
-  const qx_fmt = v => (Math.abs(v)>=1 ? v.toLocaleString(undefined,{maximumFractionDigits:2}) : (v??0).toPrecision(3));
-  const qx_color = (i)=>['#7aa2ff','#ff7ab3','#ffd36e','#7bffa6','#c896ff','#6ee0ff','#ffa86e','#a6ff6e'][i%8];
-  const qx_now = ()=>new Date().toLocaleString();
-  const qx_state = { tokens:[], points:[], spikes:[], token:'BTC', metric:'net', pollMs:10000 };
-
-  // ---------- data
-  async function qx_fetchJSON(url,opts){ try{ const r=await fetch(url,opts); if(!r.ok) throw 0; return await r.json(); }catch(e){ return null; } }
-  async function qx_getFlows(){
-    const live = await qx_fetchJSON('/api/flows');
-    if (live) return live;
-    // demo synth data based on watchlist
-    const tokens = ($('#qx-watchlist')?.value||'BTC,ETH,BNB,OKB,MNT').split(',').map(s=>s.trim().toUpperCase()).slice(0,8);
-    const base = Date.now()-6*60*60*1000; // 6h
-    const points = Array.from({length:72},(_,i)=>{
-      const ts = base + i*5*60*1000;
-      const row={ts};
-      tokens.forEach((t,idx)=>{
-        const f = Math.sin(i*0.2+idx)*0.5+0.5;
-        const inflow = (2e8+f*4e8)*(0.6+Math.random()*0.8);
-        const outflow = (1.8e8+(1-f)*4.2e8)*(0.6+Math.random()*0.8);
-        const p0 = t==='BTC'?82000:t==='ETH'?3900:t==='BNB'?455:t==='OKB'?108:t==='MNT'?1.23:150;
-        const price = p0*(1+Math.sin(i*0.03+idx)*0.01)*(1+(Math.random()-0.5)*0.002);
-        const longShort = 0.95+Math.sin(i*0.05+idx)*0.1+(Math.random()-0.5)*0.05;
-        const sentiment = (Math.random()-0.5)*0.5;
-        row[t]={inflow,outflow,price,longShort,sentiment};
-      });
-      return row;
-    });
-    const spikes = tokens.map((t,idx)=>({token:t,exchange:['binance','okx','coinbase','bybit'][idx%4],score:Math.random()**0.6,direction:Math.random()*2-1}));
-    return {tokens,points,spikes};
-  }
-
-  // ---------- chart
-  let qx_chart;
-  function qx_buildDatasets(points, token, metric){
-    const ci = Math.max(0, qx_state.tokens.indexOf(token));
-    const color = qx_color(ci);
-    const d = points.map(p=>({x:p.ts, y: (p[token] ? (metric==='net' ? (p[token].outflow - p[token].inflow) : p[token][metric]) : null)}));
-    const price = points.map(p=>({x:p.ts, y:p[token]?.price ?? null}));
-    return [
-      {label:`${token} ${metric}`, data:d, borderColor:color, backgroundColor:color+'55', tension:0.25, pointRadius:0, fill:'origin'},
-      {type:'line', label:`${token} price`, data:price, yAxisID:'y2', borderColor:'#9aa4b2', backgroundColor:'#9aa4b266', tension:0.2, pointRadius:0}
-    ];
-  }
-  function qx_annos(token){
-    const A={annotations:{}}, add=(id,y,label)=>A.annotations[id]={type:'line',yMin:y,yMax:y,yScaleID:'y2',borderColor:'#4ade80',borderWidth:1,label:{enabled:true,content:label,position:'end',backgroundColor:'#052e1a',color:'#a7f3d0'}};
-    if(token==='OKB'){ add('okb102',102,'OKB $102'); add('okb82',82,'OKB $82'); }
-    if(token==='MNT'){ add('mnt094',0.94,'MNT $0.94'); add('mnt084',0.84,'MNT $0.84'); add('mnt067',0.67,'MNT $0.67 ⚠'); }
-    return A;
-  }
-  function qx_renderChart(){
-    const ctx = $('#qx-flow-canvas').getContext('2d');
-    if(qx_chart) qx_chart.destroy();
-    qx_chart = new Chart(ctx,{ type:'line', data:{ datasets: qx_buildDatasets(qx_state.points, qx_state.token, qx_state.metric) }, options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{labels:{color:'#cbd5e1'}}, tooltip:{mode:'index',intersect:false}, annotation: qx_annos(qx_state.token) },
-      scales:{ x:{type:'time',time:{unit:'minute'},grid:{color:'#1f2937'},ticks:{color:'#9aa4b2'}},
-              y:{position:'left',grid:{color:'#1f2937'},ticks:{color:'#9aa4b2',callback:v=>qx_fmt(v)}},
-             y2:{position:'right',grid:{color:'#15202b'},ticks:{color:'#9aa4b2',callback:v=>qx_fmt(v)}} }
-    }});
-  }
-
-  // ---------- sentiment strip
-  function qx_renderSentiment(){
-    const el = $('#qx-sent-strip'); if(!el) return; el.innerHTML='';
-    const latest = qx_state.points[qx_state.points.length-1]||{};
-    qx_state.tokens.forEach((t,i)=>{
-      const r = latest[t]; if(!r) return;
-      const net=(r.outflow-r.inflow), dir=net>0?'🔴 Outflow':'🔵 Inflow';
-      const div=document.createElement('div'); div.className='p-2 card rounded text-sm';
-      div.innerHTML = `<div class="flex justify-between"><span style="color:${qx_color(i)};font-weight:600">${t}</span><span class="opacity-70">${dir}</span></div>
-        <div class="grid grid-cols-3 gap-2 mt-1"><div>In $${qx_fmt(r.inflow||0)}</div><div>Out $${qx_fmt(r.outflow||0)}</div><div>Net $${qx_fmt(net||0)}</div></div>
-        <div class="grid grid-cols-2 gap-2 mt-1"><div>L/S <span class="${(r.longShort??1)>1?'text-green-400':'text-red-400'}">${(r.longShort??1).toFixed(2)}</span></div>
-        <div>Sent <span class="${(r.sentiment??0)>0?'text-green-400':'text-red-400'}">${(r.sentiment??0).toFixed(2)}</span></div></div>`;
-      el.appendChild(div);
-    });
-    const lr = latest[qx_state.token]; $('#qx-ai-read').textContent = lr ? `${qx_state.token}: ${(lr.outflow-lr.inflow)>0?'withdrawal/holding bias':'inflow/selling bias'}; L/S ${(lr.longShort??1).toFixed(2)}, Sent ${(lr.sentiment??0).toFixed(2)}; Price $${qx_fmt(lr.price||0)}.` : 'Awaiting data…';
-  }
-
-  // ---------- point cloud (three.js 0.128 already loaded in the page) 
-  let qx_scene,qx_cam,qx_ren,qx_pts, qx_auto=true;
-  function qx_pcInit(){
-    const wrap = $('#qx-pc'); const w=wrap.clientWidth,h=wrap.clientHeight;
-    qx_scene = new THREE.Scene();
-    qx_cam = new THREE.PerspectiveCamera(55,w/h,0.1,1000); qx_cam.position.set(0,0,42);
-    qx_ren = new THREE.WebGLRenderer({antialias:true,alpha:true}); qx_ren.setSize(w,h); wrap.innerHTML=''; wrap.appendChild(qx_ren.domElement);
-    const MAX=512, geo=new THREE.BufferGeometry(), pos=new Float32Array(MAX*3), col=new Float32Array(MAX*3), size=new Float32Array(MAX);
-    geo.setAttribute('position',new THREE.BufferAttribute(pos,3));
-    geo.setAttribute('customColor',new THREE.BufferAttribute(col,3));
-    geo.setAttribute('size',new THREE.BufferAttribute(size,1));
-    const mat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,vertexShader:`attribute float size;attribute vec3 customColor;varying vec3 vColor;void main(){vColor=customColor;vec4 mv=modelViewMatrix*vec4(position,1.0);gl_PointSize=size*(300.0/-mv.z);gl_Position=projectionMatrix*mv;}`,fragmentShader:`varying vec3 vColor;void main(){float d=length(gl_PointCoord-vec2(0.5));float a=smoothstep(0.6,0.3,d);gl_FragColor=vec4(vColor,a);}`});
-    qx_pts = new THREE.Points(geo,mat); qx_scene.add(qx_pts);
-    window.addEventListener('resize',()=>{ const w=wrap.clientWidth,h=wrap.clientHeight; qx_cam.aspect=w/h; qx_cam.updateProjectionMatrix(); qx_ren.setSize(w,h); });
-    window.addEventListener('keydown',e=>{ if(e.key.toLowerCase()==='a') qx_auto=!qx_auto; });
-    (function loop(){ requestAnimationFrame(loop); if(qx_auto && qx_pts){ qx_pts.rotation.y+=0.002; qx_pts.rotation.x+=0.001; } qx_ren.render(qx_scene,qx_cam); })();
-  }
-  function qx_pcUpdate(spikes){
-    if(!qx_pts) return; const g=qx_pts.geometry, pos=g.attributes.position.array, col=g.attributes.customColor.array, sz=g.attributes.size.array;
-    const N=Math.min(spikes.length,sz.length);
-    for(let i=0;i<N;i++){ const s=spikes[i], th=i/N*Math.PI*2, ph=Math.acos(2*(i/N)-1), r=18+s.score*8;
-      const x=r*Math.sin(ph)*Math.cos(th), y=r*Math.sin(ph)*Math.sin(th), z=r*Math.cos(ph);
-      const C = s.direction>0?{r:0.2,g:0.6,b:1.0}:s.direction<0?{r:1.0,g:0.25,b:0.25}:{r:0.7,g:0.5,b:1.0};
-      pos[i*3]=x; pos[i*3+1]=y; pos[i*3+2]=z; col[i*3]=C.r; col[i*3+1]=C.g; col[i*3+2]=C.b; sz[i]=12+s.score*26;
-    }
-    for(let i=spikes.length;i<sz.length;i++){ sz[i]=0; pos[i*3]=pos[i*3+1]=pos[i*3+2]=0; }
-    g.attributes.position.needsUpdate=g.attributes.customColor.needsUpdate=g.attributes.size.needsUpdate=true;
-    $('#qx-pc-legend').title = spikes.map(s=>`${s.token}@${s.exchange}: ${(s.score*100|0)}% · ${s.direction>0?'inflow':'outflow'}`).join('\n');
-  }
-
-  // ---------- forum + AI
-  const QX_STORE='qx_threads_v1';
-  const qx_load=()=>{ try{return JSON.parse(localStorage.getItem(QX_STORE)||'[]');}catch{ return []; } };
-  const qx_save=(t)=>localStorage.setItem(QX_STORE,JSON.stringify(t));
-  function qx_renderThreads(){
-    const list=$('#qx-threads'); const arr=qx_load().sort((a,b)=>(b.up-b.down)-(a.up-a.down)); list.innerHTML='';
-    arr.forEach((t,i)=>{ const li=document.createElement('li'); li.className='p-3 card rounded';
-      li.innerHTML=`<div class="flex justify-between"><div class="flex-1"><div class="font-semibold">${t.title}</div><div class="text-sm opacity-80 mt-1 whitespace-pre-line">${t.body}</div>${t.ai?`<div class="mt-2 text-xs opacity-90 border-t border-slate-700 pt-2"><strong>AI:</strong> ${t.ai}</div>`:''}<div class="mt-1 text-xs opacity-60">${new Date(t.ts).toLocaleString()}</div></div><div class="flex flex-col items-center gap-1 ml-2"><div class="vote text-green-400" data-i="${i}" data-type="up">▲</div><div class="text-xs">${t.up-t.down}</div><div class="vote text-red-400" data-i="${i}" data-type="down">▼</div></div></div>`;
-      list.appendChild(li);
-    });
-    $$('#qx-threads .vote').forEach(v=>v.onclick=()=>{ const i=+v.dataset.i, type=v.dataset.type; const a=qx_load(); if(!a[i])return; a[i][type]=(a[i][type]||0)+1; qx_save(a); qx_renderThreads(); });
-  }
-  async function qx_aiReply(title,body,latest){
-    const res = await qx_fetchJSON('/api/ai_reply',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title,body,context:{token:qx_state.token,latest}})});
-    if(res && res.reply) return res.reply;
-    // local fallback
-    const {inflow=0,outflow=0,price='—',longShort=1,sentiment=0}=latest||{}; const net=outflow-inflow;
-    const dir=net>0?'outflows (holding/withdrawals)':'inflows (potential sell pressure)'; const ls=longShort>1?'longs dominant':'short-heavy';
-    return `• Flows: ${dir}; net $${qx_fmt(net)}. • Positioning: L/S ${longShort.toFixed(2)} (${ls}); Sent ${sentiment.toFixed(2)}. • Price: $${qx_fmt(price)}; respect levels. Outlook: trade reactions; fade euphoria, scale risk if flows flip.`;
-  }
-
-  // ---------- main loop
-  async function qx_refresh(){
-    const data = await qx_getFlows(); qx_state.tokens=data.tokens||[]; qx_state.points=data.points||[]; qx_state.spikes=data.spikes||[];
-    // token select init
-    const sel=$('#qx-token'); sel.innerHTML = qx_state.tokens.map(t=>`<option value="${t}">${t}</option>`).join(''); if(!qx_state.tokens.includes(qx_state.token)) qx_state.token=qx_state.tokens[0]||'BTC'; sel.value=qx_state.token;
-    qx_renderChart(); qx_renderSentiment(); qx_pcUpdate(qx_state.spikes);
-  }
-
-  function qx_bind(){
-    $('#qx-apply').onclick=()=>{ qx_refresh(); };
-    $('#qx-token').onchange=e=>{ qx_state.token=e.target.value; qx_renderChart(); const latest=qx_state.points[qx_state.points.length-1]?.[qx_state.token]; $('#qx-ai-read').textContent = latest? `${qx_state.token}: ${(latest.outflow-latest.inflow)>0?'withdrawal/holding bias':'inflow/selling bias'}; L/S ${latest.longShort.toFixed(2)}, Sent ${latest.sentiment.toFixed(2)}; Price $${qx_fmt(latest.price)}.` : 'Awaiting data…'; };
-    $('#qx-metric').onchange=e=>{ qx_state.metric=e.target.value; qx_renderChart(); };
-    $('#qx-post').onclick=async()=>{ const title=$('#qx-post-title').value.trim(), body=$('#qx-post-body').value.trim(); if(!title||!body) return;
-      const latest = qx_state.points[qx_state.points.length-1]?.[qx_state.token]; const ai = await qx_aiReply(title,body,latest);
-      const arr=qx_load(); arr.push({title,body,ts:Date.now(),up:0,down:0,ai}); qx_save(arr); $('#qx-post-title').value=''; $('#qx-post-body').value=''; qx_renderThreads(); };
-  }
-
-  // boot
-  qx_pcInit(); qx_bind(); qx_refresh(); setInterval(qx_refresh, qx_state.pollMs);
-})();
-</script>
-                  <script src="quantumi-logo.js"></script>
-                  <script>
-                          document.addEventListener('DOMContentLoaded', () => {
-                                  const pebble = () => {
-                                          if (navigator.vibrate)
-                                                  navigator.vibrate([60, 20, 40, 20, 20]);
-                                  };
-                                  document.querySelectorAll('.quantumi-logo').forEach((logo) => {
-                                          logo.addEventListener('click', pebble);
-                                          logo.addEventListener('touchstart', pebble);
-                                          logo.addEventListener('pointerdown', pebble);
-                                  });
-                          });
-                  </script>
+                <script src="quantumi-logo.js"></script>
+                <script>
+                        document.addEventListener('DOMContentLoaded', () => {
+                                const pebble = () => {
+                                        if (navigator.vibrate)
+                                                navigator.vibrate([60, 20, 40, 20, 20]);
+                                };
+                                document.querySelectorAll('.quantumi-logo').forEach((logo) => {
+                                        logo.addEventListener('click', pebble);
+                                        logo.addEventListener('touchstart', pebble);
+                                        logo.addEventListener('pointerdown', pebble);
+                                });
+                        });
+                </script>
                 <script>
                         const modeSwitch = document.querySelector('.mode-switch');
                         let brainMode = false;
