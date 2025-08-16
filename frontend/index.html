@@ -2433,12 +2433,56 @@
 				padding: 0.25rem 0.5rem;
 				cursor: pointer;
 			}
-			.dj-cue-btn:hover {
-				background-color: var(--secondary-color);
-				box-shadow: 0 0 4px var(--secondary-color);
-			}
-		</style>
-	</head>
+                        .dj-cue-btn:hover {
+                                background-color: var(--secondary-color);
+                                box-shadow: 0 0 4px var(--secondary-color);
+                        }
+                </style>
+                <style>
+                        #exch-spikes-module .exch-grid {
+                                display: grid;
+                                grid-template-columns: 1.1fr 1fr;
+                                gap: 14px;
+                        }
+                        #exch-spikes-module .exch-panel {
+                                border: 1px solid var(--panel-brd);
+                                border-radius: 12px;
+                                background: var(--panel-bg);
+                                padding: 10px;
+                        }
+                        #exch-spikes-module .spikes-list {
+                                display: grid;
+                                gap: 6px;
+                        }
+                        #exch-spikes-module .spike-row {
+                                border: 1px solid var(--panel-brd);
+                                border-radius: 10px;
+                                background: var(--panel-bg);
+                                padding: 8px;
+                                cursor: pointer;
+                        }
+                        #exch-spikes-module .exch-select {
+                                padding: 6px 10px;
+                                border-radius: 8px;
+                                border: 1px solid var(--panel-brd);
+                                background: var(--panel-bg);
+                                color: var(--text-color);
+                        }
+                        #exch-spikes-module .exch-chart-box {
+                                position: relative;
+                                height: 360px;
+                                border: 1px solid var(--panel-brd);
+                                border-radius: 12px;
+                                background: var(--panel-bg);
+                                padding: 8px;
+                        }
+                        @media (max-width: 768px) {
+                                #exch-spikes-module .exch-grid {
+                                        grid-template-columns: 1fr;
+                                }
+                        }
+                </style>
+        </head>
         <body
                 class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF00]"
         >
@@ -3144,30 +3188,28 @@
                         <!-- Annotation plugin for Chart.js v3 -->
                         <script defer src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.1.1/dist/chartjs-plugin-annotation.min.js"></script>
 
-                        <section id="exch-spikes-module" style="margin:24px 0;">
-                          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
-                            <h2 style="margin:0;font:600 18px/1 system-ui, -apple-system, Segoe UI, Roboto;">Exchange Tokens · Volume Spikes</h2>
-                            <button id="exch-refresh" style="padding:6px 12px;border-radius:8px;border:1px solid #2d3a4f;background:#1f2a3b;color:#e6edf3;">Refresh</button>
-                            <span id="exch-updated" style="font-size:12px;opacity:.7;"></span>
+                        <section class="rounded-lg" draggable="true" id="exch-spikes-module">
+                          <div class="module-header">
+                            <h2 class="text-lg md:text-xl typewriter">&gt; Exchange Tokens · Volume Spikes</h2>
+                            <button id="exch-refresh" class="btn">Refresh</button>
+                            <span id="exch-updated" class="text-xs opacity-70"></span>
                           </div>
 
-                          <div style="display:grid;grid-template-columns: 1.1fr 1fr;gap:14px;">
+                          <div class="module-content exch-grid">
                             <!-- Left: Spikes board -->
-                            <div>
-                              <div style="border:1px solid #1e2633;border-radius:12px;background:#0b0f14;padding:10px;">
-                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                                  <strong>Spikes (24h volume vs EMA)</strong>
-                                  <small style="opacity:.75">Click a row → detail chart</small>
-                                </div>
-                                <div id="exch-spikes" style="display:grid;gap:6px;"></div>
+                            <div class="exch-panel">
+                              <div class="flex justify-between items-center mb-2">
+                                <strong>Spikes (24h volume vs EMA)</strong>
+                                <small class="opacity-75">Click a row → detail chart</small>
                               </div>
+                              <div id="exch-spikes" class="spikes-list"></div>
                             </div>
 
                             <!-- Right: Detail chart -->
-                            <div>
-                              <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-                                <select id="exch-token" style="padding:6px 10px;border-radius:8px;border:1px solid #2d3a4f;background:#121822;color:#e6edf3;"></select>
-                                <select id="exch-metric" style="padding:6px 10px;border-radius:8px;border:1px solid #2d3a4f;background:#121822;color:#e6edf3;">
+                            <div class="exch-panel">
+                              <div class="flex gap-2 items-center mb-2">
+                                <select id="exch-token" class="exch-select"></select>
+                                <select id="exch-metric" class="exch-select">
                                   <option value="net">Net Flow (Out − In)</option>
                                   <option value="inflow">Inflow</option>
                                   <option value="outflow">Outflow</option>
@@ -3175,10 +3217,10 @@
                                   <option value="price">Price (USD)</option>
                                 </select>
                               </div>
-                              <div style="position:relative;height:360px;border:1px solid #1e2633;border-radius:12px;background:#0b0f14;padding:8px;">
+                              <div class="exch-chart-box">
                                 <canvas id="exch-chart"></canvas>
                               </div>
-                              <div style="font-size:12px;opacity:.8;margin-top:6px;">
+                              <div class="text-xs opacity-80 mt-1">
                                 Inflow ≈ potential selling · Outflow ≈ holding/withdrawal · Net = Out − In · Spike = current 24h volume vs EMA
                               </div>
                             </div>
@@ -3305,16 +3347,16 @@
                               const net = (r.outflow ?? 0) - (r.inflow ?? 0);
                               const dir = isFinite(net) ? (net>0 ? '🔴 Outflow' : net<0 ? '🔵 Inflow' : '🟣 Flat') : '—';
                               const el = document.createElement('div');
-                              el.style.cssText = 'border:1px solid #1e2633;border-radius:10px;background:#0b0f14;padding:8px;cursor:pointer;';
+                              el.className = 'spike-row';
                               el.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <div style="display:flex;gap:8px;align-items:center;">
-            <span style="font-weight:700;color:${colorOf(r.sym)}">${r.sym}</span>
-            <small style="opacity:.8">${r.label}</small>
+        <div class="flex justify-between items-center">
+          <div class="flex gap-2 items-center">
+            <span class="font-bold" style="color:${colorOf(r.sym)}">${r.sym}</span>
+            <small class="opacity-80">${r.label}</small>
           </div>
-          <div style="font-size:12px;opacity:.8">Spike ×${(r.spike||1).toFixed(2)}</div>
+          <div class="text-xs opacity-80">Spike ×${(r.spike||1).toFixed(2)}</div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;font-size:12px;">
+        <div class="grid grid-cols-3 gap-2 mt-1 text-xs">
           <div>Vol24h $${fmt(r.volume24h)}</div>
           <div>Price $${fmt(r.price)}</div>
           <div>${dir} ${isFinite(net)? ('$'+fmt(net)) : ''}</div>
