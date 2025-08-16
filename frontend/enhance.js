@@ -156,6 +156,8 @@
       if (document.fullscreenElement) document.exitFullscreen?.();
     }
 
+    window.enterFP = enterFP;
+
     controlsFP.addEventListener('lock', ()=>{
       active = true;
       hud?.classList.add('on');
