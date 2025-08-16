@@ -28,16 +28,23 @@
     const keys = { f:false,b:false,l:false,r:false,run:false,ground:false };
     const SPEED=9, RUN=1.8, GRAV=28, JUMP=10, HEIGHT=1.6;
     let bounds = computeBounds();
+    let pathPoints = []; let lastPathLen = 0;
     let active = false;
 
     // update bounds whenever a new cloud is added (we can hook into your frame loop cheaply)
     let frameCount = 0;
     document.addEventListener('quantumi:frame', ()=>{
-      if (!active && ++frameCount % 180 === 0) { bounds = computeBounds(); } // ~3s at 60fps
+      if (++frameCount % 180 === 0) { bounds = computeBounds(); }
+      if (active && pathPoints.length !== lastPathLen){
+        const obj = controlsFP.getObject();
+        const p = pathPoints[pathPoints.length-1];
+        if (p){ obj.position.set(p.x, p.y + HEIGHT, p.z); }
+        lastPathLen = pathPoints.length;
+      }
       if (!active) return;
 
       // Integrate simple kinematics each frame
-      const dt = 1/60; // your renderer is already driving the frame rate; we use small fixed step
+      const dt = 1/60;
       v.x -= v.x * 8 * dt;
       v.z -= v.z * 8 * dt;
       v.y -= GRAV * dt;
@@ -56,25 +63,50 @@
       const obj = controlsFP.getObject();
       obj.position.addScaledVector(v, dt);
 
-      // clamp to current point-cloud bounds
-      const floorY = bounds.min.y + HEIGHT;
-      if (obj.position.y <= floorY){ v.y = 0; obj.position.y = floorY; keys.ground = true; } else { keys.ground = false; }
+      const groundY = getGroundHeight(obj.position.x, obj.position.z) + HEIGHT;
+      if (obj.position.y <= groundY){ v.y = 0; obj.position.y = groundY; keys.ground = true; } else { keys.ground = false; }
 
       obj.position.x = Math.max(bounds.min.x-2, Math.min(bounds.max.x+2, obj.position.x));
       obj.position.z = Math.max(bounds.min.z-2, Math.min(bounds.max.z+2, obj.position.z));
     });
 
+    document.addEventListener('quantumi:cloud', ()=>{
+      bounds = computeBounds();
+      lastPathLen = pathPoints.length;
+      if (active){
+        const obj = controlsFP.getObject();
+        const p = pathPoints[pathPoints.length-1];
+        if (p){ obj.position.set(p.x, p.y + HEIGHT, p.z); }
+      }
+    });
+
     function computeBounds(){
-      // Try newest cloud first
       const clouds = Q.dotClouds || [];
       const latest = clouds[clouds.length-1];
-      const box = new THREE_.Box3();
-      if (latest && latest.geometry) {
-        latest.geometry.computeBoundingBox?.();
-        if (latest.geometry.boundingBox) return latest.geometry.boundingBox.clone().expandByScalar(2);
+      const box = new THREE_.Box3(new THREE_.Vector3(-12,-2,-12), new THREE_.Vector3(12,6,12));
+      pathPoints = [];
+      if (latest && latest.geometry){
+        const pos = latest.geometry.getAttribute('position');
+        if (pos){
+          for (let i=0;i<pos.count;i++){
+            const p = new THREE_.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
+            pathPoints.push(p);
+            box.expandByPoint(p);
+          }
+        }
+        return box.expandByScalar(2);
       }
-      // Fallback reasonable stage
-      return new THREE_.Box3(new THREE_.Vector3(-12,-2,-12), new THREE_.Vector3(12,6,12));
+      return box;
+    }
+
+    function getGroundHeight(x,z){
+      if (!pathPoints.length) return bounds.min.y;
+      let min=Infinity, y=bounds.min.y;
+      for (const p of pathPoints){
+        const dx=p.x-x, dz=p.z-z; const d=dx*dx+dz*dz;
+        if (d<min){ min=d; y=p.y; }
+      }
+      return y;
     }
 
     // key handlers only while pointer-locked
@@ -99,8 +131,17 @@
     }
 
     function enterFP(){
-      // disable Orbit while exploring
+      if (!document.fullscreenElement){ document.getElementById('toggle-fs')?.click(); }
       Q.controls.enabled = false;
+      bounds = computeBounds();
+      lastPathLen = pathPoints.length;
+      const p = pathPoints[pathPoints.length-1];
+      if (p){
+        const obj = controlsFP.getObject();
+        obj.position.set(p.x, p.y + HEIGHT, p.z);
+        const look = pathPoints[pathPoints.length-2] || new THREE_.Vector3();
+        obj.lookAt(look.x, look.y + HEIGHT, look.z);
+      }
       controlsFP.lock();
     }
     function exitFP(){
@@ -109,11 +150,7 @@
 
     controlsFP.addEventListener('lock', ()=>{
       active = true;
-      bounds = computeBounds();
       hud?.classList.add('on');
-      // place camera on floor if outside
-      const y = bounds.min.y + HEIGHT;
-      if (Q.camera.position.y < y) Q.camera.position.y = y;
       document.addEventListener('keydown', onKeyDown);
       document.addEventListener('keyup', onKeyUp);
     });

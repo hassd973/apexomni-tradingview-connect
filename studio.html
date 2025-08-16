@@ -510,18 +510,19 @@
 
       async function updateHashCloud(){
         try{
-          if ($('mapping').value === 'original'){
+        if ($('mapping').value === 'original'){
             await drawOriginalFromMarket();
             const { price } = await fetchBTCPrice();
             addHashLog(generateHashFromPrice(price), new Date().toLocaleTimeString());
-          } else {
+        } else {
             const { price } = await fetchBTCPrice();
             const h = generateHashFromPrice(price);
             layoutFromHash(h, $('mapping').value);
             addHashLog(h, new Date().toLocaleTimeString());
-          }
-        }catch(err){ console.warn('Auto update failed', err); }
-      }
+        }
+        document.dispatchEvent(new CustomEvent('quantumi:cloud'));
+      }catch(err){ console.warn('Auto update failed', err); }
+    }
 
       // --- Model import → instanced geometry -------------------------------------
       const fbxLoader = new THREE.FBXLoader();
