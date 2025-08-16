@@ -6008,14 +6008,19 @@ function setupModuleToggles() {
 					return;
 				}
 
-				document.getElementById('loader-tokens').style.display = 'none';
-				const tokenList = document.getElementById('token-list');
-				tokenList.innerHTML = tokens
-					.map((token, index) => {
-						const isPositive = token.price_change_percentage_24h >= 0;
-						const symbol = `BINANCE:${token.symbol}USDT`;
-						return `
-          <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
+                                document.getElementById('loader-tokens').style.display = 'none';
+                                const tokenList = document.getElementById('token-list');
+                                const topVolumeToken = tokens.reduce(
+                                        (max, token) => (token.total_volume > max.total_volume ? token : max),
+                                        tokens[0]
+                                );
+                                tokenList.innerHTML = tokens
+                                        .map((token) => {
+                                                const isPositive = token.price_change_percentage_24h >= 0;
+                                                const isSelected = token.id === topVolumeToken.id;
+                                                const symbol = `BINANCE:${token.symbol}USDT`;
+                                                return `
+          <li class="${isSelected ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="flex justify-between items-center">
               <span><a href="https://coinmarketcap.com/currencies/${token.id}/" target="_blank" class="token-link">${token.name}</a> (${token.symbol})</span>
               <span class="performance ${isPositive ? 'text-green-400' : 'text-red-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
@@ -6084,17 +6089,18 @@ function setupModuleToggles() {
 					'ticker-marquee-modal'
 				).style.animationDuration = `${Math.max(80, tokens.length * 5)}s`;
 
-				const topSymbol = `BINANCE:${topToken.symbol}USDT`;
-				initializeChart('chart-container-header', topSymbol, 'D');
-				initializeChart('chart-container-modal', topSymbol, 'D');
-				document
-					.getElementById('chart-title-header')
-					.setAttribute('data-symbol', topSymbol);
-				document.getElementById('chart-title-header').textContent = topSymbol;
-				document
-					.getElementById('chart-title-modal')
-					.setAttribute('data-symbol', topSymbol);
-				document.getElementById('chart-title-modal').textContent = topSymbol;
+                                const topSymbol = `BINANCE:${topVolumeToken.symbol}USDT`;
+                                initializeChart('chart-container-header', topSymbol, 'D');
+                                initializeChart('chart-container-modal', topSymbol, 'D');
+                                const currentDate = new Date().toLocaleDateString();
+                                document
+                                        .getElementById('chart-title-header')
+                                        .setAttribute('data-symbol', topSymbol);
+                                document.getElementById('chart-title-header').textContent = `${topSymbol} - ${currentDate}`;
+                                document
+                                        .getElementById('chart-title-modal')
+                                        .setAttribute('data-symbol', topSymbol);
+                                document.getElementById('chart-title-modal').textContent = `${topSymbol} - ${currentDate}`;
 
 				const ethToken = tokens.find((token) => token.symbol === 'ETH');
 				if (ethToken) {
