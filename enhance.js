@@ -45,6 +45,10 @@
 
       // Integrate simple kinematics each frame
       const dt = 1/60;
+      if (!active && ++frameCount % 180 === 0) { bounds = computeBounds(); } // ~3s at 60fps
+      if (!active) return;
+
+      // Integrate simple kinematics each frame
       v.x -= v.x * 8 * dt;
       v.z -= v.z * 8 * dt;
       v.y -= GRAV * dt;

@@ -124,11 +124,17 @@
 
       /* Reduced motion */
       @media (prefers-reduced-motion: reduce){ *{ animation: none !important; transition: none !important; } }
+      /* --- First-person HUD (non-invasive) --- */
+      .fp-hud{position:absolute;inset:0;pointer-events:none;display:none;place-items:center}
+      .fp-hud.on{display:grid}
+      .fp-cross{width:12px;height:12px;border:2px solid rgba(255,255,255,.9);border-radius:50%}
+      .fp-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--muted);background:rgba(0,0,0,.35);padding:6px 10px;border-radius:6px}
     </style>
 
     <!-- three.js r128 (kept for FBXLoader compatibility) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
@@ -141,6 +147,7 @@
         <div class="right">
           <a class="btn" id="home-btn" href="index.html" title="Home">⌂</a>
           <button class="btn desktop-fs-btn" id="toggle-fs" title="Toggle fullscreen (F / dbl‑click)">⤢</button>
+          <button class="btn" id="play-fp" title="Enter first-person explore">▶ Explore</button>
           <button class="btn" id="toggle-log" title="Show/Hide log">≡</button>
           <button class="btn" id="toggle-metrics" title="Show/Hide metrics">Σ</button>
           <div class="seg" role="group" aria-label="Theme">
@@ -169,6 +176,10 @@
             <div class="chip" id="m-status">Status — Init…</div>
           </div>
           <canvas id="btc-hash-canvas" aria-label="BTC hash visualization"></canvas>
+          <div id="fp-hud" class="fp-hud" aria-hidden="true">
+            <div class="fp-cross"></div>
+            <div class="fp-hint">WASD to move • Space to jump • Shift to run • Esc to exit</div>
+          </div>
           <div class="legend" id="btc-legend" aria-live="polite">
             <span id="btc-price">Price: Loading...</span>
             <span id="btc-time">Time: Loading...</span>
@@ -697,6 +708,7 @@
           const cp = $('camera-pos');
           if (cp) cp.textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
         }
+        document.dispatchEvent(new CustomEvent('quantumi:frame', { detail: { now: performance.now() } }));
         renderer.render(scene, camera);
       }
 
@@ -968,7 +980,13 @@
         // Metrics bootstrap
         updateMetrics();
         setInterval(updateMetrics, 60_000);
+        window.QUANTUMI = {
+          get scene(){ return scene; }, get camera(){ return camera; }, get renderer(){ return renderer; },
+          get controls(){ return controls; }, get dotClouds(){ return dotClouds; },
+          functions: { updateHashCloud, layoutFromHash, drawOriginalFromMarket, clearClouds }
+        };
       });
     </script>
+    <script type="module" src="./enhance.js"></script>
   </body>
 </html>
