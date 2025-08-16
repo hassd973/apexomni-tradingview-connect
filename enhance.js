@@ -154,6 +154,8 @@
       controlsFP.unlock();
     }
 
+    window.enterFP = enterFP;
+
     controlsFP.addEventListener('lock', ()=>{
       active = true;
       hud?.classList.add('on');
