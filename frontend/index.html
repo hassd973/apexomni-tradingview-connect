@@ -2464,6 +2464,7 @@
                         #exch-spikes-module .spike-row .grid > div {
                                 min-width: 0;
                                 overflow-wrap: anywhere;
+                                word-break: break-word;
                         }
                         #exch-spikes-module .exch-select {
                                 padding: 6px 10px;
@@ -3365,7 +3366,7 @@
           </div>
           <div class="text-xs opacity-80">Spike ×${(r.spike||1).toFixed(2)}</div>
         </div>
-        <div class="grid grid-cols-3 gap-2 mt-1 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-1 text-xs">
           <div>Vol24h $${fmt(r.volume24h)}</div>
           <div>Price $${fmt(r.price)}</div>
           <div>${dir} ${isFinite(net)? ('$'+fmt(net)) : ''}</div>
