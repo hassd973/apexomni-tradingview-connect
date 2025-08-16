@@ -133,7 +133,8 @@
     async function ensureFullscreen(){
       if (document.fullscreenElement) return;
       try{
-        await (stage.requestFullscreen?.({ navigationUI:'hide' }) || stage.webkitRequestFullscreen?.());
+        const mod = await import('../fullscreen.js');
+        await mod.toggleFullscreen(stage);
       }catch(e){ console.warn('FS request failed', e); }
     }
     async function enterFP(){
