@@ -342,7 +342,16 @@
           return { price:60000, volume:4_500_000, change:0 };
         }
       }
-      async function fetchBTCHistorical(){ try { return await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1'); } catch { return null; } }
+      async function fetchBTCHistorical(){
+        try {
+          return await fetchWithRetry('https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1');
+        } catch {
+          try {
+            const resp = await fetch('./mock-btc-historical.json');
+            return await resp.json();
+          } catch { return null; }
+        }
+      }
       async function fetchBTCHashRate(){ try { return parseFloat(await fetchTextWithRetry('https://api.blockchain.info/q/hashrate?cors=true'))/1e9; } catch { return 0; } }
       async function fetchBTCDifficulty(){ try { return parseFloat(await fetchTextWithRetry('https://api.blockchain.info/q/getdifficulty?cors=true')); } catch { return 0; } }
 
