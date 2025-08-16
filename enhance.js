@@ -152,7 +152,6 @@
     }
     function exitFP(){
       controlsFP.unlock();
-      if (document.fullscreenElement) document.exitFullscreen?.();
     }
 
     controlsFP.addEventListener('lock', ()=>{
