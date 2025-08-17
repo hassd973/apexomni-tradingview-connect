@@ -139,7 +139,7 @@ button:active {
 .module-content {
   width: 100%;
   max-width: 100%;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: auto;
   box-sizing: border-box;
   overflow-wrap: anywhere;
