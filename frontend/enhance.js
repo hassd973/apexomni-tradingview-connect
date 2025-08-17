@@ -30,6 +30,11 @@
     let bounds = computeBounds();
     let pathPoints = []; let lastPathLen = 0;
     let active = false;
+    const canvas = Q.renderer.domElement;
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const canPointerLock = !!canvas.requestPointerLock && !isMobile;
+    let lookTouchId = -1, moveTouchId = -1;
+    let lookX = 0, lookY = 0, moveSX = 0, moveSY = 0;
 
     // update bounds whenever a new cloud is added (we can hook into your frame loop cheaply)
     let frameCount = 0;
@@ -130,6 +135,54 @@
       }
     }
 
+    function onTouchStart(e){
+      e.preventDefault();
+      for (const t of e.changedTouches){
+        if (t.clientX < window.innerWidth / 2 && moveTouchId === -1){
+          moveTouchId = t.identifier;
+          moveSX = t.clientX;
+          moveSY = t.clientY;
+        } else if (lookTouchId === -1){
+          lookTouchId = t.identifier;
+          lookX = t.clientX;
+          lookY = t.clientY;
+        }
+      }
+    }
+    function onTouchMove(e){
+      e.preventDefault();
+      for (const t of e.changedTouches){
+        if (t.identifier === moveTouchId){
+          const dx = t.clientX - moveSX;
+          const dy = t.clientY - moveSY;
+          keys.f = dy < -10; keys.b = dy > 10;
+          keys.l = dx < -10; keys.r = dx > 10;
+        } else if (t.identifier === lookTouchId){
+          const dx = t.clientX - lookX;
+          const dy = t.clientY - lookY;
+          lookX = t.clientX; lookY = t.clientY;
+          const yaw = controlsFP.getObject();
+          const pitch = yaw.children[0];
+          yaw.rotation.y -= dx * 0.002;
+          if (pitch){
+            pitch.rotation.x -= dy * 0.002;
+            pitch.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch.rotation.x));
+          }
+        }
+      }
+    }
+    function onTouchEnd(e){
+      for (const t of e.changedTouches){
+        if (t.identifier === moveTouchId){
+          moveTouchId = -1;
+          keys.f = keys.b = keys.l = keys.r = false;
+        }
+        if (t.identifier === lookTouchId){
+          lookTouchId = -1;
+        }
+      }
+    }
+
     async function ensureFullscreen(){
       if (document.fullscreenElement) return;
       try{
@@ -139,7 +192,6 @@
     }
     async function enterFP(){
       ensureFullscreen();
-      Q.controls.enabled = false;
       bounds = computeBounds();
       lastPathLen = pathPoints.length;
       const p = pathPoints[pathPoints.length-1];
@@ -149,30 +201,62 @@
         const look = pathPoints[pathPoints.length-2] || new THREE_.Vector3();
         obj.lookAt(look.x, look.y + HEIGHT, look.z);
       }
-      controlsFP.lock();
+      if (canPointerLock){
+        Q.controls.enabled = false;
+        controlsFP.lock();
+      } else {
+        Q.controls.enabled = false;
+        active = true;
+        hud?.classList.add('on');
+        setPlayState(true);
+        document.addEventListener('touchstart', onTouchStart, { passive: false });
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend', onTouchEnd);
+        document.addEventListener('touchcancel', onTouchEnd);
+      }
     }
     function exitFP(){
-      controlsFP.unlock();
+      if (canPointerLock){
+        controlsFP.unlock();
+      } else {
+        active = false;
+        hud?.classList.remove('on');
+        setPlayState(false);
+        Q.controls.enabled = true;
+        keys.f = keys.b = keys.l = keys.r = false;
+        document.removeEventListener('touchstart', onTouchStart);
+        document.removeEventListener('touchmove', onTouchMove);
+        document.removeEventListener('touchend', onTouchEnd);
+        document.removeEventListener('touchcancel', onTouchEnd);
+      }
       if (document.fullscreenElement) document.exitFullscreen?.();
     }
 
     window.enterFP = enterFP;
 
+    function setPlayState(on){
+      if (!playBtn) return;
+      playBtn.textContent = on ? '■ Exit' : '▶ Explore';
+      playBtn.title = on ? 'Exit explore' : 'Enter first-person explore';
+    }
+
     controlsFP.addEventListener('lock', ()=>{
       active = true;
       hud?.classList.add('on');
+      setPlayState(true);
       document.addEventListener('keydown', onKeyDown);
       document.addEventListener('keyup', onKeyUp);
     });
     controlsFP.addEventListener('unlock', ()=>{
       active = false;
       hud?.classList.remove('on');
+      setPlayState(false);
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
       Q.controls.enabled = true;
     });
 
-    playBtn?.addEventListener('click', enterFP);
+    playBtn?.addEventListener('click', ()=>{ active ? exitFP() : enterFP(); });
     document.getElementById('mobile-fs-toggle')?.addEventListener('click', ()=>{ /* mobile FS already handled by page */ });
 
     // ---------- Generative Style Mapping (prompt → live recolor) ----------
@@ -279,7 +363,7 @@
 
     // ESC exits explore (PointerLock handles most, but ensure UI toggles)
     document.addEventListener('keydown', (e)=>{
-      if (e.key === 'Escape' && controlsFP.isLocked) { exitFP(); }
+      if (e.key === 'Escape' && (controlsFP.isLocked || active)) { exitFP(); }
     });
   });
 })();
