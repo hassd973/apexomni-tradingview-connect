@@ -1,10 +1,10 @@
 // QUANTUMI add-on: first-person Explore mode + generative style recoloring (non-destructive)
-// Works with three r128. Depends on window.QUANTUMI (exposed by the patch) and PointerLockControls.
+// Adds PointerLock + auto-fullscreen, and snaps player to latest BTC hash point-cloud height.
+// No changes to your data flow: original mapping + hash layouts still render as before.
 
 (function(){
   const wait = (cond, t=50) => new Promise(res=>{
-    const tick=()=>cond()?res():setTimeout(tick,t);
-    tick();
+    const tick=()=>cond()?res():setTimeout(tick,t); tick();
   });
 
   document.addEventListener('DOMContentLoaded', async ()=>{
@@ -27,28 +27,60 @@
     const up = new THREE_.Vector3(0,1,0);
     const keys = { f:false,b:false,l:false,r:false,run:false,ground:false };
     const SPEED=9, RUN=1.8, GRAV=28, JUMP=10, HEIGHT=1.6;
-    let bounds = computeBounds();
-    let pathPoints = []; let lastPathLen = 0;
     let active = false;
-    const canvas = Q.renderer.domElement;
-    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const canPointerLock = !!canvas.requestPointerLock && !isMobile;
-    let lookTouchId = -1, moveTouchId = -1;
-    let lookX = 0, lookY = 0, moveSX = 0, moveSY = 0;
 
-    // update bounds whenever a new cloud is added (we can hook into your frame loop cheaply)
-    let frameCount = 0;
-    document.addEventListener('quantumi:frame', ()=>{
-      if (++frameCount % 180 === 0) { bounds = computeBounds(); }
-      if (active && pathPoints.length !== lastPathLen){
-        const obj = controlsFP.getObject();
-        const p = pathPoints[pathPoints.length-1];
-        if (p){ obj.position.set(p.x, p.y + HEIGHT, p.z); }
-        lastPathLen = pathPoints.length;
+    // ---- Spatial index over latest cloud so we can "walk on the hash" ----
+    // Grid hashmap: key = ix,iz; value = {yMax, count, yAvg}
+    let grid=null, gridSize=0.6, yMin=-2, yMax=6, lastCloudCount=-1;
+
+    function rebuildSpatialIndex(){
+      grid = new Map();
+      const clouds = Q.dotClouds || [];
+      const latest = clouds[clouds.length-1];
+      if (!latest || !latest.geometry) return;
+      const pos = latest.geometry.getAttribute('position');
+      if (!pos) return;
+
+      yMin = +Infinity; yMax = -Infinity;
+      for (let i=0;i<pos.count;i++){
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+        yMin = Math.min(yMin, y); yMax = Math.max(yMax, y);
+        const ix = Math.floor(x / gridSize), iz = Math.floor(z / gridSize);
+        const key = ix + ',' + iz;
+        let cell = grid.get(key);
+        if (!cell) { cell = { yMax: y, ySum: y, count: 1 }; grid.set(key, cell); }
+        else { cell.yMax = Math.max(cell.yMax, y); cell.ySum += y; cell.count++; }
       }
+      lastCloudCount = clouds.length;
+    }
+
+    function yAt(x, z){
+      if (!grid || grid.size===0) return null;
+      const ix = Math.floor(x / gridSize), iz = Math.floor(z / gridSize);
+      // Look in 3x3 neighborhood for a cell
+      let best = null;
+      for (let dx=-1; dx<=1; dx++){
+        for (let dz=-1; dz<=1; dz++){
+          const cell = grid.get((ix+dx)+','+(iz+dz));
+          if (!cell) continue;
+          const h = cell.yMax; // choose max to favor "top" of cloud clusters
+          best = (best==null) ? h : Math.max(best, h);
+        }
+      }
+      return best;
+    }
+
+    function ensureIndexUpToDate(){
+      const count = (Q.dotClouds||[]).length;
+      if (grid==null || count !== lastCloudCount) rebuildSpatialIndex();
+    }
+
+    // update per frame
+    document.addEventListener('quantumi:frame', ()=>{
+      ensureIndexUpToDate();
       if (!active) return;
 
-      // Integrate simple kinematics each frame
+      // Integrate simple kinematics each frame (fixed small step)
       const dt = 1/60;
       v.x -= v.x * 8 * dt;
       v.z -= v.z * 8 * dt;
@@ -68,50 +100,32 @@
       const obj = controlsFP.getObject();
       obj.position.addScaledVector(v, dt);
 
-      const groundY = getGroundHeight(obj.position.x, obj.position.z) + HEIGHT;
-      if (obj.position.y <= groundY){ v.y = 0; obj.position.y = groundY; keys.ground = true; } else { keys.ground = false; }
+      // Snap to BTC hash surface height (walk/climb on cloud)
+      const h = yAt(obj.position.x, obj.position.z);
+      const floorY = (h!=null ? h : yMin) + HEIGHT;
 
-      obj.position.x = Math.max(bounds.min.x-2, Math.min(bounds.max.x+2, obj.position.x));
-      obj.position.z = Math.max(bounds.min.z-2, Math.min(bounds.max.z+2, obj.position.z));
+      if (obj.position.y <= floorY){ v.y = 0; obj.position.y = floorY; keys.ground = true; }
+      else { keys.ground = false; }
+
+      // gentle climb assist: if we're slightly above target, ease down
+      const diff = obj.position.y - floorY;
+      if (diff > 0 && diff < 0.5){ obj.position.y -= Math.min(diff, 0.02); }
+
+      // Clamp horizontal wandering to the cloud's rough bounds
+      const bb = latestBounds();
+      obj.position.x = Math.max(bb.min.x-2, Math.min(bb.max.x+2, obj.position.x));
+      obj.position.z = Math.max(bb.min.z-2, Math.min(bb.max.z+2, obj.position.z));
     });
 
-    document.addEventListener('quantumi:cloud', ()=>{
-      bounds = computeBounds();
-      lastPathLen = pathPoints.length;
-      if (active){
-        const obj = controlsFP.getObject();
-        const p = pathPoints[pathPoints.length-1];
-        if (p){ obj.position.set(p.x, p.y + HEIGHT, p.z); }
-      }
-    });
-
-    function computeBounds(){
+    function latestBounds(){
       const clouds = Q.dotClouds || [];
       const latest = clouds[clouds.length-1];
       const box = new THREE_.Box3(new THREE_.Vector3(-12,-2,-12), new THREE_.Vector3(12,6,12));
-      pathPoints = [];
       if (latest && latest.geometry){
-        const pos = latest.geometry.getAttribute('position');
-        if (pos){
-          for (let i=0;i<pos.count;i++){
-            const p = new THREE_.Vector3(pos.getX(i), pos.getY(i), pos.getZ(i));
-            pathPoints.push(p);
-            box.expandByPoint(p);
-          }
-        }
-        return box.expandByScalar(2);
+        latest.geometry.computeBoundingBox?.();
+        if (latest.geometry.boundingBox) return latest.geometry.boundingBox.clone().expandByScalar(2);
       }
       return box;
-    }
-
-    function getGroundHeight(x,z){
-      if (!pathPoints.length) return bounds.min.y;
-      let min=Infinity, y=bounds.min.y;
-      for (const p of pathPoints){
-        const dx=p.x-x, dz=p.z-z; const d=dx*dx+dz*dz;
-        if (d<min){ min=d; y=p.y; }
-      }
-      return y;
     }
 
     // key handlers only while pointer-locked
@@ -122,7 +136,8 @@
         case 'KeyA': case 'ArrowLeft': keys.l = true; break;
         case 'KeyD': case 'ArrowRight': keys.r = true; break;
         case 'ShiftLeft': case 'ShiftRight': keys.run = true; break;
-        case 'Space': if (keys.ground) { v.y += JUMP; keys.ground = false; } break;
+        case 'Space': if (keys.ground) { keys.ground=false; v.y += JUMP; } break;
+        case 'KeyF': toggleFullscreen(); break; // convenience
       }
     }
     function onKeyUp(e){
@@ -135,129 +150,39 @@
       }
     }
 
-    function onTouchStart(e){
-      e.preventDefault();
-      for (const t of e.changedTouches){
-        if (t.clientX < window.innerWidth / 2 && moveTouchId === -1){
-          moveTouchId = t.identifier;
-          moveSX = t.clientX;
-          moveSY = t.clientY;
-        } else if (lookTouchId === -1){
-          lookTouchId = t.identifier;
-          lookX = t.clientX;
-          lookY = t.clientY;
-        }
-      }
-    }
-    function onTouchMove(e){
-      e.preventDefault();
-      for (const t of e.changedTouches){
-        if (t.identifier === moveTouchId){
-          const dx = t.clientX - moveSX;
-          const dy = t.clientY - moveSY;
-          keys.f = dy < -10; keys.b = dy > 10;
-          keys.l = dx < -10; keys.r = dx > 10;
-        } else if (t.identifier === lookTouchId){
-          const dx = t.clientX - lookX;
-          const dy = t.clientY - lookY;
-          lookX = t.clientX; lookY = t.clientY;
-          const yaw = controlsFP.getObject();
-          const pitch = yaw.children[0];
-          yaw.rotation.y -= dx * 0.002;
-          if (pitch){
-            pitch.rotation.x -= dy * 0.002;
-            pitch.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, pitch.rotation.x));
-          }
-        }
-      }
-    }
-    function onTouchEnd(e){
-      for (const t of e.changedTouches){
-        if (t.identifier === moveTouchId){
-          moveTouchId = -1;
-          keys.f = keys.b = keys.l = keys.r = false;
-        }
-        if (t.identifier === lookTouchId){
-          lookTouchId = -1;
-        }
-      }
-    }
-
-    async function ensureFullscreen(){
-      if (document.fullscreenElement) return;
-      try{
-        const mod = await import('../fullscreen.js');
-        await mod.toggleFullscreen(stage);
-      }catch(e){ console.warn('FS request failed', e); }
-    }
     async function enterFP(){
-      ensureFullscreen();
-      bounds = computeBounds();
-      lastPathLen = pathPoints.length;
-      const p = pathPoints[pathPoints.length-1];
-      if (p){
-        const obj = controlsFP.getObject();
-        obj.position.set(p.x, p.y + HEIGHT, p.z);
-        const look = pathPoints[pathPoints.length-2] || new THREE_.Vector3();
-        obj.lookAt(look.x, look.y + HEIGHT, look.z);
-      }
-      if (canPointerLock){
-        Q.controls.enabled = false;
-        controlsFP.lock();
-      } else {
-        Q.controls.enabled = false;
-        active = true;
-        hud?.classList.add('on');
-        setPlayState(true);
-        document.addEventListener('touchstart', onTouchStart, { passive: false });
-        document.addEventListener('touchmove', onTouchMove, { passive: false });
-        document.addEventListener('touchend', onTouchEnd);
-        document.addEventListener('touchcancel', onTouchEnd);
-      }
+      // Ensure latest clouds present & index ready (but do not change normal loading)
+      ensureIndexUpToDate();
+      // Auto-enter fullscreen focused on the stage
+      await enterFullscreen();
+      // disable Orbit while exploring; pointer lock last so click grants both FS + lock
+      Q.controls.enabled = false;
+      controlsFP.lock();
     }
     function exitFP(){
-      if (canPointerLock){
-        controlsFP.unlock();
-      } else {
-        active = false;
-        hud?.classList.remove('on');
-        setPlayState(false);
-        Q.controls.enabled = true;
-        keys.f = keys.b = keys.l = keys.r = false;
-        document.removeEventListener('touchstart', onTouchStart);
-        document.removeEventListener('touchmove', onTouchMove);
-        document.removeEventListener('touchend', onTouchEnd);
-        document.removeEventListener('touchcancel', onTouchEnd);
-      }
-      if (document.fullscreenElement) document.exitFullscreen?.();
-    }
-
-    window.enterFP = enterFP;
-
-    function setPlayState(on){
-      if (!playBtn) return;
-      playBtn.textContent = on ? '■ Exit' : '▶ Explore';
-      playBtn.title = on ? 'Exit explore' : 'Enter first-person explore';
+      controlsFP.unlock();
     }
 
     controlsFP.addEventListener('lock', ()=>{
       active = true;
       hud?.classList.add('on');
-      setPlayState(true);
+      // place camera at surface if below
+      const bb = latestBounds();
+      const y = (yAt(Q.camera.position.x, Q.camera.position.z) ?? bb.min.y) + HEIGHT;
+      if (Q.camera.position.y < y) Q.camera.position.y = y;
       document.addEventListener('keydown', onKeyDown);
       document.addEventListener('keyup', onKeyUp);
     });
     controlsFP.addEventListener('unlock', ()=>{
       active = false;
       hud?.classList.remove('on');
-      setPlayState(false);
       document.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('keyup', onKeyUp);
       Q.controls.enabled = true;
+      // keep fullscreen until user presses Esc again; optional: exit FS here if desired
     });
 
-    playBtn?.addEventListener('click', ()=>{ active ? exitFP() : enterFP(); });
-    document.getElementById('mobile-fs-toggle')?.addEventListener('click', ()=>{ /* mobile FS already handled by page */ });
+    playBtn?.addEventListener('click', enterFP);
 
     // ---------- Generative Style Mapping (prompt → live recolor) ----------
     styleCtrl?.apply.addEventListener('click', ()=>{
@@ -291,20 +216,20 @@
         col.needsUpdate = true;
         cloud.material.vertexColors = true;
       }
-      // let theme chip reflect style
       const chip = document.getElementById('m-mode');
       if (chip) chip.textContent = `Mode — ${cfg.label}`;
+      // after recolor, refresh index bounds in case Y range was updated upstream
+      ensureIndexUpToDate();
     }
 
     function inferStyle(p){
       const s = p.toLowerCase();
-      // palettes (r,g,b in 0..1)
       const C = (hex)=>new THREE_.Color(hex);
       const A = C('#6bdc7a'), B = C('#1e6a37');        // grass
       const R1= C('#8d8d93'), R2=C('#333338');         // rock
       const W1= C('#56a7e6'), W2=C('#0a2749');         // water
       const F1= C('#fb6aa9'), F2=C('#f6e85a');         // flower
-      const N1= C('#a6c8ff'), N2=C('#1b3f66');         // neon city/sky
+      const N1= C('#a6c8ff'), N2=C('#1b3f66');         // neon
       const toRGB=(c)=>({r:c.r,g:c.g,b:c.b});
       let label='Custom', a=N1, b=N2, mode='gradient';
       if (/(grass|meadow|field|forest|green)/.test(s)){ label='Grass'; a=A; b=B; }
@@ -313,9 +238,9 @@
       else if (/(flower|bloom|garden|petal)/.test(s)){ label='Floral'; a=F1; b=F2; }
       else if (/(city|neon|cyber|tower|building)/.test(s)){ label='Neon'; a=N1; b=N2; }
       if (/noise|grain|speck|sparkle/.test(s)) mode='noise';
-      // scan current cloud bounds to set y-range
-      const bb = computeBounds();
-      return { label, a:toRGB(a), b:toRGB(b), yMin:bb.min.y, yMax:bb.max.y, mode };
+      const bb = latestBounds();
+      yMin = bb.min.y; yMax = bb.max.y;
+      return { label, a:toRGB(a), b:toRGB(b), yMin, yMax, mode };
     }
 
     function hash32(str){
@@ -329,13 +254,11 @@
     function ensurePlayButton(){
       let btn = document.getElementById('play-fp');
       if (!btn){
-        // Fallback: inject if missing
         const right = document.querySelector('.brand .right');
         if (right){
           btn = document.createElement('button');
           btn.className='btn'; btn.id='play-fp'; btn.title='Enter first-person explore';
           btn.textContent='▶ Explore';
-          // insert after fullscreen button if present
           const fs = document.getElementById('toggle-fs');
           fs?.insertAdjacentElement('afterend', btn) || right.appendChild(btn);
         }
@@ -346,12 +269,11 @@
     function ensureStyleControls(){
       const panel = document.querySelector('#controls-rail .controls');
       if (!panel) return null;
-      // Only add once
       if (document.getElementById('stylePrompt')) {
         return { input: document.getElementById('stylePrompt'), apply: document.getElementById('applyStyle') };
       }
       const wrap = document.createElement('div');
-      wrap.className='ctrl'; wrap.title='Live recolor point clouds by prompt (e.g., "lush grass", "rocky canyon", "neon city")';
+      wrap.className='ctrl'; wrap.title='Live recolor point clouds by prompt (e.g., "lush grass", "neon city", "rocky canyon")';
       wrap.innerHTML = `
         <label>Style Prompt</label>
         <input id="stylePrompt" type="text" placeholder="e.g. lush grass, neon city, rocky canyon" autocomplete="off">
@@ -361,9 +283,25 @@
       return { input: wrap.querySelector('#stylePrompt'), apply: wrap.querySelector('#applyStyle') };
     }
 
+    // --- Fullscreen helpers (independent of page's internal FS code) ---
+    async function enterFullscreen(){
+      try{
+        if (stage.requestFullscreen){ await stage.requestFullscreen({ navigationUI: 'hide' }); }
+        else if (stage.webkitRequestFullscreen){ stage.webkitRequestFullscreen(); }
+      }catch(e){ /* ignore; pointer lock will still work */ }
+    }
+    function toggleFullscreen(){
+      if (document.fullscreenElement || document.webkitFullscreenElement){
+        try{ document.exitFullscreen?.(); document.webkitExitFullscreen?.(); }catch{}
+      } else {
+        enterFullscreen();
+      }
+    }
+
     // ESC exits explore (PointerLock handles most, but ensure UI toggles)
     document.addEventListener('keydown', (e)=>{
-      if (e.key === 'Escape' && (controlsFP.isLocked || active)) { exitFP(); }
+      if (e.key === 'Escape' && controlsFP.isLocked) { exitFP(); }
     });
   });
 })();
+
