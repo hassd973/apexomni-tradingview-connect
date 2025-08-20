@@ -240,11 +240,27 @@
                 <input id="modelColor" type="color" value="#22d3ee" />
               </div>
               <div class="ctrl" title="Skip vertices for huge meshes to keep FPS high.">
-                <label>Model Sampling (every n-th)</label>
-                <input id="modelStride" type="number" min="1" step="1" value="1" />
-              </div>
+            <label>Model Sampling (every n-th)</label>
+            <input id="modelStride" type="number" min="1" step="1" value="1" />
+            </div>
             </div>
             <div id="modelStatus" class="text-xs opacity-80 mt-1"></div>
+          </div>
+          <div class="ctrl" title="Autonomous runner that climbs the current BTC path.">
+            <label>Runner</label>
+            <button class="btn" id="runner-toggle" aria-pressed="false">Start Runner</button>
+            <button class="btn" id="runner-attach" aria-pressed="false">Attach Cam</button>
+            <button class="btn" id="runner-fpv" aria-pressed="false">First-Person (FPV)</button>
+            <input class="w-full" type="range" id="runner-speed" min="0.2" max="5" step="0.1" value="1.2" />
+            <small>Hotkeys: R=run, C=chase, F=first-person</small>
+          </div>
+
+          <div class="ctrl" title="Turn clouds into worlds">
+            <label>World Builder Prompt</label>
+            <input id="worldPrompt" type="text" placeholder="e.g., neon city, grass field, mountainous terrain…" />
+            <button class="btn" id="build-world">Build World</button>
+            <button class="btn" id="reset-world">Reset World</button>
+            <div id="m-mode" class="chip">Mode — World(none)</div>
           </div>
           <div class="ctrl" title="Playback & camera">
             <label>Camera</label>
@@ -280,6 +296,7 @@
     </footer>
 
     <script src="quantumi-logo.js"></script>
+    <script>let lastPathPoints = [];</script>
     <script>
       // --- Theme toggle (Light / Dark). Remembers choice. iOS-ready light.
       (function initTheme(){
@@ -451,17 +468,19 @@
         const recent = prices.slice(-10).map(p=>p[1]); const volatility = ((Math.max(...recent)-Math.min(...recent))/latestPrice)*100;
         const cloudColorHex = getThemeColor(volatility, latestVolume, minVolume, maxVolume); const cloudColor = new THREE.Color(cloudColorHex);
         const pointsPerCloud = parseInt($('density').value,10);
-        const positions=[]; const colors=[]; const jitter=0.6;
+        const positions=[]; const colors=[]; const jitter=0.6; const centers=[];
         for(let i=0;i<prices.length;i++){
           const t = timestamps[i]; const price = prices[i][1]; const vol = volumes[i][1];
           const z = ((t-minTime)/(maxTime-minTime))*20-10;
           const x = ((price-minPrice)/(maxPrice-minPrice))*20-10;
           const y = ((vol-minVolume)/(maxVolume-minVolume))*20-10;
+          centers.push(new THREE.Vector3(x,y,z));
           for(let j=0;j<pointsPerCloud;j++){
             positions.push(x+(Math.random()-.5)*jitter, y+(Math.random()-.5)*jitter, z+(Math.random()-.5)*jitter);
             colors.push(cloudColor.r, cloudColor.g, cloudColor.b);
           }
         }
+        lastPathPoints = centers;
         const count = positions.length/3;
         let cloud;
         if (customGeometry) {
@@ -486,7 +505,7 @@
       }
 
       function layoutFromHash(hash, mapping){
-        const vals = Array.from(hash).map(ch=>parseInt(ch,16)); const N = 256; const positions=[]; const colors=[];
+        const vals = Array.from(hash).map(ch=>parseInt(ch,16)); const N = 256; const positions=[]; const colors=[]; const pathPts=[];
         const base = new THREE.Color(themes.original[dotClouds.length % themes.original.length]);
         for(let i=0;i<N;i++){
           const v = vals[i % vals.length] / 15; let x,y,z;
@@ -494,8 +513,9 @@
           else if(mapping==='sphere'){ const phi=Math.acos(1-(2*(i+.5))/N); const theta=Math.PI*(1+Math.sqrt(5))*(i+v); const R=6*(.6+.4*v); x=R*Math.sin(phi)*Math.cos(theta); y=R*Math.sin(phi)*Math.sin(theta); z=R*Math.cos(phi); }
           else if(mapping==='helix'){ const a=(i/N)*Math.PI*8; x=Math.cos(a)*5; y=Math.sin(a)*5; z=(i/N)*20-10+(v-.5); }
           else{ const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
-          positions.push(x,y,z); colors.push(base.r, base.g, base.b);
+          positions.push(x,y,z); colors.push(base.r, base.g, base.b); pathPts.push(new THREE.Vector3(x,y,z));
         }
+        lastPathPoints = pathPts;
         const count = positions.length/3;
         let cloud;
         if (customGeometry) {
@@ -709,15 +729,19 @@
       }
 
       // --- Controls & lifecycle --------------------------------------------
+      let __last = performance.now();
       function animate() {
         requestAnimationFrame(animate);
+        const __now = performance.now();
+        const dt = (__now - __last)/1000; __last = __now;
+        document.dispatchEvent(new CustomEvent('quantumi:tick',{ detail:{ dt } }));
         controls && controls.update();
         handleGamepadInput();
         if (camera) {
           const cp = $('camera-pos');
           if (cp) cp.textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
         }
-        document.dispatchEvent(new CustomEvent('quantumi:frame', { detail: { now: performance.now() } }));
+        document.dispatchEvent(new CustomEvent('quantumi:frame', { detail: { now: __now } }));
         renderer.render(scene, camera);
       }
 
@@ -992,10 +1016,12 @@
         window.QUANTUMI = {
           get scene(){ return scene; }, get camera(){ return camera; }, get renderer(){ return renderer; },
           get controls(){ return controls; }, get dotClouds(){ return dotClouds; },
+          get path(){ return lastPathPoints; },
           functions: { updateHashCloud, layoutFromHash, drawOriginalFromMarket, clearClouds }
         };
       });
     </script>
     <script type="module" src="./enhance.js"></script>
+    <script type="module" src="./game-ext.js"></script>
   </body>
 </html>
