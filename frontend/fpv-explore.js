@@ -1,19 +1,19 @@
-/* fpv-explore.js — FPV only via Explore; hidden tube by default; smooth motion.
+/* fpv-explore.js — FPV via Explore; mobile joystick restored; smooth motion; tube hidden by default.
    Requires: window.THREE and window.QUANTUMI with .scene, .camera, .controls, .path (Vector3[]).
 */
 const THREE = window.THREE;
 
 (() => {
   const $ = (id)=>document.getElementById(id);
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
 
   let Q, curve=null, tube=null, curveLen=1;
   let isFPV=false;
   let runnerT=0, playerY=0, velY=0;
 
-  // Inputs and smoothing
+  // Raw inputs (from keys/joystick) and smoothed values
   const moveRaw = {f:0,b:0,l:0,r:0, run:0};
-  const moveSm  = {fwd:0, lat:0}; // smoothed forward & lateral
-  const keysDown = new Set();
+  const moveSm  = {fwd:0, lat:0};
 
   const cfg = {
     tubeRadius: 0.065,
@@ -25,20 +25,27 @@ const THREE = window.THREE;
     jumpVel: 3.0,
     gravity: 9.0,
     // smoothing
-    easeIn: 8.0,     // higher = faster response
+    easeIn: 8.0,
     easeOut: 6.0,
     camPosLerp: 0.45,
     camRotSlerp: 0.35,
   };
 
-  // HUD (minimal) + Path toggle
-  let hud=null, pathBtn=null, hintTimer=null, headerPathBtn=null;
+  // HUD + Path toggle + Mobile controls
+  let hud=null, pathBtn=null, hintTimer=null;
+  let joy=null, jumpBtn=null, exitBtn=null;
+
   function buildHUD() {
     if (hud) return;
+
     const root = document.createElement('div');
-    root.style.position='absolute'; root.style.inset='0'; root.style.pointerEvents='none';
-    root.style.zIndex='30'; root.id='fpv-hud-min';
-    // path toggle (top-left)
+    root.id = 'fpv-hud';
+    Object.assign(root.style,{
+      position:'absolute', inset:'0', pointerEvents:'none', zIndex:30,
+      fontFamily:'inherit', color:'#fff'
+    });
+
+    // Path toggle (top-left)
     const btn = document.createElement('button');
     btn.textContent = 'Path';
     btn.id='toggle-path';
@@ -51,33 +58,98 @@ const THREE = window.THREE;
     btn.setAttribute('aria-pressed','false');
     btn.onclick = ()=> {
       if (!tube) return;
-      const on = !(tube.visible);
+      const on = !tube.visible;
       tube.visible = on;
       btn.setAttribute('aria-pressed', String(on));
-      headerPathBtn && headerPathBtn.setAttribute('aria-pressed', String(on));
     };
-
-    // small hint (auto-fade)
-    const hint = document.createElement('div');
-    hint.textContent = 'W/S move • A/D strafe • Space jump • Shift run • Esc exit';
-    Object.assign(hint.style,{
-      position:'absolute', bottom:'16px', left:'50%', transform:'translateX(-50%)',
-      background:'rgba(0,0,0,.45)', color:'#fff', fontSize:'12px',
-      padding:'6px 10px', borderRadius:'8px', opacity:'0', transition:'opacity .4s ease'
-    });
-
     root.appendChild(btn);
-    root.appendChild(hint);
-    $('stagePanel')?.appendChild(root);
-    hud = root; pathBtn = btn;
+    pathBtn = btn;
 
-    clearTimeout(hintTimer);
-    hint.style.opacity='1';
-    hintTimer = setTimeout(()=> hint.style.opacity='0', 3200);
+    // Desktop hint (auto-fade)
+    if (!isTouch){
+      const hint = document.createElement('div');
+      hint.textContent = 'W/S move • A/D strafe • Space jump • Shift run • Esc exit';
+      Object.assign(hint.style,{
+        position:'absolute', bottom:'16px', left:'50%', transform:'translateX(-50%)',
+        background:'rgba(0,0,0,.45)', color:'#fff', fontSize:'12px',
+        padding:'6px 10px', borderRadius:'8px', opacity:'0', transition:'opacity .4s ease',
+        pointerEvents:'none'
+      });
+      root.appendChild(hint);
+      clearTimeout(hintTimer);
+      hint.style.opacity='1';
+      hintTimer = setTimeout(()=> hint.style.opacity='0', 3200);
+    }
+
+    // Mobile controls: joystick + Jump + Exit
+    if (isTouch){
+      // Joystick ring
+      const joyRoot = document.createElement('div');
+      Object.assign(joyRoot.style,{
+        position:'absolute', bottom:'20px', left:'18px', width:'120px', height:'120px',
+        borderRadius:'999px', background:'rgba(255,255,255,.06)',
+        border:'1px solid rgba(255,255,255,.12)', touchAction:'none', pointerEvents:'auto'
+      });
+      const knob = document.createElement('div');
+      Object.assign(knob.style,{
+        position:'absolute', width:'56px', height:'56px', borderRadius:'999px',
+        left:'32px', top:'32px', background:'rgba(255,255,255,.22)'
+      });
+      joyRoot.appendChild(knob);
+      root.appendChild(joyRoot);
+
+      // Jump
+      const j = document.createElement('button');
+      j.textContent = '⤒';
+      Object.assign(j.style,{
+        position:'absolute', bottom:'42px', right:'22px', width:'64px', height:'64px',
+        borderRadius:'999px', background:'rgba(255,255,255,.14)', color:'white',
+        border:'1px solid rgba(255,255,255,.2)', fontSize:'28px', pointerEvents:'auto'
+      });
+      root.appendChild(j);
+
+      // Exit (top-right)
+      const x = document.createElement('button');
+      x.textContent = '✕';
+      Object.assign(x.style,{
+        position:'absolute', top:'14px', right:'14px', width:'44px', height:'44px',
+        borderRadius:'12px', background:'rgba(0,0,0,.35)', color:'white',
+        border:'1px solid rgba(255,255,255,.15)', fontSize:'18px', pointerEvents:'auto'
+      });
+      root.appendChild(x);
+
+      // Wire joystick
+      let touching=false, cx=60, cy=60;
+      function setKnob(x,y){ knob.style.left=(x-28)+'px'; knob.style.top=(y-28)+'px'; }
+      joyRoot.addEventListener('pointerdown',e=>{ touching=true; joyRoot.setPointerCapture(e.pointerId); });
+      joyRoot.addEventListener('pointerup',e=>{ touching=false; moveRaw.f=moveRaw.b=moveRaw.l=moveRaw.r=0; setKnob(cx,cy); });
+      joyRoot.addEventListener('pointermove',e=>{
+        if(!touching) return;
+        const r = joyRoot.getBoundingClientRect();
+        const x = Math.max(0, Math.min(120, e.clientX - r.left));
+        const y = Math.max(0, Math.min(120, e.clientY - r.top));
+        setKnob(x,y);
+        const dx = (x-cx)/60, dy = (y-cy)/60;
+        moveRaw.f = (-dy>0 ? -dy : 0);
+        moveRaw.b = (dy>0 ? dy : 0);
+        moveRaw.r = (dx>0 ? dx : 0);
+        moveRaw.l = (-dx>0 ? -dx : 0);
+      });
+
+      j.addEventListener('click', ()=> { if (Math.abs(playerY) < 0.02) velY = cfg.jumpVel; });
+      x.addEventListener('click', ()=> toggleFPV(false));
+
+      joy = { root:joyRoot, knob }; jumpBtn=j; exitBtn=x;
+    }
+
+    $('stagePanel')?.appendChild(root);
+    hud = root;
   }
 
-  // Mobile joystick (optional): keep it simple & hidden until FPV, but we rely on WASD for now.
-  // If you want it back, we can re-add later without touching this file.
+  function destroyHUD(){
+    if (hud && hud.parentNode){ hud.parentNode.removeChild(hud); }
+    hud=null; pathBtn=null; joy=null; jumpBtn=null; exitBtn=null;
+  }
 
   function getPathPoints(){
     const pts = (window.QUANTUMI?.path) || [];
@@ -103,24 +175,30 @@ const THREE = window.THREE;
     });
     tube = new THREE.Mesh(tubeGeo, tubeMat);
     tube.name = 'HashTube';
-    tube.visible = false; // <- hidden by default
+    tube.visible = false; // hidden by default
     Q.scene.add(tube);
+
+    // Sync Path button state if exists
+    const headerBtn = $('toggle-path');
+    if (headerBtn) headerBtn.onclick = ()=> {
+      const on = !tube.visible;
+      tube.visible = on;
+      headerBtn.setAttribute('aria-pressed', String(on));
+    };
     pathBtn && pathBtn.setAttribute('aria-pressed','false');
-    headerPathBtn && headerPathBtn.setAttribute('aria-pressed','false');
     return true;
   }
 
-  // Fullscreen helpers — do NOT bind to fullscreen buttons; Explore handles FPV.
+  // Fullscreen helpers — FPV uses fullscreen; standalone fullscreen buttons remain unchanged
   function enterFullscreen(el){ el?.requestFullscreen?.().catch(()=>{}); }
   function exitFullscreen(){ if (document.fullscreenElement) document.exitFullscreen().catch(()=>{}); }
 
-  // Input binding (desktop)
+  // Keyboard bindings (desktop)
   function bindKeys(){
     window.addEventListener('keydown', (e)=>{
       if (!isFPV) return;
       if (['INPUT','TEXTAREA'].includes((document.activeElement?.tagName||''))) return;
       const k = e.key.toLowerCase();
-      keysDown.add(k);
       if (k==='w') moveRaw.f = 1;
       if (k==='s') moveRaw.b = 1;
       if (k==='a') moveRaw.l = 1;
@@ -132,7 +210,6 @@ const THREE = window.THREE;
     window.addEventListener('keyup', (e)=>{
       if (!isFPV) return;
       const k = e.key.toLowerCase();
-      keysDown.delete(k);
       if (k==='w') moveRaw.f = 0;
       if (k==='s') moveRaw.b = 0;
       if (k==='a') moveRaw.l = 0;
@@ -141,7 +218,7 @@ const THREE = window.THREE;
     });
   }
 
-  // Smooth step toward target with different in/out rates
+  // Smoothing helper
   function easeToward(cur, target, dt){
     const diff = target - cur;
     const rate = (Math.abs(target) > Math.abs(cur)) ? cfg.easeIn : cfg.easeOut;
@@ -151,7 +228,7 @@ const THREE = window.THREE;
   function tick(dt){
     if (!isFPV || !curve) return;
 
-    // Smooth inputs
+    // Smooth input
     const targetFwd = (moveRaw.f - moveRaw.b);
     const targetLat = (moveRaw.r - moveRaw.l);
     moveSm.fwd = easeToward(moveSm.fwd, targetFwd, dt);
@@ -175,7 +252,6 @@ const THREE = window.THREE;
     const eye = pos.clone()
       .add(up.clone().multiplyScalar(cfg.eyeHeight + playerY))
       .add(side.multiplyScalar(moveSm.lat * cfg.strafeSpeed * 0.4));
-
     const look = curve.getPointAt((runnerT + (cfg.lookAhead/curveLen)) % 1);
 
     const cam = Q.camera;
@@ -184,7 +260,6 @@ const THREE = window.THREE;
     const q = new THREE.Quaternion().setFromRotationMatrix(m);
     cam.quaternion.slerp(q, cfg.camRotSlerp);
 
-    // Keep controls target sensible for when we exit FPV
     Q.controls && (Q.controls.target.copy(look), Q.controls.update?.());
   }
 
@@ -194,25 +269,25 @@ const THREE = window.THREE;
 
     if (isFPV){
       if (!Q) Q = window.QUANTUMI;
-      // Build curve from current data
       if (!rebuildCurveAndTube()){
         console.warn('FPV: missing path points');
-        return;
+        isFPV=false; return;
       }
-      // Start position
       runnerT = 0; playerY=0; velY=0;
-      // Disable OrbitControls while FPV
+
+      // Disable OrbitControls
       Q.controls && (Q.controls.enabled=false);
-      // Fullscreen the stage
+
+      // Fullscreen stage
       enterFullscreen($('stagePanel'));
-      // HUD on
+
+      // Build HUD (adds joystick on mobile automatically)
       buildHUD();
     } else {
       // Restore controls
       Q && Q.controls && (Q.controls.enabled=true, Q.controls.update?.());
-      // HUD off
-      if (hud && hud.parentNode){ hud.parentNode.removeChild(hud); hud=null; pathBtn=null; }
-      // We leave the tube in scene (still hidden unless user toggled it)
+      destroyHUD();
+      // Keep tube object; still hidden unless toggled on
       exitFullscreen();
       // Reset inputs
       Object.assign(moveRaw,{f:0,b:0,l:0,r:0,run:0});
@@ -222,39 +297,31 @@ const THREE = window.THREE;
 
   function bindUI(){
     // Only “Explore” toggles FPV.
-    const explore = $('play-fp'); // already present in your header
+    const explore = $('play-fp');
     if (explore){
       explore.onclick = ()=> toggleFPV(!isFPV);
       explore.title = 'Explore BTC hash in first-person (toggle)';
     }
 
-    // Path toggle in header (if present)
-    const pathToggle = $('toggle-path');
-    if (pathToggle){
-      headerPathBtn = pathToggle;
-      pathToggle.onclick = ()=>{
-        if (!tube) return;
-        const on = !(tube.visible);
-        tube.visible = on;
-        pathToggle.setAttribute('aria-pressed', String(on));
-        pathBtn && pathBtn.setAttribute('aria-pressed', String(on));
-      };
-    }
-
-    // DO NOT hook fullscreen buttons; they keep their original behavior (fullscreen only).
-    // (toggle-fs, mobile-fs-toggle) remain as-is in studio.html.
+    // DO NOT hook fullscreen-only buttons (#toggle-fs, #mobile-fs-toggle).
 
     // Rebuild tube when new data cloud is produced
     document.addEventListener('quantumi:cloud', ()=> rebuildCurveAndTube());
+
+    // Safety: exit FPV when the page is hidden (e.g., app switch on mobile)
+    document.addEventListener('visibilitychange', ()=>{ if (document.hidden) toggleFPV(false); });
   }
 
   function start(){
     if (!window.QUANTUMI?.scene) return setTimeout(start, 60);
     Q = window.QUANTUMI;
+
+    // Frame driving
     document.addEventListener('quantumi:tick', (e)=> tick(e.detail.dt));
     document.addEventListener('quantumi:frame', (e)=>{
       const dt = (e?.detail?.dt) ?? 0.016; tick(dt);
     });
+
     bindKeys();
     bindUI();
   }
