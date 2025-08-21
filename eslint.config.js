@@ -1,7 +1,7 @@
 export default [
   {
     files: ['frontend/**/*.js'],
-    languageOptions: { sourceType: 'script' },
+    languageOptions: { sourceType: 'module' },
     rules: {}
   }
 ];
