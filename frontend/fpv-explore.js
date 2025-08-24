@@ -1,26 +1,24 @@
-/* Clean FPS on BTC path + mobile HUD. Thin tube, pointer-lock desktop, swipe-look mobile. Path toggle works. */
 const THREE = window.THREE;
+
 (() => {
   const $ = (id)=>document.getElementById(id);
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 
   let Q, curve=null, tube=null, curveLen=1, bounds=null;
   let isFPV=false, pathVisible=false;
-  // Path coordinates + look
+
+  // path coords + look
   let t=0, u=Math.PI, yaw=0, pitch=0;
+  const inp = { fwd:0, strafe:0, run:0 };
 
   const cfg = {
-    fov: 85, sens: 0.0018, invertY: false,
+    fov: 84, sens: 0.0018, invertY: false,
     radiusMin: 0.12, radiusMax: 0.38, radiusScale: 0.012,
     rideHeight: 0.04, baseSpeed: 4.0, runBoost: 1.55, strafeSpeed: 2.2, lookAhead: 3.6,
     camPosLerp: 0.5, camRotSlerp: 0.28
   };
 
-  const inp = { fwd:0, strafe:0, run:0 };
-  const key = new Set();
-  const latch = { X:false, B:false };
-
-  // -------- Path build (thin radius)
+  // ---------- helpers ----------
   function getPathPoints(){ return (window.QUANTUMI?.path)||[]; }
   function computeBounds(pts){ const bb=new THREE.Box3(); pts.forEach(p=>bb.expandByPoint(p)); return bb; }
   function radiusAuto(bb){ const d=bb.getSize(new THREE.Vector3()).length(); return Math.max(cfg.radiusMin, Math.min(cfg.radiusMax, d*cfg.radiusScale)); }
@@ -31,7 +29,6 @@ const THREE = window.THREE;
     const tmp=curve.getPoints(1200); let L=0; for (let i=1;i<tmp.length;i++) L+=tmp[i-1].distanceTo(tmp[i]);
     curveLen=Math.max(1e-3,L);
     bounds = computeBounds(pts);
-
     if (tube){ Q.scene.remove(tube); tube.geometry.dispose(); tube.material.dispose(); }
     const r = radiusAuto(bounds);
     const geo=new THREE.TubeGeometry(curve, Math.min(2400, pts.length*6), r, 14, false);
@@ -48,9 +45,32 @@ const THREE = window.THREE;
     return {T,N,B};
   }
 
-  // -------- Inputs
-  function pointerLock(el){
-    el?.addEventListener('click', ()=>{ if (!document.pointerLockElement) el.requestPointerLock?.(); });
+  // ---------- fullscreen helpers (robust) ----------
+  function fsActive(stage){ return document.fullscreenElement===stage || document.webkitFullscreenElement===stage || stage.classList.contains('fs-fallback'); }
+  async function enterFullscreen(stage){
+    try{
+      if (stage.requestFullscreen){ await stage.requestFullscreen({ navigationUI:'hide' }); }
+      else if (stage.webkitRequestFullscreen){ stage.webkitRequestFullscreen(); }
+      else throw new Error('no FS api');
+      stage.classList.add('fs-active');
+    }catch(e){
+      // fallback overlay
+      stage.classList.add('fs-active','fs-fallback');
+      document.body.classList.add('fs-noscroll');
+    }
+  }
+  async function exitFullscreen(stage){
+    try{
+      if (document.exitFullscreen) await document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    }catch{}
+    stage.classList.remove('fs-active','fs-fallback');
+    document.body.classList.remove('fs-noscroll');
+  }
+
+  // ---------- input ----------
+  function enablePointerLock(el){
+    el?.addEventListener('click', ()=>{ if (!document.pointerLockElement) el.requestPointerLock?.(); }, { capture:true });
     window.addEventListener('mousemove', (e)=>{
       if (!isFPV || document.pointerLockElement!==el) return;
       yaw   -= e.movementX * cfg.sens;
@@ -61,102 +81,99 @@ const THREE = window.THREE;
   }
   function bindKeys(){
     window.addEventListener('keydown', e=>{
-      if (!isFPV) return; const k=e.key.toLowerCase(); key.add(k);
+      if (!isFPV) return;
+      const k=e.key.toLowerCase();
       if (k==='w'||k==='arrowup')    inp.fwd= 1;
       if (k==='s'||k==='arrowdown')  inp.fwd=-1;
       if (k==='a'||k==='arrowleft')  inp.strafe=-1;
       if (k==='d'||k==='arrowright') inp.strafe= 1;
       if (k==='shift') inp.run=1;
-      if (k==='x'){ setPathVisible(!pathVisible); }
-      if (k==='escape') toggle(false);
+      if (k==='x'){ togglePath(); }
+      if (k==='escape'){ toggle(false); }
     });
     window.addEventListener('keyup', e=>{
-      if (!isFPV) return; const k=e.key.toLowerCase(); key.delete(k);
+      if (!isFPV) return;
+      const k=e.key.toLowerCase();
       if (k==='w'||k==='s'||k==='arrowup'||k==='arrowdown') inp.fwd=0;
       if (k==='a'||k==='d'||k==='arrowleft'||k==='arrowright') inp.strafe=0;
       if (k==='shift') inp.run=0;
     });
   }
-  function pollPad(){
-    const pads = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
-    if (!pads.length) return; const gp = pads[0], dz=0.12;
-    const lx=gp.axes[0]||0, ly=gp.axes[1]||0, rx=gp.axes[2]||0, ry=gp.axes[3]||0;
-    inp.strafe = Math.abs(lx)>dz ? lx : (key.size?inp.strafe:0);
-    inp.fwd    = Math.abs(ly)>dz ? -ly : (key.size?inp.fwd:0);
-    // look with RS
-    yaw   -= (Math.abs(rx)>dz ? rx : 0)*0.03;
-    const inv = cfg.invertY? -1 : 1;
-    pitch -= (Math.abs(ry)>dz ? ry : 0)*0.03*inv;
-    pitch = Math.max(-1.2, Math.min(1.2, pitch));
-    // X toggles path, B exits, LB/RB run
-    if (gp.buttons[4]?.pressed || gp.buttons[5]?.pressed) inp.run=1; else if (!key.has('shift')) inp.run=0;
-    if (gp.buttons[2]?.pressed && !latch.X){ setPathVisible(!pathVisible); latch.X=true; } if (!gp.buttons[2]?.pressed) latch.X=false;
-    if (gp.buttons[1]?.pressed && !latch.B){ toggle(false); latch.B=true; } if (!gp.buttons[1]?.pressed) latch.B=false;
-  }
 
-  // -------- Mobile HUD
+  // ---------- mobile HUD (self-contained; non-conflicting) ----------
   let hud=null;
-  function buildHUD(){
+  function mountHUD(){
     if (hud) return;
-    hud = document.createElement('div'); hud.id='fpv-hud'; document.body.appendChild(hud);
-
-    const exit = document.createElement('button'); exit.className='fpv-btn glass fpv-exit'; exit.textContent='✕'; exit.onclick=()=>toggle(false); hud.appendChild(exit);
-    const path = document.createElement('button'); path.className='fpv-btn glass fpv-path'; path.textContent='Path'; path.onclick=()=> setPathVisible(!pathVisible); hud.appendChild(path);
+    hud = document.createElement('div');
+    hud.id='fpv-hud-layer';
+    Object.assign(hud.style, {
+      position:'absolute', inset:'0', zIndex: 9999, pointerEvents:'none'
+    });
+    const mkBtn=(txt,cls)=>{ const b=document.createElement('button'); b.textContent=txt; b.className=cls; b.style.pointerEvents='auto'; b.style.border='1px solid rgba(255,255,255,.12)'; b.style.background='rgba(15,17,20,.55)'; b.style.color='#fff'; b.style.borderRadius='12px'; b.style.padding='10px 12px'; b.style.font='12px system-ui'; return b; };
+    const exit = mkBtn('✕',''); Object.assign(exit.style,{ position:'absolute', top:'12px', left:'12px' }); exit.onclick=()=> toggle(false);
+    const path = mkBtn('Path',''); Object.assign(path.style,{ position:'absolute', top:'60px', left:'12px' }); path.onclick=()=> togglePath();
+    hud.appendChild(exit); hud.appendChild(path);
 
     if (isTouch){
-      // Joystick
-      const joy=document.createElement('div'); joy.className='joy'; joy.style.pointerEvents='auto';
-      joy.innerHTML=`<div class="ring glass"></div><div class="knob"></div>`; hud.appendChild(joy);
-      const knob=joy.querySelector('.knob'); let touching=false,cx=65,cy=65;
-      joy.addEventListener('pointerdown',e=>{touching=true;joy.setPointerCapture(e.pointerId);});
-      joy.addEventListener('pointerup',e=>{touching=false;inp.fwd=inp.strafe=0;knob.style.left='36px';knob.style.top='36px';});
+      // joystick
+      const joy=document.createElement('div');
+      Object.assign(joy.style,{ position:'absolute', bottom:'26px', left:'18px', width:'132px', height:'132px', borderRadius:'999px', border:'1px solid rgba(255,255,255,.12)', background:'rgba(255,255,255,.06)', pointerEvents:'auto' });
+      const knob=document.createElement('div'); Object.assign(knob.style,{ position:'absolute', left:'37px', top:'37px', width:'58px',height:'58px', borderRadius:'999px', background:'rgba(255,255,255,.22)'});
+      joy.appendChild(knob); hud.appendChild(joy);
+      let touching=false,cx=66,cy=66;
+      joy.addEventListener('pointerdown',e=>{ touching=true; joy.setPointerCapture(e.pointerId); });
+      joy.addEventListener('pointerup',e=>{ touching=false; inp.fwd=inp.strafe=0; knob.style.left='37px'; knob.style.top='37px'; });
       joy.addEventListener('pointermove',e=>{
-        if(!touching) return; const r=joy.getBoundingClientRect(); const x=Math.max(0,Math.min(130,e.clientX-r.left)); const y=Math.max(0,Math.min(130,e.clientY-r.top));
+        if(!touching) return;
+        const r=joy.getBoundingClientRect(); const x=Math.max(0,Math.min(132,e.clientX-r.left)); const y=Math.max(0,Math.min(132,e.clientY-r.top));
         knob.style.left=(x-29)+'px'; knob.style.top=(y-29)+'px';
-        const dx=(x-cx)/65, dy=(y-cy)/65;
+        const dx=(x-cx)/66, dy=(y-cy)/66;
         inp.fwd   = (-dy>0 ? -dy : 0) + (dy>0 ? -dy*0.35 : 0);
         inp.strafe= (dx>0 ? dx : 0) + (-dx>0 ? -dx : 0);
       });
 
-      // Jump / Run
-      const run=document.createElement('button'); run.className='fpv-btn glass fpv-run'; run.textContent='Run'; run.onpointerdown=()=>{inp.run=1;}; run.onpointerup=()=>{inp.run=0;}; hud.appendChild(run);
-      const jump=document.createElement('button'); jump.className='fpv-btn glass fpv-jump'; jump.textContent='⤒'; jump.onclick=()=>{/* optional hop impulse later */}; hud.appendChild(jump);
+      // Run / Jump
+      const run=mkBtn('Run',''); Object.assign(run.style,{ position:'absolute', bottom:'42px', right:'96px' });
+      run.onpointerdown=()=>{inp.run=1;}; run.onpointerup=()=>{inp.run=0;};
+      const jump=mkBtn('⤒',''); Object.assign(jump.style,{ position:'absolute', bottom:'42px', right:'22px', width:'64px', height:'64px', borderRadius:'999px', fontSize:'28px', textAlign:'center' });
+      jump.onclick=()=>{/* placeholder hop */};
+      hud.appendChild(run); hud.appendChild(jump);
 
-      // Swipe-look (right half)
+      // swipe-look (right half)
       let swiping=false, lx=0, ly=0;
-      hud.addEventListener('pointerdown',e=>{ const rect=hud.getBoundingClientRect(); if (e.clientX > rect.width*0.5){ swiping=true; lx=e.clientX; ly=e.clientY; hud.setPointerCapture(e.pointerId);} });
-      hud.addEventListener('pointerup',e=>{ swiping=false; });
+      hud.addEventListener('pointerdown',e=>{
+        const rect=hud.getBoundingClientRect();
+        if (e.clientX > rect.width/2){ swiping=true; lx=e.clientX; ly=e.clientY; hud.setPointerCapture(e.pointerId); }
+      });
+      hud.addEventListener('pointerup',()=> swiping=false);
       hud.addEventListener('pointermove',e=>{
-        if(!swiping) return; const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
-        yaw   -= dx*0.003; const inv = cfg.invertY? -1 : 1; pitch -= dy*0.003*inv; pitch=Math.max(-1.2, Math.min(1.2, pitch));
+        if(!swiping) return;
+        const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
+        yaw   -= dx*0.003; const inv = cfg.invertY ? -1 : 1; pitch -= dy*0.003*inv; pitch=Math.max(-1.2, Math.min(1.2, pitch));
       });
     }
+
+    $('stagePanel')?.appendChild(hud);
   }
-  function destroyHUD(){ hud?.remove(); hud=null; }
+  function unmountHUD(){ hud?.remove(); hud=null; }
 
-  // -------- Path visibility
-  function setPathVisible(on){ pathVisible=!!on; if (tube) tube.visible=pathVisible; }
+  function togglePath(){ pathVisible=!pathVisible; if (tube) tube.visible = pathVisible; $('toggle-path')?.setAttribute('aria-pressed', String(pathVisible)); }
 
-  // -------- Per-frame update
+  // ---------- update loop ----------
   function update(dt){
     if (!isFPV || !curve) return;
-    pollPad();
-
-    // Frame at t
+    // frame at t
     const {T,N,B}=frameAt(t);
-    // Look vector from yaw/pitch
+    // look
     const yawM=new THREE.Matrix4().makeRotationAxis(B, yaw);
     const pitchM=new THREE.Matrix4().makeRotationAxis(N, pitch);
     const lookDir=T.clone().applyMatrix4(yawM).applyMatrix4(pitchM).normalize();
 
-    // Move along tangent
     const speed = cfg.baseSpeed * (inp.run? cfg.runBoost : 1);
     const fwdAlongT = Math.max(0, lookDir.dot(T));
     t = (t + (inp.fwd * speed * fwdAlongT * dt)/curveLen + 1) % 1;
-    // Strafe: rotate around tube
     u += inp.strafe * cfg.strafeSpeed * dt;
 
-    // Camera pose near surface
     const pos=curve.getPointAt(t);
     const r=(tube?.geometry?.parameters?.radius||cfg.radiusMin)+cfg.rideHeight;
     const radial=new THREE.Vector3().addScaledVector(N, Math.cos(u)).addScaledVector(B, Math.sin(u)).normalize();
@@ -171,42 +188,60 @@ const THREE = window.THREE;
     const m=new THREE.Matrix4().lookAt(eye,look,up);
     const q=new THREE.Quaternion().setFromRotationMatrix(m);
     cam.quaternion.slerp(q, cfg.camRotSlerp);
-    Q.controls && (Q.controls.enabled===false ? null : (Q.controls.target.copy(look), Q.controls.update?.()));
   }
 
-  // -------- Mode switch
-  function toggle(on){
-    if (on===isFPV) return; isFPV=!!on;
+  // ---------- mode switch ----------
+  async function toggle(on){
+    if (on===isFPV) return;
+    isFPV=!!on;
+    const stage = $('stagePanel');
     if (isFPV){
-      if (!Q) Q=window.QUANTUMI;
+      if (!Q) Q = window.QUANTUMI;
       if (Q.controls){ Q.controls.enabled=false; if ('autoRotate' in Q.controls) Q.controls.autoRotate=false; }
-      if (!buildCurveAndTube()){ console.warn('FPV: no path'); isFPV=false; return; }
-      t=0; u=Math.PI; yaw=0; pitch=0;
-      const stage=$('stagePanel'); stage?.requestFullscreen?.().catch(()=>{});
-      if (!isTouch) pointerLock(stage);
-      buildHUD();
+      if (!buildCurveAndTube()){ console.warn('FPV: missing path'); isFPV=false; return; }
+
+      // fullscreen first (robust)
+      if (!fsActive(stage)) await enterFullscreen(stage);
+
+      // pointer-lock for desktop
+      if (!isTouch) enablePointerLock(stage);
+      // reset
+      t=0; u=Math.PI; yaw=0; pitch=0; inp.fwd=inp.strafe=inp.run=0;
+      // HUD
+      mountHUD();
     } else {
       if (Q.controls){ Q.controls.enabled=true; Q.controls.update?.(); }
-      document.exitFullscreen?.(); destroyHUD();
+      await exitFullscreen(stage);
+      unmountHUD();
       inp.fwd=inp.strafe=inp.run=0;
     }
   }
 
-  // -------- Wiring
+  // ---------- wiring ----------
   function start(){
-    if (!window.QUANTUMI?.scene) return setTimeout(start,60);
-    Q=window.QUANTUMI;
+    if (!window.QUANTUMI?.scene){ return setTimeout(start,60); }
+    Q = window.QUANTUMI;
 
-    // Explore CTA (ensures there is one visible mobile button)
-    let cta = $('#play-fp');
-    if (!cta){
-      cta = document.createElement('button'); cta.id='play-fp'; cta.className='cta glass'; cta.textContent='Explore';
-      document.body.appendChild(cta);
-    }
-    cta.onclick = ()=> toggle(!isFPV);
-
+    // drive from main loop (already present in studio.html)
     document.addEventListener('quantumi:tick', (e)=> update(e.detail.dt||0.016));
     document.addEventListener('quantumi:cloud', ()=> buildCurveAndTube());
+
+    // Explore button: ALWAYS fullscreen + FPV
+    const explore = $('play-fp');
+    if (explore){
+      explore.onclick = async ()=> { 
+        if (!isFPV){ await toggle(true); } else { await toggle(false); }
+      };
+    }
+
+    // Safety: if user exits FS via system gesture, leave FPV cleanly
+    document.addEventListener('fullscreenchange', ()=> {
+      const stage = $('stagePanel'); if (!fsActive(stage) && isFPV) toggle(false);
+    });
+    document.addEventListener('webkitfullscreenchange', ()=> {
+      const stage = $('stagePanel'); if (!fsActive(stage) && isFPV) toggle(false);
+    });
+
     bindKeys();
   }
   start();
