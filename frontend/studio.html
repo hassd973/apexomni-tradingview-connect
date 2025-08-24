@@ -1028,5 +1028,11 @@
     <script type="module" src="./game-settings.js"></script>
     <!-- FPV Explore module -->
     <script type="module" src="./fpv-explore.js"></script>
+    <script type="module" src="./ai-mapgen.js"></script>
+    <script type="module" src="./ui-ai-map.js"></script>
+    <script type="module">
+      import { attachAIMapUI } from './ui-ai-map.js';
+      window.addEventListener('load', attachAIMapUI);
+    </script>
   </body>
 </html>
