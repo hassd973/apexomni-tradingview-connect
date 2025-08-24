@@ -5,7 +5,10 @@ export function attachAIMapUI(){
   const Q = window.QUANTUMI;
   const panel = document.createElement('div');
   panel.id='ai-panel';
-  panel.style.cssText='position:fixed;left:10px;bottom:10px;z-index:41;background:rgba(0,0,0,.45);color:#fff;padding:10px;border-radius:10px;font:12px system-ui;display:flex;gap:6px;align-items:center;flex-wrap:wrap;pointer-events:none;max-width:340px;';
+  panel.classList.add('glass');
+  panel.style.left='10px';
+  panel.style.bottom='10px';
+  panel.style.cssText='position:fixed;z-index:41;padding:10px;border-radius:10px;font:12px system-ui;display:flex;gap:6px;align-items:center;flex-wrap:wrap;pointer-events:none;max-width:340px;';
   panel.innerHTML = `
     <input id="ai-seed" placeholder="seed" value="btc" style="width:90px">
     <input id="ai-prompt" placeholder="world prompt" value="grass cliffs neon city" style="width:200px">
