@@ -1,6 +1,12 @@
 export class AIMapGen {
   constructor({ baseURL }){
-    this.baseURL = baseURL || (location.origin.replace(/^http/,'http') + ':8787');
+    if (!baseURL){
+      const origin = typeof location !== 'undefined' ? location.origin : '';
+      baseURL = origin.startsWith('http')
+        ? origin.replace(/^https?/,'http') + ':8787'
+        : 'http://localhost:8787';
+    }
+    this.baseURL = baseURL;
   }
   async generate({ seed='btc', prompt='grass cliffs neon city', cols=6, rows=6, size=12 }){
     const r = await fetch(this.baseURL + '/api/mapgen', {
