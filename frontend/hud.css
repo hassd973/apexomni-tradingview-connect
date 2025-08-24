@@ -1,0 +1,34 @@
+:root { --hud-glass: rgba(15,17,20,.55); --hud-line: rgba(255,255,255,.12); --hud-text:#fff; --hud-accent:#00ff98; --hud-blur: 8px; --hud-scale:1; }
+@media (max-width: 600px){ :root{ --hud-scale:1.1; } }
+* { box-sizing: border-box; }
+.glass {
+  background: var(--hud-glass);
+  color: var(--hud-text);
+  border: 1px solid var(--hud-line);
+  backdrop-filter: blur(var(--hud-blur));
+  -webkit-backdrop-filter: blur(var(--hud-blur));
+}
+#ai-panel, #br-panel {
+  border-radius: 12px; padding: 10px; gap: 8px; display: flex; align-items: center; flex-wrap: wrap;
+  font: 12px/1.4 system-ui; box-shadow: 0 6px 30px rgba(0,0,0,.24);
+}
+#ai-panel input, #ai-panel select, #ai-panel button,
+#br-panel input, #br-panel select, #br-panel button {
+  height: 32px; padding: 0 10px; border-radius: 10px; border: 1px solid var(--hud-line); background: rgba(255,255,255,.06); color: var(--hud-text);
+}
+#play-fp.cta {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom,0px) + 20px);
+  font: 600 14px/1 system-ui; padding: 12px 18px; border-radius: 14px; border: 1px solid var(--hud-line);
+}
+#fpv-hud { position: absolute; inset: 0; pointer-events: none; z-index: 30; transform: scale(var(--hud-scale)); transform-origin: bottom left; }
+.fpv-btn { pointer-events: auto; border-radius: 12px; padding: 8px 12px; border:1px solid var(--hud-line); font: 12px/1 system-ui; }
+.fpv-round { width: 64px; height: 64px; border-radius: 999px; }
+.fpv-exit { position:absolute; top: calc(env(safe-area-inset-top,0px) + 10px); left: calc(env(safe-area-inset-left,0px) + 10px); }
+.fpv-path { position:absolute; top: calc(env(safe-area-inset-top,0px) + 60px); left: calc(env(safe-area-inset-left,0px) + 10px); }
+.fpv-run  { position:absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 42px); right: calc(env(safe-area-inset-right,0px) + 98px); }
+.fpv-jump { position:absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 42px); right: calc(env(safe-area-inset-right,0px) + 22px); }
+.joy { position:absolute; bottom: calc(env(safe-area-inset-bottom,0px) + 20px); left: calc(env(safe-area-inset-left,0px) + 18px); width: 130px; height: 130px; border-radius: 999px; }
+.joy .ring { position:absolute; inset:0; border-radius:999px; border:1px solid var(--hud-line); background: rgba(255,255,255,.06); }
+.joy .knob { position:absolute; width:58px; height:58px; border-radius:999px; left:36px; top:36px; background: rgba(255,255,255,.22); }
+.badge { padding: 6px 10px; border-radius:10px; font: 12px/1 system-ui; border:1px solid var(--hud-line); }
