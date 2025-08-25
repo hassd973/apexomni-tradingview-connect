@@ -306,7 +306,8 @@
       const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
       const canvas = $('btc-hash-canvas');
       let renderer, scene, camera, controls, axes; let dotClouds = []; let hashLogEntries = []; let customGeometry = null;
-      const DPR_CAP = 2;
+      const DPR_CAP = Math.min((window.devicePixelRatio||1), 1.8);
+      let __targetDPR = Math.min(DPR_CAP, 1.4); // start moderate on mobile
 
       function vibrate(ms, gamepad = null){
         if (gamepad?.vibrationActuator) {
@@ -414,7 +415,7 @@
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(75, 1, 0.1, 5000);
         renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:false, preserveDrawingBuffer:true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, DPR_CAP));
+        renderer.setPixelRatio(__targetDPR);
         resize();
         camera.position.set(0,0,12);
         const amb = new THREE.AmbientLight(0xffffff,0.7); scene.add(amb);
@@ -700,15 +701,29 @@
       }
 
       // --- Controls & lifecycle --------------------------------------------
+      let __last = performance.now();
+      let __accum = 0, __frames = 0;
       function animate() {
         requestAnimationFrame(animate);
+        const __now = performance.now();
+        const dt = (__now - __last)/1000; __last = __now;
+
+        __accum += dt; __frames++;
+        if (__accum >= 0.75) {
+          const fps = __frames / __accum; // 45–60 good, <35 too slow
+          if (fps < 35 && __targetDPR > 0.9) { __targetDPR = Math.max(0.9, __targetDPR - 0.1); renderer.setPixelRatio(__targetDPR); }
+          else if (fps > 55 && __targetDPR < DPR_CAP) { __targetDPR = Math.min(DPR_CAP, __targetDPR + 0.1); renderer.setPixelRatio(__targetDPR); }
+          __accum = 0; __frames = 0;
+        }
+
+        document.dispatchEvent(new CustomEvent('quantumi:tick',{ detail:{ dt } }));
         controls && controls.update();
         handleGamepadInput();
         if (camera) {
           const cp = $('camera-pos');
           if (cp) cp.textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
         }
-        document.dispatchEvent(new CustomEvent('quantumi:frame', { detail: { now: performance.now() } }));
+        document.dispatchEvent(new CustomEvent('quantumi:frame', { detail: { now: __now } }));
         renderer.render(scene, camera);
       }
 
