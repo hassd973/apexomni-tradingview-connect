@@ -131,6 +131,16 @@
         .fp-hud.on{display:grid}
         .fp-cross{width:12px;height:12px;border:2px solid rgba(255,255,255,.9);border-radius:50%}
         .fp-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--muted);background:rgba(0,0,0,.35);padding:6px 10px;border-radius:6px}
+        /* --- FPV Mobile HUD (inline) --- */
+        .fpv-layer{position:absolute;inset:0;z-index:9999;pointer-events:none;display:none}
+        .fpv-layer.on{display:block}
+        .fpv-btn{pointer-events:auto;border:1px solid rgba(255,255,255,.12);background:rgba(15,17,20,.55);color:#fff;border-radius:12px;padding:10px 12px;font:12px system-ui}
+        .fpv-exit{position:absolute;top:12px;left:12px}
+        .fpv-path{position:absolute;top:60px;left:12px}
+        .fpv-joy{position:absolute;bottom:26px;left:18px;width:132px;height:132px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);pointer-events:auto}
+        .fpv-joy .knob{position:absolute;left:37px;top:37px;width:58px;height:58px;border-radius:999px;background:rgba(255,255,255,.22)}
+        .fpv-run{position:absolute;bottom:42px;right:22px}
+        .fpv-cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border:2px solid rgba(255,255,255,.9);border-radius:50%}
       </style>
 
     <!-- three.js r128 (kept for FBXLoader compatibility) -->
@@ -1035,6 +1045,304 @@
         };
       });
     </script>
+    <script>
+    /* === FPV Crest-Glide Controller (inline, authoritative) ===
+       Uses window.QUANTUMI.{scene,camera,controls,path,dotClouds}.
+       Guarantees Explore -> Fullscreen -> FPV. Mobile HUD included.
+    */
+    (function(){
+      const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
+      const $ = (id)=>document.getElementById(id);
+
+      // State & config
+      let Q, isFPV=false, pathVisible=false, curve=null, tube=null, curveLen=1;
+      let t=0, u=0, yaw=0, pitch=0;          // path param, around-tube, look intents
+      const inp = { thrust:0, run:0, bank:0, jumping:false, vy:0 }; // vy for jump arc
+
+      const cfg = {
+        fov: 84, sens: 0.0016, invertY:false,
+        radiusMin:.12, radiusMax:.36, radiusScale:.012,
+        rideHeight:.07, glideSpeed:5.6, runBoost:1.6, bankStrength:.6,
+        lookAhead:4.0, posSmooth:.22, rotSmooth:.18, uLock:7.5, uDamp:8.5,
+        worldUp:new THREE.Vector3(0,1,0),
+        gravity: -12,   // m/s^2 along radial “height”
+        jumpVel: 3.8,   // initial jump velocity
+        shellCull:true, shellRadius:1.0
+      };
+
+      // Springs
+      const sPos = new THREE.Vector3(), sVel = new THREE.Vector3();
+      let sYaw=0, sPitch=0, sYawVel=0, sPitchVel=0;
+
+      const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+      const wrapA=(a)=>Math.atan2(Math.sin(a),Math.cos(a));
+      function smoothDamp(cur,tgt,velRef,time,dt){
+        const w = 2/Math.max(1e-4,time), x=w*dt;
+        const k = 1/(1+x+0.48*x*x+0.235*x*x*x);
+        const ch = cur-tgt, tmp=(velRef.v + w*ch)*dt;
+        velRef.v = (velRef.v - w*tmp)*k;
+        return (cur - ch)*k + tgt*(1-k) + tmp*k;
+      }
+      function smoothV3(cur,tgt,vel,time,dt){
+        return new THREE.Vector3(
+          smoothDamp(cur.x,tgt.x,{get v(){return vel.x},set v(v){vel.x=v}},time,dt),
+          smoothDamp(cur.y,tgt.y,{get v(){return vel.y},set v(v){vel.y=v}},time,dt),
+          smoothDamp(cur.z,tgt.z,{get v(){return vel.z},set v(v){vel.z=v}},time,dt)
+        );
+      }
+
+      // Path
+      function pathPts(){ return (window.QUANTUMI?.path)||[]; }
+      function buildCurve(){
+        const pts=pathPts(); if (!pts || pts.length<3) return false;
+        const curve3 = new THREE.CatmullRomCurve3(pts,false,'centripetal',.25);
+        curve = curve3;
+        const tmp = curve.getPoints(1200); let L=0; for(let i=1;i<tmp.length;i++) L += tmp[i-1].distanceTo(tmp[i]);
+        curveLen = Math.max(1e-3,L);
+
+        // thin tube
+        if (tube){ Q.scene.remove(tube); tube.geometry.dispose(); tube.material.dispose(); }
+        const bb = new THREE.Box3(); pts.forEach(p=>bb.expandByPoint(p));
+        const d = bb.getSize(new THREE.Vector3()).length();
+        const r = Math.max(cfg.radiusMin, Math.min(cfg.radiusMax, d*cfg.radiusScale));
+        const geo = new THREE.TubeGeometry(curve, Math.min(2400, pts.length*6), r, 14, false);
+        const mat = new THREE.MeshStandardMaterial({ color:0x00ff98, emissive:0x00331c, transparent:true, opacity:.34, roughness:.35, metalness:.05 });
+        tube = new THREE.Mesh(geo, mat); tube.name='HashTube'; tube.visible=pathVisible;
+        Q.scene.add(tube);
+        return true;
+      }
+      function frameAt(tt){
+        const T = curve.getTangentAt(tt).normalize();
+        const refUp = Math.abs(T.y)>0.92 ? new THREE.Vector3(1,0,0) : cfg.worldUp;
+        const N = new THREE.Vector3().crossVectors(refUp, T).normalize();
+        const B = new THREE.Vector3().crossVectors(T, N).normalize();
+        return {T,N,B};
+      }
+      function crestAngle(N,B){ const Nu=N.dot(cfg.worldUp), Bu=B.dot(cfg.worldUp); return Math.atan2(Bu,Nu); }
+
+      // HUD
+      let hud=null;
+      function mountHUD(){
+        if (hud) return;
+        hud = document.createElement('div'); hud.className='fpv-layer on';
+        const mkBtn=(txt,cls,css={})=>{ const b=document.createElement('button'); b.textContent=txt; b.className='fpv-btn '+cls; Object.assign(b.style,css); return b; };
+        const exit=mkBtn('✕','fpv-exit'); exit.onclick=()=>toggle(false);
+        const path=mkBtn('Path','fpv-path'); path.onclick=()=>{ pathVisible=!pathVisible; if (tube) tube.visible=pathVisible; $('toggle-path')?.setAttribute('aria-pressed', String(pathVisible)); };
+        const cross=document.createElement('div'); cross.className='fpv-cross';
+        hud.append(exit,path,cross);
+
+        if (isTouch){
+          // joystick thrust/bank
+          const joy=document.createElement('div'); joy.className='fpv-joy';
+          const knob=document.createElement('div'); knob.className='knob'; joy.appendChild(knob); hud.appendChild(joy);
+          let touching=false,cx=66,cy=66;
+          joy.addEventListener('pointerdown',e=>{ touching=true; joy.setPointerCapture(e.pointerId); });
+          joy.addEventListener('pointerup',e=>{ touching=false; inp.thrust=0; inp.bank=0; knob.style.left='37px'; knob.style.top='37px'; });
+          joy.addEventListener('pointermove',e=>{
+            if(!touching) return; const r=joy.getBoundingClientRect(); const x=Math.max(0,Math.min(132,e.clientX-r.left)); const y=Math.max(0,Math.min(132,e.clientY-r.top));
+            knob.style.left=(x-29)+'px'; knob.style.top=(y-29)+'px';
+            const dx=(x-cx)/66, dy=(y-cy)/66;
+            inp.thrust = clamp(-dy, -0.2, 1);
+            inp.bank   = clamp(dx, -1, 1);
+          });
+
+          // swipe look (right half)
+          let swiping=false,lx=0,ly=0,vx=0,vy=0;
+          hud.addEventListener('pointerdown',e=>{ const rect=hud.getBoundingClientRect(); if (e.clientX>rect.width/2){ swiping=true; lx=e.clientX; ly=e.clientY; vx=vy=0; hud.setPointerCapture(e.pointerId);} });
+          hud.addEventListener('pointerup',()=> swiping=false);
+          hud.addEventListener('pointermove',e=>{
+            if(!swiping) return; const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY; vx=vx*.7+dx*.3; vy=vy*.7+dy*.3;
+            yaw -= vx*0.003; pitch -= vy*0.003*(cfg.invertY?-1:1); pitch=clamp(pitch,-1.0,1.0);
+          });
+
+          const run=mkBtn('Run','fpv-run'); run.onpointerdown=()=>{inp.run=1}; run.onpointerup=()=>{inp.run=0};
+          hud.appendChild(run);
+        }
+        $('stagePanel')?.appendChild(hud);
+      }
+      function unmountHUD(){ hud?.remove(); hud=null; }
+
+      // Fullscreen helpers (robust)
+      function fsActive(stage){ return document.fullscreenElement===stage || document.webkitFullscreenElement===stage || stage.classList.contains('fs-fallback'); }
+      async function enterFS(stage){
+        try{
+          if (stage.requestFullscreen) await stage.requestFullscreen({ navigationUI:'hide' });
+          else if (stage.webkitRequestFullscreen) stage.webkitRequestFullscreen();
+          else throw 0;
+          stage.classList.add('fs-active');
+        }catch{
+          stage.classList.add('fs-active','fs-fallback'); document.body.classList.add('fs-noscroll');
+        }
+      }
+      async function exitFS(stage){
+        try{ if (document.exitFullscreen) await document.exitFullscreen(); else if (document.webkitExitFullscreen) document.webkitExitFullscreen(); }catch{}
+        stage.classList.remove('fs-active','fs-fallback'); document.body.classList.remove('fs-noscroll');
+      }
+
+      // Inputs
+      function enablePointerLook(el){
+        el?.addEventListener('click', ()=>{ if (!document.pointerLockElement) el.requestPointerLock?.(); }, {capture:true});
+        window.addEventListener('mousemove', (e)=>{
+          if (!isFPV || document.pointerLockElement!==el) return;
+          yaw -= e.movementX * cfg.sens;
+          pitch -= e.movementY * cfg.sens * (cfg.invertY?-1:1);
+          pitch = clamp(pitch, -1.0, 1.0);
+        });
+        window.addEventListener('keydown', (e)=>{
+          if(!isFPV) return;
+          const k=e.key.toLowerCase();
+          if (k==='w'||k==='arrowup')    inp.thrust=1;
+          if (k==='s'||k==='arrowdown')  inp.thrust=-0.2;
+          if (k==='a'||k==='arrowleft')  inp.bank=-1;
+          if (k==='d'||k==='arrowright') inp.bank=1;
+          if (k==='shift') inp.run=1;
+          if (k===' ') jump();
+          if (k==='x'){ pathVisible=!pathVisible; if(tube) tube.visible=pathVisible; $('toggle-path')?.setAttribute('aria-pressed', String(pathVisible)); }
+          if (k==='escape') toggle(false);
+        });
+        window.addEventListener('keyup', (e)=>{
+          if(!isFPV) return;
+          const k=e.key.toLowerCase();
+          if (k==='w'||k==='s'||k==='arrowup'||k==='arrowdown') inp.thrust=0;
+          if (k==='a'||k==='d'||k==='arrowleft'||k==='arrowright') inp.bank=0;
+          if (k==='shift') inp.run=0;
+        });
+      }
+
+      // Jump mechanics (lightweight)
+      function jump(){
+        if (!isFPV || inp.jumping) return;
+        inp.jumping = true; inp.vy = cfg.jumpVel;
+        if (navigator.vibrate) try{ navigator.vibrate(15); }catch{}
+      }
+
+      // Gamepad poll (Xbox-like)
+      function pollPad(){
+        const pads=navigator.getGamepads?Array.from(navigator.getGamepads()).filter(Boolean):[]; if(!pads.length) return; const gp=pads[0], dz=0.12;
+        const lx=gp.axes[0]||0, ly=gp.axes[1]||0, rx=gp.axes[2]||0, ry=gp.axes[3]||0;
+        inp.bank   = Math.abs(lx)>dz ? lx : 0;
+        inp.thrust = Math.abs(ly)>dz ? -ly : 0;
+        yaw   -= (Math.abs(rx)>dz ? rx : 0) * 0.03;
+        pitch -= (Math.abs(ry)>dz ? ry : 0) * 0.03 * (cfg.invertY?-1:1);
+        pitch = clamp(pitch, -1.0, 1.0);
+        inp.run = (gp.buttons[4]?.pressed||gp.buttons[5]?.pressed)?1:0;     // LB/RB
+        if (gp.buttons[0]?.pressed) jump();                                  // A
+        if (gp.buttons[2]?.pressed){ pathVisible=!pathVisible; if(tube) tube.visible=pathVisible; } // X
+        if (gp.buttons[1]?.pressed) toggle(false);                            // B
+      }
+
+      // Shell cull near camera (reduces fill-rate spikes)
+      function shellCull(camPos){
+        if(!cfg.shellCull) return;
+        const list = window.QUANTUMI?.dotClouds||[];
+        for(const c of list){
+          const bs=c.geometry?.boundingSphere; if(!bs) continue;
+          const worldCenter = c.localToWorld ? c.localToWorld(bs.center.clone()) : bs.center;
+          c.visible = worldCenter.distanceTo(camPos) > cfg.shellRadius;
+        }
+      }
+
+      // Per-frame update
+      const _yawVel={v:0}, _pitchVel={v:0};
+      function update(dt){
+        if (!isFPV || !curve) return;
+        pollPad();
+
+        // Locals
+        const {T,N,B} = frameAt(t);
+        const uTarget = wrapA( crestAngle(N,B) + inp.bank*cfg.bankStrength );
+        const uErr = wrapA(uTarget - u);
+        u = wrapA( u + (cfg.uLock*uErr) * dt );
+
+        // Progress
+        const v = cfg.glideSpeed * (1 + inp.run*(cfg.runBoost-1));
+        const fwd = Math.max(0, inp.thrust); t = (t + fwd * v * dt / curveLen) % 1;
+        if (inp.thrust<0) t = (t + inp.thrust * 0.4 * dt / curveLen + 1) % 1;
+
+        // Intended look
+        const yawM=new THREE.Matrix4().makeRotationAxis(B, yaw);
+        const pitchM=new THREE.Matrix4().makeRotationAxis(N, pitch);
+        const lookDir=T.clone().applyMatrix4(yawM).applyMatrix4(pitchM).normalize();
+
+        // Ride height (with jump arc)
+        let ride = cfg.rideHeight;
+        if (inp.jumping){
+          inp.vy += cfg.gravity * dt; ride += Math.max(0, (inp.vy * dt));
+          if (ride <= cfg.rideHeight + 0.005){ inp.jumping=false; inp.vy=0; ride = cfg.rideHeight; }
+        }
+
+        // Camera target
+        const r = (tube?.geometry?.parameters?.radius || cfg.radiusMin) + ride;
+        const radial = new THREE.Vector3().addScaledVector(N, Math.cos(u)).addScaledVector(B, Math.sin(u)).normalize();
+        const pos = curve.getPointAt(t);
+        const camTarget = pos.clone().addScaledVector(radial, r);
+        const lookTarget = pos.clone().addScaledVector(lookDir, cfg.lookAhead);
+
+        // Smooth camera
+        const cam = Q.camera;
+        const s = smoothV3(cam.position, camTarget, sVel, cfg.posSmooth, dt); sPos.copy(s); cam.position.copy(sPos);
+        sYaw   = smoothDamp(sYaw,   yaw,   {get v(){return sYawVel},   set v(v){sYawVel=v;}},   cfg.rotSmooth, dt);
+        sPitch = smoothDamp(sPitch, pitch, {get v(){return sPitchVel}, set v(v){sPitchVel=v;}}, cfg.rotSmooth, dt);
+
+        const yawMs=new THREE.Matrix4().makeRotationAxis(B, sYaw);
+        const pitchMs=new THREE.Matrix4().makeRotationAxis(N, sPitch);
+        const lookSm = T.clone().applyMatrix4(yawMs).applyMatrix4(pitchMs).normalize();
+        const up = radial.clone().cross(T).normalize();
+        const m=new THREE.Matrix4().lookAt(sPos, sPos.clone().addScaledVector(lookSm, cfg.lookAhead), up);
+        const q=new THREE.Quaternion().setFromRotationMatrix(m);
+        cam.quaternion.slerp(q, 0.35);
+        if (cam.fov!==cfg.fov){ cam.fov=cfg.fov; cam.updateProjectionMatrix(); }
+
+        shellCull(cam.position);
+      }
+
+      // Toggle mode
+      async function toggle(on){
+        if (on===isFPV) return;
+        isFPV=!!on; const stage=$('stagePanel');
+        if (isFPV){
+          if (!Q) Q = window.QUANTUMI;
+          // orbit off
+          if (Q.controls){ Q.controls.enabled=false; Q.controls.autoRotate=false; Q.controls.update?.(); }
+          // (re)build curve
+          if (!buildCurve()){ console.warn('FPV: no path points'); isFPV=false; return; }
+          // FS first
+          await enterFS(stage);
+          // pointer lock desktop
+          if (!isTouch) enablePointerLook(stage);
+          // reset & crest start
+          t=0; yaw=0; pitch=0; sYaw=0; sPitch=0; sVel.set(0,0,0); inp.thrust=0; inp.bank=0; inp.run=0; inp.jumping=false; inp.vy=0;
+          const {N,B} = frameAt(t); u = crestAngle(N,B);
+          mountHUD();
+          $('fp-hud')?.classList.add('on'); $('fp-hud')?.setAttribute('aria-hidden','false');
+        }else{
+          if (Q.controls){ Q.controls.enabled=true; Q.controls.update?.(); }
+          await exitFS(stage); unmountHUD();
+          $('fp-hud')?.classList.remove('on'); $('fp-hud')?.setAttribute('aria-hidden','true');
+          inp.thrust=inp.bank=inp.run=0; inp.jumping=false; inp.vy=0;
+        }
+      }
+
+      // Wire up
+      function start(){
+        if (!window.THREE || !window.QUANTUMI?.scene){ return setTimeout(start,60); }
+        Q = window.QUANTUMI;
+        document.addEventListener('quantumi:tick', (e)=> update(e.detail.dt||0.016));
+        document.addEventListener('quantumi:cloud', ()=> buildCurve());
+
+        // Explore button: always FS + FPV
+        const explore = $('play-fp'); if (explore) explore.onclick = ()=> toggle(!isFPV);
+
+        // Keep state consistent if user exits FS
+        document.addEventListener('fullscreenchange', ()=>{ const stage=$('stagePanel'); if (!fsActive(stage) && isFPV) toggle(false); });
+        document.addEventListener('webkitfullscreenchange', ()=>{ const stage=$('stagePanel'); if (!fsActive(stage) && isFPV) toggle(false); });
+
+        // Path toggle button mirrors HUD
+        const tbtn = $('toggle-path'); if (tbtn) tbtn.onclick = ()=>{ pathVisible = !pathVisible; if (tube) tube.visible = pathVisible; tbtn.setAttribute('aria-pressed', String(pathVisible)); };
+      }
+      start();
+    })();
+    </script>
     <script type="module" src="./enhance.js"></script>
     <script type="module" src="./game-ext.js"></script>
     <script type="module" src="./collider-lite.js"></script>
@@ -1045,6 +1353,61 @@
       import { attachAIMapUI } from './ui-ai-map.js';
       window.addEventListener('load', attachAIMapUI);
     </script>
-    <script type="module" src="./fpv-explore.js"></script>
+    <script type="module">
+    /* AI World Builder hooks (uses /api/mapgen; falls back to stub) */
+    import { AIMapGen } from './ai-mapgen.js';
+    import { buildWorld } from './worldgen-br.js'; // if present; else we do a minimal inline spawn
+
+    const Q = window.QUANTUMI;
+    const $ = (id)=>document.getElementById(id);
+
+    function setModeChip(txt){ const chip = document.querySelector('#m-mode'); if (chip) chip.textContent = `Mode — ${txt}`; }
+
+    async function generateMap(prompt){
+      try{
+        const gen = new AIMapGen({}); // relative /api/mapgen
+        const desc = await gen.generate({ seed:'btc', prompt: prompt||'neon city grass cliffs', cols:8, rows:8, size:10 });
+        return desc;
+      }catch{
+        // Fallback descriptor if API missing
+        const cols=6, rows=6, size=12;
+        const chunks=[]; for(let j=0;j<rows;j++) for(let i=0;i<cols;i++) chunks.push({ i,j, biome: (i+j)%4? 'grass':'city', elev: ((i-rows/2)+(j-cols/2))/Math.max(rows,cols), density: 0.45+0.1*((i*j)%3) });
+        return { version:1, seed:'btc', prompt: prompt||'stub world', grid:{cols,rows,size}, chunks, pois:[{x:(cols*size)/2,y:0.3,z:(rows*size)/2,type:'spawn'}], materials:{ ground:'#2b3a2e', accent:'#4fd1c5', emissive:'#0b2f33' } };
+      }
+    }
+
+    function minimalBuild(desc){
+      // If buildWorld module is absent, do a minimal “plates + instanced deco” so button isn’t dead.
+      if (buildWorld){ buildWorld({ scene: Q.scene, mapDesc: desc }); return; }
+      const THREE = window.THREE;
+      const group = new THREE.Group(); group.name='BRWorld';
+      const { cols, rows, size } = desc.grid;
+      const groundMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(desc.materials?.ground||'#2b3a2e'), roughness:.95, metalness:.02 });
+      for (let j=0;j<rows;j++) for (let i=0;i<cols;i++){
+        const c = desc.chunks.find(x=>x.i===i && x.j===j); const y = (c?.elev||0)*1.2;
+        const tile = new THREE.Mesh(new THREE.BoxGeometry(size,0.12,size), groundMat);
+        tile.position.set(i*size+size/2, y, j*size+size/2); tile.receiveShadow=true; group.add(tile);
+      }
+      Q.scene.getObjectByName('BRWorld')?.removeFromParent(); Q.scene.add(group);
+    }
+
+    window.addEventListener('DOMContentLoaded', ()=>{
+      const buildBtn = $('#build-world');
+      const resetBtn = $('#reset-world');
+      const promptIn = $('#worldPrompt');
+
+      buildBtn?.addEventListener('click', async ()=>{
+        setModeChip('World(building…)');
+        const desc = await generateMap(promptIn?.value || '');
+        minimalBuild(desc);
+        setModeChip(`World(${desc.grid.cols}x${desc.grid.rows})`);
+      });
+      resetBtn?.addEventListener('click', ()=>{
+        // Remove world group if any
+        const g = window.QUANTUMI?.scene?.getObjectByName('BRWorld'); g?.removeFromParent();
+        setModeChip('World(none)');
+      });
+    });
+    </script>
   </body>
 </html>
