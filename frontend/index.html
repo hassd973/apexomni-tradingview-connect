@@ -1909,18 +1909,18 @@
                                 height: 80px;
                                 pointer-events: none;
                         }
-                        .mobile-fs-btn {
-                                display: none;
-                                position: absolute;
-                                right: 10px;
-                                top: 10px;
-                                background: rgba(0, 0, 0, 0.6);
-                                color: #00FF00;
-                                border: 1px solid #00FF00;
-                                border-radius: 6px;
-                                padding: 4px 8px;
-                                z-index: 1001;
-                        }
+                                .mobile-fs-btn {
+                                        display: none;
+                                        position: absolute;
+                                        right: 10px;
+                                        top: 10px;
+                                        background: rgba(0, 0, 0, 0.6);
+                                        color: var(--primary-color);
+                                        border: 1px solid var(--primary-color);
+                                        border-radius: 6px;
+                                        padding: 4px 8px;
+                                        z-index: 1001;
+                                }
                         #btc-mobile-exit {
                                 display: none;
                         }
@@ -1954,8 +1954,8 @@
                                         top: 10px;
                                         right: 10px;
                                         background: rgba(0, 0, 0, 0.6);
-                                        color: #00FF00;
-                                        border: 1px solid #00FF00;
+                                        color: var(--primary-color);
+                                        border: 1px solid var(--primary-color);
                                         border-radius: 6px;
                                         padding: 6px 10px;
                                         z-index: 1001;
@@ -2227,7 +2227,7 @@
                         transform-origin: center;
                     }
                     .q-hero-canvas.glow {
-                        box-shadow: 0 0 24px #00FF00;
+                        box-shadow: 0 0 24px var(--primary-color);
                     }
                     .center-content {
                         text-align: center;
@@ -2281,7 +2281,7 @@
                         background: #111;
                         color: #fff;
                         font-weight: 600;
-                        border: 1px solid #00FF00;
+                        border: 1px solid var(--primary-color);
                         border-radius: 6px;
                         font-size: 1.15em;
                         padding: 0.7em;
@@ -2292,7 +2292,7 @@
                     }
                     .login-btn:hover,
                     .login-btn:focus {
-                        background: #00FF00;
+                        background: var(--primary-color);
                         color: #111;
                     }
                     .buttons {
@@ -2519,7 +2519,7 @@
                 </style>
         </head>
         <body
-                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[\#00FF00]"
+                class="text-white min-h-screen flex flex-col overflow-x-hidden overflow-y-auto scrollbar-thin scrollbar-track-gray-900 scrollbar-thumb-[var(--primary-color)]"
         >
                <div class="seg fixed top-2 right-2 z-50" role="group" aria-label="Theme">
                        <button class="btn" id="theme-dark" aria-pressed="true" title="Dark">◐</button>
@@ -3534,7 +3534,7 @@
 							<canvas id="gas-heatmap-canvas"></canvas>
                                                         <div id="gas-heatmap-legend">
                                                                 <div class="legend-item">
-                                                                        <div class="legend-color" style="background: #00ff00"></div>
+                                                                        <div class="legend-color" style="background: var(--primary-color)"></div>
                                                                         <span>Safe</span>
                                                                 </div>
                                                                 <div class="legend-item">
@@ -4389,12 +4389,13 @@
 				bitcrusherNode,
 				gainNode;
                         const themes = {
-                                original: ['#add8e6', '#7ec8e3', '#55a7d5', '#e0f7ff'],
+                                original: ['#00ff00'],
                                 heatmap: ['#00ff00', '#ffff00', '#ff0000'],
                                 lifecycle: ['#003366', '#0077cc', '#00ccff']
                         };
                         let currentTheme = 'heatmap';
-                        let siteColors = themes.original;
+                        let siteColors = themes[currentTheme];
+                        let currentHashColor = siteColors[0];
 
                        function hexToRgba(hex, alpha = 1) {
                                const r = parseInt(hex.slice(1, 3), 16);
@@ -4410,8 +4411,9 @@
                                root.style.setProperty('--focus', color);
                                root.style.setProperty('--ring', hexToRgba(color, 0.35));
                                root.style.setProperty('--shadow-color', hexToRgba(color, 0.3));
+                               window.dispatchEvent(new CustomEvent('highlightChange', { detail: color }));
                        }
-                       updateHighlights(siteColors[0]);
+                       updateHighlights(currentHashColor);
 			let currentEthPrice = 0;
                         let isUsingMockLogs = false;
 			let gasHistory = [];
@@ -5744,7 +5746,8 @@ function setupModuleToggles() {
                                                 maxVolume
                                         );
                                         const cloudColor = new THREE.Color(cloudColorHex);
-                                        updateHighlights(cloudColorHex);
+                                        currentHashColor = cloudColorHex;
+                                        updateHighlights(currentHashColor);
 
 					const dotPositions = [];
 					const dotColors = [];
@@ -5968,8 +5971,8 @@ function setupModuleToggles() {
 
                         function setTheme(name) {
                                 currentTheme = name;
-                                siteColors = themes[name] || themes.original;
-                                updateHighlights(siteColors[0]);
+                                siteColors = themes[currentTheme] || ['#00ff00'];
+                                updateHighlights(currentHashColor);
                                 colorLegend = [];
                                 dotClouds.forEach((c) => scene.remove(c));
                                 dotClouds = [];
@@ -6025,7 +6028,8 @@ function setupModuleToggles() {
 				});
 
                                 const getColor = (type) => {
-                                        if (type === 'safe') return '#00ff00';
+                                        if (type === 'safe')
+                                                return STYLE.getPropertyValue('--primary-color').trim() || '#00ff00';
                                         if (type === 'propose') return '#ffff00';
                                         return '#ff0000';
                                 };
@@ -6235,6 +6239,10 @@ function setupModuleToggles() {
                                 const ctx = DOM.tokenPerformanceChart.getContext('2d');
                                 const labels = tokens.map((token) => token.symbol);
                                 const data = tokens.map((token) => parseFloat(token.price_change_percentage_24h) || 0);
+                                const primary =
+                                        getComputedStyle(document.documentElement)
+                                                .getPropertyValue('--primary-color')
+                                                .trim() || '#00FF00';
                                 new Chart(ctx, {
                                         type: 'bar',
                                         data: {
@@ -6244,10 +6252,10 @@ function setupModuleToggles() {
                                                                 label: '24h Price Change (%)',
                                                                 data: data,
                                                                 backgroundColor: data.map((value) =>
-                                                                        value >= 0 ? '#00FF00' : '#FF0000'
+                                                                        value >= 0 ? primary : '#FF0000'
                                                                 ),
                                                                 borderColor: data.map((value) =>
-                                                                        value >= 0 ? '#00FF00' : '#FF0000'
+                                                                        value >= 0 ? primary : '#FF0000'
                                                                 ),
                                                                 borderWidth: 1
                                                         }
@@ -8011,7 +8019,8 @@ function setupModuleToggles() {
 
                                 const labels = filteredTokens.map((t) => t.symbol.toUpperCase());
                                 const data = filteredTokens.map((t) => t.price_change_percentage_24h);
-                                const green = '#00FF00';
+                                const rootStyle = getComputedStyle(document.documentElement);
+                                const green = rootStyle.getPropertyValue('--primary-color').trim() || '#00FF00';
                                 const red = '#e74c3c';
                                 const bgColor = data.map((change) => (change >= 0 ? green : red));
 
@@ -8123,7 +8132,7 @@ function setupModuleToggles() {
                                                overlay.style.display = 'none';
                                                document.body.classList.remove('locked');
                                                if (typeof initIntroVideo === 'function') initIntroVideo();
-                                               loadInverseChart(10);
+                                               loadInverseChart(5);
                                        } else {
                                                error.textContent = 'Incorrect password or missing agreement';
                                                error.classList.remove('hidden');
