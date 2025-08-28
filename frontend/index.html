@@ -6258,7 +6258,7 @@ function setupModuleToggles() {
                                                         if (elements.length) {
                                                                 const index = elements[0].index;
                                                                 const token = tokens[index];
-                                                                window.open(`https://coinmarketcap.com/currencies/${token.id}/`, '_blank');
+                                                                window.open(getTokenUrl(token), '_blank');
                                                         }
                                                 },
                                                 scales: {
@@ -6290,18 +6290,27 @@ function setupModuleToggles() {
 				link.click();
 			}
 
-			function notifyUser(message) {
-				if (Notification.permission === 'granted') {
-					new Notification('QuantumI Alert', { body: message });
-				} else if (Notification.permission !== 'denied') {
-					Notification.requestPermission().then((permission) => {
-						if (permission === 'granted')
-							new Notification('QuantumI Alert', { body: message });
-					});
-				}
-			}
+                        function notifyUser(message) {
+                                if (Notification.permission === 'granted') {
+                                        new Notification('QuantumI Alert', { body: message });
+                                } else if (Notification.permission !== 'denied') {
+                                        Notification.requestPermission().then((permission) => {
+                                                if (permission === 'granted')
+                                                        new Notification('QuantumI Alert', { body: message });
+                                        });
+                                }
+                        }
 
-			const loadData = async () => {
+                        function getTokenUrl(token) {
+                                const isObj = typeof token === 'object';
+                                const id = isObj ? token?.id || token?.slug : token;
+                                const cmc = isObj ? token?.cmc || token?.slug : null;
+                                return cmc
+                                        ? `https://coinmarketcap.com/currencies/${cmc}/`
+                                        : `https://www.coingecko.com/en/coins/${id}`;
+                        }
+
+                        const loadData = async () => {
                                 const backendApiUrl = '/api/crypto';
 				const tokenWarning = document.getElementById('token-warning');
 				const logsWarning = document.getElementById('logs-warning');
@@ -6394,10 +6403,10 @@ function setupModuleToggles() {
 						return `
           <li class="${index === 0 ? 'selected-token' : ''}" data-symbol="${symbol}" data-tooltip="View ${token.symbol} chart">
             <div class="flex justify-between items-center">
-              <span><a href="https://coinmarketcap.com/currencies/${token.id}/" target="_blank" class="token-link">${token.name}</a> (${token.symbol})</span>
+              <span><a href="${getTokenUrl(token)}" target="_blank" class="token-link">${token.name}</a> (${token.symbol})</span>
               <span class="performance ${isPositive ? 'text-green-400' : 'text-red-400'}">${token.price_change_percentage_24h >= 0 ? '+' : ''}${token.price_change_percentage_24h.toFixed(2)}%</span>
             </div>
-            <span class="cmc-link mt-1 text-xs" data-cmc="${token.id}" aria-label="Open CoinMarketCap page">CMC</span>
+            <span class="cmc-link mt-1 text-xs" data-url="${getTokenUrl(token)}" aria-label="Open token page">Info</span>
             <div class="metric">Price: $${token.current_price.toLocaleString()}</div>
             <div class="metric">Volume: ${token.total_volume.toLocaleString()} USD</div>
             <div class="metric">Supply: ${token.circulating_supply.toLocaleString()}</div>
@@ -6417,12 +6426,12 @@ function setupModuleToggles() {
 					sortedTokens[sortedTokens.length - 1] || mockTokens[1];
 				profitPairs.innerHTML = `
         <li class="top-pair p-2 rounded">
-          <div><a href="https://coinmarketcap.com/currencies/${topToken.id}/" target="_blank" class="token-link">${topToken.name}</a> (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
+          <div><a href="${getTokenUrl(topToken)}" target="_blank" class="token-link">${topToken.name}</a> (${topToken.symbol}): +${topToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${topToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${topToken.total_volume.toLocaleString()} USD</div>
         </li>
         <li class="bottom-pair p-2 rounded">
-          <div><a href="https://coinmarketcap.com/currencies/${bottomToken.id}/" target="_blank" class="token-link">${bottomToken.name}</a> (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
+          <div><a href="${getTokenUrl(bottomToken)}" target="_blank" class="token-link">${bottomToken.name}</a> (${bottomToken.symbol}): ${bottomToken.price_change_percentage_24h.toFixed(2)}%</div>
           <div class="metric">Price: $${bottomToken.current_price.toLocaleString()}</div>
           <div class="metric">Volume: ${bottomToken.total_volume.toLocaleString()} USD</div>
         </li>
@@ -6434,7 +6443,7 @@ function setupModuleToggles() {
 					.slice(0, 5)
                                         .map(
                                                 (token) =>
-                                                        `<li class="p-1 rounded-md"><a href="https://coinmarketcap.com/currencies/${token.id}/" target="_blank" class="token-link">${token.symbol}/USDT (#${token.market_cap_rank})</a></li>`
+                                                        `<li class="p-1 rounded-md"><a href="${getTokenUrl(token)}" target="_blank" class="token-link">${token.symbol}/USDT (#${token.market_cap_rank})</a></li>`
                                         )
 					.join('');
 
@@ -6497,7 +6506,7 @@ function setupModuleToggles() {
 							.replace(/\s+/g, '-');
 						return `
         <li class="p-2 rounded">
-          <a href="https://coinmarketcap.com/currencies/${slug}/" target="_blank" class="underline token-link">${balance.token}</a>
+          <a href="${getTokenUrl({id: slug})}" target="_blank" class="underline token-link">${balance.token}</a>
           <div>Balance: ${balance.balance.toLocaleString()}</div>
           <div class="metric">Chain ID: ${balance.chainId}</div>
         </li>`;
@@ -7233,16 +7242,13 @@ function setupModuleToggles() {
 				});
 
 				DOM.tokenList.addEventListener('click', (e) => {
-					const cmcBtn = e.target.closest('.cmc-link');
-					if (cmcBtn) {
-						e.stopPropagation();
-						const cmc = cmcBtn.getAttribute('data-cmc');
-						window.open(
-							`https://coinmarketcap.com/currencies/${cmc}/`,
-							'_blank'
-						);
-						return;
-					}
+                                        const cmcBtn = e.target.closest('.cmc-link');
+                                        if (cmcBtn) {
+                                                e.stopPropagation();
+                                                const url = cmcBtn.getAttribute('data-url');
+                                                window.open(url, '_blank');
+                                                return;
+                                        }
 
 					const li = e.target.closest('li');
 					if (li && li.dataset.symbol) {
@@ -8027,10 +8033,10 @@ function setupModuleToggles() {
 						onClick: (_, items) => {
 							if (items.length > 0) {
 								const token = filteredTokens[items[0].index].id;
-								window.open(
-									`https://coinmarketcap.com/currencies/${token}/`,
-									'_blank'
-								);
+                                                                window.open(
+                                                                        getTokenUrl(token),
+                                                                        '_blank'
+                                                                );
 							}
 						},
 						responsive: true,
