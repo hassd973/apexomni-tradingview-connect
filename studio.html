@@ -399,24 +399,34 @@
       }
 
       function generateHashFromPrice(price){ const s = String(price); let h=''; for(let i=0;i<64;i++){ h += (s.charCodeAt(i%s.length)%16).toString(16); } return h; }
-      function addHashLog(hash, time){
-        hashLogEntries.unshift({ hash, time });
+      function difficultyToColor(diff){
+        const min = 10_000_000_000_000;
+        const max = 100_000_000_000_000;
+        const t = Math.max(0, Math.min(1, (diff - min) / (max - min)));
+        const r = Math.round(255 * t);
+        const g = Math.round(255 * (1 - t));
+        return `rgb(${r},${g},0)`;
+      }
+      function addHashLog(hash, time, diff){
+        hashLogEntries.unshift({ hash, time, diff });
         if (hashLogEntries.length > 10) hashLogEntries.pop();
         const full = $('hash-log');
         if (full){
           full.innerHTML = '';
-          hashLogEntries.forEach(({hash: h, time: t})=>{
+          hashLogEntries.forEach(({hash: h, time: t, diff: d})=>{
             const el = document.createElement('li');
-            el.innerHTML = `<span class="kbd">${h.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${t}</span>`;
+            const color = difficultyToColor(d);
+            el.innerHTML = `<span class="kbd" style="color:${color}">${h.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${t}</span>`;
             full.appendChild(el);
           });
         }
         const preview = $('log-preview');
         if (preview){
           preview.innerHTML = '';
-          hashLogEntries.slice(0,2).forEach(({hash: h, time: t})=>{
+          hashLogEntries.slice(0,2).forEach(({hash: h, time: t, diff: d})=>{
             const el = document.createElement('li');
-            el.innerHTML = `<span class="kbd">${h.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${t}</span>`;
+            const color = difficultyToColor(d);
+            el.innerHTML = `<span class="kbd" style="color:${color}">${h.slice(0,16)}…</span> <span class="text-gray-400 ml-2">${t}</span>`;
             preview.appendChild(el);
           });
         }
@@ -523,13 +533,13 @@
         try{
         if ($('mapping').value === 'original'){
             await drawOriginalFromMarket();
-            const { price } = await fetchBTCPrice();
-            addHashLog(generateHashFromPrice(price), new Date().toLocaleTimeString());
+            const [{ price }, diff] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
+            addHashLog(generateHashFromPrice(price), new Date().toLocaleTimeString(), diff);
         } else {
-            const { price } = await fetchBTCPrice();
+            const [{ price }, diff] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
             const h = generateHashFromPrice(price);
             layoutFromHash(h, $('mapping').value);
-            addHashLog(h, new Date().toLocaleTimeString());
+            addHashLog(h, new Date().toLocaleTimeString(), diff);
         }
         document.dispatchEvent(new CustomEvent('quantumi:cloud'));
       }catch(err){ console.warn('Auto update failed', err); }
@@ -791,8 +801,8 @@
         animate();
         await drawOriginalFromMarket();
         $('m-status').textContent = 'Status — Ready';
-        const { price: initialPrice } = await fetchBTCPrice();
-        addHashLog(generateHashFromPrice(initialPrice), new Date().toLocaleTimeString());
+        const [{ price: initialPrice }, diffInit] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
+        addHashLog(generateHashFromPrice(initialPrice), new Date().toLocaleTimeString(), diffInit);
         setInterval(updateHashCloud, 60_000);
         updateHashCloud();
 
@@ -803,10 +813,13 @@
           if (e.target.value === 'original') {
             await drawOriginalFromMarket();
           } else {
-            const hv = $('hashInput').value.trim() || generateHashFromPrice((await fetchBTCPrice()).price);
+            const pricePromise = fetchBTCPrice();
+            const diffPromise = fetchBTCDifficulty();
+            const hv = $('hashInput').value.trim() || generateHashFromPrice((await pricePromise).price);
             const h = hv.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64);
             layoutFromHash(h, e.target.value);
-            addHashLog(h, new Date().toLocaleTimeString());
+            const diff = await diffPromise;
+            addHashLog(h, new Date().toLocaleTimeString(), diff);
           }
           vibrate(10, gamepadAPI.controller);
         });
@@ -829,45 +842,47 @@
 
         // Hash controls
         $('btnGenerate').addEventListener('click', async () => {
-          const { price } = await fetchBTCPrice();
+          const [{ price }, diff] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
           const h = generateHashFromPrice(price);
           $('hashInput').value = h;
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
-            addHashLog(h, new Date().toLocaleTimeString());
+            addHashLog(h, new Date().toLocaleTimeString(), diff);
           }
           vibrate(8, gamepadAPI.controller);
         });
-        $('btnRandom').addEventListener('click', () => {
+        $('btnRandom').addEventListener('click', async () => {
           const h = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
           $('hashInput').value = h;
+          const diff = await fetchBTCDifficulty();
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
-            addHashLog(h, new Date().toLocaleTimeString());
+            addHashLog(h, new Date().toLocaleTimeString(), diff);
           }
           vibrate(8, gamepadAPI.controller);
         });
         $('btnLatest').addEventListener('click', async () => {
-          const { price } = await fetchBTCPrice();
+          const [{ price }, diff] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
           const h = generateHashFromPrice(price);
           $('hashInput').value = h;
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
-            addHashLog(h, new Date().toLocaleTimeString());
+            addHashLog(h, new Date().toLocaleTimeString(), diff);
           }
           vibrate(8, gamepadAPI.controller);
         });
-        $('hashInput').addEventListener('change', () => {
+        $('hashInput').addEventListener('change', async () => {
           const hv = $('hashInput').value.trim();
           if (!hv) return;
           const h = hv.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64);
+          const diff = await fetchBTCDifficulty();
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
-            addHashLog(h, new Date().toLocaleTimeString());
+            addHashLog(h, new Date().toLocaleTimeString(), diff);
           }
           vibrate(10, gamepadAPI.controller);
         });
