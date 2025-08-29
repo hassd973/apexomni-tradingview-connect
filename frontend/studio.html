@@ -348,13 +348,28 @@
         }
       }
 
+      const minDifficulty = 10_000_000_000_000;
+      const maxDifficulty = 100_000_000_000_000;
+      function difficultyToColor(diff){
+        const t = Math.max(0, Math.min(1, (diff - minDifficulty) / (maxDifficulty - minDifficulty)));
+        const r = Math.round(255 * t);
+        const g = Math.round(255 * (1 - t));
+        return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}00`;
+      }
+      let latestDifficulty = minDifficulty;
+
       const themes = {
-        original: ['#00ff7f','#44ffaa','#bbffdd'],
+        original: [
+          difficultyToColor(minDifficulty),
+          difficultyToColor((minDifficulty + maxDifficulty) / 2),
+          difficultyToColor(maxDifficulty)
+        ],
         heatmap(v){ const t = Math.min(1, Math.max(0, (v-0)/(10-0))); const r=Math.round(255*t), g=Math.round(255*(1-t)); return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}00`; },
         lifecycle(vol, minV, maxV){ const t=(vol-minV)/(maxV-minV+1e-6); const c=Math.round(255*(0.3+0.7*t)); return `#00${c.toString(16).padStart(2,'0')}ff`; }
       };
-      const getThemeColor = (volatility, volume, minV, maxV) => {
-        const mode = $('theme').value; if (mode==='heatmap') return themes.heatmap(volatility); if (mode==='lifecycle') return themes.lifecycle(volume, minV, maxV); return themes.original[0]; };
+      const getThemeColor = (volatility, volume, minV, maxV, diff) => {
+        const mode = $('theme').value; if (mode==='heatmap') return themes.heatmap(volatility); if (mode==='lifecycle') return themes.lifecycle(volume, minV, maxV); return difficultyToColor(diff);
+      };
 
       async function fetchWithRetry(url, opts = {}, retries = 2, delay = 600) {
         for (let i = 0; i <= retries; i++) { try { const r = await fetch(url, opts); if (!r.ok) throw new Error(`${r.status}`); return await r.json(); } catch (e){ if (i === retries) throw e; await new Promise(res=>setTimeout(res, delay*Math.pow(2,i))); } }
@@ -401,6 +416,7 @@
           $('m-change').textContent = `24h — ${change.toFixed(2)}%`;
           $('m-hashrate').textContent = `Hashrate — ${hashrate.toFixed(2)} EH/s`;
           $('m-diff').textContent = `Difficulty — ${diff.toLocaleString()}`;
+          latestDifficulty = diff;
 
           // bottom legend metrics
           let latestTime = new Date().toLocaleTimeString();
@@ -481,7 +497,7 @@
         const minVolume = Math.min(...volumes.map(v=>v[1])), maxVolume = Math.max(...volumes.map(v=>v[1]));
         const latestPrice = prices[prices.length-1][1]; const latestVolume = volumes[volumes.length-1][1];
         const recent = prices.slice(-10).map(p=>p[1]); const volatility = ((Math.max(...recent)-Math.min(...recent))/latestPrice)*100;
-        const cloudColorHex = getThemeColor(volatility, latestVolume, minVolume, maxVolume); const cloudColor = new THREE.Color(cloudColorHex);
+        const cloudColorHex = getThemeColor(volatility, latestVolume, minVolume, maxVolume, latestDifficulty); const cloudColor = new THREE.Color(cloudColorHex);
         const pointsPerCloud = parseInt($('density').value,10);
         const positions=[]; const colors=[]; const jitter=0.6; const centers=[];
         for(let i=0;i<prices.length;i++){
@@ -521,7 +537,7 @@
 
       function layoutFromHash(hash, mapping){
         const vals = Array.from(hash).map(ch=>parseInt(ch,16)); const N = 256; const positions=[]; const colors=[]; const pathPts=[];
-        const base = new THREE.Color(themes.original[dotClouds.length % themes.original.length]);
+        const base = new THREE.Color(difficultyToColor(latestDifficulty));
         for(let i=0;i<N;i++){
           const v = vals[i % vals.length] / 15; let x,y,z;
           if(mapping==='spiral'){ const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
