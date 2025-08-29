@@ -509,7 +509,12 @@
       function clearClouds(){ dotClouds.forEach(c=>scene.remove(c)); dotClouds=[]; }
 
       async function drawOriginalFromMarket(){
-        const data = await fetchBTCHistorical(); if (!data) return;
+        const data = await fetchBTCHistorical();
+        if (!data){
+          const h = generateHashFromPrice(Date.now());
+          layoutFromHash(h, $('mapping').value);
+          return;
+        }
         const prices = data.prices || []; const volumes = data.total_volumes || []; const timestamps = prices.map(p=>p[0]); if (prices.length<2) return;
         const minTime = timestamps[0], maxTime = timestamps[timestamps.length-1];
         const minPrice = Math.min(...prices.map(p=>p[1])), maxPrice = Math.max(...prices.map(p=>p[1]));

@@ -76,6 +76,7 @@
                                --quantumi-white: #F8F8F8;
                                --quantumi-gray: #1A1A1A;
                                --quantumi-accent: #F7931A;
+                               --brand-green: #00ff7e;
                                --quantumi-radius: 18px;
                                --quantumi-blur: 18px;
 
@@ -1140,19 +1141,21 @@
                                 padding: 0.65em 1.5em;
                                 font-size: clamp(13px, 2vw, 19px);
                                 background: transparent;
-                               color: var(--primary-color);
-                               border: 1.5px solid var(--ring);
+                                color: var(--primary-color);
+                                border: 1.5px solid var(--ring);
                                 border-radius: 8px;
                                 cursor: pointer;
                                 font-family: inherit;
                                 font-weight: 500;
-                                transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+                                opacity: 0.6;
+                                transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
                         }
                         .toggle-module-btn:hover:not(.active),
                         .toggle-desc-btn:hover:not(.active),
                         #hash-log-toggle:hover:not(.active),
                         #legend-toggle:hover:not(.active) {
                                background: var(--ring);
+                               opacity: 1;
                         }
                         .toggle-module-btn.active,
                         .toggle-desc-btn.active,
@@ -1162,6 +1165,7 @@
                                color: #000;
                                box-shadow: 0 0 8px var(--shadow-color);
                                border-color: var(--primary-color);
+                               opacity: 1;
                        }
 			.module-content.hidden {
 				display: none;
@@ -2281,7 +2285,7 @@
                         background: #111;
                         color: #fff;
                         font-weight: 600;
-                        border: 1px solid var(--primary-color);
+                        border: 1px solid var(--brand-green);
                         border-radius: 6px;
                         font-size: 1.15em;
                         padding: 0.7em;
@@ -2292,7 +2296,7 @@
                     }
                     .login-btn:hover,
                     .login-btn:focus {
-                        background: var(--primary-color);
+                        background: var(--brand-green);
                         color: #111;
                     }
                     .buttons {
@@ -5787,13 +5791,13 @@ function setupModuleToggles() {
 					});
 					const newDotCloud = new THREE.Points(geometry, material);
 					scene.add(newDotCloud);
-					dotClouds.push(newDotCloud);
-					dotClouds.slice(0, -1).forEach((cloud) => {
-						cloud.material.opacity =
-							cloud.material.opacity - 0.05 <= 0.1
-								? 1
-								: cloud.material.opacity - 0.05;
-					});
+                                        dotClouds.push(newDotCloud);
+                                        dotClouds.slice(0, -1).forEach((cloud) => {
+                                                cloud.material.opacity = Math.max(
+                                                        0.1,
+                                                        cloud.material.opacity - 0.05
+                                                );
+                                        });
 
 					const latestTime = new Date(
 						timestamps[timestamps.length - 1]
