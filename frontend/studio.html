@@ -20,18 +20,18 @@
       /* ---------- Design System ---------- */
       *, *::before, *::after { box-sizing: border-box; }
       :root{
-        --bg:#0e1013; --fg:#f7f8fb; --muted:#cfd3d8; --accent:#F7931A; --accent-2:#F7931A;
-        --border:rgba(247,147,26,.28); --card:#0b0d10; --soft:rgba(247,147,26,.10);
-        --focus:#F7931A; --danger:#ff6161; --ring: rgba(247,147,26,.35);
+        --bg:#0e1013; --fg:#f7f8fb; --muted:#cfd3d8; --accent:#00FF7F; --accent-2:#00FF00;
+        --border:rgba(0,255,127,.28); --card:#0b0d10; --soft:rgba(0,255,127,.10);
+        --focus:#00FF7F; --danger:#ff6161; --ring: rgba(0,255,127,.35);
         --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
         --panel-bg: rgba(13,15,18,.55); --panel-brd: rgba(255,255,255,.08);
         --chip-bg: rgba(255,255,255,.06);
       }
       [data-theme="light"]{
         --bg:#f2f2f7; --fg:#0b0e11; --muted:#6b7280;
-        --accent:#F7931A; --accent-2:#F7931A;
-        --border:rgba(247,147,26,.18); --card:#ffffff; --soft:rgba(247,147,26,.06);
-        --focus:#F7931A; --danger:#ff3b30; --ring: rgba(247,147,26,.24);
+        --accent:#0A84FF; --accent-2:#34C759;
+        --border:rgba(10,132,255,.18); --card:#ffffff; --soft:rgba(10,132,255,.06);
+        --focus:#0A84FF; --danger:#ff3b30; --ring: rgba(10,132,255,.24);
         --panel-bg: rgba(255,255,255,.92); --panel-brd: rgba(0,0,0,.06);
         --chip-bg: rgba(0,0,0,.04);
       }
@@ -356,7 +356,7 @@
         return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
       }
       const themes = {
-        original: ['#f7931a'],
+        original: ['#00ff7f'],
         heatmap(v){
           const t = Math.min(v / 10, 1);
           if (t < 0.5) return interpolateColor('#00ff7e', '#ffff00', t * 2);
@@ -542,7 +542,7 @@
         const count = positions.length/3;
         let cloud;
         if (customGeometry) {
-          const mat = new THREE.MeshBasicMaterial({ color: cloudColor });
+          const mat = new THREE.MeshBasicMaterial({ color: cloudColor, transparent:true, opacity:1 });
           const mesh = new THREE.InstancedMesh(customGeometry, mat, count);
           const dummy = new THREE.Object3D();
           for(let i=0;i<count;i++){
@@ -578,7 +578,7 @@
         const count = positions.length/3;
         let cloud;
         if (customGeometry) {
-          const mat = new THREE.MeshBasicMaterial({ color: base });
+          const mat = new THREE.MeshBasicMaterial({ color: base, transparent:true, opacity:1 });
           const mesh = new THREE.InstancedMesh(customGeometry, mat, count);
           const dummy = new THREE.Object3D();
           for(let i=0;i<count;i++){
