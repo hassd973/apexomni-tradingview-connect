@@ -1140,8 +1140,8 @@
                                 padding: 0.65em 1.5em;
                                 font-size: clamp(13px, 2vw, 19px);
                                 background: transparent;
-                               color: #fff;
-                               border: 1.5px solid rgba(247, 147, 26, 0.3);
+                               color: var(--primary-color);
+                               border: 1.5px solid var(--ring);
                                 border-radius: 8px;
                                 cursor: pointer;
                                 font-family: inherit;
@@ -1152,16 +1152,16 @@
                         .toggle-desc-btn:hover:not(.active),
                         #hash-log-toggle:hover:not(.active),
                         #legend-toggle:hover:not(.active) {
-                               background: rgba(247, 147, 26, 0.15);
+                               background: var(--ring);
                         }
                         .toggle-module-btn.active,
                         .toggle-desc-btn.active,
                         #hash-log-toggle.active,
                         #legend-toggle.active {
-                               background: rgba(247, 147, 26, 0.4);
+                               background: var(--primary-color);
                                color: #000;
-                               box-shadow: 0 0 8px rgba(247, 147, 26, 0.8);
-                               border-color: rgba(247, 147, 26, 0.8);
+                               box-shadow: 0 0 8px var(--shadow-color);
+                               border-color: var(--primary-color);
                        }
 			.module-content.hidden {
 				display: none;
@@ -4390,7 +4390,7 @@
 				gainNode;
                         const themes = {
                                 original: ['#f7931a'],
-                                heatmap: ['#f7931a', '#ffff00', '#ff0000'],
+                                heatmap: ['#00ff7e', '#ffff00', '#ff0000'],
                                 lifecycle: ['#003366', '#0077cc', '#00ccff']
                         };
                         let currentTheme = 'heatmap';
@@ -5945,7 +5945,7 @@ function setupModuleToggles() {
 
                         function getThemeColor(vol, volume, minV, maxV) {
                                 if (currentTheme === 'heatmap') {
-                                        const ratio = Math.min(vol / 5, 1);
+                                        const ratio = Math.min(vol / 10, 1);
                                         if (ratio < 0.5) {
                                                 return interpolateColor(
                                                         themes.heatmap[0],
