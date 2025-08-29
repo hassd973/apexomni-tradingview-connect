@@ -71,25 +71,26 @@
 		<script src="https://www.youtube.com/iframe_api"></script>
                 <style>
                         :root {
-                                --quantumi-green: #00FF00;
-                                --quantumi-black: #010101;
-                                --quantumi-white: #F8F8F8;
-                                --quantumi-gray: #1A1A1A;
-                                --quantumi-accent: #00FF00;
-                                --quantumi-radius: 18px;
-                                --quantumi-blur: 18px;
+                               --quantumi-btc: #F7931A;
+                               --quantumi-black: #010101;
+                               --quantumi-white: #F8F8F8;
+                               --quantumi-gray: #1A1A1A;
+                               --quantumi-accent: #F7931A;
+                               --brand-green: #00ff7e;
+                               --quantumi-radius: 18px;
+                               --quantumi-blur: 18px;
 
-                                --bg-color: var(--quantumi-black);
-                                --text-color: var(--quantumi-white);
-                                --primary-color: var(--quantumi-green);
-                                --secondary-color: var(--quantumi-green);
-                                --shadow-color: rgba(0, 255, 0, 0.3);
-                                --panel-bg: rgba(12,15,18,.6);
-                                --panel-brd: rgba(255,255,255,.08);
-                                --card: rgba(12,15,18,.6);
-                                --focus: var(--primary-color);
-                                --ring: rgba(0,255,0,.35);
-                        }
+                               --bg-color: var(--quantumi-black);
+                               --text-color: var(--quantumi-white);
+                               --primary-color: var(--quantumi-btc);
+                               --secondary-color: var(--quantumi-btc);
+                               --shadow-color: rgba(247, 147, 26, 0.3);
+                               --panel-bg: rgba(12,15,18,.6);
+                               --panel-brd: rgba(255,255,255,.08);
+                               --card: rgba(12,15,18,.6);
+                               --focus: var(--primary-color);
+                               --ring: rgba(247,147,26,.35);
+                       }
                        body {
                                font-family: 'Inter', 'Segoe UI', sans-serif;
                                background: var(--bg-color);
@@ -107,7 +108,7 @@
                                --panel-bg: rgba(255,255,255,.7);
                                --panel-brd: rgba(0,0,0,.1);
                                --card: rgba(255,255,255,.7);
-                               --shadow-color: rgba(0,255,0,.2);
+                               --shadow-color: rgba(247,147,26,.2);
                        }
                        body.locked > :not(#access-overlay) {
                                display: none !important;
@@ -1140,29 +1141,32 @@
                                 padding: 0.65em 1.5em;
                                 font-size: clamp(13px, 2vw, 19px);
                                 background: transparent;
-                                color: #fff;
-                                border: 1.5px solid rgba(0, 255, 0, 0.3);
+                                color: var(--primary-color);
+                                border: 1.5px solid var(--ring);
                                 border-radius: 8px;
                                 cursor: pointer;
                                 font-family: inherit;
                                 font-weight: 500;
-                                transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+                                opacity: 0.6;
+                                transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
                         }
                         .toggle-module-btn:hover:not(.active),
                         .toggle-desc-btn:hover:not(.active),
                         #hash-log-toggle:hover:not(.active),
                         #legend-toggle:hover:not(.active) {
-                                background: rgba(0, 255, 0, 0.15);
+                               background: var(--ring);
+                               opacity: 1;
                         }
                         .toggle-module-btn.active,
                         .toggle-desc-btn.active,
                         #hash-log-toggle.active,
                         #legend-toggle.active {
-                                background: rgba(0, 255, 0, 0.4);
-                                color: #000;
-                                box-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
-                                border-color: rgba(0, 255, 0, 0.8);
-                        }
+                               background: var(--primary-color);
+                               color: #000;
+                               box-shadow: 0 0 8px var(--shadow-color);
+                               border-color: var(--primary-color);
+                               opacity: 1;
+                       }
 			.module-content.hidden {
 				display: none;
 			}
@@ -1200,7 +1204,7 @@
                                 border-radius: 4px;
                         }
                         #token-search::placeholder {
-                                color: rgba(0,255,0,0.6);
+                               color: rgba(247,147,26,0.6);
                         }
                         #gas-heatmap-list,
                         #balances-list,
@@ -2281,7 +2285,7 @@
                         background: #111;
                         color: #fff;
                         font-weight: 600;
-                        border: 1px solid var(--primary-color);
+                        border: 1px solid var(--brand-green);
                         border-radius: 6px;
                         font-size: 1.15em;
                         padding: 0.7em;
@@ -2292,7 +2296,7 @@
                     }
                     .login-btn:hover,
                     .login-btn:focus {
-                        background: var(--primary-color);
+                        background: var(--brand-green);
                         color: #111;
                     }
                     .buttons {
@@ -2316,13 +2320,13 @@
                         outline: none;
                     }
                     .btn.selected {
-                        background: rgba(0,255,0,0.3);
+                        background: rgba(247,147,26,0.3);
                         color: #fff;
-                        border-color: rgba(0,255,0,0.4);
+                        border-color: rgba(247,147,26,0.4);
                     }
                     .btn:hover:not(.selected),
                     .btn:focus:not(.selected) {
-                        background: rgba(0,255,0,0.2);
+                        background: rgba(247,147,26,0.2);
                         color: #fff;
                         transform: scale(1.04);
                     }
@@ -3283,7 +3287,7 @@
 
                           // Brand colors
                           const STYLE = getComputedStyle(document.documentElement);
-                          const BRAND_COLOR = STYLE.getPropertyValue('--primary-color').trim() || '#00FF00';
+                          const BRAND_COLOR = STYLE.getPropertyValue('--primary-color').trim() || '#F7931A';
                           const TEXT_COLOR = STYLE.getPropertyValue('--text-color').trim() || '#F8F8F8';
                           const PANEL_BG = STYLE.getPropertyValue('--panel-bg').trim() || '#0c0f12';
                           const PANEL_BRD = STYLE.getPropertyValue('--panel-brd').trim() || '#1A1A1A';
@@ -4389,8 +4393,8 @@
 				bitcrusherNode,
 				gainNode;
                         const themes = {
-                                original: ['#00ff00'],
-                                heatmap: ['#00ff00', '#ffff00', '#ff0000'],
+                                original: ['#f7931a'],
+                                heatmap: ['#00ff7e', '#ffff00', '#ff0000'],
                                 lifecycle: ['#003366', '#0077cc', '#00ccff']
                         };
                         let currentTheme = 'heatmap';
@@ -5220,7 +5224,7 @@ function setupModuleToggles() {
 
                                 const initWidget = () => {
                                         const style = getComputedStyle(document.documentElement);
-                                        const upColor = style.getPropertyValue('--primary-color').trim() || '#00FF00';
+                                        const upColor = style.getPropertyValue('--primary-color').trim() || '#F7931A';
                                         const downColor = '#ff0000';
                                         try {
                                                 const widget = new TradingView.widget({
@@ -5787,13 +5791,13 @@ function setupModuleToggles() {
 					});
 					const newDotCloud = new THREE.Points(geometry, material);
 					scene.add(newDotCloud);
-					dotClouds.push(newDotCloud);
-					dotClouds.slice(0, -1).forEach((cloud) => {
-						cloud.material.opacity =
-							cloud.material.opacity - 0.05 <= 0.1
-								? 1
-								: cloud.material.opacity - 0.05;
-					});
+                                        dotClouds.push(newDotCloud);
+                                        dotClouds.slice(0, -1).forEach((cloud) => {
+                                                cloud.material.opacity = Math.max(
+                                                        0.1,
+                                                        cloud.material.opacity - 0.05
+                                                );
+                                        });
 
 					const latestTime = new Date(
 						timestamps[timestamps.length - 1]
@@ -5945,7 +5949,7 @@ function setupModuleToggles() {
 
                         function getThemeColor(vol, volume, minV, maxV) {
                                 if (currentTheme === 'heatmap') {
-                                        const ratio = Math.min(vol / 5, 1);
+                                        const ratio = Math.min(vol / 10, 1);
                                         if (ratio < 0.5) {
                                                 return interpolateColor(
                                                         themes.heatmap[0],
@@ -5971,7 +5975,7 @@ function setupModuleToggles() {
 
                         function setTheme(name) {
                                 currentTheme = name;
-                                siteColors = themes[currentTheme] || ['#00ff00'];
+                                siteColors = themes[currentTheme] || ['#f7931a'];
                                 updateHighlights(currentHashColor);
                                 colorLegend = [];
                                 dotClouds.forEach((c) => scene.remove(c));
@@ -6029,7 +6033,7 @@ function setupModuleToggles() {
 
                                 const getColor = (type) => {
                                         if (type === 'safe')
-                                                return STYLE.getPropertyValue('--primary-color').trim() || '#00ff00';
+                                                return STYLE.getPropertyValue('--primary-color').trim() || '#f7931a';
                                         if (type === 'propose') return '#ffff00';
                                         return '#ff0000';
                                 };
@@ -6242,7 +6246,7 @@ function setupModuleToggles() {
                                 const primary =
                                         getComputedStyle(document.documentElement)
                                                 .getPropertyValue('--primary-color')
-                                                .trim() || '#00FF00';
+                                                .trim() || '#F7931A';
                                 new Chart(ctx, {
                                         type: 'bar',
                                         data: {
@@ -8020,7 +8024,7 @@ function setupModuleToggles() {
                                 const labels = filteredTokens.map((t) => t.symbol.toUpperCase());
                                 const data = filteredTokens.map((t) => t.price_change_percentage_24h);
                                 const rootStyle = getComputedStyle(document.documentElement);
-                                const green = rootStyle.getPropertyValue('--primary-color').trim() || '#00FF00';
+                                const green = rootStyle.getPropertyValue('--primary-color').trim() || '#F7931A';
                                 const red = '#e74c3c';
                                 const bgColor = data.map((change) => (change >= 0 ? green : red));
 
