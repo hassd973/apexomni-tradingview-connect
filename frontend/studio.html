@@ -2,7 +2,7 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
-    <title>QUANTUMI • BTC Hash Studio — Pro (v3.5)</title>
+    <title>QUANTUMI • BTC Hash Studio — Pro (v4.0)</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0d0f12" id="meta-theme-color" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -67,6 +67,10 @@
       .stage{ position:absolute; inset:0; }
       .overlay{ position:absolute; left:12px; top:12px; display:flex; flex-wrap:wrap; gap:6px; pointer-events:none; }
       .legend{ position:absolute; left:0; right:0; bottom:0; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; pointer-events:none; padding:0.5rem; background:var(--panel-bg); border-top:1px solid var(--panel-brd); font-size:12px; }
+      .legend-item{ display:flex; align-items:center; gap:4px; background:var(--panel-bg); border:1px solid var(--panel-brd); padding:2px 6px; border-radius:8px; pointer-events:auto; }
+      .legend-label{ opacity:.8; }
+      .legend-value{ font-weight:600; }
+      .legend-color{ width:8px; height:8px; border-radius:2px; background:var(--accent); }
       canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background:#000; touch-action:none; }
 
       /* Dedicated fullscreen buttons */
@@ -168,7 +172,7 @@
             <button class="btn" id="theme-dark" aria-pressed="true" title="Dark">◐</button>
             <button class="btn" id="theme-light" aria-pressed="false" title="Light">◑</button>
           </div>
-          <div class="sub">v3.5</div>
+          <div class="sub">v4.0</div>
         </div>
       </div>
       <button id="controls-toggle" class="btn" type="button" aria-expanded="false" aria-controls="controls-rail">Controls</button>
@@ -195,13 +199,13 @@
               <div class="fp-hint">WASD to move • Space to jump • Shift to run • Esc to exit • F to toggle FS</div>
             </div>
             <div class="legend" id="btc-legend" aria-live="polite">
-            <span id="btc-price">Price: Loading...</span>
-            <span id="btc-time">Time: Loading...</span>
-            <span id="btc-date">Date: Loading...</span>
-            <span id="btc-volume">Volume: Loading...</span>
-            <span id="btc-volatility">Volatility: Loading...</span>
-            <span id="btc-momentum">Momentum: Loading...</span>
-            <span id="camera-pos">Pos: 0,0,0</span>
+              <div class="legend-item"><span class="legend-color"></span><span class="legend-label">Price</span><span class="legend-value" id="btc-price">--</span></div>
+              <div class="legend-item"><span class="legend-color"></span><span class="legend-label">Time</span><span class="legend-value" id="btc-time">--</span></div>
+              <div class="legend-item"><span class="legend-color"></span><span class="legend-label">Date</span><span class="legend-value" id="btc-date">--</span></div>
+              <div class="legend-item"><span class="legend-color"></span><span class="legend-label">Volume</span><span class="legend-value" id="btc-volume">--</span></div>
+              <div class="legend-item"><span class="legend-color"></span><span class="legend-label">Volatility</span><span class="legend-value" id="btc-volatility">--</span></div>
+              <div class="legend-item"><span class="legend-color"></span><span class="legend-label">Momentum</span><span class="legend-value" id="btc-momentum">--</span></div>
+              <div class="legend-item"><span class="legend-color"></span><span class="legend-label">Pos</span><span class="legend-value" id="camera-pos">0,0,0</span></div>
           </div>
           <ul id="log-preview" class="log-preview" aria-live="polite"></ul>
         </div>
@@ -371,6 +375,22 @@
         const mode = $('theme').value; if (mode==='heatmap') return themes.heatmap(volatility); if (mode==='lifecycle') return themes.lifecycle(volume, minV, maxV); return difficultyToColor(diff);
       };
 
+      let currentHashColor = '#00FF7F';
+      function updateHighlights(color){
+        const root = document.documentElement;
+        const r = parseInt(color.slice(1,3),16);
+        const g = parseInt(color.slice(3,5),16);
+        const b = parseInt(color.slice(5,7),16);
+        root.style.setProperty('--accent', color);
+        root.style.setProperty('--accent-2', color);
+        root.style.setProperty('--primary-color', color);
+        root.style.setProperty('--primary-rgb', `${r},${g},${b}`);
+        root.style.setProperty('--border', `rgba(${r},${g},${b},.28)`);
+        root.style.setProperty('--soft', `rgba(${r},${g},${b},.10)`);
+        root.style.setProperty('--focus', color);
+        root.style.setProperty('--ring', `rgba(${r},${g},${b},.35)`);
+      }
+
       async function fetchWithRetry(url, opts = {}, retries = 2, delay = 600) {
         for (let i = 0; i <= retries; i++) { try { const r = await fetch(url, opts); if (!r.ok) throw new Error(`${r.status}`); return await r.json(); } catch (e){ if (i === retries) throw e; await new Promise(res=>setTimeout(res, delay*Math.pow(2,i))); } }
       }
@@ -423,22 +443,28 @@
           let latestVolume = volume;
           let volatility = 0;
           let momentum = 0;
+          let minVolume = volume;
+          let maxVolume = volume;
           if (historical && historical.prices && historical.prices.length >= 2) {
             const prices = historical.prices;
             const volumes = historical.total_volumes;
             latestTime = new Date(prices[prices.length - 1][0]).toLocaleTimeString();
             latestVolume = volumes[volumes.length - 1][1];
+            minVolume = Math.min(...volumes.map(v=>v[1]));
+            maxVolume = Math.max(...volumes.map(v=>v[1]));
             const recent = prices.slice(-10).map(p=>p[1]);
             volatility = ((Math.max(...recent) - Math.min(...recent)) / price) * 100;
             momentum = price - prices[prices.length - 2][1];
           }
-          $('btc-price').textContent = `Price: $${price.toLocaleString()}`;
-          $('btc-time').textContent = `Time: ${latestTime}`;
-          $('btc-date').textContent = `Date: ${new Date().toLocaleDateString()}`;
-          $('btc-volume').textContent = `Volume: ${latestVolume.toLocaleString()}`;
-          $('btc-volatility').textContent = `Volatility: ${volatility.toFixed(2)}%`;
-          $('btc-momentum').textContent = `Momentum: ${momentum >= 0 ? '+' : ''}${momentum.toFixed(2)}`;
-          if (camera) $('camera-pos').textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
+          currentHashColor = getThemeColor(volatility, latestVolume, minVolume, maxVolume, diff);
+          updateHighlights(currentHashColor);
+          $('btc-price').textContent = `$${price.toLocaleString()}`;
+          $('btc-time').textContent = latestTime;
+          $('btc-date').textContent = new Date().toLocaleDateString();
+          $('btc-volume').textContent = latestVolume.toLocaleString();
+          $('btc-volatility').textContent = `${volatility.toFixed(2)}%`;
+          $('btc-momentum').textContent = `${momentum >= 0 ? '+' : ''}${momentum.toFixed(2)}`;
+          if (camera) $('camera-pos').textContent = `${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
         } catch (err) {
           console.warn('Failed to update metrics', err);
         }
@@ -498,6 +524,8 @@
         const latestPrice = prices[prices.length-1][1]; const latestVolume = volumes[volumes.length-1][1];
         const recent = prices.slice(-10).map(p=>p[1]); const volatility = ((Math.max(...recent)-Math.min(...recent))/latestPrice)*100;
         const cloudColorHex = getThemeColor(volatility, latestVolume, minVolume, maxVolume, latestDifficulty); const cloudColor = new THREE.Color(cloudColorHex);
+        currentHashColor = cloudColorHex;
+        updateHighlights(currentHashColor);
         const pointsPerCloud = parseInt($('density').value,10);
         const positions=[]; const colors=[]; const jitter=0.6; const centers=[];
         for(let i=0;i<prices.length;i++){
@@ -538,6 +566,8 @@
       function layoutFromHash(hash, mapping){
         const vals = Array.from(hash).map(ch=>parseInt(ch,16)); const N = 256; const positions=[]; const colors=[]; const pathPts=[];
         const base = new THREE.Color(difficultyToColor(latestDifficulty));
+        currentHashColor = '#' + base.getHexString();
+        updateHighlights(currentHashColor);
         for(let i=0;i<N;i++){
           const v = vals[i % vals.length] / 15; let x,y,z;
           if(mapping==='spiral'){ const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
