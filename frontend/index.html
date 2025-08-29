@@ -83,6 +83,7 @@
                                --bg-color: var(--quantumi-black);
                                --text-color: var(--quantumi-white);
                                --primary-color: var(--quantumi-btc);
+                               --primary-rgb: 0,255,127;
                                --secondary-color: var(--quantumi-btc);
                                --shadow-color: rgba(0, 255, 127, 0.3);
                                --panel-bg: rgba(12,15,18,.6);
@@ -1140,25 +1141,24 @@
                         #legend-toggle {
                                 padding: 0.65em 1.5em;
                                 font-size: clamp(13px, 2vw, 19px);
-                                background: transparent;
+                                background: rgba(var(--primary-rgb), 0.12);
                                 color: var(--primary-color);
                                 border: 1.5px solid var(--ring);
                                 border-radius: 8px;
                                 cursor: pointer;
                                 font-family: inherit;
                                 font-weight: 500;
-                                opacity: 0.8;
-                                transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+                                transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
                         }
+
                         .toggle-module-btn {
-                                opacity: 0.6;
+                                background: rgba(var(--primary-rgb), 0.08);
                         }
                         .toggle-module-btn:hover:not(.active),
                         .toggle-desc-btn:hover:not(.active),
                         #hash-log-toggle:hover:not(.active),
                         #legend-toggle:hover:not(.active) {
-                               background: var(--ring);
-                               opacity: 1;
+                               background: rgba(var(--primary-rgb), 0.25);
                         }
                         .toggle-module-btn.active,
                         .toggle-desc-btn.active,
@@ -1168,7 +1168,6 @@
                                color: #000;
                                box-shadow: 0 0 8px var(--shadow-color);
                                border-color: var(--primary-color);
-                               opacity: 1;
                        }
 			.module-content.hidden {
 				display: none;

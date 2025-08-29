@@ -21,17 +21,19 @@
       *, *::before, *::after { box-sizing: border-box; }
       :root{
         --bg:#0e1013; --fg:#f7f8fb; --muted:#cfd3d8; --accent:#00FF7F; --accent-2:#00FF00;
-        --border:rgba(0,255,127,.28); --card:#0b0d10; --soft:rgba(0,255,127,.10);
-        --focus:#00FF7F; --danger:#ff6161; --ring: rgba(0,255,127,.35);
+        --primary-color: var(--accent); --primary-rgb: 0,255,127;
+        --border:rgba(var(--primary-rgb),.28); --card:#0b0d10; --soft:rgba(var(--primary-rgb),.10);
+        --focus:var(--primary-color); --danger:#ff6161; --ring: rgba(var(--primary-rgb),.35);
         --safe-top: env(safe-area-inset-top); --safe-bottom: env(safe-area-inset-bottom);
         --panel-bg: rgba(13,15,18,.55); --panel-brd: rgba(255,255,255,.08);
         --chip-bg: rgba(255,255,255,.06);
       }
       [data-theme="light"]{
         --bg:#f2f2f7; --fg:#0b0e11; --muted:#6b7280;
-        --accent:#0A84FF; --accent-2:#34C759;
-        --border:rgba(10,132,255,.18); --card:#ffffff; --soft:rgba(10,132,255,.06);
-        --focus:#0A84FF; --danger:#ff3b30; --ring: rgba(10,132,255,.24);
+        --accent:#00FF7F; --accent-2:#00FF7F;
+        --primary-color: var(--accent);
+        --border:rgba(var(--primary-rgb),.18); --card:#ffffff; --soft:rgba(var(--primary-rgb),.06);
+        --focus:var(--primary-color); --danger:#ff3b30; --ring: rgba(var(--primary-rgb),.24);
         --panel-bg: rgba(255,255,255,.92); --panel-brd: rgba(0,0,0,.06);
         --chip-bg: rgba(0,0,0,.04);
       }
@@ -48,8 +50,8 @@
       .right{ margin-left:auto; display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
 
       /* Buttons */
-      .btn{ background:var(--card); border:1px solid var(--focus); color:var(--fg); border-radius:12px; padding:10px 14px; cursor:pointer; transition:background .18s, color .18s, transform .06s, border-color .18s; min-width:44px; min-height:44px; }
-      .btn:hover,.btn:focus{ background:var(--focus); color:#0b0d0f; outline:none; box-shadow:0 0 0 4px var(--ring); }
+      .btn{ background:rgba(var(--primary-rgb),.12); border:1px solid var(--ring); color:var(--primary-color); border-radius:12px; padding:10px 14px; cursor:pointer; transition:background .18s, color .18s, transform .06s, border-color .18s; min-width:44px; min-height:44px; }
+      .btn:hover,.btn:focus{ background:var(--primary-color); color:#0b0d0f; outline:none; box-shadow:0 0 0 4px var(--ring); }
       .btn:active{ transform: translateY(1px); }
       .seg{ display:inline-flex; border:1px solid var(--panel-brd); background:var(--panel-bg); border-radius:12px; overflow:hidden; }
       .seg button{ border:0; padding:10px 12px; min-width:44px; }
