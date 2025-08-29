@@ -8,7 +8,7 @@ const THREE = window.THREE;
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 
   let Q, curve=null, tube=null, curveLen=1;
-  let isFPV=false, pathVisible=false;
+  let isFPV=false, pathVisible=false, walking=false;
 
   // Path params
   let t=0;        // along path [0..1)
@@ -203,6 +203,14 @@ const THREE = window.THREE;
   const _yawVel={v:0}, _pitchVel={v:0};
   function update(dt){
     if(!isFPV || !curve) return;
+    if(walking){
+      window.walkMode?.update(dt);
+      shellCull(Q.camera.position);
+      const cls=window.QUANTUMI?.clusters||[]; let inside=false;
+      for(const c of cls){ if(Q.camera.position.distanceTo(c.center)<c.radius){ inside=true; break; } }
+      if(!inside){ walking=false; const pos=curve.getPointAt(t); Q.camera.position.copy(pos); }
+      return;
+    }
     pollPad();
 
     const {T,N,B} = frameAt(t);
@@ -247,12 +255,20 @@ const THREE = window.THREE;
 
     if (cam.fov!==cfg.fov){ cam.fov=cfg.fov; cam.updateProjectionMatrix(); }
     shellCull(cam.position);
+    const cls=window.QUANTUMI?.clusters||[];
+    for(const c of cls){
+      if(cam.position.distanceTo(c.center)<c.radius){
+        walking=true;
+        window.walkMode?.startWalkMode(Q.camera, Q.renderer);
+        return;
+      }
+    }
   }
 
   // ---------- toggle ----------
   async function toggle(on){
     if(on===isFPV) return;
-    isFPV=!!on; const stage=$('stagePanel');
+    isFPV=!!on; const stage=$('stagePanel'); walking=false;
     if (isFPV){
       if(!Q) Q=window.QUANTUMI;
       // disable orbit during FPV
