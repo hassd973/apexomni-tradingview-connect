@@ -1152,7 +1152,7 @@
                         }
 
                         .toggle-module-btn {
-                                background: rgba(var(--primary-rgb), 0.04);
+                                background: rgba(var(--primary-rgb), 0.08);
                         }
                         .toggle-module-btn:hover:not(.active),
                         .toggle-desc-btn:hover:not(.active),
@@ -1164,8 +1164,8 @@
                         .toggle-desc-btn.active,
                         #hash-log-toggle.active,
                         #legend-toggle.active {
-                               background: var(--primary-color);
-                               color: #000;
+                               background: transparent;
+                               color: var(--primary-color);
                                box-shadow: 0 0 8px var(--shadow-color);
                                border-color: var(--primary-color);
                        }
@@ -2322,13 +2322,13 @@
                         outline: none;
                     }
                     .btn.selected {
-                        background: rgba(247,147,26,0.3);
+                        background: rgba(var(--primary-rgb),0.3);
                         color: #fff;
-                        border-color: rgba(247,147,26,0.4);
+                        border-color: rgba(var(--primary-rgb),0.4);
                     }
                     .btn:hover:not(.selected),
                     .btn:focus:not(.selected) {
-                        background: rgba(247,147,26,0.2);
+                        background: rgba(var(--primary-rgb),0.2);
                         color: #fff;
                         transform: scale(1.04);
                     }
