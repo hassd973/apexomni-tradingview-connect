@@ -9,14 +9,14 @@ header, footer {
   background: rgba(31, 41, 55, 0.5);
   backdrop-filter: blur(10px);
   padding: 1rem;
-  border-bottom: 1px solid rgba(0, 255, 0, 0.1); /* Ice King green accent */
+  border-bottom: 1px solid rgba(247, 147, 26, 0.1); /* BTC accent */
 }
 
 section {
   background: rgba(31, 41, 55, 0.5);
   backdrop-filter: blur(10px);
   padding: 1rem;
-  border: 1px solid rgba(0, 255, 0, 0.1);
+  border: 1px solid rgba(247, 147, 26, 0.1);
   border-radius: 8px;
   box-sizing: border-box;
   overflow: hidden;
@@ -64,15 +64,15 @@ canvas {
 
 /* Visual enhancements for Ice King theme */
 .gradient-bg {
-  background: linear-gradient(45deg, rgba(0, 255, 0, 0.1), rgba(0, 0, 0, 0.5));
+  background: linear-gradient(45deg, rgba(247, 147, 26, 0.1), rgba(0, 0, 0, 0.5));
 }
 
 .hover-glow:hover {
-  box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); /* Green glow on hover */
+  box-shadow: 0 0 15px rgba(247, 147, 26, 0.5); /* Accent glow on hover */
 }
 
 .glow-green {
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  box-shadow: 0 0 10px rgba(247, 147, 26, 0.3);
 }
 
 .glow-red {
@@ -81,7 +81,7 @@ canvas {
 
 .glow-blue,
 .glow-purple {
-  box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+  box-shadow: 0 0 10px rgba(247, 147, 26, 0.3);
 }
 
 .fade-in {
@@ -107,7 +107,7 @@ button {
 button:hover,
 button:focus,
 button:active {
-  background: #00FF00;
+  background: var(--primary-color);
   color: #000;
 }
 
@@ -117,7 +117,7 @@ button:active {
   align-items: center;
   justify-content: center;
   background: #25272a;
-  color: #e3e3e3cc;
+  color: var(--primary-color);
   border: 1.5px solid transparent;
   border-radius: 8px;
   padding: 0.5rem;
@@ -128,7 +128,7 @@ button:active {
 .module-arrow:focus {
   background: #393a41;
   color: #fff;
-  border-color: #a5b5ff44;
+  border-color: var(--primary-color);
 }
 
 .loader {
