@@ -1151,7 +1151,7 @@
                                 transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
                         }
                         .toggle-module-btn {
-                                opacity: 0.4;
+                                opacity: 0.15;
                         }
                         .toggle-module-btn:hover:not(.active),
                         .toggle-desc-btn:hover:not(.active),
@@ -3887,10 +3887,10 @@
 					<div class="mt-4 text-sm hidden" id="btc-legend-explanation">
 						<h3 class="text-base md:text-lg mb-2">Legend</h3>
 						<p>The rotating 3D hash visualizes real-time Bitcoin blocks.</p>
-						<p>
-							Original theme uses site colors; Heat Map reflects bullish and
-							bearish momentum; Life Cycle shades blocks by age.
-						</p>
+                                                <p>
+                                                        Original theme colors blocks by network difficulty; Heat Map reflects
+                                                        bullish and bearish momentum; Life Cycle shades blocks by age.
+                                                </p>
 						<p>
 							Clouds rise with audio volume, and hovering the legend reveals
 							price and time for each cluster.
@@ -4395,8 +4395,25 @@
 				filterNode,
 				bitcrusherNode,
 				gainNode;
+                        const minDifficulty = 10_000_000_000_000;
+                        const maxDifficulty = 100_000_000_000_000;
+                        function difficultyToColor(diff) {
+                                const t = Math.max(
+                                        0,
+                                        Math.min(1, (diff - minDifficulty) / (maxDifficulty - minDifficulty))
+                                );
+                                const r = Math.round(255 * t);
+                                const g = Math.round(255 * (1 - t));
+                                return `#${r.toString(16).padStart(2, '0')}${g
+                                        .toString(16)
+                                        .padStart(2, '0')}00`;
+                        }
                         const themes = {
-                                original: ['#f7931a'],
+                                original: [
+                                        difficultyToColor(minDifficulty),
+                                        difficultyToColor((minDifficulty + maxDifficulty) / 2),
+                                        difficultyToColor(maxDifficulty)
+                                ],
                                 heatmap: ['#00ff7e', '#ffff00', '#ff0000'],
                                 lifecycle: ['#003366', '#0077cc', '#00ccff']
                         };
@@ -5750,7 +5767,8 @@ function setupModuleToggles() {
                                                 volatility,
                                                 latestVolume,
                                                 minVolume,
-                                                maxVolume
+                                                maxVolume,
+                                                difficulty
                                         );
                                         const cloudColor = new THREE.Color(cloudColorHex);
                                         currentHashColor = cloudColorHex;
@@ -5921,8 +5939,9 @@ function setupModuleToggles() {
         <div class="legend-item"><div class="legend-color" style="background: ${themes.lifecycle[2]}"></div><span>Old</span></div>`;
                                 } else {
                                         themeLegend = `
-        <div class="legend-item"><div class="legend-color" style="background: ${themes.original[0]}"></div><span>Start</span></div>
-        <div class="legend-item"><div class="legend-color" style="background: ${themes.original[themes.original.length - 1]}"></div><span>Fade</span></div>`;
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.original[0]}"></div><span>Low Diff</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.original[1]}"></div><span>Mid Diff</span></div>
+        <div class="legend-item"><div class="legend-color" style="background: ${themes.original[2]}"></div><span>High Diff</span></div>`;
                                 }
                                 const dataLegend = colorLegend
                                         .map(
@@ -5950,7 +5969,7 @@ function setupModuleToggles() {
                                 return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
                         }
 
-                        function getThemeColor(vol, volume, minV, maxV) {
+                        function getThemeColor(vol, volume, minV, maxV, diff) {
                                 if (currentTheme === 'heatmap') {
                                         const ratio = Math.min(vol / 10, 1);
                                         if (ratio < 0.5) {
@@ -5971,8 +5990,7 @@ function setupModuleToggles() {
                                         if (ratio < 0.5) return themes.lifecycle[1];
                                         return themes.lifecycle[2];
                                 } else {
-                                        const idx = dotClouds.length % themes.original.length;
-                                        return themes.original[idx];
+                                        return difficultyToColor(diff);
                                 }
                         }
 
