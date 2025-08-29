@@ -134,12 +134,12 @@
     </style>
 
     <!-- three.js r128 (kept for FBXLoader compatibility) -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/FBXLoader.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
   </head>
   <body>
     <header>
@@ -203,7 +203,7 @@
         </div>
       </section>
 
-      <div id="controls-rail" class="controls-rail" aria-hidden="true">
+      <div id="controls-rail" class="controls-rail" aria-hidden="false">
         <div class="controls">
           <div class="ctrl" title="Mapping from data to space. ‘Original’ uses time→Z, price→X, volume→Y.">
             <label>Mapping</label>
@@ -289,8 +289,8 @@
       <span>© 2025 <span style="font-family:'Sixtyfour',sans-serif">QUANTUMI</span> — All Rights Reserved.</span>
     </footer>
 
-    <script src="quantumi-logo.js"></script>
-    <script>
+    <script defer src="quantumi-logo.js"></script>
+    <script defer>
       // --- Theme toggle (Light / Dark). Remembers choice. iOS-ready light.
       (function initTheme(){
         const meta = document.getElementById('meta-theme-color');
@@ -336,6 +336,18 @@
         const mode = $('theme').value; if (mode==='heatmap') return themes.heatmap(volatility); if (mode==='lifecycle') return themes.lifecycle(volume, minV, maxV); return difficultyToColor(diff); };
       let currentHashColor = themes.original[0];
 
+      function colorToRgba(color, alpha = 0.35){
+        const [r,g,b] = color.match(/\d+/g).map(Number);
+        return `rgba(${r},${g},${b},${alpha})`;
+      }
+      function updateHighlights(color){
+        const root = document.documentElement;
+        root.style.setProperty('--accent', color);
+        root.style.setProperty('--accent-2', color);
+        root.style.setProperty('--focus', color);
+        root.style.setProperty('--ring', colorToRgba(color));
+      }
+
       async function fetchWithRetry(url, opts = {}, retries = 2, delay = 600) {
         for (let i = 0; i <= retries; i++) { try { const r = await fetch(url, opts); if (!r.ok) throw new Error(`${r.status}`); return await r.json(); } catch (e){ if (i === retries) throw e; await new Promise(res=>setTimeout(res, delay*Math.pow(2,i))); } }
       }
@@ -374,6 +386,7 @@
           $('m-diff').textContent = `Difficulty — ${diff.toLocaleString()}`;
           lastDifficulty = diff;
           currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
 
           // bottom legend metrics
           let latestTime = new Date().toLocaleTimeString();
@@ -540,10 +553,16 @@
         if ($('mapping').value === 'original'){
             await drawOriginalFromMarket();
             const [{ price }, diff] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
+            lastDifficulty = diff;
+            currentHashColor = difficultyToColor(diff);
+            updateHighlights(currentHashColor);
             addHashLog(generateHashFromPrice(price), new Date().toLocaleTimeString(), diff);
         } else {
             const [{ price }, diff] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
             const h = generateHashFromPrice(price);
+            lastDifficulty = diff;
+            currentHashColor = difficultyToColor(diff);
+            updateHighlights(currentHashColor);
             layoutFromHash(h, $('mapping').value);
             addHashLog(h, new Date().toLocaleTimeString(), diff);
         }
@@ -808,6 +827,9 @@
         await drawOriginalFromMarket();
         $('m-status').textContent = 'Status — Ready';
         const [{ price: initialPrice }, diffInit] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
+        lastDifficulty = diffInit;
+        currentHashColor = difficultyToColor(diffInit);
+        updateHighlights(currentHashColor);
         addHashLog(generateHashFromPrice(initialPrice), new Date().toLocaleTimeString(), diffInit);
         setInterval(updateHashCloud, 60_000);
         updateHashCloud();
@@ -824,6 +846,7 @@
             const h = hv.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64);
             lastDifficulty = diff;
             currentHashColor = difficultyToColor(diff);
+            updateHighlights(currentHashColor);
             layoutFromHash(h, e.target.value);
             addHashLog(h, new Date().toLocaleTimeString(), diff);
           }
@@ -854,6 +877,7 @@
           $('hashInput').value = h;
           lastDifficulty = diff;
           currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
@@ -867,6 +891,7 @@
           const diff = await fetchBTCDifficulty();
           lastDifficulty = diff;
           currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
@@ -880,6 +905,7 @@
           $('hashInput').value = h;
           lastDifficulty = diff;
           currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
@@ -894,6 +920,7 @@
           const diff = await fetchBTCDifficulty();
           lastDifficulty = diff;
           currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
