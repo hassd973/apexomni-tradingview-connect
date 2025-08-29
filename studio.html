@@ -63,7 +63,9 @@
       .stage{ position:absolute; inset:0; }
       .overlay{ position:absolute; left:12px; top:12px; display:flex; flex-wrap:wrap; gap:6px; pointer-events:none; }
       .legend{ position:absolute; left:0; right:0; bottom:0; display:flex; gap:6px; flex-wrap:wrap; justify-content:center; pointer-events:none; padding:0.5rem; background:var(--panel-bg); border-top:1px solid var(--panel-brd); font-size:12px; }
-      canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background:#000; touch-action:none; }
+      .btc-hash-svg{ position:relative; width:100%; height:100%; background:#000; }
+      canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background:transparent; touch-action:none; }
+      #btc-audio-canvas{ width:100%; height:80px; pointer-events:none; }
 
       /* Dedicated fullscreen buttons */
       .mobile-fs-btn{ display:none; position:absolute; right:12px; top:12px; background:var(--soft); border:1px solid var(--border); color:var(--accent-2); border-radius:14px; padding:12px; z-index:20; font-size: 16px; }
@@ -163,33 +165,41 @@
     <main id="main">
       <section class="panel fs-target" id="stagePanel" aria-label="3D stage">
         <div class="stage">
-          <button id="mobile-fs-toggle" class="mobile-fs-btn" aria-label="Toggle fullscreen">⤢</button>
-          <div class="overlay" id="metrics">
-            <canvas class="quantumi-logo w-12 h-12" aria-label="Quantumi logo"></canvas>
-            <div class="chip" id="m-price">Price —</div>
-            <div class="chip" id="m-volume">Volume —</div>
-            <div class="chip" id="m-change">24h —</div>
-            <div class="chip" id="m-hashrate">Hashrate —</div>
-            <div class="chip" id="m-diff">Difficulty —</div>
-            <div class="chip" id="m-mode">Mode — Original</div>
-            <div class="chip" id="m-axes">Axes — On</div>
-            <div class="chip" id="m-status">Status — Init…</div>
+          <div class="btc-hash-svg relative" id="btc-hash-wrapper">
+            <button id="mobile-fs-toggle" class="mobile-fs-btn" aria-label="Toggle fullscreen">⤢</button>
+            <canvas
+              id="btc-audio-canvas"
+              width="600"
+              height="80"
+              class="absolute top-0 left-0 w-full pointer-events-none"
+            ></canvas>
+            <canvas id="btc-hash-canvas" aria-label="BTC hash visualization"></canvas>
+            <div class="overlay" id="metrics">
+              <canvas class="quantumi-logo w-12 h-12" aria-label="Quantumi logo"></canvas>
+              <div class="chip" id="m-price">Price —</div>
+              <div class="chip" id="m-volume">Volume —</div>
+              <div class="chip" id="m-change">24h —</div>
+              <div class="chip" id="m-hashrate">Hashrate —</div>
+              <div class="chip" id="m-diff">Difficulty —</div>
+              <div class="chip" id="m-mode">Mode — Original</div>
+              <div class="chip" id="m-axes">Axes — On</div>
+              <div class="chip" id="m-status">Status — Init…</div>
+            </div>
+            <div id="fp-hud" class="fp-hud" aria-hidden="true">
+              <div class="fp-cross"></div>
+              <div class="fp-hint">WASD/left touch to move • drag to look • Esc/Explore to exit</div>
+            </div>
+            <div class="legend" id="btc-legend" aria-live="polite">
+              <span id="btc-price">Price: Loading...</span>
+              <span id="btc-time">Time: Loading...</span>
+              <span id="btc-date">Date: Loading...</span>
+              <span id="btc-volume">Volume: Loading...</span>
+              <span id="btc-volatility">Volatility: Loading...</span>
+              <span id="btc-momentum">Momentum: Loading...</span>
+              <span id="camera-pos">Pos: 0,0,0</span>
+            </div>
+            <ul id="log-preview" class="log-preview" aria-live="polite"></ul>
           </div>
-          <canvas id="btc-hash-canvas" aria-label="BTC hash visualization"></canvas>
-          <div id="fp-hud" class="fp-hud" aria-hidden="true">
-            <div class="fp-cross"></div>
-          <div class="fp-hint">WASD/left touch to move • drag to look • Esc/Explore to exit</div>
-          </div>
-          <div class="legend" id="btc-legend" aria-live="polite">
-            <span id="btc-price">Price: Loading...</span>
-            <span id="btc-time">Time: Loading...</span>
-            <span id="btc-date">Date: Loading...</span>
-            <span id="btc-volume">Volume: Loading...</span>
-            <span id="btc-volatility">Volatility: Loading...</span>
-            <span id="btc-momentum">Momentum: Loading...</span>
-            <span id="camera-pos">Pos: 0,0,0</span>
-          </div>
-          <ul id="log-preview" class="log-preview" aria-live="polite"></ul>
         </div>
       </section>
 
