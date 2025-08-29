@@ -191,6 +191,7 @@
             <div class="chip" id="m-diff">Difficulty —</div>
             <div class="chip" id="m-mode">Mode — Original</div>
             <div class="chip" id="m-axes">Axes — On</div>
+            <div class="chip" id="m-clusters">Clusters — 0</div>
             <div class="chip" id="m-status">Status — Init…</div>
           </div>
             <canvas id="btc-hash-canvas" aria-label="BTC hash visualization"></canvas>
@@ -314,7 +315,7 @@
     </footer>
 
     <script src="quantumi-logo.js"></script>
-    <script>let lastPathPoints = [];</script>
+    <script>let lastPathPoints = []; let lastClusters = [];</script>
     <script>
       // --- Theme toggle (Light / Dark). Remembers choice. iOS-ready light.
       (function initTheme(){
@@ -376,6 +377,7 @@
       };
 
       let currentHashColor = '#00FF7F';
+      let clusterMeshes = [];
       function updateHighlights(color){
         const root = document.documentElement;
         const r = parseInt(color.slice(1,3),16);
@@ -513,7 +515,47 @@
         function resize(){ const w=canvas.clientWidth, h=canvas.clientHeight; renderer.setSize(w,h,false); camera.aspect = w/(h||1); camera.updateProjectionMatrix(); }
       }
 
-      function clearClouds(){ dotClouds.forEach(c=>scene.remove(c)); dotClouds=[]; }
+      function ensureNoOverlap(points, minDist = 0.5){
+        for(let i=0;i<points.length;i++){
+          for(let j=0;j<i;j++){
+            if(points[i].distanceTo(points[j])<minDist){
+              const dir = points[i].clone().sub(points[j]).normalize().multiplyScalar(minDist);
+              points[i].copy(points[j]).add(dir);
+            }
+          }
+        }
+      }
+      function detectClusters(points, radius=1.2, threshold=5){
+        const clusters=[]; const visited=new Array(points.length).fill(false);
+        for(let i=0;i<points.length;i++){
+          if(visited[i]) continue; const group=[];
+          for(let j=0;j<points.length;j++){
+            if(points[i].distanceTo(points[j])<radius){ group.push(j); visited[j]=true; }
+          }
+          if(group.length>=threshold){
+            const center=new THREE.Vector3(); group.forEach(idx=>center.add(points[idx]));
+            center.divideScalar(group.length);
+            clusters.push({center,radius});
+          }
+        }
+        return clusters;
+      }
+      function updateClusters(points){
+        clusterMeshes.forEach(m=>scene.remove(m)); clusterMeshes=[];
+        lastClusters = detectClusters(points);
+        lastClusters.forEach(c=>{
+          const geo=new THREE.SphereGeometry(c.radius,16,16);
+          const mat=new THREE.MeshBasicMaterial({color:currentHashColor,wireframe:true,transparent:true,opacity:0.25});
+          const mesh=new THREE.Mesh(geo,mat); mesh.position.copy(c.center); scene.add(mesh); clusterMeshes.push(mesh);
+        });
+        $('m-clusters').textContent = `Clusters — ${lastClusters.length}`;
+      }
+
+      function clearClouds(){
+        dotClouds.forEach(c=>scene.remove(c)); dotClouds=[];
+        clusterMeshes.forEach(m=>scene.remove(m)); clusterMeshes=[]; lastClusters=[];
+        $('m-clusters').textContent = 'Clusters — 0';
+      }
 
       async function drawOriginalFromMarket(){
         const data = await fetchBTCHistorical(); if (!data) return;
@@ -539,7 +581,9 @@
             colors.push(cloudColor.r, cloudColor.g, cloudColor.b);
           }
         }
+        ensureNoOverlap(centers);
         lastPathPoints = centers;
+        updateClusters(centers);
         const count = positions.length/3;
         let cloud;
         if (customGeometry) {
@@ -568,15 +612,24 @@
         const base = new THREE.Color(difficultyToColor(latestDifficulty));
         currentHashColor = '#' + base.getHexString();
         updateHighlights(currentHashColor);
+        const minDist=0.5;
         for(let i=0;i<N;i++){
           const v = vals[i % vals.length] / 15; let x,y,z;
           if(mapping==='spiral'){ const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
           else if(mapping==='sphere'){ const phi=Math.acos(1-(2*(i+.5))/N); const theta=Math.PI*(1+Math.sqrt(5))*(i+v); const R=6*(.6+.4*v); x=R*Math.sin(phi)*Math.cos(theta); y=R*Math.sin(phi)*Math.sin(theta); z=R*Math.cos(phi); }
           else if(mapping==='helix'){ const a=(i/N)*Math.PI*8; x=Math.cos(a)*5; y=Math.sin(a)*5; z=(i/N)*20-10+(v-.5); }
           else{ const a=i*.28, r=2+v*4; x=Math.cos(a)*r; y=Math.sin(a)*r; z=(i/N)*16-8; }
-          positions.push(x,y,z); colors.push(base.r, base.g, base.b); pathPts.push(new THREE.Vector3(x,y,z));
+          const newPt=new THREE.Vector3(x,y,z);
+          for(const p of pathPts){
+            if(newPt.distanceTo(p)<minDist){
+              const dir=newPt.clone().sub(p).normalize().multiplyScalar(minDist);
+              newPt.copy(p).add(dir); x=newPt.x; y=newPt.y; z=newPt.z;
+            }
+          }
+          positions.push(x,y,z); colors.push(base.r, base.g, base.b); pathPts.push(newPt);
         }
         lastPathPoints = pathPts;
+        updateClusters(pathPts);
         const count = positions.length/3;
         let cloud;
         if (customGeometry) {
@@ -1087,11 +1140,12 @@
         window.QUANTUMI = {
           get scene(){ return scene; }, get camera(){ return camera; }, get renderer(){ return renderer; },
           get controls(){ return controls; }, get dotClouds(){ return dotClouds; },
-          get path(){ return lastPathPoints; },
+          get path(){ return lastPathPoints; }, get clusters(){ return lastClusters; },
           functions: { updateHashCloud, layoutFromHash, drawOriginalFromMarket, clearClouds }
         };
       });
     </script>
+    <script type="module" src="./walkmode.js"></script>
     <script type="module" src="./fpv-explore.js"></script>
     <script type="module" src="./enhance.js"></script>
     <script type="module" src="./game-ext.js"></script>
