@@ -345,7 +345,7 @@
       const $ = (id) => document.getElementById(id);
       const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
       const canvas = $('btc-hash-canvas');
-      let renderer, scene, camera, controls, axes; let dotClouds = []; let hashLogEntries = []; let customGeometry = null;
+      let renderer, scene, camera, controls, axes; let dotClouds = []; let hashLogEntries = []; let customGeometry = null; let lastDifficulty = 0;
       const DPR_CAP = Math.min((window.devicePixelRatio||1), 1.8);
       let __targetDPR = Math.min(DPR_CAP, 1.4); // start moderate on mobile
 
@@ -366,7 +366,7 @@
         return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`;
       }
       const themes = {
-        original: ['#00ff7f'],
+        original: ['#00ff7f', '#ffd700', '#ff4500'],
         heatmap(v){
           const t = Math.min(v / 10, 1);
           if (t < 0.5) return interpolateColor('#00ff7e', '#ffff00', t * 2);
@@ -374,8 +374,8 @@
         },
         lifecycle(vol, minV, maxV){ const t=(vol-minV)/(maxV-minV+1e-6); const c=Math.round(255*(0.3+0.7*t)); return `#00${c.toString(16).padStart(2,'0')}ff`; }
       };
-      const getThemeColor = (volatility, volume, minV, maxV) => {
-        const mode = $('theme').value; if (mode==='heatmap') return themes.heatmap(volatility); if (mode==='lifecycle') return themes.lifecycle(volume, minV, maxV); return themes.original[0]; };
+      const getThemeColor = (volatility, volume, minV, maxV, diff) => {
+        const mode = $('theme').value; if (mode==='heatmap') return themes.heatmap(volatility); if (mode==='lifecycle') return themes.lifecycle(volume, minV, maxV); return difficultyToColor(diff); };
 
       let currentHashColor = themes.original[0];
       function hexToRgba(hex, alpha=1){
@@ -446,6 +446,9 @@
           $('m-change').textContent = `24h — ${change.toFixed(2)}%`;
           $('m-hashrate').textContent = `Hashrate — ${hashrate.toFixed(2)} EH/s`;
           $('m-diff').textContent = `Difficulty — ${diff.toLocaleString()}`;
+          lastDifficulty = diff;
+          currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
 
           // bottom legend metrics
           let latestTime = new Date().toLocaleTimeString();
@@ -529,9 +532,12 @@
       function clearClouds(){ dotClouds.forEach(c=>scene.remove(c)); dotClouds=[]; }
 
       async function drawOriginalFromMarket(){
-        const data = await fetchBTCHistorical();
+        const [data, diff] = await Promise.all([fetchBTCHistorical(), fetchBTCDifficulty()]);
+        lastDifficulty = diff;
         if (!data){
           const h = generateHashFromPrice(Date.now());
+          currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
           layoutFromHash(h, $('mapping').value);
           return;
         }
@@ -541,7 +547,7 @@
         const minVolume = Math.min(...volumes.map(v=>v[1])), maxVolume = Math.max(...volumes.map(v=>v[1]));
         const latestPrice = prices[prices.length-1][1]; const latestVolume = volumes[volumes.length-1][1];
         const recent = prices.slice(-10).map(p=>p[1]); const volatility = ((Math.max(...recent)-Math.min(...recent))/latestPrice)*100;
-        const cloudColorHex = getThemeColor(volatility, latestVolume, minVolume, maxVolume);
+        const cloudColorHex = getThemeColor(volatility, latestVolume, minVolume, maxVolume, diff);
         const cloudColor = new THREE.Color(cloudColorHex);
         currentHashColor = cloudColorHex;
         updateHighlights(currentHashColor);
@@ -901,12 +907,13 @@
           if (e.target.value === 'original') {
             await drawOriginalFromMarket();
           } else {
-            const pricePromise = fetchBTCPrice();
-            const diffPromise = fetchBTCDifficulty();
-            const hv = $('hashInput').value.trim() || generateHashFromPrice((await pricePromise).price);
+            const [{ price }, diff] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
+            const hv = $('hashInput').value.trim() || generateHashFromPrice(price);
             const h = hv.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64);
+            lastDifficulty = diff;
+            currentHashColor = difficultyToColor(diff);
+            updateHighlights(currentHashColor);
             layoutFromHash(h, e.target.value);
-            const diff = await diffPromise;
             addHashLog(h, new Date().toLocaleTimeString(), diff);
           }
           vibrate(10, gamepadAPI.controller);
@@ -921,7 +928,7 @@
           dotClouds.forEach(c => c.material.size = parseFloat($('pointSize').value));
         });
         $('theme').addEventListener('change', async () => {
-          const base = getThemeColor(0,0,0,1);
+          const base = getThemeColor(0,0,0,1,lastDifficulty);
           currentHashColor = base;
           updateHighlights(base);
           if ($('mapping').value === 'original') {
@@ -936,6 +943,9 @@
           const [{ price }, diff] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
           const h = generateHashFromPrice(price);
           $('hashInput').value = h;
+          lastDifficulty = diff;
+          currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
@@ -947,6 +957,9 @@
           const h = Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
           $('hashInput').value = h;
           const diff = await fetchBTCDifficulty();
+          lastDifficulty = diff;
+          currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
@@ -958,6 +971,9 @@
           const [{ price }, diff] = await Promise.all([fetchBTCPrice(), fetchBTCDifficulty()]);
           const h = generateHashFromPrice(price);
           $('hashInput').value = h;
+          lastDifficulty = diff;
+          currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
@@ -970,6 +986,9 @@
           if (!hv) return;
           const h = hv.replace(/[^0-9a-f]/gi, '').padEnd(64, '0').slice(0, 64);
           const diff = await fetchBTCDifficulty();
+          lastDifficulty = diff;
+          currentHashColor = difficultyToColor(diff);
+          updateHighlights(currentHashColor);
           if ($('mapping').value !== 'original') {
             clearClouds();
             layoutFromHash(h, $('mapping').value);
