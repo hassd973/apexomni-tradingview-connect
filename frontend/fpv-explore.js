@@ -195,12 +195,15 @@ const THREE = window.THREE;
     const pads=navigator.getGamepads?Array.from(navigator.getGamepads()).filter(Boolean):[];
     if(!pads.length) return; const gp=pads[0], dz=0.12;
     const lx=gp.axes[0]||0, ly=gp.axes[1]||0, rx=gp.axes[2]||0, ry=gp.axes[3]||0;
-    inp.bank   = Math.abs(lx)>dz ? lx : 0;
-    inp.thrust = Math.abs(ly)>dz ? -ly : 0;
+    const rt=gp.buttons[7]?.value||0, lt=gp.buttons[6]?.value||0;
+    inp.bank = Math.abs(lx)>dz ? lx : 0;
+    let thrust = Math.abs(ly)>dz ? -ly : 0;
+    thrust += rt - lt;
+    inp.thrust = clamp(thrust,-1,1);
     yaw   -= (Math.abs(rx)>dz?rx:0)*0.03;
     pitch -= (Math.abs(ry)>dz?ry:0)*0.03*(cfg.invertY?-1:1);
     pitch = clamp(pitch,-1.0,1.0);
-    inp.run = (gp.buttons[4]?.pressed||gp.buttons[5]?.pressed)?1:0;
+    inp.run = rt>0.6?1:0;
     if (gp.buttons[2]?.pressed){ pathVisible=!pathVisible; if(tube) tube.visible=pathVisible; } // X
     if (gp.buttons[1]?.pressed) toggle(false); // B
   }

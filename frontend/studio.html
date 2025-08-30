@@ -121,6 +121,9 @@
       .ctrl input[type="range"]::-moz-range-track{ height:4px; background:rgba(10,132,255,.3); border-radius:2px; }
       .ctrl input[type="range"]::-moz-range-thumb{ width:18px; height:18px; border-radius:50%; background:var(--accent); cursor:pointer; }
 
+      /* highlight theme selector for visibility */
+      .theme-ctrl select{ border:2px solid var(--focus); }
+
       /* Dropzone */
       .dropzone{ position:relative; border:2px dashed var(--border); border-radius:14px; padding:14px; width:100%; min-height:84px; display:flex; align-items:center; justify-content:center; gap:10px; background:var(--soft); }
       .dropzone.drag{ border-color:var(--focus); box-shadow:0 0 0 4px var(--ring); }
@@ -242,10 +245,10 @@
             <label>Point Size</label>
             <input type="range" id="pointSize" min="0.005" max="0.5" step="0.005" value="0.02" />
           </div>
-          <div class="ctrl" title="Color mode for clouds/instances.">
+          <div class="ctrl theme-ctrl" title="Color mode for clouds/instances. Original theme reflects hash difficulty.">
             <label>Theme</label>
             <select id="theme">
-              <option value="original">Original</option>
+              <option value="original">Original (difficulty)</option>
               <option value="heatmap" selected>Heatmap (volatility)</option>
               <option value="lifecycle">Lifecycle (volume)</option>
             </select>
@@ -353,6 +356,7 @@
       const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
       const canvas = $('btc-hash-canvas');
       let renderer, scene, camera, controls, axes; let dotClouds = []; let hashLogEntries = []; let customGeometry = null;
+      let camVelocity = new THREE.Vector3();
       let clusterDev = false; let clusterInfoEl = null; let clusterMetricsVisible = false;
       const DPR_CAP = Math.min((window.devicePixelRatio||1), 1.8);
       let __targetDPR = Math.min(DPR_CAP, 1.4); // start moderate on mobile
@@ -587,7 +591,7 @@
         $('m-clusters').textContent = `Clusters — ${lastClusters.length}`;
       }
 
-      function applyClusterGravity(){
+      function applyClusterGravity(dt){
         if(!camera||!controls) return;
         const pos=camera.position;
         const pull=new THREE.Vector3();
@@ -604,8 +608,10 @@
             pull.add(toCenter.normalize().multiplyScalar(attractStrength));
           }
         });
-        camera.position.add(pull);
-        controls.target.add(pull);
+        camVelocity.add(pull.multiplyScalar(dt));
+        camVelocity.multiplyScalar(0.92); // damping
+        camera.position.add(camVelocity);
+        controls.target.add(camVelocity);
       }
 
       function clearClouds(){
@@ -923,7 +929,7 @@
           scene.rotation.y += 0.002;
           controls.autoRotate = true;
         }
-        applyClusterGravity();
+        applyClusterGravity(dt);
         if (camera) {
           const cp = $('camera-pos');
           if (cp) cp.textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
