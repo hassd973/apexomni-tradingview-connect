@@ -240,9 +240,9 @@ const THREE = window.THREE;
       } else {
         thrustHold=0;
       }
-      if(walkCluster && Q.camera.position.distanceTo(walkCluster.center) > walkCluster.radius){
-        t = walkCluster.t || t;
-        walking=false; walkCluster=null; walkClusterIdx=-1;
+      const cls=window.QUANTUMI?.clusters||[];
+      for(let i=0;i<cls.length;i++){
+        if(Q.camera.position.distanceTo(cls[i].center)<cls[i].radius){ walkCluster=cls[i]; walkClusterIdx=i; break; }
       }
       return;
     }
@@ -314,10 +314,11 @@ const THREE = window.THREE;
     if(!cls.length) return;
     idx = (idx + cls.length) % cls.length;
     const c = cls[idx];
-    jumpTargetT = c.t || 0;
-    walking=false;
-    walkCluster=null;
-    walkClusterIdx=-1;
+    if(Q && Q.camera){
+      Q.camera.position.set(c.center.x, c.center.y + c.radius + 2, c.center.z);
+    }
+    walkCluster = c;
+    walkClusterIdx = idx;
   }
 
   // ---------- toggle ----------
@@ -334,6 +335,8 @@ const THREE = window.THREE;
       // start on crest
       const {N,B} = frameAt(t=0);
       u = crestAngle(N,B); yaw=0; pitch=0; sYaw=0; sPitch=0; sVel.set(0,0,0);
+      walking=true;
+      if(!isTouch) window.walkMode?.startWalkMode(Q.camera, Q.renderer);
       mountHUD();
     } else {
       Q.controls && (Q.controls.enabled=true, Q.controls.update?.());
