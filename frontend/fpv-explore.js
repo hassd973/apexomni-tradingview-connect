@@ -29,7 +29,8 @@ const THREE = window.THREE;
     radiusMin:0.12, radiusMax:0.36, radiusScale:0.012,
     rideHeight:0.07, glideSpeed:5.4, runBoost:1.6,
     bankStrength:0.6, lookAhead:4.0,
-    posSmooth:0.22, rotSmooth:0.18,
+    posSmoothSlow:0.32, posSmoothFast:0.15,
+    rotSmoothSlow:0.25, rotSmoothFast:0.12,
     uLock:7.5, uDamp:8.5,
     worldUp: new THREE.Vector3(0,1,0),
     shellCull: true, shellRadius: 1.6,
@@ -61,9 +62,24 @@ const THREE = window.THREE;
     const d=bb.getSize(new THREE.Vector3()).length();
     return Math.max(cfg.radiusMin, Math.min(cfg.radiusMax, d*cfg.radiusScale));
   }
+  function smoothPath(pts,iterations=2){
+    let out=pts.slice();
+    for(let k=0;k<iterations;k++){
+      const n=[out[0].clone()];
+      for(let i=0;i<out.length-1;i++){
+        const p0=out[i], p1=out[i+1];
+        n.push(p0.clone().multiplyScalar(0.75).add(p1.clone().multiplyScalar(0.25)));
+        n.push(p0.clone().multiplyScalar(0.25).add(p1.clone().multiplyScalar(0.75)));
+      }
+      n.push(out[out.length-1].clone());
+      out=n;
+    }
+    return out;
+  }
   function buildCurve(){
-    const pts = pathPoints(); if (!pts || pts.length<3) return false;
-    curve = new THREE.CatmullRomCurve3(pts,false,'centripetal',0.25);
+    let pts = pathPoints(); if (!pts || pts.length<3) return false;
+    pts = smoothPath(pts,2);
+    curve = new THREE.CatmullRomCurve3(pts,false,'centripetal',0.5);
     const tmp = curve.getPoints(1200); let L=0; for(let i=1;i<tmp.length;i++) L += tmp[i-1].distanceTo(tmp[i]);
     curveLen = Math.max(1e-3,L);
 
@@ -183,12 +199,14 @@ const THREE = window.THREE;
       if (k==='shift') inp.run=1;
       if (k==='x'){ pathVisible=!pathVisible; if(tube) tube.visible=pathVisible; }
       if (k==='escape') toggle(false);
+      e.preventDefault();
     });
     window.addEventListener('keyup',e=>{
       if(!isFPV) return; const k=e.key.toLowerCase();
       if (k==='w'||k==='s'||k==='arrowup'||k==='arrowdown') inp.thrust=0;
       if (k==='a'||k==='d'||k==='arrowleft'||k==='arrowright') inp.bank=0;
       if (k==='shift') inp.run=0;
+      e.preventDefault();
     });
   }
   function pollPad(){
@@ -196,9 +214,16 @@ const THREE = window.THREE;
     if(!pads.length) return; const gp=pads[0], dz=0.12;
     const lx=gp.axes[0]||0, ly=gp.axes[1]||0, rx=gp.axes[2]||0, ry=gp.axes[3]||0;
     const rt=gp.buttons[7]?.value||0, lt=gp.buttons[6]?.value||0;
-    inp.bank = Math.abs(lx)>dz ? lx : 0;
+    let bank = Math.abs(lx)>dz ? lx : 0;
     let thrust = Math.abs(ly)>dz ? -ly : 0;
+    if(Math.abs(bank)<=dz && Math.abs(thrust)<=dz){
+      const up=gp.buttons[12]?.pressed, down=gp.buttons[13]?.pressed;
+      const left=gp.buttons[14]?.pressed, right=gp.buttons[15]?.pressed;
+      thrust = (up?1:0) + (down?-1:0);
+      bank = (right?1:0) + (left?-1:0);
+    }
     thrust += rt - lt;
+    inp.bank = clamp(bank,-1,1);
     inp.thrust = clamp(thrust,-1,1);
     yaw   -= (Math.abs(rx)>dz?rx:0)*0.03;
     pitch -= (Math.abs(ry)>dz?ry:0)*0.03*(cfg.invertY?-1:1);
@@ -281,13 +306,16 @@ const THREE = window.THREE;
     const camTarget = pos.clone().addScaledVector(radial, r);
     const lookTarget = pos.clone().addScaledVector(lookDir, cfg.lookAhead);
 
-    // smooth position and rotation
+    // smooth position and rotation with dampening based on speed
     const cam = Q.camera;
-    sPos.copy( smoothDampV3(cam.position, camTarget, sVel, cfg.posSmooth, dt) );
+    const speedFactor = Math.min(1, Math.abs(inp.thrust));
+    const posSmooth = THREE.MathUtils.lerp(cfg.posSmoothSlow, cfg.posSmoothFast, speedFactor);
+    const rotSmooth = THREE.MathUtils.lerp(cfg.rotSmoothSlow, cfg.rotSmoothFast, speedFactor);
+    sPos.copy( smoothDampV3(cam.position, camTarget, sVel, posSmooth, dt) );
     cam.position.copy(sPos);
 
-    sYaw   = smoothDamp(sYaw,   yaw,   _yawVel,   cfg.rotSmooth, dt);
-    sPitch = smoothDamp(sPitch, pitch, _pitchVel, cfg.rotSmooth, dt);
+    sYaw   = smoothDamp(sYaw,   yaw,   _yawVel,   rotSmooth, dt);
+    sPitch = smoothDamp(sPitch, pitch, _pitchVel, rotSmooth, dt);
 
     const yawMs=new THREE.Matrix4().makeRotationAxis(B, sYaw);
     const pitchMs=new THREE.Matrix4().makeRotationAxis(N, sPitch);
@@ -332,7 +360,8 @@ const THREE = window.THREE;
       Q.controls && (Q.controls.enabled=false, Q.controls.autoRotate=false, Q.controls.update?.());
       if(!buildCurve()){ console.warn('FPV: no path'); isFPV=false; return; }
       await enterFS(stage);
-      if(!isTouch) enablePointerLook(stage);
+      if(!isTouch){ enablePointerLook(stage); stage.requestPointerLock?.(); }
+      window.QUANTUMI?.setClusterDisplay?.(true);
       // start on crest of the path
       const {N,B} = frameAt(t=0);
       u = crestAngle(N,B); yaw=0; pitch=0; sYaw=0; sPitch=0; sVel.set(0,0,0);
@@ -341,6 +370,7 @@ const THREE = window.THREE;
     } else {
       Q.controls && (Q.controls.enabled=true, Q.controls.update?.());
       await exitFS(stage); unmountHUD();
+      window.QUANTUMI?.setClusterDisplay?.(false);
       inp.thrust=inp.bank=inp.run=0;
     }
   }
