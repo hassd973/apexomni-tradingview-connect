@@ -8,7 +8,8 @@ const THREE = window.THREE;
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 
   let Q, curve=null, tube=null, curveLen=1;
-  let isFPV=false, pathVisible=false, walking=false, walkCluster=null;
+  let isFPV=false, pathVisible=false, walking=false, walkCluster=null, walkClusterIdx=-1;
+  let jumpTargetT=null, thrustHold=0, tapStart=null;
 
   // Path params
   let t=0;        // along path [0..1)
@@ -233,9 +234,15 @@ const THREE = window.THREE;
         window.walkMode?.update(dt);
       }
       shellCull(Q.camera.position);
+      if(inp.thrust>0.8){
+        thrustHold += dt;
+        if(thrustHold>1){ jumpToCluster(walkClusterIdx+1); thrustHold=0; }
+      } else {
+        thrustHold=0;
+      }
       if(walkCluster && Q.camera.position.distanceTo(walkCluster.center) > walkCluster.radius){
-        walking=false; walkCluster=null;
-        const pos=curve.getPointAt(t); Q.camera.position.copy(pos);
+        t = walkCluster.t || t;
+        walking=false; walkCluster=null; walkClusterIdx=-1;
       }
       return;
     }
@@ -247,10 +254,17 @@ const THREE = window.THREE;
     u = wrapA( u + (cfg.uLock*uErr - cfg.uDamp*0) * dt );
 
     // progress along;
-    const v = cfg.glideSpeed * (1 + inp.run*(cfg.runBoost-1));
-    const dir = Math.max(0, inp.thrust); // no hard reverse in glide
-    t = (t + dir * v * dt / curveLen) % 1;
-    if (inp.thrust<0) t = (t + inp.thrust*0.4 * dt / curveLen + 1) % 1; // slight back
+    if(jumpTargetT!==null){
+      const step = cfg.glideSpeed * dt / curveLen;
+      const diff = jumpTargetT - t;
+      if(Math.abs(diff) <= step){ t = jumpTargetT; jumpTargetT=null; }
+      else t += Math.sign(diff) * step;
+    } else {
+      const v = cfg.glideSpeed * (1 + inp.run*(cfg.runBoost-1));
+      const dir = Math.max(0, inp.thrust); // no hard reverse in glide
+      t = (t + dir * v * dt / curveLen) % 1;
+      if (inp.thrust<0) t = (t + inp.thrust*0.4 * dt / curveLen + 1) % 1; // slight back
+    }
 
     // intended look
     const yawM=new THREE.Matrix4().makeRotationAxis(B, yaw);
@@ -283,14 +297,27 @@ const THREE = window.THREE;
     if (cam.fov!==cfg.fov){ cam.fov=cfg.fov; cam.updateProjectionMatrix(); }
     shellCull(cam.position);
     const cls=window.QUANTUMI?.clusters||[];
-    for(const c of cls){
+    for(let i=0;i<cls.length;i++){
+      const c=cls[i];
       if(cam.position.distanceTo(c.center)<c.radius){
         walking=true;
         walkCluster=c;
+        walkClusterIdx=i;
         if(!isTouch) window.walkMode?.startWalkMode(Q.camera, Q.renderer);
         return;
       }
     }
+  }
+
+  function jumpToCluster(idx){
+    const cls = window.QUANTUMI?.clusters || [];
+    if(!cls.length) return;
+    idx = (idx + cls.length) % cls.length;
+    const c = cls[idx];
+    jumpTargetT = c.t || 0;
+    walking=false;
+    walkCluster=null;
+    walkClusterIdx=-1;
   }
 
   // ---------- toggle ----------
@@ -321,6 +348,24 @@ const THREE = window.THREE;
     document.addEventListener('quantumi:tick', (e)=> update(e.detail.dt||0.016));
     document.addEventListener('quantumi:cloud', ()=> buildCurve());
     bindKeys();
+
+    const stage=$('stagePanel');
+    if(stage){
+      stage.addEventListener('pointerdown',e=>{
+        if(!isFPV || !walking) return;
+        if(e.target.closest('.fpv-joy') || e.target.closest('.fpv-run')) return;
+        tapStart={x:e.clientX,y:e.clientY,t:performance.now()};
+      });
+      stage.addEventListener('pointerup',e=>{
+        if(!isFPV || !walking || !tapStart) return;
+        if(e.target.closest('.fpv-joy') || e.target.closest('.fpv-run')){ tapStart=null; return; }
+        const dx=Math.abs(e.clientX-tapStart.x);
+        const dy=Math.abs(e.clientY-tapStart.y);
+        const dt=performance.now()-tapStart.t;
+        if(dx<10 && dy<10 && dt<250){ const cls=window.QUANTUMI?.clusters||[]; if(cls.length){ const next=(walkClusterIdx+1)%cls.length; jumpToCluster(next); } }
+        tapStart=null;
+      });
+    }
 
     const explore=$('play-fp'); if (explore){ explore.onclick = ()=> toggle(!isFPV); }
     document.addEventListener('fullscreenchange', ()=>{ const stage=$('stagePanel'); if(!fsActive(stage) && isFPV) toggle(false); });
