@@ -171,6 +171,7 @@
             <button class="btn" id="play-fp" type="button" title="Enter first-person explore">▶ Explore</button>
             <button class="btn" id="toggle-log" title="Show/Hide log">≡</button>
             <button class="btn" id="toggle-metrics" title="Show/Hide metrics">Σ</button>
+            <button class="btn" id="toggle-cloud" title="Toggle cloud metric">☁</button>
             <button class="btn" id="toggle-cluster-dev" aria-pressed="false" title="Toggle cluster bounds">◎</button>
           <div class="seg" role="group" aria-label="Theme">
             <button class="btn" id="theme-dark" aria-pressed="true" title="Dark">◐</button>
@@ -195,6 +196,7 @@
             <div class="chip" id="m-diff">Difficulty —</div>
             <div class="chip" id="m-mode">Mode — Original</div>
             <div class="chip" id="m-axes">Axes — On</div>
+            <div class="chip" id="m-cloud">Cloud — On</div>
             <div class="chip" id="m-clusters">Clusters — 0</div>
             <div class="chip" id="m-status">Status — Init…</div>
           </div>
@@ -346,7 +348,7 @@
       const $ = (id) => document.getElementById(id);
       const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
       const canvas = $('btc-hash-canvas');
-      let renderer, scene, camera, controls, axes; let dotClouds = []; let hashLogEntries = []; let customGeometry = null;
+      let renderer, scene, camera, controls, axes; let dotClouds = []; let hashLogEntries = []; let customGeometry = null; let cloudVisible = true;
       let clusterDev = false; let clusterInfoEl = null;
       const DPR_CAP = Math.min((window.devicePixelRatio||1), 1.8);
       let __targetDPR = Math.min(DPR_CAP, 1.4); // start moderate on mobile
@@ -541,7 +543,8 @@
           if(group.length>=threshold){
             const center=new THREE.Vector3(); group.forEach(idx=>center.add(points[idx]));
             center.divideScalar(group.length);
-            clusters.push({center,radius,count:group.length});
+            const idx = Math.round(group.reduce((a,b)=>a+b,0)/group.length);
+            clusters.push({center,radius,count:group.length,index:idx,t:points.length>1?idx/(points.length-1):0});
           }
         }
         return clusters;
@@ -617,7 +620,7 @@
           const mat = new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
           cloud = new THREE.Points(geo,mat);
         }
-        scene.add(cloud); dotClouds.push(cloud);
+        scene.add(cloud); cloud.visible = cloudVisible; dotClouds.push(cloud);
         dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
       }
 
@@ -661,7 +664,7 @@
           const mat=new THREE.PointsMaterial({ size: parseFloat($('pointSize').value), vertexColors:true, transparent:true, opacity:1 });
           cloud=new THREE.Points(geo,mat);
         }
-        scene.add(cloud); dotClouds.push(cloud);
+        scene.add(cloud); cloud.visible = cloudVisible; dotClouds.push(cloud);
         dotClouds.slice(0,-1).forEach(c=>c.material.opacity = Math.max(.12, c.material.opacity - .06));
       }
 
@@ -1072,6 +1075,12 @@
           if(clusterInfoEl) clusterInfoEl.classList.toggle('on',clusterDev);
           vibrate(8,gamepadAPI.controller);
         }); }
+        $('toggle-cloud').addEventListener('click', () => {
+          cloudVisible = !cloudVisible;
+          dotClouds.forEach(c=>c.visible = cloudVisible);
+          $('m-cloud').textContent = `Cloud — ${cloudVisible ? 'On' : 'Off'}`;
+          vibrate(8, gamepadAPI.controller);
+        });
 
         // --- Fullscreen (unified for desktop + mobile + iOS) ---------------
         const fsBtnDesktop = $('toggle-fs');
