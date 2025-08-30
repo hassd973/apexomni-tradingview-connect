@@ -537,7 +537,7 @@
           }
         }
       }
-      function detectClusters(points, radius=1.2, threshold=5){
+      function detectClusters(points, radius=2.0, threshold=5){
         const clusters=[]; const visited=new Array(points.length).fill(false);
         for(let i=0;i<points.length;i++){
           if(visited[i]) continue; const group=[];
@@ -551,6 +551,21 @@
             clusters.push({center,radius,count:group.length,index:idx,t:points.length>1?idx/(points.length-1):0});
           }
         }
+        // ensure all path points are covered by at least one sphere
+        const covered=new Array(points.length).fill(false);
+        clusters.forEach(c=>{
+          for(let i=0;i<points.length;i++){
+            if(points[i].distanceTo(c.center)<=c.radius) covered[i]=true;
+          }
+        });
+        for(let i=0;i<points.length;i++){
+          if(!covered[i]){
+            const center=points[i].clone();
+            clusters.push({center,radius,count:1,index:i,t:points.length>1?i/(points.length-1):0});
+          }
+        }
+        // nudge centers apart so spheres don't overlap
+        ensureNoOverlap(clusters.map(c=>c.center), radius*2);
         return clusters;
       }
       function updateClusters(points){

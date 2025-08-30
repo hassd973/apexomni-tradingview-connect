@@ -300,11 +300,9 @@ const THREE = window.THREE;
     for(let i=0;i<cls.length;i++){
       const c=cls[i];
       if(cam.position.distanceTo(c.center)<c.radius){
-        walking=true;
         walkCluster=c;
         walkClusterIdx=i;
-        if(!isTouch) window.walkMode?.startWalkMode(Q.camera, Q.renderer);
-        return;
+        // remain locked to the hash; walking mode must be triggered manually
       }
     }
   }
@@ -332,11 +330,10 @@ const THREE = window.THREE;
       if(!buildCurve()){ console.warn('FPV: no path'); isFPV=false; return; }
       await enterFS(stage);
       if(!isTouch) enablePointerLook(stage);
-      // start on crest
+      // start on crest of the path
       const {N,B} = frameAt(t=0);
       u = crestAngle(N,B); yaw=0; pitch=0; sYaw=0; sPitch=0; sVel.set(0,0,0);
-      walking=true;
-      if(!isTouch) window.walkMode?.startWalkMode(Q.camera, Q.renderer);
+      walking=false;
       mountHUD();
     } else {
       Q.controls && (Q.controls.enabled=true, Q.controls.update?.());
