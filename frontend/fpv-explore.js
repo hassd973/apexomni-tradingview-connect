@@ -8,7 +8,7 @@ const THREE = window.THREE;
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints>0;
 
   let Q, curve=null, tube=null, curveLen=1;
-  let isFPV=false, pathVisible=false, walking=false;
+  let isFPV=false, pathVisible=false, walking=false, walkCluster=null;
 
   // Path params
   let t=0;        // along path [0..1)
@@ -17,6 +17,7 @@ const THREE = window.THREE;
 
   // Inputs (glide style)
   const inp = { thrust:0, run:0, bank:0 };
+  let allow360=false, holdTimer=null;
 
   // Smoothing (critically damped springs)
   const sPos = new THREE.Vector3(), sVel = new THREE.Vector3();
@@ -30,7 +31,8 @@ const THREE = window.THREE;
     posSmooth:0.22, rotSmooth:0.18,
     uLock:7.5, uDamp:8.5,
     worldUp: new THREE.Vector3(0,1,0),
-    shellCull: true, shellRadius: 1.0
+    shellCull: true, shellRadius: 1.6,
+    walkSpeed: 2.0
   };
 
   // ---------- math helpers ----------
@@ -127,19 +129,33 @@ const THREE = window.THREE;
         inp.bank   = clamp(dx, -1, 1);
       });
 
-      // swipe look (right half) with low-pass
+      // swipe look outside joystick with long‑press for 360
       let swiping=false,lx=0,ly=0,vx=0,vy=0;
-      hud.addEventListener('pointerdown',e=>{ const rect=hud.getBoundingClientRect(); if (e.clientX>rect.width/2){ swiping=true; lx=e.clientX; ly=e.clientY; vx=vy=0; hud.setPointerCapture(e.pointerId);} });
-      hud.addEventListener('pointerup',()=> swiping=false);
+      hud.addEventListener('pointerdown',e=>{
+        const r=joy.getBoundingClientRect();
+        if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){
+          swiping=true; lx=e.clientX; ly=e.clientY; vx=vy=0;
+          allow360=false;
+          holdTimer=setTimeout(()=>{allow360=true;},500);
+          hud.setPointerCapture(e.pointerId);
+        }
+      });
+      hud.addEventListener('pointerup',()=>{
+        swiping=false;
+        allow360=false;
+        clearTimeout(holdTimer);
+      });
       hud.addEventListener('pointermove',e=>{
         if(!swiping) return;
         const dx=e.clientX-lx, dy=e.clientY-ly; lx=e.clientX; ly=e.clientY;
         vx=vx*0.7+dx*0.3; vy=vy*0.7+dy*0.3;
         yaw   -= vx*0.003;
         pitch -= vy*0.003*(cfg.invertY?-1:1);
-        pitch = clamp(pitch,-1.0,1.0);
+        pitch = allow360 ? wrapA(pitch) : clamp(pitch,-1.0,1.0);
       });
-      const run=mkBtn('Run',{position:'absolute',bottom:'42px',right:'22px'}); run.onpointerdown=()=>{inp.run=1}; run.onpointerup=()=>{inp.run=0};
+      const run=mkBtn('Run',{position:'absolute',bottom:'42px',right:'22px'});
+      run.onpointerdown=()=>{inp.run=1};
+      run.onpointerup=()=>{inp.run=0};
       hud.appendChild(run);
     }
     $('stagePanel')?.appendChild(hud);
@@ -203,15 +219,26 @@ const THREE = window.THREE;
   const _yawVel={v:0}, _pitchVel={v:0};
   function update(dt){
     if(!isFPV || !curve) return;
+    pollPad();
     if(walking){
-      window.walkMode?.update(dt);
+      if(isTouch){
+        const speed = cfg.walkSpeed * (1 + inp.run*(cfg.runBoost-1));
+        const forward = new THREE.Vector3();
+        Q.camera.getWorldDirection(forward);
+        forward.y=0; forward.normalize();
+        const right = new THREE.Vector3().crossVectors(forward, cfg.worldUp).normalize();
+        const move = forward.multiplyScalar(inp.thrust*speed*dt).add(right.multiplyScalar(inp.bank*speed*dt));
+        Q.camera.position.add(move);
+      } else {
+        window.walkMode?.update(dt);
+      }
       shellCull(Q.camera.position);
-      const cls=window.QUANTUMI?.clusters||[]; let inside=false;
-      for(const c of cls){ if(Q.camera.position.distanceTo(c.center)<c.radius){ inside=true; break; } }
-      if(!inside){ walking=false; const pos=curve.getPointAt(t); Q.camera.position.copy(pos); }
+      if(walkCluster && Q.camera.position.distanceTo(walkCluster.center) > walkCluster.radius){
+        walking=false; walkCluster=null;
+        const pos=curve.getPointAt(t); Q.camera.position.copy(pos);
+      }
       return;
     }
-    pollPad();
 
     const {T,N,B} = frameAt(t);
     // steer u to crest + bank
@@ -259,7 +286,8 @@ const THREE = window.THREE;
     for(const c of cls){
       if(cam.position.distanceTo(c.center)<c.radius){
         walking=true;
-        window.walkMode?.startWalkMode(Q.camera, Q.renderer);
+        walkCluster=c;
+        if(!isTouch) window.walkMode?.startWalkMode(Q.camera, Q.renderer);
         return;
       }
     }
