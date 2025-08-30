@@ -150,6 +150,9 @@
         .fpv-joy .knob{position:absolute;left:37px;top:37px;width:58px;height:58px;border-radius:999px;background:rgba(255,255,255,.22)}
         .fpv-run{position:absolute;bottom:42px;right:22px}
         .fpv-cross{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12px;height:12px;border:2px solid rgba(255,255,255,.9);border-radius:50%}
+        /* Fade overlay for respawn */
+        .fade-overlay{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .8s;z-index:9999}
+        .fade-overlay.on{opacity:1}
       </style>
 
     <!-- three.js r128 (kept for FBXLoader compatibility) -->
@@ -161,6 +164,7 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/inflate.min.js"></script>
   </head>
   <body>
+    <div id="fall-fade" class="fade-overlay"></div>
     <header>
       <div class="brand">
         <div class="logo">QUANTUMI</div>
@@ -573,11 +577,16 @@
         const pos=camera.position;
         const pull=new THREE.Vector3();
         lastClusters.forEach(c=>{
-          const dir=c.center.clone().sub(pos);
-          const dist=dir.length();
+          const toCenter=c.center.clone().sub(pos);
+          const dist=toCenter.length();
           if(dist<c.radius){
-            const strength=(1 - dist / c.radius)*0.02;
-            pull.add(dir.normalize().multiplyScalar(strength));
+            // push outward when inside a cluster sphere
+            const pushStrength=(1 - dist / c.radius)*0.05;
+            pull.add(toCenter.negate().normalize().multiplyScalar(pushStrength));
+          }else{
+            // gentle attraction when nearby to help reach next cluster
+            const attractStrength=Math.max(0,(1 - dist/(c.radius*3)))*0.02;
+            pull.add(toCenter.normalize().multiplyScalar(attractStrength));
           }
         });
         camera.position.add(pull);
