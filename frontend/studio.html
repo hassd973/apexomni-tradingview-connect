@@ -394,6 +394,12 @@
 
       let currentHashColor = '#00FF7F';
       let clusterMeshes = [];
+      function setClusterDisplay(show){
+        clusterDev = show;
+        clusterMeshes.forEach(m=>m.visible=show);
+        if(clusterInfoEl) clusterInfoEl.classList.toggle('on',show);
+        clusterMetricsVisible = show;
+      }
       function updateHighlights(color){
         const root = document.documentElement;
         const r = parseInt(color.slice(1,3),16);
@@ -568,9 +574,35 @@
             clusters.push({center,radius,count:1,index:i,t:points.length>1?i/(points.length-1):0});
           }
         }
-        // nudge centers apart so spheres don't overlap
-        ensureNoOverlap(clusters.map(c=>c.center), radius*2);
-        return clusters;
+        // merge overlapping groups into single larger spheres
+        function mergeClusters(list){
+          let merged=true;
+          while(merged){
+            merged=false;
+            for(let i=0;i<list.length;i++){
+              for(let j=i+1;j<list.length;j++){
+                const a=list[i], b=list[j];
+                const dist=a.center.distanceTo(b.center);
+                if(dist < a.radius + b.radius){
+                  // bounding sphere covering both
+                  const dir=b.center.clone().sub(a.center);
+                  const len=dir.length()||1;
+                  const r=(len + a.radius + b.radius)/2;
+                  const center=a.center.clone().add(dir.multiplyScalar((r-a.radius)/len));
+                  list[i]={center,radius:r,count:a.count+b.count,index:a.index,t:a.t};
+                  list.splice(j,1);
+                  merged=true; break;
+                }
+              }
+              if(merged) break;
+            }
+          }
+          return list;
+        }
+        const merged=mergeClusters(clusters);
+        // ensure final spheres don't overlap visually
+        ensureNoOverlap(merged.map(c=>c.center), radius*2);
+        return merged;
       }
       function updateClusters(points){
         clusterMeshes.forEach(m=>scene.remove(m)); clusterMeshes=[];
@@ -1123,8 +1155,7 @@
         if(tcd){ tcd.addEventListener('click',()=>{
           clusterDev=!clusterDev;
           tcd.setAttribute('aria-pressed',String(clusterDev));
-          clusterMeshes.forEach(m=>m.visible=clusterDev);
-          if(clusterInfoEl) clusterInfoEl.classList.toggle('on',clusterDev);
+          setClusterDisplay(clusterDev);
           vibrate(8,gamepadAPI.controller);
         }); }
         $('toggle-cloud').addEventListener('click', () => {
@@ -1235,6 +1266,7 @@
           get scene(){ return scene; }, get camera(){ return camera; }, get renderer(){ return renderer; },
           get controls(){ return controls; }, get dotClouds(){ return dotClouds; },
           get path(){ return lastPathPoints; }, get clusters(){ return lastClusters; },
+          setClusterDisplay,
           functions: { updateHashCloud, layoutFromHash, drawOriginalFromMarket, clearClouds }
         };
       });
