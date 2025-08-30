@@ -72,6 +72,9 @@
       .legend-value{ font-weight:600; }
       .legend-color{ width:8px; height:8px; border-radius:2px; background:var(--accent); }
       canvas#btc-hash-canvas{ width:100%; height:100%; display:block; background:#000; touch-action:none; }
+      .cluster-info{position:absolute;inset:0;pointer-events:none;display:none}
+      .cluster-info.on{display:block}
+      .cluster-label{position:absolute;background:var(--panel-bg);border:1px solid var(--panel-brd);padding:2px 4px;border-radius:4px;font-size:11px;white-space:nowrap}
 
       /* Dedicated fullscreen buttons */
       .mobile-fs-btn{ display:none; position:absolute; right:12px; top:12px; background:var(--soft); border:1px solid var(--border); color:var(--accent-2); border-radius:14px; padding:12px; z-index:20; font-size: 16px; }
@@ -167,7 +170,8 @@
             <button class="btn desktop-fs-btn" id="toggle-fs" title="Toggle fullscreen (F / dbl‑click)">⤢</button>
             <button class="btn" id="play-fp" type="button" title="Enter first-person explore">▶ Explore</button>
             <button class="btn" id="toggle-log" title="Show/Hide log">≡</button>
-          <button class="btn" id="toggle-metrics" title="Show/Hide metrics">Σ</button>
+            <button class="btn" id="toggle-metrics" title="Show/Hide metrics">Σ</button>
+            <button class="btn" id="toggle-cluster-dev" aria-pressed="false" title="Toggle cluster bounds">◎</button>
           <div class="seg" role="group" aria-label="Theme">
             <button class="btn" id="theme-dark" aria-pressed="true" title="Dark">◐</button>
             <button class="btn" id="theme-light" aria-pressed="false" title="Light">◑</button>
@@ -194,6 +198,7 @@
             <div class="chip" id="m-clusters">Clusters — 0</div>
             <div class="chip" id="m-status">Status — Init…</div>
           </div>
+          <div id="cluster-info" class="cluster-info"></div>
             <canvas id="btc-hash-canvas" aria-label="BTC hash visualization"></canvas>
             <div id="fp-hud" class="fp-hud" aria-hidden="true">
               <div class="fp-cross"></div>
@@ -342,6 +347,7 @@
       const nfUSD = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
       const canvas = $('btc-hash-canvas');
       let renderer, scene, camera, controls, axes; let dotClouds = []; let hashLogEntries = []; let customGeometry = null;
+      let clusterDev = false; let clusterInfoEl = null;
       const DPR_CAP = Math.min((window.devicePixelRatio||1), 1.8);
       let __targetDPR = Math.min(DPR_CAP, 1.4); // start moderate on mobile
 
@@ -535,18 +541,25 @@
           if(group.length>=threshold){
             const center=new THREE.Vector3(); group.forEach(idx=>center.add(points[idx]));
             center.divideScalar(group.length);
-            clusters.push({center,radius});
+            clusters.push({center,radius,count:group.length});
           }
         }
         return clusters;
       }
       function updateClusters(points){
         clusterMeshes.forEach(m=>scene.remove(m)); clusterMeshes=[];
+        if(clusterInfoEl) clusterInfoEl.innerHTML='';
         lastClusters = detectClusters(points);
-        lastClusters.forEach(c=>{
+        lastClusters.forEach((c,idx)=>{
           const geo=new THREE.SphereGeometry(c.radius,16,16);
           const mat=new THREE.MeshBasicMaterial({color:currentHashColor,wireframe:true,transparent:true,opacity:0.25});
-          const mesh=new THREE.Mesh(geo,mat); mesh.position.copy(c.center); scene.add(mesh); clusterMeshes.push(mesh);
+          const mesh=new THREE.Mesh(geo,mat); mesh.position.copy(c.center); mesh.visible = clusterDev; scene.add(mesh); clusterMeshes.push(mesh);
+          if(clusterInfoEl){
+            const label=document.createElement('div');
+            label.className='cluster-label';
+            label.textContent=`C${idx+1}: ${c.count}`;
+            clusterInfoEl.appendChild(label);
+          }
         });
         $('m-clusters').textContent = `Clusters — ${lastClusters.length}`;
       }
@@ -554,6 +567,7 @@
       function clearClouds(){
         dotClouds.forEach(c=>scene.remove(c)); dotClouds=[];
         clusterMeshes.forEach(m=>scene.remove(m)); clusterMeshes=[]; lastClusters=[];
+        if(clusterInfoEl) clusterInfoEl.innerHTML='';
         $('m-clusters').textContent = 'Clusters — 0';
       }
 
@@ -865,6 +879,16 @@
           const cp = $('camera-pos');
           if (cp) cp.textContent = `Pos: ${camera.position.x.toFixed(2)},${camera.position.y.toFixed(2)},${camera.position.z.toFixed(2)}`;
         }
+        if(clusterDev && clusterInfoEl){
+          const w = canvas.clientWidth; const h = canvas.clientHeight;
+          [...clusterInfoEl.children].forEach((label,idx)=>{
+            const v = lastClusters[idx]?.center.clone();
+            if(!v) return; v.project(camera);
+            const x = (v.x*0.5+0.5)*w;
+            const y = (-v.y*0.5+0.5)*h;
+            label.style.transform = `translate(${x}px,${y}px)`;
+          });
+        }
         document.dispatchEvent(new CustomEvent('quantumi:frame', { detail: { now: __now } }));
         renderer.render(scene, camera);
       }
@@ -879,6 +903,7 @@
       document.addEventListener('DOMContentLoaded', async () => {
         // Initialize gamepad support
         initGamepad();
+        clusterInfoEl = $('cluster-info');
 
         // Responsive controls drawer
         const drawerBtn = $('controls-toggle');
@@ -1039,6 +1064,14 @@
           b.style.display = hidden ? 'flex' : 'none';
           vibrate(8, gamepadAPI.controller);
         });
+        const tcd=$('toggle-cluster-dev');
+        if(tcd){ tcd.addEventListener('click',()=>{
+          clusterDev=!clusterDev;
+          tcd.setAttribute('aria-pressed',String(clusterDev));
+          clusterMeshes.forEach(m=>m.visible=clusterDev);
+          if(clusterInfoEl) clusterInfoEl.classList.toggle('on',clusterDev);
+          vibrate(8,gamepadAPI.controller);
+        }); }
 
         // --- Fullscreen (unified for desktop + mobile + iOS) ---------------
         const fsBtnDesktop = $('toggle-fs');
